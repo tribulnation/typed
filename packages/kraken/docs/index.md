@@ -27,27 +27,6 @@ async with Kraken.new(public=True) as client:
 pip install typed-kraken
 ```
 
-## Surface
-
-`Kraken.new()` builds a client with two top-level surfaces:
-
-- `client.spot` -- REST, under `https://api.kraken.com`. Composes `market_data`,
-  `account`, `trading`, `funding`, and `earn`. Public methods work with no
-  credentials; private ones sign each request.
-- `client.streams` -- WebSocket v2. Composes `market_data` (public channel
-  subscriptions), `private` (account channel subscriptions), and `trading`
-  (order placement/cancellation over the wire). `private` and `trading` share one
-  authenticated connection; `market_data` uses a separate public one.
-
-Pass `public=True` to build a client with no credentials, usable only for
-`spot.market_data` and `streams.market_data`.
-
-## Documentation
-
-- [API Keys Setup](api-keys.md)
-- [How To](how-to/index.md)
-- [Reference](reference/index.md)
-
 ## How To
 
 - [Fetch Market Data](how-to/fetch-market-data.md)
@@ -56,6 +35,14 @@ Pass `public=True` to build a client with no credentials, usable only for
 - [Fetch Account Data](how-to/fetch-account-data.md)
 - [Query & Manage Earn Instruments](how-to/query-and-manage-earn.md)
 - [Deposits & Withdrawals](how-to/deposits-and-withdrawals.md)
+
+## Reference
+
+- [API Keys Setup](api-keys.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
 
 ## Design Philosophy
 

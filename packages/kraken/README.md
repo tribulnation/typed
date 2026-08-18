@@ -1,6 +1,38 @@
-# Typed Kraken
+<p align="center">
+  <a href="https://tribulnation.com/typed/kraken">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-light.svg">
+      <img alt="Typed Kraken" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> A fully typed, validated async client for the Kraken Spot API -- REST and WebSocket v2.
+<p align="center">
+  <em>A fully typed, validated async client for the Kraken Spot API -- REST and WebSocket v2.</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/typed-kraken/">
+    <img src="https://img.shields.io/pypi/v/typed-kraken.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/typed-kraken/">
+    <img src="https://img.shields.io/pypi/pyversions/typed-kraken.svg" alt="Python versions">
+  </a>
+  <a href="https://tribulnation.com/typed/kraken">
+    <img src="https://img.shields.io/badge/docs-live-black" alt="Docs">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/pypi/l/typed-kraken.svg" alt="License">
+  </a>
+</p>
+
+---
+
+- **Documentation**: [https://tribulnation.com/typed/kraken](https://tribulnation.com/typed/kraken)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/kraken](https://github.com/tribulnation/typed/tree/main/packages/kraken)
+
+---
 
 ```python
 from kraken import Kraken
@@ -27,12 +59,6 @@ async with Kraken.new(public=True) as client:
 pip install typed-kraken
 ```
 
-## Documentation
-
-- [API Keys Setup](https://tribulnation.com/typed/kraken/api-keys)
-- [How To](https://tribulnation.com/typed/kraken/how-to)
-- [Reference](https://tribulnation.com/typed/kraken/reference)
-
 ## How To
 
 - [Fetch Market Data](https://tribulnation.com/typed/kraken/how-to/fetch-market-data)
@@ -42,6 +68,20 @@ pip install typed-kraken
 - [Query & Manage Earn Instruments](https://tribulnation.com/typed/kraken/how-to/query-and-manage-earn)
 - [Deposits & Withdrawals](https://tribulnation.com/typed/kraken/how-to/deposits-and-withdrawals)
 
-## Source Code
+## Reference
 
-> [github.com/tribulnation/kraken](https://github.com/tribulnation/kraken)
+- [API Keys Setup](https://tribulnation.com/typed/kraken/api-keys)
+- [Async Usage](https://tribulnation.com/typed/kraken/reference/async-usage)
+- [Error Handling](https://tribulnation.com/typed/kraken/reference/error-handling)
+- [Environment Variables](https://tribulnation.com/typed/kraken/reference/env-vars)
+- [Timestamps](https://tribulnation.com/typed/kraken/reference/timestamps)
+
+## Design Philosophy
+
+Typed Kraken follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT -- see [LICENSE](LICENSE).
