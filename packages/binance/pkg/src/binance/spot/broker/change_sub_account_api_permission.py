@@ -1,0 +1,61 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountApiPermission(TypedDict):
+  """Updated permissions for a sub-account API key."""
+
+  subaccountId: str
+  """Sub-account identifier."""
+  apikey: str
+  """API key updated."""
+  canTrade: bool
+  """Whether spot trading is enabled."""
+  marginTrade: bool
+  """Whether margin trading is enabled."""
+  futuresTrade: bool
+  """Whether futures trading is enabled."""
+
+
+class ChangeSubAccountApiPermission(RpcEndpoint):
+  """Change Sub Account Api Permission"""
+
+  async def change_sub_account_api_permission(
+    self,
+    *,
+    sub_account_id: str,
+    sub_account_api_key: str,
+    can_trade: bool,
+    margin_trade: bool,
+    futures_trade: bool,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountApiPermission:
+    """Change the trading permissions of a sub-account API key.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      sub_account_api_key: Sub-account API key.
+      can_trade: Grant spot trading permission.
+      margin_trade: Grant margin trading permission.
+      futures_trade: Grant futures trading permission.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'subAccountApiKey': sub_account_api_key,
+      'canTrade': can_trade,
+      'marginTrade': margin_trade,
+      'futuresTrade': futures_trade,
+    }
+    _Response = BrokerSubAccountApiPermission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccountApi/permission',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

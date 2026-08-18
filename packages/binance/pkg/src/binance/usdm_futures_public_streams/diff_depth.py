@@ -1,0 +1,57 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class DiffDepthEvent(TypedDict):
+  """Incremental bid/ask updates for one symbol."""
+
+  e: str
+  """Event type."""
+  E: Timestamp
+  """Event time."""
+  T: Timestamp
+  """Transaction time."""
+  s: str
+  """Symbol."""
+  U: int
+  """First update ID in event."""
+  u: int
+  """Final update ID in event."""
+  pu: int
+  """Final update ID in the previous stream event."""
+  b: list[tuple[str, str]]
+  """Bid updates."""
+  a: list[tuple[str, str]]
+  """Ask updates."""
+  ps: NotRequired[str]
+  """(After UM/CM stream-host migration) Pair symbol."""
+  st: NotRequired[int]
+  """(After UM/CM stream-host migration) Symbol type: 1 = UM, 2 = CM."""
+
+
+class DiffDepth(StreamEndpoint):
+  """Diff. book depth stream"""
+
+  def __call__(
+    self,
+    symbol: str,
+    speed: Literal[100, 250, 500],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[DiffDepthEvent]:
+    """Diff. book depth stream
+
+    Args:
+      symbol: Trading pair symbol, e.g. `BTCUSDT`. The venue requires stream names to use lowercase symbols on the wire.
+      speed: Update speed, in milliseconds.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-streams/public#diff-book-depth-streams)
+    """
+    _validator = validator[DiffDepthEvent](DiffDepthEvent)
+    return self.subscribe(
+      f'{symbol.lower()}@depth@{speed}ms', validator=_validator, validate=validate
+    )

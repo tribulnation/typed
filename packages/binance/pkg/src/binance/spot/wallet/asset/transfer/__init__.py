@@ -1,0 +1,6 @@
+from .create import Create
+from .history import History
+
+
+class Transfer(Create, History):
+  """Binance transfer endpoints."""

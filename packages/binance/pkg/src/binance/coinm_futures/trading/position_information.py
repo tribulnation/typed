@@ -1,0 +1,71 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMPosition(TypedDict):
+  """One position."""
+
+  symbol: str
+  """Symbol."""
+  positionAmt: str
+  """Position amount, in contracts."""
+  entryPrice: NotRequired[str]
+  """Position entry price."""
+  breakEvenPrice: NotRequired[str]
+  """Break-even price."""
+  markPrice: NotRequired[str]
+  """Mark price."""
+  unRealizedProfit: NotRequired[str]
+  """Unrealized profit, in the settlement asset."""
+  liquidationPrice: NotRequired[str]
+  """Estimated liquidation price."""
+  leverage: NotRequired[str]
+  """Current leverage."""
+  maxQty: NotRequired[str]
+  """Maximum position quantity, in the base asset, allowed at this leverage."""
+  marginType: NotRequired[str]
+  """Margin type. Documented as a closed set (isolated/cross) but the response's exact casing wasn't independently confirmed in this pass — left as a bare string rather than guessing a case-sensitive enum that could reject a real value."""
+  isolatedMargin: NotRequired[str]
+  """Isolated margin amount, in the settlement asset."""
+  isAutoAddMargin: NotRequired[Literal['true', 'false']]
+  """Whether auto-add-margin is enabled for this isolated position. Sent as a literal string, not a JSON boolean."""
+  positionSide: Literal['BOTH', 'LONG', 'SHORT']
+  """Position side. `BOTH` for One-way Mode; `LONG` or `SHORT` for Hedge Mode."""
+  updateTime: NotRequired[int]
+  """Last update time."""
+
+
+class PositionInformation(RpcEndpoint):
+  """Position Information"""
+
+  async def position_information(
+    self,
+    *,
+    margin_asset: str | None = None,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[CoinMPosition]:
+    """Get current position information. Pair with the `ACCOUNT_UPDATE` user data stream event for timeliness- and accuracy-sensitive use cases rather than polling this endpoint.
+
+    Args:
+      margin_asset: Settlement/margin asset, e.g. BTC. Mutually exclusive with `pair`.
+      pair: Underlying pair. Mutually exclusive with `marginAsset`.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/trade#position-information)
+    """
+    params = {}
+    if margin_asset is not None:
+      params['marginAsset'] = margin_asset
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[CoinMPosition]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/dapi/v1/positionRisk',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

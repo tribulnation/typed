@@ -1,0 +1,141 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DualInvestmentPosition(TypedDict):
+  """One Dual Investment position."""
+
+  id: NotRequired[str]
+  """Position identifier, passed to spot.dual_investment.auto_compound."""
+  investCoin: NotRequired[str]
+  """Asset subscribed with."""
+  exercisedCoin: NotRequired[str]
+  """Target exercised asset."""
+  subscriptionAmount: NotRequired[str]
+  """Amount subscribed, as a decimal string."""
+  strikePrice: NotRequired[str]
+  """Strike price, as a decimal string."""
+  duration: NotRequired[int]
+  """Product duration in days."""
+  settleDate: NotRequired[int]
+  """Millisecond epoch settlement date."""
+  purchaseStatus: NotRequired[
+    Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+  ]
+  """Purchase status."""
+  apr: NotRequired[str]
+  """Annual percentage rate, as a decimal string."""
+  orderId: NotRequired[int]
+  """Order identifier."""
+  purchaseEndTime: NotRequired[int]
+  """Millisecond epoch time after which the position's product could no longer be subscribed to."""
+  optionType: NotRequired[str]
+  """Product option type."""
+  autoCompoundPlan: NotRequired[Literal['NULL', 'STANDARD', 'ADVANCED']]
+  """Auto-compound plan currently set on this position."""
+  subscriptionTime: NotRequired[int]
+  """Millisecond epoch time the subscription was recorded."""
+
+
+class DualInvestmentPositionPage(TypedDict):
+  """One page of this account's Dual Investment positions."""
+
+  total: NotRequired[int]
+  """Total number of matching positions."""
+  list: NotRequired[list[DualInvestmentPosition]]
+  """Matching positions on this page."""
+
+
+class Positions(RpcEndpoint):
+  """Get this account's Dual Investment positions (batch)."""
+
+  async def positions(
+    self,
+    *,
+    status: Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+    | None = None,
+    page_size: int | None = None,
+    page_index: int | None = None,
+    validate: bool | None = None,
+  ) -> DualInvestmentPositionPage:
+    """Get this account's Dual Investment positions (batch).
+
+    Args:
+      status: Restrict results to this position status. If omitted, positions in every status are returned.
+      page_size: Number of records per page.
+      page_index: Page index to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-dual-investment/api/rest-api/trade#get-dual-investment-positions)
+    """
+    params = {}
+    if status is not None:
+      params['status'] = status
+    if page_size is not None:
+      params['pageSize'] = page_size
+    if page_index is not None:
+      params['pageIndex'] = page_index
+    _Response = DualInvestmentPositionPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/dci/product/positions',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def positions_paged(
+    self,
+    *,
+    status: Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+    | None = None,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[DualInvestmentPositionPage]:
+    """Yield successive pages of `positions`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.positions(
+        status=status, page_size=page_size, page_index=page_index, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or page_size is None or pages * page_size >= total:
+        break
+      page_index += 1

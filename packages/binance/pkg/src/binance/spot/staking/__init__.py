@@ -1,0 +1,27 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .eth import Eth
+from .on_chain_yields import OnChainYields
+from .soft import Soft
+from .sol import Sol
+
+
+class Staking(RpcEndpoint):
+  """Binance staking endpoints."""
+
+  @cached_property
+  def eth(self) -> Eth:
+    return Eth(client=self.client)
+
+  @cached_property
+  def on_chain_yields(self) -> OnChainYields:
+    return OnChainYields(client=self.client)
+
+  @cached_property
+  def soft(self) -> Soft:
+    return Soft(client=self.client)
+
+  @cached_property
+  def sol(self) -> Sol:
+    return Sol(client=self.client)

@@ -1,0 +1,102 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OrderAmendmentPriceChange(TypedDict):
+  """The order's price, before and after this amendment."""
+
+  before: str
+  """Price before the amendment."""
+  after: str
+  """Price after the amendment."""
+
+
+class OrderAmendmentQuantityChange(TypedDict):
+  """The order's original quantity, before and after this amendment."""
+
+  before: str
+  """Original quantity before the amendment."""
+  after: str
+  """Original quantity after the amendment."""
+
+
+class OrderAmendmentDetail(TypedDict):
+  """What changed in this amendment."""
+
+  price: OrderAmendmentPriceChange
+  origQty: OrderAmendmentQuantityChange
+  count: int
+  """Order modification count: how many times the order has been modified in total."""
+  modifyId: NotRequired[int]
+  """Caller-supplied modification id, echoed back when provided in the request."""
+
+
+class OrderAmendment(TypedDict):
+  """One order modification event."""
+
+  amendmentId: int
+  """Order modification id."""
+  symbol: str
+  """Trading symbol."""
+  pair: str
+  """Underlying contract pair."""
+  orderId: int
+  """Id of the order that was modified."""
+  clientOrderId: str
+  """Client order id of the order that was modified."""
+  time: Timestamp
+  """Order modification time."""
+  amendment: OrderAmendmentDetail
+
+
+class OrderModifyHistory(RpcEndpoint):
+  """Get an order's modification history."""
+
+  async def order_modify_history(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[OrderAmendment]:
+    """Get an order's modification history.
+
+    Args:
+      symbol: Trading symbol.
+      order_id: Id of the order to fetch modification history for. Either orderId or origClientOrderId must be sent; orderId prevails if both are sent.
+      orig_client_order_id: Client order id of the order to fetch modification history for. Either orderId or origClientOrderId must be sent.
+      start_time: Timestamp in milliseconds to get modification history from, inclusive.
+      end_time: Timestamp in milliseconds to get modification history until, inclusive.
+      limit: Number of modification records to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#get-order-modify-history)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[OrderAmendment]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/fapi/v1/orderAmendment',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

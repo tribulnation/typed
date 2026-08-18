@@ -1,0 +1,28 @@
+from typing_extensions import Literal
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.types import TickerWindowEvent
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class TickerWindowAll(StreamEndpoint):
+  """All market rolling window statistics stream"""
+
+  def __call__(
+    self,
+    window: Literal['1h', '4h', '1d'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[TickerWindowEvent]]:
+    """All market rolling window statistics stream
+
+    Args:
+      window: Rolling window size.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#all-market-rolling-window-statistics-streams)
+    """
+    _validator = validator[list[TickerWindowEvent]](list[TickerWindowEvent])
+    return self.subscribe(
+      f'!ticker_{window}@arr', validator=_validator, validate=validate
+    )

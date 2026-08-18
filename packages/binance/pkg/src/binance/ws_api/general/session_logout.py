@@ -1,0 +1,37 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class SessionLogoutResult(TypedDict):
+  """Authentication status of the WebSocket connection after logging out."""
+
+  apiKey: str | None
+  """The API key authenticated on this connection, or null if the connection is not authenticated."""
+  authorizedSince: Timestamp | None
+  """Millisecond timestamp this connection was authenticated, or null if the connection is not authenticated."""
+  connectedSince: Timestamp
+  """Millisecond timestamp this WebSocket connection was established."""
+  returnRateLimits: bool
+  """Whether rate limit usage is included in responses on this connection."""
+  serverTime: Timestamp
+  """Current server time."""
+  userDataStream: bool
+  """Whether a User Data Stream subscription is active on this connection."""
+
+
+class SessionLogout(WsRpcEndpoint):
+  """Log out of the session"""
+
+  async def session_logout(
+    self, *, validate: bool | None = None
+  ) -> SessionLogoutResult:
+    """Forget the API key previously authenticated via `session.logon`. If the connection is not authenticated, this does nothing. The connection stays open; later requests must explicitly supply `apiKey`/`signature` again where needed.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#log-out-of-the-session)
+    """
+    _Response = SessionLogoutResult
+    _validator = validator[_Response](_Response)
+    return await self.request('session.logout', validator=_validator, validate=validate)

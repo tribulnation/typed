@@ -1,0 +1,63 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountCommission(TypedDict):
+  """Updated commission rates for a sub-account."""
+
+  subAccountId: str
+  """Sub-account identifier."""
+  makerCommission: float
+  """New spot maker commission rate."""
+  takerCommission: float
+  """New spot taker commission rate."""
+  marginMakerCommission: float
+  """New margin maker commission rate."""
+  marginTakerCommission: float
+  """New margin taker commission rate."""
+
+
+class ChangeSubAccountCommission(RpcEndpoint):
+  """Change Sub Account Commission"""
+
+  async def change_sub_account_commission(
+    self,
+    *,
+    sub_account_id: str,
+    maker_commission: float,
+    taker_commission: float,
+    margin_maker_commission: float | None = None,
+    margin_taker_commission: float | None = None,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountCommission:
+    """Change a sub-account's spot/margin commission rates.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      maker_commission: New spot maker commission rate, e.g. `0.001`.
+      taker_commission: New spot taker commission rate, e.g. `0.002`.
+      margin_maker_commission: New margin maker commission rate.
+      margin_taker_commission: New margin taker commission rate.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'makerCommission': maker_commission,
+      'takerCommission': taker_commission,
+    }
+    if margin_maker_commission is not None:
+      params['marginMakerCommission'] = margin_maker_commission
+    if margin_taker_commission is not None:
+      params['marginTakerCommission'] = margin_taker_commission
+    _Response = BrokerSubAccountCommission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccountApi/commission',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

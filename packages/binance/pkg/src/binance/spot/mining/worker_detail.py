@@ -1,0 +1,73 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MiningHashrateSample(TypedDict):
+  """One hashrate sample."""
+
+  time: NotRequired[int]
+  """Millisecond epoch sample timestamp."""
+  hashrate: NotRequired[str]
+  """Hashrate at this sample."""
+  reject: NotRequired[int]
+  """Rejected shares at this sample."""
+
+
+class MiningWorkerHashrateSeries(TypedDict):
+  """One hashrate time series for the miner."""
+
+  workerName: NotRequired[str]
+  """Miner name."""
+  type: NotRequired[str]
+  """Hashrate series type, e.g. H_hashrate."""
+  hashrateDatas: NotRequired[list[MiningHashrateSample]]
+  """Hashrate samples over time."""
+
+
+class MiningWorkerDetailResponse(TypedDict):
+  """Miner detail response frame. This product line wraps its business data in {code,msg,data} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[int]
+  """Response code. 0 indicates success."""
+  msg: NotRequired[str]
+  """Response message."""
+  data: NotRequired[list[MiningWorkerHashrateSeries]]
+  """Hashrate series for the miner, one entry per hashrate type."""
+
+
+class WorkerDetail(RpcEndpoint):
+  """Query detailed hashrate history for one miner."""
+
+  async def worker_detail(
+    self,
+    *,
+    algo: str,
+    user_name: str,
+    worker_name: str,
+    validate: bool | None = None,
+  ) -> MiningWorkerDetailResponse:
+    """Query detailed hashrate history for one miner.
+
+    Args:
+      algo: Mining algorithm, e.g. sha256.
+      user_name: Mining account.
+      worker_name: Miner name.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/mining/rest-api#request-for-detail-miner-list)
+    """
+    params: dict = {
+      'algo': algo,
+      'userName': user_name,
+      'workerName': worker_name,
+    }
+    _Response = MiningWorkerDetailResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/mining/worker/detail',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

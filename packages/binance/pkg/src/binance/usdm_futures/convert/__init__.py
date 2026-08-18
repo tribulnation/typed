@@ -1,0 +1,8 @@
+from .accept_quote import AcceptQuote
+from .exchange_info import ExchangeInfo
+from .get_quote import GetQuote
+from .order_status import OrderStatus
+
+
+class Convert(AcceptQuote, ExchangeInfo, GetQuote, OrderStatus):
+  """Binance convert endpoints."""

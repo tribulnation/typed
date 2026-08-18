@@ -1,0 +1,57 @@
+from .active_orders import ActiveOrders
+from .batch_cancel import BatchCancel
+from .batch_redeem import BatchRedeem
+from .category_list import CategoryList
+from .last_trade_price import LastTradePrice
+from .market_detail import MarketDetail
+from .market_list import MarketList
+from .market_search import MarketSearch
+from .order_book import OrderBook
+from .order_history import OrderHistory
+from .payment_option_balances import PaymentOptionBalances
+from .place_order import PlaceOrder
+from .pnl import Pnl
+from .portfolio import Portfolio
+from .position_by_token import PositionByToken
+from .positions import Positions
+from .positions_filter import PositionsFilter
+from .quota_status import QuotaStatus
+from .quote import Quote
+from .redeem_status import RedeemStatus
+from .settled_position_history import SettledPositionHistory
+from .transfer_inbound import TransferInbound
+from .transfer_list import TransferList
+from .transfer_outbound import TransferOutbound
+from .transfer_status import TransferStatus
+from .wallet_list import WalletList
+
+
+class Prediction(
+  ActiveOrders,
+  BatchCancel,
+  BatchRedeem,
+  CategoryList,
+  LastTradePrice,
+  MarketDetail,
+  MarketList,
+  MarketSearch,
+  OrderBook,
+  OrderHistory,
+  PaymentOptionBalances,
+  PlaceOrder,
+  Pnl,
+  Portfolio,
+  PositionByToken,
+  Positions,
+  PositionsFilter,
+  QuotaStatus,
+  Quote,
+  RedeemStatus,
+  SettledPositionHistory,
+  TransferInbound,
+  TransferList,
+  TransferOutbound,
+  TransferStatus,
+  WalletList,
+):
+  """Binance prediction endpoints."""

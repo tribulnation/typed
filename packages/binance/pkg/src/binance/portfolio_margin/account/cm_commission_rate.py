@@ -1,0 +1,45 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmUserCommissionRateForCm(TypedDict):
+  """Get User Commission Rate for CM."""
+
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  makerCommissionRate: NotRequired[str]
+  """0.015%."""
+  takerCommissionRate: NotRequired[str]
+  """0.040%."""
+
+
+class CmCommissionRate(RpcEndpoint):
+  """Get User Commission Rate for CM"""
+
+  async def cm_commission_rate(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> PmUserCommissionRateForCm:
+    """Get User Commission Rate for CM.
+
+    Args:
+      symbol: Symbol.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#get-user-commission-rate-for-cm)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = PmUserCommissionRateForCm
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/cm/commissionRate',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

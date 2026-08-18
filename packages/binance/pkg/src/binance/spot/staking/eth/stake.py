@@ -1,0 +1,44 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class EthStakeResult(TypedDict):
+  """Result of an ETH staking subscription."""
+
+  success: NotRequired[bool]
+  """Whether the subscription succeeded."""
+  wbethAmount: NotRequired[str]
+  """Amount of WBETH minted for this subscription, as a decimal string."""
+  purchaseId: NotRequired[int]
+  """Identifier of this staking subscription."""
+  conversionRatio: NotRequired[str]
+  """WBETH/ETH conversion ratio applied to this subscription, as a decimal string."""
+
+
+class Stake(RpcEndpoint):
+  """Stake an amount of ETH, minting WBETH in return."""
+
+  async def __call__(
+    self, *, amount: float, validate: bool | None = None
+  ) -> EthStakeResult:
+    """Stake an amount of ETH, minting WBETH in return.
+
+    Args:
+      amount: Amount of ETH to stake. Limited to 4 decimal places.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/eth-staking#subscribe-eth-staking)
+    """
+    params: dict = {
+      'amount': amount,
+    }
+    _Response = EthStakeResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v2/eth-staking/eth/stake',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

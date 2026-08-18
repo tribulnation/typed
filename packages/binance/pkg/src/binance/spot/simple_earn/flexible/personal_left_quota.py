@@ -1,0 +1,41 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FlexiblePersonalLeftQuota(TypedDict):
+  """This account's remaining personal subscription quota for a flexible product."""
+
+  leftPersonalQuota: NotRequired[str]
+  """Remaining amount this account may still subscribe, as a decimal string."""
+
+
+class PersonalLeftQuota(RpcEndpoint):
+  """Get this account's remaining personal subscription quota for a Simple Earn flexible product."""
+
+  async def __call__(
+    self,
+    *,
+    product_id: str,
+    validate: bool | None = None,
+  ) -> FlexiblePersonalLeftQuota:
+    """Get this account's remaining personal subscription quota for a Simple Earn flexible product.
+
+    Args:
+      product_id: Flexible product identifier to check remaining personal subscription quota for.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#get-flexible-personal-left-quota)
+    """
+    params: dict = {
+      'productId': product_id,
+    }
+    _Response = FlexiblePersonalLeftQuota
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/simple-earn/flexible/personalLeftQuota',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

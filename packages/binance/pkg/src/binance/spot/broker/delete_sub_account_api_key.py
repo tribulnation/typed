@@ -1,0 +1,41 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountApiKeyDeleted(TypedDict):
+  """Empty acknowledgement."""
+
+
+class DeleteSubAccountApiKey(RpcEndpoint):
+  """Delete Sub Account Api Key"""
+
+  async def delete_sub_account_api_key(
+    self,
+    *,
+    sub_account_id: str,
+    sub_account_api_key: str,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountApiKeyDeleted:
+    """Delete an API key belonging to a sub-account.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      sub_account_api_key: Sub-account API key.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'subAccountApiKey': sub_account_api_key,
+    }
+    _Response = BrokerSubAccountApiKeyDeleted
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/sapi/v1/broker/subAccountApi',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

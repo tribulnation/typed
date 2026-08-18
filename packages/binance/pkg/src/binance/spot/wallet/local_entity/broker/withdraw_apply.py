@@ -1,0 +1,80 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerWithdrawSubmission(TypedDict):
+  """Result of submitting a broker travel rule withdrawal request."""
+
+  trId: NotRequired[int]
+  """Travel rule record id."""
+  accepted: NotRequired[bool]
+  """Whether the withdrawal request was accepted."""
+  info: NotRequired[str]
+  """Status message, e.g. "Withdraw request accepted"."""
+
+
+class WithdrawApply(RpcEndpoint):
+  """Submit a sub-account withdrawal request for brokers of local entities that require travel rule, including the travel rule questionnaire answers and originator PII."""
+
+  async def withdraw_apply(
+    self,
+    *,
+    address: str,
+    coin: str,
+    amount: float,
+    withdraw_order_id: str,
+    questionnaire: str,
+    originator_pii: str,
+    address_tag: str | None = None,
+    network: str | None = None,
+    address_name: str | None = None,
+    transaction_fee_flag: bool | None = None,
+    wallet_type: Literal[0, 1] | None = None,
+    validate: bool | None = None,
+  ) -> BrokerWithdrawSubmission:
+    """Submit a sub-account withdrawal request for brokers of local entities that require travel rule, including the travel rule questionnaire answers and originator PII.
+
+    Args:
+      address: Withdrawal address.
+      coin: Coin to withdraw.
+      amount: Amount to withdraw.
+      withdraw_order_id: Caller-supplied id for the withdrawal (i.e. the client's own internal withdraw id). Required for this broker variant, unlike the non-broker spot.wallet.local_entity.withdraw.apply where it's optional.
+      questionnaire: JSON-formatted questionnaire answers, URL-encoded. Contents differ per local entity; see the entity's own Withdraw Questionnaire Contents page.
+      originator_pii: JSON-formatted originator personally-identifiable-information, per the StandardPii format Binance's docs define for this product.
+      address_tag: Secondary address identifier, for coins like XRP, XMR, etc.
+      network: Withdrawal network. If omitted, the coin's default network is used; if the address doesn't match that default network, the withdrawal is rejected. See the `networkList` of a coin in spot.wallet.capital.config.get_all's response for valid values.
+      address_name: Description of the address. The address book cap is 200; a space in the name must be URL-encoded as `%20`.
+      transaction_fee_flag: For an internal transfer: true returns the fee to the destination account, false returns it to the departure account.
+      wallet_type: Wallet to withdraw from: 0 spot wallet, 1 funding wallet. Defaults to the account's currently selected wallet under Wallet -> Fiat and Spot/Funding -> Deposit.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule#broker-withdraw)
+    """
+    params: dict = {
+      'address': address,
+      'coin': coin,
+      'amount': amount,
+      'withdrawOrderId': withdraw_order_id,
+      'questionnaire': questionnaire,
+      'originatorPii': originator_pii,
+    }
+    if address_tag is not None:
+      params['addressTag'] = address_tag
+    if network is not None:
+      params['network'] = network
+    if address_name is not None:
+      params['addressName'] = address_name
+    if transaction_fee_flag is not None:
+      params['transactionFeeFlag'] = transaction_fee_flag
+    if wallet_type is not None:
+      params['walletType'] = wallet_type
+    _Response = BrokerWithdrawSubmission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/localentity/broker/withdraw/apply',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

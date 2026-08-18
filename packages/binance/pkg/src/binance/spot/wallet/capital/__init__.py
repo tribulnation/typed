@@ -1,0 +1,22 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .config import Config
+from .deposit import Deposit
+from .withdraw import Withdraw
+
+
+class Capital(RpcEndpoint):
+  """Binance capital endpoints."""
+
+  @cached_property
+  def config(self) -> Config:
+    return Config(client=self.client)
+
+  @cached_property
+  def deposit(self) -> Deposit:
+    return Deposit(client=self.client)
+
+  @cached_property
+  def withdraw(self) -> Withdraw:
+    return Withdraw(client=self.client)

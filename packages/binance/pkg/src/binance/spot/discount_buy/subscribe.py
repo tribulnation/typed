@@ -1,0 +1,71 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DiscountBuySubscription(TypedDict):
+  """Result of a Discount Buy product subscription."""
+
+  positionId: NotRequired[int]
+  """Identifier of the created position."""
+  investAsset: NotRequired[str]
+  """Subscription (stablecoin) asset."""
+  targetAsset: NotRequired[str]
+  """Target (non-stablecoin) asset."""
+  depositAmount: NotRequired[str]
+  """Amount deposited into this position, as a decimal string."""
+  duration: NotRequired[int]
+  """Product duration in days."""
+  strikePrice: NotRequired[str]
+  """Strike price of the accumulator, as a decimal string."""
+  knockOutPrice: NotRequired[str]
+  """Knock-out price of the accumulator, as a decimal string."""
+  settleDate: NotRequired[int]
+  """Millisecond epoch settlement date."""
+  purchaseStatus: NotRequired[
+    Literal[
+      'SUBSCRIBING', 'SUCCEED', 'SETTLED', 'FAILED', 'REFUNDING', 'REFUNDED', 'SETTLING'
+    ]
+  ]
+  """Subscription status."""
+  knockOutApr: NotRequired[str]
+  """Annual percentage rate if the product knocks out, as a decimal string."""
+  orderId: NotRequired[int]
+  """Order identifier of this subscription."""
+
+
+class Subscribe(RpcEndpoint):
+  """Subscribe to a Discount Buy product."""
+
+  async def subscribe(
+    self,
+    *,
+    project_id: int,
+    order_id: str,
+    deposit_amount: float,
+    validate: bool | None = None,
+  ) -> DiscountBuySubscription:
+    """Subscribe to a Discount Buy product.
+
+    Args:
+      project_id: Product identifier, from `spot.discount_buy.product_list`'s `id` field.
+      order_id: Order identifier, from `spot.discount_buy.product_list`'s `orderId` field.
+      deposit_amount: Amount to subscribe, as a decimal number.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-discount-buy/api/rest-api/trade#subscribe-discount-buy-products)
+    """
+    params: dict = {
+      'projectId': project_id,
+      'orderId': order_id,
+      'depositAmount': deposit_amount,
+    }
+    _Response = DiscountBuySubscription
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/accumulator/product/subscribe',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

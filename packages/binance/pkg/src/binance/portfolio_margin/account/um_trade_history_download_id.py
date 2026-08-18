@@ -1,0 +1,47 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp, timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmDownloadIdForUmFuturesTradeHistory(TypedDict):
+  """Get download id for UM futures trade history."""
+
+  avgCostTimestampOfLast30d: NotRequired[int]
+  """Average time taken for data download in the past 30 days."""
+  downloadId: NotRequired[str]
+  """Download ID."""
+
+
+class UmTradeHistoryDownloadId(RpcEndpoint):
+  """Get Download Id For UM Futures Trade History"""
+
+  async def um_trade_history_download_id(
+    self,
+    *,
+    start_time: Timestamp,
+    end_time: Timestamp,
+    validate: bool | None = None,
+  ) -> PmDownloadIdForUmFuturesTradeHistory:
+    """Get download id for UM futures trade history.
+
+    Args:
+      start_time: Timestamp in ms.
+      end_time: Timestamp in ms.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#get-download-id-for-um-futures-trade-history)
+    """
+    params: dict = {
+      'startTime': timestamp.dump(start_time),
+      'endTime': timestamp.dump(end_time),
+    }
+    _Response = PmDownloadIdForUmFuturesTradeHistory
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/um/trade/asyn',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

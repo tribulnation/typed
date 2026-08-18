@@ -1,0 +1,97 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionPositionDetail(TypedDict):
+  """Position detail for a single prediction token."""
+
+  positionId: NotRequired[int]
+  """Position ID."""
+  vendor: NotRequired[str]
+  """Prediction liquidity vendor backing this position."""
+  chainId: NotRequired[str]
+  """Chain ID this position settles on."""
+  tokenId: NotRequired[str]
+  """Prediction outcome token ID."""
+  collateralSymbol: NotRequired[str]
+  """Collateral asset symbol."""
+  topicType: NotRequired[str]
+  """Topic layout type."""
+  marketTopicId: NotRequired[int]
+  """Market topic ID."""
+  marketId: NotRequired[int]
+  """Market ID."""
+  marketTopicTitle: NotRequired[str]
+  """Market topic title."""
+  marketTitle: NotRequired[str]
+  """Market title."""
+  outcomeName: NotRequired[str]
+  """Outcome name held by this position."""
+  outcomeIndex: NotRequired[int]
+  """Zero-based outcome index."""
+  shares: NotRequired[str]
+  """Outcome shares held, as a decimal string."""
+  avgPrice: NotRequired[str]
+  """Average entry price, as a decimal string."""
+  totalCost: NotRequired[str]
+  """Total cost basis, as a decimal string."""
+  value: NotRequired[str]
+  """Current value, as a decimal string."""
+  currentPrice: NotRequired[str]
+  """Current market price, as a decimal string."""
+  positionStatus: NotRequired[str]
+  """Position lifecycle status."""
+  endDate: NotRequired[Timestamp]
+  """Time the underlying market closes for trading."""
+  unrealizedPnl: NotRequired[str]
+  """Unrealized profit and loss, as a decimal string."""
+  realizedPnl: NotRequired[str]
+  """Realized profit and loss, as a decimal string."""
+  pnl: NotRequired[str]
+  """Realized plus unrealized profit and loss, as a decimal string."""
+  createdTime: NotRequired[Timestamp]
+  """Time this position was opened."""
+  updatedTime: NotRequired[Timestamp]
+  """Time this position was last updated."""
+
+
+class PredictionPositionByTokenResult(TypedDict):
+  """This user's position detail for a prediction token."""
+
+  position: NotRequired[PredictionPositionDetail]
+
+
+class PositionByToken(RpcEndpoint):
+  """Get the authenticated user's position detail for a specific prediction token."""
+
+  async def position_by_token(
+    self,
+    *,
+    wallet_address: str,
+    token_id: str,
+    validate: bool | None = None,
+  ) -> PredictionPositionByTokenResult:
+    """Get the authenticated user's position detail for a specific prediction token.
+
+    Args:
+      wallet_address: User's prediction wallet address.
+      token_id: Prediction outcome token ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/position#get-position-by-token)
+    """
+    params: dict = {
+      'walletAddress': wallet_address,
+      'tokenId': token_id,
+    }
+    _Response = PredictionPositionByTokenResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/w3w/wallet/prediction/position/token',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

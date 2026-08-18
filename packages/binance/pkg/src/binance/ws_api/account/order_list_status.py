@@ -1,0 +1,67 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class OrderListOrder(TypedDict):
+  """One order belonging to an order list."""
+
+  symbol: str
+  """Symbol this order was placed on."""
+  orderId: int
+  """Order ID assigned by Binance."""
+  clientOrderId: str
+  """Client-supplied order ID."""
+
+
+class OrderListStatus(TypedDict):
+  """A spot order list (OCO/OTO), in the shape returned by order-list-query commands."""
+
+  orderListId: int
+  """Order list ID assigned by Binance."""
+  contingencyType: Literal['OCO', 'OTO']
+  """Contingency type of the order list."""
+  listStatusType: Literal['RESPONSE', 'EXEC_STARTED', 'UPDATED', 'ALL_DONE']
+  """Current status of the order list."""
+  listOrderStatus: Literal['EXECUTING', 'ALL_DONE', 'REJECT']
+  """Current status of the orders in the list."""
+  listClientOrderId: str
+  """Client-supplied order list ID."""
+  transactionTime: Timestamp
+  """Millisecond timestamp the order list was created or last updated."""
+  symbol: str
+  """Symbol this order list was placed on."""
+  orders: list[OrderListOrder]
+  """Orders belonging to this order list."""
+
+
+class OrderListStatusEndpoint(WsRpcEndpoint):
+  """Query order list"""
+
+  async def order_list_status(
+    self,
+    *,
+    orig_client_order_id: str | None = None,
+    order_list_id: int | None = None,
+    validate: bool | None = None,
+  ) -> OrderListStatus:
+    """Check execution status of an order list. `orderListId` or `origClientOrderId` must be provided; if both are specified, only `origClientOrderId` is used and `orderListId` is ignored. `origClientOrderId` refers to the order list's own `listClientOrderId`. For execution status of individual orders, use `order.status`.
+
+    Args:
+      orig_client_order_id: Query order list by `listClientOrderId`. `orderListId` or `origClientOrderId` must be provided.
+      order_list_id: Query order list by `orderListId`. `orderListId` or `origClientOrderId` must be provided.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#query-order-list-user_data)
+    """
+    params = {}
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    if order_list_id is not None:
+      params['orderListId'] = order_list_id
+    _Response = OrderListStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'orderList.status', params=params, validator=_validator, validate=validate
+    )

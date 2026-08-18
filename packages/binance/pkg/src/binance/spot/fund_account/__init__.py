@@ -1,0 +1,10 @@
+from .fund_info import FundInfo
+from .fund_nav_history import FundNavHistoryEndpoint
+from .investor_history import InvestorHistory
+from .redemption_calendar import RedemptionCalendarEndpoint
+
+
+class FundAccount(
+  FundInfo, FundNavHistoryEndpoint, InvestorHistory, RedemptionCalendarEndpoint
+):
+  """Binance fund_account endpoints."""

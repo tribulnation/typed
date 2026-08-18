@@ -1,0 +1,32 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class TradfiOptionsContractResult(TypedDict):
+  """Acknowledgement of the TradFi options agreement signing request."""
+
+  code: NotRequired[int]
+  """Result code."""
+  msg: NotRequired[str]
+  """Result message."""
+
+
+class StockContract(RpcEndpoint):
+  """Sign the TradFi options agreement contract."""
+
+  async def stock_contract(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> TradfiOptionsContractResult:
+    """Sign the TradFi options agreement contract.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/derivatives/option/trade#tradfi-options-contract)
+    """
+    _Response = TradfiOptionsContractResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST', '/eapi/v1/stock/contract', validator=_validator, validate=validate
+    )

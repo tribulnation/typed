@@ -1,0 +1,66 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmCmPositionInformation(TypedDict):
+  """PmCmPositionInformation."""
+
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  positionAmt: NotRequired[str]
+  """position amount."""
+  entryPrice: NotRequired[str]
+  """average entry price."""
+  markPrice: NotRequired[str]
+  """Mark Price."""
+  unRealizedProfit: NotRequired[str]
+  """Un Realized Profit."""
+  liquidationPrice: NotRequired[str]
+  """Liquidation Price."""
+  leverage: NotRequired[str]
+  """current initial leverage."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+  maxQty: NotRequired[str]
+  """maximum quantity of base asset."""
+  notionalValue: NotRequired[str]
+  """Notional Value."""
+
+
+class CmPositionRisk(RpcEndpoint):
+  """Query CM Position Information"""
+
+  async def cm_position_risk(
+    self,
+    *,
+    margin_asset: str | None = None,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[PmCmPositionInformation]:
+    """Get current CM position information.
+
+    Args:
+      margin_asset: Margin asset.
+      pair: Trading pair.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#query-cm-position-information)
+    """
+    params = {}
+    if margin_asset is not None:
+      params['marginAsset'] = margin_asset
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[PmCmPositionInformation]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/cm/positionRisk',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

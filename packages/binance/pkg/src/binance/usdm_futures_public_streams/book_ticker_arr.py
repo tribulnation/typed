@@ -1,0 +1,45 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class BookTickerEvent(TypedDict):
+  """Best bid/ask price and quantity for one symbol."""
+
+  e: str
+  """Event type."""
+  u: int
+  """Order book update ID."""
+  E: Timestamp
+  """Event time."""
+  T: Timestamp
+  """Transaction time."""
+  s: str
+  """Symbol."""
+  b: str
+  """Best bid price."""
+  B: str
+  """Best bid quantity."""
+  a: str
+  """Best ask price."""
+  A: str
+  """Best ask quantity."""
+  ps: NotRequired[str]
+  """(After UM/CM stream-host migration) Pair symbol."""
+  st: NotRequired[int]
+  """(After UM/CM stream-host migration) Symbol type: 1 = UM, 2 = CM."""
+
+
+class BookTickerArr(StreamEndpoint):
+  """All book tickers stream"""
+
+  def __call__(self, *, validate: bool | None = None) -> StreamManager[BookTickerEvent]:
+    """All book tickers stream
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-streams/public#all-book-tickers-stream)
+    """
+    _validator = validator[BookTickerEvent](BookTickerEvent)
+    return self.subscribe('!bookTicker', validator=_validator, validate=validate)

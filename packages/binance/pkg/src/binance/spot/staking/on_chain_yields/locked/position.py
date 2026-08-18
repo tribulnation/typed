@@ -1,0 +1,146 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OnChainYieldsLockedPosition(TypedDict):
+  """One On-chain Yields locked product position held by this account."""
+
+  positionId: NotRequired[str]
+  """Identifier of this locked position."""
+  projectId: NotRequired[str]
+  """Locked product identifier this position belongs to."""
+  asset: NotRequired[str]
+  """Underlying asset held."""
+  amount: NotRequired[str]
+  """Amount held in this position, as a decimal string."""
+  purchaseTime: NotRequired[str]
+  """Millisecond epoch time the position was opened, as a numeric string."""
+  duration: NotRequired[str]
+  """Lock duration in days, as a numeric string."""
+  accrualDays: NotRequired[str]
+  """Number of days rewards have accrued so far, as a numeric string."""
+  rewardAsset: NotRequired[str]
+  """Asset the base rewards are paid in."""
+  APY: NotRequired[str]
+  """Annual percentage yield, as a decimal string."""
+  rewardAmt: NotRequired[str]
+  """Base rewards accrued so far, as a decimal string."""
+  nextPay: NotRequired[str]
+  """Amount of the next reward payment, as a decimal string."""
+  nextPayDate: NotRequired[str]
+  """Millisecond epoch time of the next reward payment, as a numeric string."""
+  payPeriod: NotRequired[str]
+  """Reward payment interval in days, as a numeric string."""
+  rewardsPayDate: NotRequired[str]
+  """Millisecond epoch time of the next scheduled rewards payment, as a numeric string."""
+  rewardsEndDate: NotRequired[str]
+  """Millisecond epoch time reward accrual ends, as a numeric string."""
+  deliverDate: NotRequired[str]
+  """Millisecond epoch time principal (and final rewards) are delivered, as a numeric string."""
+  nextSubscriptionDate: NotRequired[str]
+  """Millisecond epoch time the position would next be eligible to auto-renew into, as a numeric string."""
+  redeemingAmt: NotRequired[str]
+  """Amount currently in the process of being redeemed, as a decimal string."""
+  redeemTo: NotRequired[Literal['SPOT', 'FLEXIBLE']]
+  """Wallet this position redeems to."""
+  canRedeemEarly: NotRequired[bool]
+  """Whether this position can be redeemed before maturity."""
+  autoSubscribe: NotRequired[bool]
+  """Whether this position auto-renews at maturity."""
+  type: NotRequired[str]
+  """Position type."""
+  status: NotRequired[str]
+  """Position status."""
+
+
+class OnChainYieldsLockedPositionPage(TypedDict):
+  """One page of this account's On-chain Yields locked product positions."""
+
+  rows: NotRequired[list[OnChainYieldsLockedPosition]]
+  """Matching records on this page."""
+  total: NotRequired[int]
+  """Total number of matching records."""
+
+
+class Position(RpcEndpoint):
+  """Get this account's On-chain Yields locked product positions."""
+
+  async def __call__(
+    self,
+    *,
+    asset: str | None = None,
+    position_id: str | None = None,
+    project_id: str | None = None,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> OnChainYieldsLockedPositionPage:
+    """Get this account's On-chain Yields locked product positions.
+
+    Args:
+      asset: Restrict results to positions in this underlying asset.
+      position_id: Restrict results to this locked position.
+      project_id: Restrict results to this locked product.
+      current: Page index, starting from 1.
+      size: Number of results per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/on-chain-yields#get-on-chain-yields-locked-product-position)
+    """
+    params = {}
+    if asset is not None:
+      params['asset'] = asset
+    if position_id is not None:
+      params['positionId'] = position_id
+    if project_id is not None:
+      params['projectId'] = project_id
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = OnChainYieldsLockedPositionPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/onchain-yields/locked/position',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def paged(
+    self,
+    *,
+    asset: str | None = None,
+    position_id: str | None = None,
+    project_id: str | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[OnChainYieldsLockedPositionPage]:
+    """Yield successive pages of this endpoint.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.__call__(
+        asset=asset,
+        position_id=position_id,
+        project_id=project_id,
+        size=size,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

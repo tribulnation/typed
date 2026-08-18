@@ -1,0 +1,62 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProNegativeBalanceInterest(TypedDict):
+  """One negative-balance interest record."""
+
+  asset: NotRequired[str]
+  """Asset name."""
+  interest: NotRequired[str]
+  """Interest amount."""
+  interestAccruedTime: NotRequired[Timestamp]
+  """Interest accrued time."""
+  interestRate: NotRequired[str]
+  """Daily interest rate."""
+  principal: NotRequired[str]
+  """Principal amount."""
+
+
+class NegativeBalanceInterestHistory(RpcEndpoint):
+  """Query Portfolio Margin Pro Negative Balance Interest History"""
+
+  async def negative_balance_interest_history(
+    self,
+    *,
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> list[PmProNegativeBalanceInterest]:
+    """Query interest history of negative balance for portfolio margin.
+
+    Args:
+      asset: Asset name.
+      start_time: Start time.
+      end_time: End time.
+      size: Number of results returned.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account#query-portfolio-margin-pro-negative-balance-interest-history)
+    """
+    params = {}
+    if asset is not None:
+      params['asset'] = asset
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if size is not None:
+      params['size'] = size
+    _Response = list[PmProNegativeBalanceInterest]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/portfolio/interest-history',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

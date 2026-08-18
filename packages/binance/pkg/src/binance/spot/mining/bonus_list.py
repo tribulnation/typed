@@ -1,0 +1,135 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MiningBonus(TypedDict):
+  """One extra bonus record."""
+
+  time: NotRequired[int]
+  """Millisecond epoch record timestamp."""
+  coinName: NotRequired[str]
+  """Coin the bonus is denominated in."""
+  type: NotRequired[int]
+  """Bonus type."""
+  profitAmount: NotRequired[float]
+  """Bonus amount."""
+  status: NotRequired[int]
+  """Payout status."""
+
+
+class MiningBonusListData(TypedDict):
+  """Paged extra bonus list."""
+
+  otherProfits: NotRequired[list[MiningBonus]]
+  """Extra bonus records on this page."""
+  totalNum: NotRequired[int]
+  """Total number of matching records."""
+  pageSize: NotRequired[int]
+  """Number of records returned per page."""
+
+
+class MiningBonusListResponse(TypedDict):
+  """Extra bonus list response frame. This product line wraps its business data in {code,msg,data} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[int]
+  """Response code. 0 indicates success."""
+  msg: NotRequired[str]
+  """Response message."""
+  data: NotRequired[MiningBonusListData]
+
+
+class BonusList(RpcEndpoint):
+  """Query this mining account's extra bonus income (e.g. from merged mining or promotions)."""
+
+  async def bonus_list(
+    self,
+    *,
+    algo: str,
+    user_name: str,
+    coin: str | None = None,
+    start_date: int | None = None,
+    end_date: int | None = None,
+    page_index: int | None = None,
+    page_size: int | None = None,
+    validate: bool | None = None,
+  ) -> MiningBonusListResponse:
+    """Query this mining account's extra bonus income (e.g. from merged mining or promotions).
+
+    Args:
+      algo: Mining algorithm, e.g. sha256.
+      user_name: Mining account.
+      coin: Coin to filter by, e.g. BTC.
+      start_date: Millisecond epoch start of the queried window.
+      end_date: Millisecond epoch end of the queried window.
+      page_index: Page number.
+      page_size: Number of rows per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/mining/rest-api#extra-bonus-list)
+    """
+    params: dict = {
+      'algo': algo,
+      'userName': user_name,
+    }
+    if coin is not None:
+      params['coin'] = coin
+    if start_date is not None:
+      params['startDate'] = start_date
+    if end_date is not None:
+      params['endDate'] = end_date
+    if page_index is not None:
+      params['pageIndex'] = page_index
+    if page_size is not None:
+      params['pageSize'] = page_size
+    _Response = MiningBonusListResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/mining/payment/other',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def bonus_list_paged(
+    self,
+    *,
+    algo: str,
+    user_name: str,
+    coin: str | None = None,
+    start_date: int | None = None,
+    end_date: int | None = None,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[MiningBonusListResponse]:
+    """Yield successive pages of `bonus_list`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the
+    `data.totalNum` items the response reports, or after `max_pages` pages when one is
+    given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.bonus_list(
+        algo=algo,
+        user_name=user_name,
+        coin=coin,
+        start_date=start_date,
+        end_date=end_date,
+        page_size=page_size,
+        page_index=page_index,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total_0 = response.get('data') if response is not None else None
+      total = total_0.get('totalNum') if total_0 is not None else None
+      total = int(total) if total is not None else None
+      if total is None or page_size is None or pages * page_size >= total:
+        break
+      page_index += 1

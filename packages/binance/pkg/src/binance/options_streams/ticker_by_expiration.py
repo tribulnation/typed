@@ -1,0 +1,73 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class Ticker24hrEvent(TypedDict):
+  """24hr rolling-window ticker statistics for one option symbol."""
+
+  e: Literal['24hrTicker']
+  """Event type."""
+  E: Timestamp
+  """Event time."""
+  s: str
+  """Option symbol."""
+  p: str
+  """Price change."""
+  P: str
+  """Price change percent."""
+  w: str
+  """Weighted average price."""
+  c: str
+  """Last price."""
+  Q: str
+  """Last quantity."""
+  o: str
+  """Open price."""
+  h: str
+  """High price."""
+  l: str
+  """Low price."""
+  v: str
+  """Trading volume, in contracts."""
+  q: str
+  """Trade amount, in quote asset."""
+  O: Timestamp
+  """Statistics open time."""
+  C: Timestamp
+  """Statistics close time."""
+  F: int
+  """First trade ID."""
+  L: int
+  """Last trade ID."""
+  n: int
+  """Total number of trades."""
+
+
+class TickerByExpiration(StreamEndpoint):
+  """24hr ticker by expiration date"""
+
+  def __call__(
+    self,
+    symbol: str,
+    expirationDate: str,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[Ticker24hrEvent]:
+    """24hr ticker by expiration date
+
+    Args:
+      symbol: Option symbol, e.g. `BTC-250627-50000-C`.
+      expirationDate: Expiration date, formatted `YYMMDD`, e.g. `221225`.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/ws-streams/public#hour24-ticker)
+    """
+    _validator = validator[Ticker24hrEvent](Ticker24hrEvent)
+    return self.subscribe(
+      f'{symbol.lower()}@optionTicker{expirationDate}',
+      validator=_validator,
+      validate=validate,
+    )

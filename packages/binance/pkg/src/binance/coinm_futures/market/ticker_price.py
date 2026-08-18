@@ -1,0 +1,51 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMPriceTicker(TypedDict):
+  """Latest price for one symbol."""
+
+  symbol: str
+  """Trading symbol."""
+  ps: str
+  """Underlying pair."""
+  price: str
+  """Latest price."""
+  time: int
+  """Time, in milliseconds since epoch."""
+
+
+class TickerPrice(RpcEndpoint):
+  """Latest price for a symbol, for every symbol of a pair, or for every symbol."""
+
+  async def ticker_price(
+    self,
+    *,
+    symbol: str | None = None,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[CoinMPriceTicker]:
+    """Latest price for a symbol, for every symbol of a pair, or for every symbol.
+
+    Args:
+      symbol: Symbol. Mutually exclusive with `pair`. Omit to get every symbol.
+      pair: Underlying pair. Mutually exclusive with `symbol`. Returns every symbol of the pair.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#symbol-price-ticker)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[CoinMPriceTicker]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/dapi/v1/ticker/price',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

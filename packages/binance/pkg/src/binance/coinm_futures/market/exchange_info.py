@@ -1,0 +1,161 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMRateLimit(TypedDict):
+  """One rate-limit bucket."""
+
+  rateLimitType: Literal['REQUEST_WEIGHT', 'ORDERS']
+  """Kind of rate limit, e.g. REQUEST_WEIGHT or ORDERS."""
+  interval: Literal['MINUTE']
+  """Interval unit the limit resets on, e.g. MINUTE."""
+  intervalNum: int
+  """Number of `interval` units in one window."""
+  limit: int
+  """Maximum count allowed within the window."""
+
+
+class CoinMSymbolFilter(TypedDict):
+  """One trading-rule filter. Field applicability depends on `filterType`."""
+
+  filterType: Literal[
+    'PRICE_FILTER',
+    'LOT_SIZE',
+    'MARKET_LOT_SIZE',
+    'MAX_NUM_ORDERS',
+    'MAX_NUM_ALGO_ORDERS',
+    'PERCENT_PRICE',
+  ]
+  """Which filter this is."""
+  minPrice: NotRequired[str]
+  """PRICE_FILTER: minimum price."""
+  maxPrice: NotRequired[str]
+  """PRICE_FILTER: maximum price."""
+  tickSize: NotRequired[str]
+  """PRICE_FILTER: price increment."""
+  minQty: NotRequired[str]
+  """LOT_SIZE/MARKET_LOT_SIZE: minimum order quantity."""
+  maxQty: NotRequired[str]
+  """LOT_SIZE/MARKET_LOT_SIZE: maximum order quantity."""
+  stepSize: NotRequired[str]
+  """LOT_SIZE/MARKET_LOT_SIZE: quantity increment."""
+  limit: NotRequired[int]
+  """MAX_NUM_ORDERS/MAX_NUM_ALGO_ORDERS: maximum open (algo) order count."""
+  multiplierUp: NotRequired[str]
+  """PERCENT_PRICE: upper price multiplier bound."""
+  multiplierDown: NotRequired[str]
+  """PERCENT_PRICE: lower price multiplier bound."""
+  multiplierDecimal: NotRequired[str]
+  """PERCENT_PRICE: multiplier decimal precision."""
+
+
+class CoinMSymbolInfo(TypedDict):
+  """One symbol's trading rules and metadata."""
+
+  symbol: str
+  """Trading symbol, e.g. BTCUSD_PERP."""
+  pair: str
+  """Underlying pair, e.g. BTCUSD."""
+  contractType: Literal[
+    'PERPETUAL',
+    'CURRENT_QUARTER',
+    'NEXT_QUARTER',
+    'CURRENT_QUARTER_DELIVERING',
+    'NEXT_QUARTER_DELIVERING',
+    'PERPETUAL_DELIVERING',
+  ]
+  """Contract type."""
+  deliveryDate: int
+  """Delivery timestamp, in milliseconds since epoch."""
+  onboardDate: int
+  """Onboard timestamp, in milliseconds since epoch."""
+  contractStatus: Literal[
+    'PENDING_TRADING',
+    'TRADING',
+    'PRE_DELIVERING',
+    'DELIVERING',
+    'DELIVERED',
+    'TRADING_HALT',
+    'TRADING_CANCEL_ONLY',
+  ]
+  """Contract trading status."""
+  contractSize: int
+  """Contract size, in USD (or the equivalent quote unit)."""
+  quoteAsset: str
+  """Quote asset symbol."""
+  baseAsset: str
+  """Base asset symbol."""
+  marginAsset: str
+  """Margin (settlement) asset symbol."""
+  pricePrecision: int
+  """Price decimal precision. Not to be used as `tickSize` -- see the PRICE_FILTER."""
+  quantityPrecision: int
+  """Quantity decimal precision. Not to be used as `stepSize` -- see the LOT_SIZE filter."""
+  baseAssetPrecision: int
+  """Base asset decimal precision."""
+  quotePrecision: int
+  """Quote asset decimal precision."""
+  equalQtyPrecision: NotRequired[int]
+  """Ignore -- retained for backward compatibility."""
+  triggerProtect: NotRequired[str]
+  """Threshold for algo order price protection."""
+  maintMarginPercent: NotRequired[str]
+  """Ignore -- retained for backward compatibility, not accurate."""
+  requiredMarginPercent: NotRequired[str]
+  """Ignore -- retained for backward compatibility, not accurate."""
+  liquidationFee: NotRequired[str]
+  """Liquidation fee rate for this symbol."""
+  marketTakeBound: NotRequired[str]
+  """Maximum price deviation a MARKET order may take from the mark price."""
+  underlyingType: str
+  """Underlying asset type, e.g. COIN."""
+  underlyingSubType: NotRequired[list[str]]
+  """Underlying asset sub-categories."""
+  filters: list[CoinMSymbolFilter]
+  """Trading rule filters applied to this symbol."""
+  orderTypes: list[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Order types accepted for this symbol."""
+  timeInForce: list[Literal['GTC', 'IOC', 'FOK', 'GTX']]
+  """Time-in-force values accepted for this symbol."""
+
+
+class CoinMExchangeInfo(TypedDict):
+  """Exchange trading rules, rate limits, and symbol information."""
+
+  exchangeFilters: list[str]
+  """Exchange-wide filters. Empty on COIN-M Futures as of this pass."""
+  rateLimits: list[CoinMRateLimit]
+  """Account- and IP-level rate limits."""
+  serverTime: int
+  """Current server time, in milliseconds since epoch."""
+  timezone: str
+  """Timezone market data timestamps are expressed in."""
+  symbols: list[CoinMSymbolInfo]
+  """Every tradable symbol and its trading rules."""
+
+
+class ExchangeInfo(RpcEndpoint):
+  """Current exchange trading rules and symbol information."""
+
+  async def exchange_info(self, *, validate: bool | None = None) -> CoinMExchangeInfo:
+    """Current exchange trading rules and symbol information.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#exchange-information)
+    """
+    _Response = CoinMExchangeInfo
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/dapi/v1/exchangeInfo', validator=_validator, validate=validate
+    )

@@ -1,0 +1,108 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CommoditySession(TypedDict):
+  """One commodity market trading session."""
+
+  startTime: int
+  """Session start time, in milliseconds since epoch."""
+  endTime: int
+  """Session end time, in milliseconds since epoch."""
+  type: Literal['REGULAR', 'NO_TRADING']
+  """Session type."""
+
+
+class EquitySession(TypedDict):
+  """One U.S. equity market trading session."""
+
+  startTime: int
+  """Session start time, in milliseconds since epoch."""
+  endTime: int
+  """Session end time, in milliseconds since epoch."""
+  type: Literal['PRE_MARKET', 'REGULAR', 'AFTER_MARKET', 'OVERNIGHT', 'NO_TRADING']
+  """Session type."""
+
+
+class HkEquitySession(TypedDict):
+  """One Hong Kong equity market trading session."""
+
+  startTime: int
+  """Session start time, in milliseconds since epoch."""
+  endTime: int
+  """Session end time, in milliseconds since epoch."""
+  type: Literal['REGULAR', 'NO_TRADING']
+  """Session type."""
+
+
+class KrEquitySession(TypedDict):
+  """One Korean equity market trading session."""
+
+  startTime: int
+  """Session start time, in milliseconds since epoch."""
+  endTime: int
+  """Session end time, in milliseconds since epoch."""
+  type: Literal['REGULAR', 'NO_TRADING']
+  """Session type."""
+
+
+class CommoditySchedule(TypedDict):
+  """Commodity market trading session schedule."""
+
+  sessions: list[CommoditySession]
+  """Trading sessions over the covered period."""
+
+
+class EquitySchedule(TypedDict):
+  """U.S. equity market trading session schedule."""
+
+  sessions: list[EquitySession]
+  """Trading sessions over the covered period."""
+
+
+class HkEquitySchedule(TypedDict):
+  """Hong Kong equity market trading session schedule."""
+
+  sessions: list[HkEquitySession]
+  """Trading sessions over the covered period."""
+
+
+class KrEquitySchedule(TypedDict):
+  """Korean equity market trading session schedule."""
+
+  sessions: list[KrEquitySession]
+  """Trading sessions over the covered period."""
+
+
+class MarketSchedules(TypedDict):
+  """Trading session schedule, keyed by market."""
+
+  EQUITY: NotRequired[EquitySchedule]
+  COMMODITY: NotRequired[CommoditySchedule]
+  KR_EQUITY: NotRequired[KrEquitySchedule]
+  HK_EQUITY: NotRequired[HkEquitySchedule]
+
+
+class TradingSchedule(TypedDict):
+  """Trading session schedules for TradFi Perp underlyings, by market."""
+
+  updateTime: int
+  """Time this schedule was last updated, in milliseconds since epoch."""
+  marketSchedules: MarketSchedules
+
+
+class TradingScheduleEndpoint(RpcEndpoint):
+  """Trading session schedules for the underlying assets of TradFi Perps, covering the U.S. equity market, Korean equity market, Hong Kong equity market, and the commodity market. Covers a one-week period forward and one-week period backward, starting from the day prior to the query time."""
+
+  async def trading_schedule(self, *, validate: bool | None = None) -> TradingSchedule:
+    """Trading session schedules for the underlying assets of TradFi Perps, covering the U.S. equity market, Korean equity market, Hong Kong equity market, and the commodity market. Covers a one-week period forward and one-week period backward, starting from the day prior to the query time.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data#trading-schedule)
+    """
+    _Response = TradingSchedule
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/fapi/v1/tradingSchedule', validator=_validator, validate=validate
+    )

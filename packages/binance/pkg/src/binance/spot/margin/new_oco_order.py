@@ -1,0 +1,188 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginOcoOrderReport(TypedDict):
+  """One order-list leg's acknowledgement, returned when placing a new margin OCO."""
+
+  symbol: str
+  """Trading pair symbol."""
+  orderId: int
+  """Order id."""
+  orderListId: int
+  """Id of the order list this order belongs to."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+  transactTime: Timestamp
+  """Time the order was processed."""
+  price: str
+  """Order price."""
+  origQty: str
+  """Original order quantity."""
+  executedQty: str
+  """Cumulative filled quantity."""
+  cummulativeQuoteQty: str
+  """Cumulative quote asset transacted quantity."""
+  status: Literal[
+    'NEW',
+    'PENDING_NEW',
+    'PARTIALLY_FILLED',
+    'FILLED',
+    'CANCELED',
+    'PENDING_CANCEL',
+    'REJECTED',
+    'EXPIRED',
+    'EXPIRED_IN_MATCH',
+  ]
+  """Order status."""
+  timeInForce: Literal['GTC', 'IOC', 'FOK']
+  """Time in force."""
+  type: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP_LOSS',
+    'STOP_LOSS_LIMIT',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_LIMIT',
+    'LIMIT_MAKER',
+  ]
+  """Order type."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  stopPrice: str
+  """Price at which the leg's stop triggers. "0.000000" for the non-stop leg."""
+
+
+class MarginOrderListOrder(TypedDict):
+  """One order belonging to the order list, identified minimally."""
+
+  symbol: str
+  """Trading pair symbol."""
+  orderId: int
+  """Order id."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+
+
+class MarginNewOcoOrderResult(TypedDict):
+  """The placed margin OCO order list."""
+
+  orderListId: int
+  """Id of the order list."""
+  contingencyType: Literal['OCO']
+  """Contingency type of the order list."""
+  listStatusType: Literal['RESPONSE', 'EXEC_STARTED', 'UPDATED', 'ALL_DONE']
+  """Status of the order list."""
+  listOrderStatus: Literal['EXECUTING', 'ALL_DONE', 'REJECT']
+  """Execution status of the order list."""
+  listClientOrderId: str
+  """Client id for the entire order list, either caller-supplied or venue-generated."""
+  transactionTime: Timestamp
+  """Time the order list was processed."""
+  symbol: str
+  """Trading pair symbol."""
+  marginBuyBorrowAmount: NotRequired[str]
+  """Amount borrowed to fund the order list. Present only when the order list triggered a margin borrow."""
+  marginBuyBorrowAsset: NotRequired[str]
+  """Asset borrowed to fund the order list. Present only when the order list triggered a margin borrow."""
+  isIsolated: bool
+  """Whether the order list belongs to an isolated margin account."""
+  orders: list[MarginOrderListOrder]
+  """The above and below legs making up the OCO, identified minimally."""
+  orderReports: list[MarginOcoOrderReport]
+  """Per-leg order acknowledgements."""
+
+
+class NewOcoOrder(RpcEndpoint):
+  """Place a new one-cancels-the-other (OCO) pair for a margin account, comprised of a limit leg and a stop leg sharing the same quantity. Price restrictions: on the SELL side, limit price > last traded price > stop price; on the BUY side, limit price < last traded price < stop price. An OCO counts as 2 orders against the order rate limit."""
+
+  async def new_oco_order(
+    self,
+    *,
+    symbol: str,
+    is_isolated: Literal['TRUE', 'FALSE'] | None = None,
+    list_client_order_id: str | None = None,
+    side: Literal['SELL', 'BUY'],
+    quantity: float,
+    limit_client_order_id: str | None = None,
+    price: float,
+    limit_iceberg_qty: float | None = None,
+    stop_client_order_id: str | None = None,
+    stop_price: float,
+    stop_limit_price: float | None = None,
+    stop_iceberg_qty: float | None = None,
+    stop_limit_time_in_force: Literal['GTC', 'FOK', 'IOC'] | None = None,
+    new_order_resp_type: Literal['ACK', 'RESULT', 'FULL'] | None = None,
+    side_effect_type: Literal[
+      'NO_SIDE_EFFECT', 'MARGIN_BUY', 'AUTO_REPAY', 'AUTO_BORROW_REPAY'
+    ]
+    | None = None,
+    self_trade_prevention_mode: Literal[
+      'EXPIRE_TAKER', 'EXPIRE_MAKER', 'EXPIRE_BOTH', 'NONE'
+    ]
+    | None = None,
+    validate: bool | None = None,
+  ) -> MarginNewOcoOrderResult:
+    """Place a new one-cancels-the-other (OCO) pair for a margin account, comprised of a limit leg and a stop leg sharing the same quantity. Price restrictions: on the SELL side, limit price > last traded price > stop price; on the BUY side, limit price < last traded price < stop price. An OCO counts as 2 orders against the order rate limit.
+
+    Args:
+      symbol: Trading pair symbol, e.g. BNBUSDT.
+      is_isolated: Margin account type for this order: isolated when TRUE, crossed (default) when FALSE.
+      list_client_order_id: Arbitrary unique id for the entire order list. Automatically generated if not sent.
+      side: Order side, shared by both legs.
+      quantity: Quantity for both legs of the order list.
+      limit_client_order_id: Arbitrary unique id for the limit order leg. Automatically generated if not sent.
+      price: Limit price of the limit order leg.
+      limit_iceberg_qty: Iceberg quantity for the limit order leg.
+      stop_client_order_id: Arbitrary unique id for the stop-loss/stop-loss-limit leg. Automatically generated if not sent.
+      stop_price: Trigger price of the stop order leg.
+      stop_limit_price: Limit price of the stop order leg, making it STOP_LOSS_LIMIT instead of STOP_LOSS. If provided, stopLimitTimeInForce is required.
+      stop_iceberg_qty: Iceberg quantity for the stop order leg. Usable only when stopLimitPrice is provided.
+      stop_limit_time_in_force: Time in force for the stop-loss-limit leg. Required when stopLimitPrice is provided.
+      new_order_resp_type: Response shape to return for each leg's orderReports entry.
+      side_effect_type: Margin borrow/repay side effect of this order list. Defaults to NO_SIDE_EFFECT.
+      self_trade_prevention_mode: Self-trade prevention mode. The allowed values depend on the symbol's configuration.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade#margin-account-new-oco)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'side': side,
+      'quantity': quantity,
+      'price': price,
+      'stopPrice': stop_price,
+    }
+    if is_isolated is not None:
+      params['isIsolated'] = is_isolated
+    if list_client_order_id is not None:
+      params['listClientOrderId'] = list_client_order_id
+    if limit_client_order_id is not None:
+      params['limitClientOrderId'] = limit_client_order_id
+    if limit_iceberg_qty is not None:
+      params['limitIcebergQty'] = limit_iceberg_qty
+    if stop_client_order_id is not None:
+      params['stopClientOrderId'] = stop_client_order_id
+    if stop_limit_price is not None:
+      params['stopLimitPrice'] = stop_limit_price
+    if stop_iceberg_qty is not None:
+      params['stopIcebergQty'] = stop_iceberg_qty
+    if stop_limit_time_in_force is not None:
+      params['stopLimitTimeInForce'] = stop_limit_time_in_force
+    if new_order_resp_type is not None:
+      params['newOrderRespType'] = new_order_resp_type
+    if side_effect_type is not None:
+      params['sideEffectType'] = side_effect_type
+    if self_trade_prevention_mode is not None:
+      params['selfTradePreventionMode'] = self_trade_prevention_mode
+    _Response = MarginNewOcoOrderResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/margin/order/oco',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

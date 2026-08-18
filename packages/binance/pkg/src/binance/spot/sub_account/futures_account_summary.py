@@ -1,0 +1,108 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SubAccountFuturesAccountSummaryItem(TypedDict):
+  """One sub-account's futures account totals."""
+
+  email: NotRequired[str]
+  """Sub-account email."""
+  totalInitialMargin: NotRequired[str]
+  """Total initial margin required."""
+  totalMaintenanceMargin: NotRequired[str]
+  """Total maintenance margin required."""
+  totalMarginBalance: NotRequired[str]
+  """Total margin balance."""
+  totalOpenOrderInitialMargin: NotRequired[str]
+  """Total initial margin required by open orders."""
+  totalPositionInitialMargin: NotRequired[str]
+  """Total initial margin required by open positions."""
+  totalUnrealizedProfit: NotRequired[str]
+  """Total unrealized profit/loss."""
+  totalWalletBalance: NotRequired[str]
+  """Total wallet balance."""
+  asset: NotRequired[str]
+  """Asset the totals are valued in."""
+
+
+class SubAccountFuturesAccountSummary(TypedDict):
+  """Aggregated futures account summary."""
+
+  totalInitialMargin: NotRequired[str]
+  """Total initial margin required across all sub-accounts."""
+  totalMaintenanceMargin: NotRequired[str]
+  """Total maintenance margin required across all sub-accounts."""
+  totalMarginBalance: NotRequired[str]
+  """Total margin balance across all sub-accounts."""
+  totalOpenOrderInitialMargin: NotRequired[str]
+  """Total initial margin required by open orders."""
+  totalPositionInitialMargin: NotRequired[str]
+  """Total initial margin required by open positions."""
+  totalUnrealizedProfit: NotRequired[str]
+  """Total unrealized profit/loss across all sub-accounts."""
+  totalWalletBalance: NotRequired[str]
+  """Total wallet balance across all sub-accounts."""
+  asset: NotRequired[str]
+  """Asset the totals are valued in."""
+  subAccountList: NotRequired[list[SubAccountFuturesAccountSummaryItem]]
+  """Per-sub-account breakdown on this page."""
+
+
+class FuturesAccountSummary(RpcEndpoint):
+  """Get an aggregated summary of every sub-account's USD-M futures account, for the master account."""
+
+  async def __call__(
+    self,
+    *,
+    page: int,
+    limit: int,
+    validate: bool | None = None,
+  ) -> SubAccountFuturesAccountSummary:
+    """Get an aggregated summary of every sub-account's USD-M futures account, for the master account.
+
+    Args:
+      page: Page number.
+      limit: Page size.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/asset-management#get-summary-of-sub-accounts-futures-account)
+    """
+    params: dict = {
+      'page': page,
+      'limit': limit,
+    }
+    _Response = SubAccountFuturesAccountSummary
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/sub-account/futures/accountSummary',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def paged(
+    self,
+    *,
+    limit: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[SubAccountFuturesAccountSummary]:
+    """Yield successive pages of this endpoint.
+
+    Requests `page` from 1 upwards and stops on the first page shorter than `limit`, or
+    after `max_pages` pages when one is given.
+    """
+    page = 1
+    pages = 0
+    while True:
+      response = await self.__call__(limit=limit, page=page, validate=validate)
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      rows = response.get('subAccountList') if response is not None else None
+      if not rows or len(rows) < limit:
+        break
+      page += 1

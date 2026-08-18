@@ -1,0 +1,46 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProAssetIndexPrice(TypedDict):
+  """Index price for one asset."""
+
+  asset: NotRequired[str]
+  """Asset name."""
+  assetIndexPrice: NotRequired[str]
+  """Asset index price, in USD."""
+  time: NotRequired[Timestamp]
+  """Index price time."""
+
+
+class AssetIndexPrice(RpcEndpoint):
+  """Query Portfolio Margin Asset Index Price"""
+
+  async def asset_index_price(
+    self,
+    *,
+    asset: str | None = None,
+    validate: bool | None = None,
+  ) -> list[PmProAssetIndexPrice]:
+    """Query Portfolio Margin Asset Index Price.
+
+    Args:
+      asset: Asset name.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/market-data#query-portfolio-margin-asset-index-price)
+    """
+    params = {}
+    if asset is not None:
+      params['asset'] = asset
+    _Response = list[PmProAssetIndexPrice]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/sapi/v1/portfolio/asset-index-price',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

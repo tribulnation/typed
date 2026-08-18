@@ -1,0 +1,50 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class EquityTokenizedRedeemAck(TypedDict):
+  """Acknowledgement of an asynchronous tokenized-redeem request."""
+
+  issuerRequestId: NotRequired[str]
+  """Server-assigned convert request id. Use it to poll `/tokenized/convert-status`."""
+  status: NotRequired[Literal['P', 'S', 'F']]
+  """Convert status code."""
+
+
+class Redeem(RpcEndpoint):
+  """Redeem a tokenized asset back into the underlying equity. The caller's tokenized asset (e.g. `AAPLB`) is burned, and the corresponding underlying equity (e.g. `AAPL`) is released. The underlying asset is resolved server-side from `tokenizedAsset`; callers only provide the tokenized asset and quantity. Redeem is asynchronous: the endpoint returns an `issuerRequestId` immediately with a transient status; poll `/tokenized/convert-status` to observe the terminal state, or inspect `/tokenized/history` for the full record. Rate limit: 200 requests / min (UID)."""
+
+  async def redeem(
+    self,
+    *,
+    tokenized_asset: str,
+    tokenized_asset_amount: str,
+    client_order_id: str | None = None,
+    validate: bool | None = None,
+  ) -> EquityTokenizedRedeemAck:
+    """Redeem a tokenized asset back into the underlying equity. The caller's tokenized asset (e.g. `AAPLB`) is burned, and the corresponding underlying equity (e.g. `AAPL`) is released. The underlying asset is resolved server-side from `tokenizedAsset`; callers only provide the tokenized asset and quantity. Redeem is asynchronous: the endpoint returns an `issuerRequestId` immediately with a transient status; poll `/tokenized/convert-status` to observe the terminal state, or inspect `/tokenized/history` for the full record. Rate limit: 200 requests / min (UID).
+
+    Args:
+      tokenized_asset: Tokenized asset to redeem, e.g. `AAPLB`. Not a US-equity ticker -- this is the on-chain tokenized asset identifier. Unknown asset returns `-1102` (the message currently says the parameter was empty/malformed, but it was in fact sent -- it is simply unknown). The target underlying ticker is looked up from this field via `/market/tokenized-assets`.
+      tokenized_asset_amount: Quantity of the tokenized asset to redeem. Must be > 0.
+      client_order_id: Client order id for idempotency. Format `^[a-zA-Z0-9-_]{32,36}$`. Auto-generated when omitted.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-stocks-trading/api/rest-api/tokenized#tokenized-redeem)
+    """
+    params: dict = {
+      'tokenizedAsset': tokenized_asset,
+      'tokenizedAssetAmount': tokenized_asset_amount,
+    }
+    if client_order_id is not None:
+      params['clientOrderId'] = client_order_id
+    _Response = EquityTokenizedRedeemAck
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/equity/tokenized/redeem',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,106 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FlexibleLoanInterestRateHistoryEntry(TypedDict):
+  """One flexible loan interest rate history entry."""
+
+  coin: NotRequired[str]
+  """Loan coin."""
+  annualizedInterestRate: NotRequired[str]
+  """Annualized flexible interest rate, as a decimal string."""
+  time: NotRequired[str]
+  """Millisecond epoch time the rate was recorded, as a numeric string."""
+
+
+class FlexibleLoanInterestRateHistoryPage(TypedDict):
+  """One page of flexible loan interest rate history."""
+
+  rows: NotRequired[list[FlexibleLoanInterestRateHistoryEntry]]
+  """Matching interest rate history entries."""
+  total: NotRequired[int]
+  """Total number of matching history entries."""
+
+
+class InterestRateHistory(RpcEndpoint):
+  """Check Flexible Loan interest rate history."""
+
+  async def interest_rate_history(
+    self,
+    *,
+    coin: str,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    current: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> FlexibleLoanInterestRateHistoryPage:
+    """Check Flexible Loan interest rate history.
+
+    Args:
+      coin: Loan coin to query interest rate history for.
+      start_time: Millisecond epoch lower bound. If both `startTime` and `endTime` are omitted, the most recent 90 days are returned.
+      end_time: Millisecond epoch upper bound. Maximum interval between `startTime` and `endTime` is 90 days. Time is based on UTC+0.
+      current: Current page number, starting from 1.
+      limit: Number of records per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-crypto-loan/api/rest-api/flexible-rate#get-flexible-loan-interest-rate-history)
+    """
+    params: dict = {
+      'coin': coin,
+    }
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if current is not None:
+      params['current'] = current
+    if limit is not None:
+      params['limit'] = limit
+    _Response = FlexibleLoanInterestRateHistoryPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v2/loan/interestRateHistory',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def interest_rate_history_paged(
+    self,
+    *,
+    coin: str,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[FlexibleLoanInterestRateHistoryPage]:
+    """Yield successive pages of `interest_rate_history`.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.interest_rate_history(
+        coin=coin,
+        start_time=start_time,
+        end_time=end_time,
+        limit=limit,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or limit is None or pages * limit >= total:
+        break
+      current += 1

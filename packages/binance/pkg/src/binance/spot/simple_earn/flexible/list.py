@@ -1,0 +1,122 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+SimpleEarnTierAnnualPercentageRateKeywords = TypedDict(
+  'SimpleEarnTierAnnualPercentageRateKeywords',
+  {'0-5BTC': NotRequired[float], '5-10BTC': NotRequired[float]},
+)
+"""
+  - `0-5BTC`: Annual percentage rate applied to the portion of the balance from 0 up to 5 BTC-equivalent.
+  - `5-10BTC`: Annual percentage rate applied to the portion of the balance from 5 up to 10 BTC-equivalent.
+"""
+
+
+class SimpleEarnTierAnnualPercentageRate(SimpleEarnTierAnnualPercentageRateKeywords):
+  """Tiered annual percentage rate, keyed by holding-amount bracket (e.g. `"0-5BTC"`, "5-10BTC"`). Present only for flexible products whose APR scales down for larger balances; the bracket keys are the literal wire field names, not fixed identifiers."""
+
+
+class FlexibleProduct(TypedDict):
+  """One available Simple Earn flexible product."""
+
+  asset: NotRequired[str]
+  """Underlying asset of the flexible product."""
+  latestAnnualPercentageRate: NotRequired[str]
+  """Most recent annual percentage rate, as a decimal string (e.g. `"0.05832425"` for 5.83%)."""
+  tierAnnualPercentageRate: NotRequired[SimpleEarnTierAnnualPercentageRate]
+  airDropPercentageRate: NotRequired[str]
+  """Additional airdrop annual percentage rate on top of the base rate, as a decimal string."""
+  canPurchase: NotRequired[bool]
+  """Whether this product currently accepts new subscriptions."""
+  canRedeem: NotRequired[bool]
+  """Whether positions in this product can currently be redeemed."""
+  isSoldOut: NotRequired[bool]
+  """Whether the product's subscription quota is currently exhausted."""
+  hot: NotRequired[bool]
+  """Whether Binance is currently featuring this product as popular."""
+  minPurchaseAmount: NotRequired[str]
+  """Minimum subscription amount, as a decimal string."""
+  productId: NotRequired[str]
+  """Flexible product identifier, used as `productId` in subscribe/redeem/position/history calls."""
+  subscriptionStartTime: NotRequired[int]
+  """Millisecond epoch time the product became available for subscription."""
+  status: NotRequired[str]
+  """Product status."""
+
+
+class FlexibleProductListPage(TypedDict):
+  """One page of available Simple Earn flexible products."""
+
+  rows: NotRequired[list[FlexibleProduct]]
+  """Matching records on this page."""
+  total: NotRequired[int]
+  """Total number of matching records."""
+
+
+class List(RpcEndpoint):
+  """Get the list of available Simple Earn flexible products."""
+
+  async def __call__(
+    self,
+    *,
+    asset: str | None = None,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> FlexibleProductListPage:
+    """Get the list of available Simple Earn flexible products.
+
+    Args:
+      asset: Restrict results to flexible products for this underlying asset (e.g. `USDT`).
+      current: Page index, starting from 1.
+      size: Number of results per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#get-simple-earn-flexible-product-list)
+    """
+    params = {}
+    if asset is not None:
+      params['asset'] = asset
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = FlexibleProductListPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/simple-earn/flexible/list',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def paged(
+    self,
+    *,
+    asset: str | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[FlexibleProductListPage]:
+    """Yield successive pages of this endpoint.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.__call__(
+        asset=asset, size=size, current=current, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

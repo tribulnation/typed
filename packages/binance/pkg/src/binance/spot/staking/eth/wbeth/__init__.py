@@ -1,0 +1,17 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .history import History
+from .wrap import Wrap
+
+
+class Wbeth(RpcEndpoint):
+  """Binance wbeth endpoints."""
+
+  @cached_property
+  def history(self) -> History:
+    return History(client=self.client)
+
+  @cached_property
+  def wrap(self) -> Wrap:
+    return Wrap(client=self.client)

@@ -1,0 +1,111 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from typed_core.exceptions import LogicError
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FundingRateRecord(TypedDict):
+  """One funding rate settlement."""
+
+  symbol: str
+  """Trading symbol."""
+  fundingRate: str
+  """Funding rate charged at this settlement."""
+  fundingTime: int
+  """Settlement time, in milliseconds since epoch."""
+  markPrice: NotRequired[str]
+  """Mark price associated with this funding fee charge."""
+  rateType: NotRequired[Literal['Regular', 'Special']]
+  """Whether this was a regular scheduled settlement or a special dividend-generated one."""
+
+
+class FundingRate(RpcEndpoint):
+  """Historical funding rate for a symbol, or every symbol when omitted."""
+
+  async def funding_rate(
+    self,
+    *,
+    symbol: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[FundingRateRecord]:
+    """Historical funding rate for a symbol, or every symbol when omitted.
+
+    Args:
+      symbol: Trading symbol, e.g. BTCUSDT.
+      start_time: Timestamp to get funding rate from, inclusive, in milliseconds since epoch.
+      end_time: Timestamp to get funding rate until, inclusive, in milliseconds since epoch.
+      limit: Number of records to return. If startTime/endTime are omitted, the most recent 200 records are returned regardless of this default.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data#get-funding-rate-history)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[FundingRateRecord]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/fapi/v1/fundingRate',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def funding_rate_paged(
+    self,
+    *,
+    symbol: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    max_pages: int | None = None,
+    allow_truncation: bool = False,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[FundingRateRecord]]:
+    """Yield successive pages of `funding_rate`.
+
+    Moves the `start_time`–`end_time` window forwards by its own width and stops on the
+    first empty window, or after `max_pages` pages when one is given.
+
+    Every request spans the width the caller's own `start_time` and `end_time` state, so
+    choose a window the venue answers in one response — at most `limit` rows. A full
+    page is evidence the window was capped, and raises `LogicError` rather than walking
+    past the rows that were left out; pass `allow_truncation=True` to accept the loss
+    and keep going.
+    """
+    if start_time is None or end_time is None:
+      raise ValueError(
+        '`funding_rate_paged` walks a time window: pass both `start_time` and `end_time`'
+      )
+    lower = start_time
+    upper = end_time
+    width = upper - lower
+    pages = 0
+    while True:
+      response = await self.funding_rate(
+        symbol=symbol, start_time=lower, end_time=upper, limit=limit, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response:
+        break
+      if not allow_truncation and len(response) >= (
+        limit if limit is not None else 100
+      ):
+        raise LogicError(
+          f'`funding_rate_paged` requested the window {lower} to {upper} and the venue returned a full page of {len(response)} rows, so it may hold more; advancing would move past the rows that were left out. Narrow the window, or pass `allow_truncation=True` to accept the loss.'
+        )
+      lower = upper + 1
+      upper = lower + width

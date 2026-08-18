@@ -1,0 +1,36 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmUserRateLimit(TypedDict):
+  """PmUserRateLimit."""
+
+  rateLimitType: NotRequired[str]
+  """Rate Limit Type."""
+  interval: NotRequired[str]
+  """Interval."""
+  intervalNum: NotRequired[int]
+  """Interval Num."""
+  limit: NotRequired[int]
+  """Limit."""
+
+
+class OrderRateLimit(RpcEndpoint):
+  """Query User Rate Limit"""
+
+  async def order_rate_limit(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[PmUserRateLimit]:
+    """Query User Rate Limit.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#query-user-rate-limit)
+    """
+    _Response = list[PmUserRateLimit]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/papi/v1/rateLimit/order', validator=_validator, validate=validate
+    )

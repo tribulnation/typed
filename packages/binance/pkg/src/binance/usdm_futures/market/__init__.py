@@ -1,0 +1,73 @@
+from .agg_trades import AggTrades
+from .asset_index import AssetIndex
+from .basis import Basis
+from .constituents import Constituents
+from .continuous_klines import ContinuousKlines
+from .delivery_price import DeliveryPriceEndpoint
+from .depth import Depth
+from .exchange_info import ExchangeInfoEndpoint
+from .funding_info import FundingInfoEndpoint
+from .funding_rate import FundingRate
+from .global_long_short_account_ratio import GlobalLongShortAccountRatio
+from .historical_trades import HistoricalTrades
+from .index_info import IndexInfo
+from .index_price_klines import IndexPriceKlines
+from .insurance_balance import InsuranceBalance
+from .klines import Klines
+from .mark_price_klines import MarkPriceKlines
+from .open_interest import OpenInterestEndpoint
+from .open_interest_hist import OpenInterestHist
+from .ping import Ping
+from .premium_index import PremiumIndex
+from .premium_index_klines import PremiumIndexKlines
+from .rpi_depth import RpiDepth
+from .symbol_adl_risk import SymbolAdlRisk
+from .taker_buy_sell_vol import TakerBuySellVol
+from .ticker_24hr import Ticker24hr
+from .ticker_book import TickerBook
+from .ticker_price import TickerPrice
+from .ticker_price_v2 import TickerPriceV2
+from .time import Time
+from .top_long_short_account_ratio import TopLongShortAccountRatio
+from .top_long_short_position_ratio import TopLongShortPositionRatio
+from .trades import Trades
+from .trading_schedule import TradingScheduleEndpoint
+
+
+class Market(
+  AggTrades,
+  AssetIndex,
+  Basis,
+  Constituents,
+  ContinuousKlines,
+  DeliveryPriceEndpoint,
+  Depth,
+  ExchangeInfoEndpoint,
+  FundingInfoEndpoint,
+  FundingRate,
+  GlobalLongShortAccountRatio,
+  HistoricalTrades,
+  IndexInfo,
+  IndexPriceKlines,
+  InsuranceBalance,
+  Klines,
+  MarkPriceKlines,
+  OpenInterestEndpoint,
+  OpenInterestHist,
+  Ping,
+  PremiumIndex,
+  PremiumIndexKlines,
+  RpiDepth,
+  SymbolAdlRisk,
+  TakerBuySellVol,
+  Ticker24hr,
+  TickerBook,
+  TickerPrice,
+  TickerPriceV2,
+  Time,
+  TopLongShortAccountRatio,
+  TopLongShortPositionRatio,
+  Trades,
+  TradingScheduleEndpoint,
+):
+  """Binance market endpoints."""

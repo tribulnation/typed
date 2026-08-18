@@ -1,0 +1,136 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OptionAsset(TypedDict):
+  """Option asset info."""
+
+  name: NotRequired[str]
+  """Asset name."""
+
+
+class OptionContract(TypedDict):
+  """Option contract underlying asset info."""
+
+  baseAsset: NotRequired[str]
+  """Base currency."""
+  quoteAsset: NotRequired[str]
+  """Quotation asset."""
+  underlying: NotRequired[str]
+  """Name of the underlying asset of the option contract."""
+  settleAsset: NotRequired[str]
+  """Settlement currency."""
+  nakedSell: NotRequired[bool]
+  """Whether naked selling is allowed for this contract's underlying."""
+
+
+class OptionSymbolFilter(TypedDict):
+  """A trading-rule filter applied to this option symbol."""
+
+  filterType: NotRequired[str]
+  """Filter type. Not documented as a closed set beyond the values observed on symbol filters; left bare per rule 2."""
+  minPrice: NotRequired[str]
+  """Minimum price."""
+  maxPrice: NotRequired[str]
+  """Maximum price."""
+  tickSize: NotRequired[str]
+  """Price tick size."""
+  minQty: NotRequired[str]
+  """Minimum order quantity."""
+  maxQty: NotRequired[str]
+  """Maximum order quantity."""
+  stepSize: NotRequired[str]
+  """Quantity step size."""
+
+
+class RateLimit(TypedDict):
+  """One rate-limit rule reported by the exchange."""
+
+  rateLimitType: NotRequired[str]
+  """Rate limit type. Not documented with its value set here; left bare per rule 2 (mirrors Spot's REQUEST_WEIGHT/ORDERS, unconfirmed for Options)."""
+  interval: NotRequired[str]
+  """Rate limit interval unit."""
+  intervalNum: NotRequired[int]
+  """Number of `interval` units per window."""
+  limit: NotRequired[int]
+  """Maximum count allowed in the window."""
+
+
+class OptionSymbol(TypedDict):
+  """An option trading pair and its trading rules."""
+
+  expiryDate: NotRequired[Timestamp]
+  """Expiry time."""
+  filters: NotRequired[list[OptionSymbolFilter]]
+  """Trading-rule filters for this symbol."""
+  symbol: NotRequired[str]
+  """Option trading pair, formatted UNDERLYING-EXPIRYDATE-STRIKE-C|P, e.g. BTC-260925-145000-C (a BTC call expiring 2026-09-25 with strike 145000)."""
+  side: NotRequired[Literal['CALL', 'PUT']]
+  """Direction."""
+  strikePrice: NotRequired[str]
+  """Strike price."""
+  underlying: NotRequired[str]
+  """Name of the underlying asset of the option contract."""
+  unit: NotRequired[int]
+  """Contract unit — the quantity of the underlying asset represented by a single contract."""
+  liquidationFeeRate: NotRequired[str]
+  """Liquidation fee rate."""
+  minQty: NotRequired[str]
+  """Minimum order quantity."""
+  maxQty: NotRequired[str]
+  """Maximum order quantity."""
+  initialMargin: NotRequired[str]
+  """Initial margin ratio."""
+  maintenanceMargin: NotRequired[str]
+  """Maintenance margin ratio."""
+  minInitialMargin: NotRequired[str]
+  """Minimum initial margin ratio."""
+  minMaintenanceMargin: NotRequired[str]
+  """Minimum maintenance margin ratio."""
+  priceScale: NotRequired[int]
+  """Price precision."""
+  quantityScale: NotRequired[int]
+  """Quantity precision."""
+  quoteAsset: NotRequired[str]
+  """Quotation asset."""
+  contractType: NotRequired[str]
+  """Contract type. Not documented with its value set; left bare per rule 2."""
+  underlyingType: NotRequired[str]
+  """Underlying type. Not documented with its value set; left bare per rule 2."""
+  status: NotRequired[str]
+  """Trading status. Not documented with its value set; left bare per rule 2."""
+
+
+class ExchangeInfo(TypedDict):
+  """Current exchange trading rules and symbol information."""
+
+  timezone: NotRequired[str]
+  """Time zone used by the server."""
+  serverTime: NotRequired[Timestamp]
+  """Current system time."""
+  optionContracts: NotRequired[list[OptionContract]]
+  """Option contract underlying asset info."""
+  optionAssets: NotRequired[list[OptionAsset]]
+  """Option asset info."""
+  optionSymbols: NotRequired[list[OptionSymbol]]
+  """Option trading pair info."""
+  rateLimits: NotRequired[list[RateLimit]]
+  """Rate limits."""
+
+
+class ExchangeInfoEndpoint(RpcEndpoint):
+  """Current exchange trading rules and symbol information."""
+
+  async def exchange_info(self, *, validate: bool | None = None) -> ExchangeInfo:
+    """Current exchange trading rules and symbol information.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/derivatives/option/market-data#exchange-information)
+    """
+    _Response = ExchangeInfo
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/eapi/v1/exchangeInfo', validator=_validator, validate=validate
+    )

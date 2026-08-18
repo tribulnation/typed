@@ -1,0 +1,74 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CryptoLoanIncomeRecord(TypedDict):
+  """One crypto loan income (balance-affecting event) record."""
+
+  asset: NotRequired[str]
+  """Asset affected."""
+  type: NotRequired[str]
+  """Event type."""
+  amount: NotRequired[str]
+  """Amount, signed per event type."""
+  timestamp: NotRequired[int]
+  """Millisecond epoch time of the event."""
+  tranId: NotRequired[str]
+  """Transaction ID."""
+
+
+class IncomeHistory(RpcEndpoint):
+  """Get Crypto Loans Income History."""
+
+  async def income_history(
+    self,
+    *,
+    asset: str | None = None,
+    type: Literal[
+      'borrowIn',
+      'collateralSpent',
+      'repayAmount',
+      'collateralReturn',
+      'addCollateral',
+      'removeCollateral',
+      'collateralReturnAfterLiquidation',
+    ]
+    | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[CryptoLoanIncomeRecord]:
+    """Get Crypto Loans Income History.
+
+    Args:
+      asset: Asset to filter by.
+      type: Income record type to filter by. All types are returned when omitted.
+      start_time: Millisecond epoch lower bound. If both `startTime` and `endTime` are omitted, the most recent 7 days are returned.
+      end_time: Millisecond epoch upper bound. Maximum interval between `startTime` and `endTime` is 30 days.
+      limit: Number of records to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-crypto-loan/api/rest-api/stable-rate#get-crypto-loans-income-history)
+    """
+    params = {}
+    if asset is not None:
+      params['asset'] = asset
+    if type is not None:
+      params['type'] = type
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[CryptoLoanIncomeRecord]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/loan/income',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

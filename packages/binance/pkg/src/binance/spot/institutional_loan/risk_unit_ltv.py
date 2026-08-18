@@ -1,0 +1,98 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class RiskUnitCollateralWallet(TypedDict):
+  """One collateral wallet."""
+
+  accountType: NotRequired[Literal['SPOT', 'PORTFOLIO_MARGIN', 'CROSS_MARGIN']]
+  """Wallet type."""
+  netEquity: NotRequired[str]
+  """Wallet net equity."""
+  maintainMargin: NotRequired[str]
+  """Wallet maintenance margin."""
+
+
+class RiskUnitLtvLiability(TypedDict):
+  """One outstanding liability entry."""
+
+  assetName: NotRequired[str]
+  """Liability asset name."""
+  principal: NotRequired[str]
+  """Outstanding principal."""
+  interest: NotRequired[str]
+  """Outstanding interest."""
+
+
+class RiskUnitCollateralAccount(TypedDict):
+  """One collateral account bound to the risk unit."""
+
+  email: NotRequired[str]
+  """Account registered email."""
+  type: NotRequired[Literal['CREDIT', 'COLLATERAL']]
+  """Credit sub-account or collateral sub-account."""
+  wallets: NotRequired[list[RiskUnitCollateralWallet]]
+  """The account's wallets counted as collateral."""
+
+
+class RiskUnitLtvDetail(TypedDict):
+  """One risk unit's LTV and collateral detail."""
+
+  groupId: NotRequired[int]
+  """Risk unit unique identifier."""
+  parentEmail: NotRequired[str]
+  """Parent account email."""
+  creditEmail: NotRequired[str]
+  """Credit account email."""
+  updateTime: NotRequired[int]
+  """Last update timestamp, in milliseconds."""
+  ltv: NotRequired[str]
+  """Current loan-to-value ratio."""
+  totalNetEquity: NotRequired[str]
+  """Total net equity across the risk unit's accounts."""
+  totalMaintenanceMargin: NotRequired[str]
+  """Total maintenance margin across the risk unit's accounts."""
+  totalLiability: NotRequired[str]
+  """Total outstanding liability (principal plus interest)."""
+  parentAccountFrozenAmount: NotRequired[str]
+  """Amount frozen on the parent account for this risk unit."""
+  maxTransferOutAmount: NotRequired[str]
+  """Maximum amount currently transferable out of the risk unit."""
+  maxAllowedBorrowLimit: NotRequired[str]
+  """USDT-equivalent maximum borrowable amount for this risk unit. Does not account for the borrowed asset's own collateral ratio -- for assets with a collateral ratio below 100%, the actual maximum borrowable quantity is further reduced by that ratio, which itself depends on the credit account's margin mode."""
+  liabilities: NotRequired[list[RiskUnitLtvLiability]]
+  """Outstanding liabilities by asset."""
+  collateralAccounts: NotRequired[list[RiskUnitCollateralAccount]]
+  """Collateral accounts bound to this risk unit."""
+
+
+class RiskUnitLtv(RpcEndpoint):
+  """Query institutional loan risk unit LTV and collateral details. Both the parent account and a credit (borrowing) account can call this endpoint. For the parent account, all risk units are returned when `groupId` is omitted, or a single risk unit when it is provided; a credit account may only query risk units bound to it; any other account type gets no results."""
+
+  async def risk_unit_ltv(
+    self,
+    *,
+    group_id: int | None = None,
+    validate: bool | None = None,
+  ) -> list[RiskUnitLtvDetail]:
+    """Query institutional loan risk unit LTV and collateral details. Both the parent account and a credit (borrowing) account can call this endpoint. For the parent account, all risk units are returned when `groupId` is omitted, or a single risk unit when it is provided; a credit account may only query risk units bound to it; any other account type gets no results.
+
+    Args:
+      group_id: Risk unit unique identifier. Only meaningful for the parent account -- omit to return all risk units.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-institutional-loan/api/rest-api/account#query-risk-unit-details)
+    """
+    params = {}
+    if group_id is not None:
+      params['groupId'] = group_id
+    _Response = list[RiskUnitLtvDetail]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/sapi/v1/margin/loan-group/ltv-details',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

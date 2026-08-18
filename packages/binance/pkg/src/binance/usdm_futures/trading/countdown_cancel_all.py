@@ -1,0 +1,46 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class AutoCancelAllOpenOrdersResult(TypedDict):
+  """Acknowledgement of the countdown that was armed or disarmed."""
+
+  symbol: str
+  """Trading symbol."""
+  countdownTime: str
+  """Countdown in milliseconds, echoed back as a string."""
+
+
+class CountdownCancelAll(RpcEndpoint):
+  """Cancel all open orders of the specified symbol at the end of the specified countdown. Call repeatedly as a heartbeat so the existing countdown is canceled and replaced by a new one; if not called again before the countdown elapses, all open orders for the symbol are automatically canceled."""
+
+  async def countdown_cancel_all(
+    self,
+    *,
+    symbol: str,
+    countdown_time: int,
+    validate: bool | None = None,
+  ) -> AutoCancelAllOpenOrdersResult:
+    """Cancel all open orders of the specified symbol at the end of the specified countdown. Call repeatedly as a heartbeat so the existing countdown is canceled and replaced by a new one; if not called again before the countdown elapses, all open orders for the symbol are automatically canceled.
+
+    Args:
+      symbol: Trading symbol.
+      countdown_time: Countdown in milliseconds. 1000 means 1 second; 0 disables the countdown cancel-all for the symbol.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#auto-cancel-all-open-orders)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'countdownTime': countdown_time,
+    }
+    _Response = AutoCancelAllOpenOrdersResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/fapi/v1/countdownCancelAll',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

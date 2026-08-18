@@ -1,0 +1,74 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DualInvestmentSubscription(TypedDict):
+  """The Dual Investment position created by a subscription."""
+
+  positionId: NotRequired[int]
+  """Identifier of the created position."""
+  investCoin: NotRequired[str]
+  """Asset subscribed with."""
+  exercisedCoin: NotRequired[str]
+  """Target exercised asset."""
+  subscriptionAmount: NotRequired[str]
+  """Amount subscribed, as a decimal string."""
+  duration: NotRequired[int]
+  """Product duration in days."""
+  autoCompoundPlan: NotRequired[Literal['STANDARD', 'ADVANCED']]
+  """Auto-compound plan applied to the position. Only present when auto-compound is not switched off."""
+  strikePrice: NotRequired[str]
+  """Strike price, as a decimal string."""
+  settleDate: NotRequired[int]
+  """Millisecond epoch settlement date."""
+  purchaseStatus: NotRequired[str]
+  """Purchase status."""
+  apr: NotRequired[str]
+  """Annual percentage rate, as a decimal string."""
+  orderId: NotRequired[int]
+  """Order identifier."""
+  purchaseTime: NotRequired[int]
+  """Millisecond epoch time the subscription was recorded."""
+  optionType: NotRequired[str]
+  """Product option type."""
+
+
+class Subscribe(RpcEndpoint):
+  """Subscribe to a Dual Investment product. id/orderId identify the product, both taken from spot.dual_investment.product_list."""
+
+  async def subscribe(
+    self,
+    *,
+    id: str,
+    order_id: str,
+    deposit_amount: float,
+    auto_compound_plan: Literal['NONE', 'STANDARD', 'ADVANCED'],
+    validate: bool | None = None,
+  ) -> DualInvestmentSubscription:
+    """Subscribe to a Dual Investment product. id/orderId identify the product, both taken from spot.dual_investment.product_list.
+
+    Args:
+      id: Product identifier, from spot.dual_investment.product_list.
+      order_id: Order identifier, from spot.dual_investment.product_list.
+      deposit_amount: Amount to subscribe with.
+      auto_compound_plan: Auto-compound plan to apply to the resulting position.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-dual-investment/api/rest-api/trade#subscribe-dual-investment-products)
+    """
+    params: dict = {
+      'id': id,
+      'orderId': order_id,
+      'depositAmount': deposit_amount,
+      'autoCompoundPlan': auto_compound_plan,
+    }
+    _Response = DualInvestmentSubscription
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/dci/product/subscribe',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,49 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class UsdMWsOrderBook(TypedDict):
+  """Order book snapshot for a symbol."""
+
+  lastUpdateId: int
+  """Identifier of the last update reflected in this snapshot."""
+  E: int
+  """Message output time, in milliseconds since epoch."""
+  T: int
+  """Transaction time, in milliseconds since epoch."""
+  bids: list[tuple[str, str]]
+  """Bid price levels, best (highest) bid first."""
+  asks: list[tuple[str, str]]
+  """Ask price levels, best (lowest) ask first."""
+
+
+class Depth(WsRpcEndpoint):
+  """Order book depth (bids and asks) for a symbol."""
+
+  async def depth(
+    self,
+    *,
+    symbol: str,
+    limit: Literal[5, 10, 20, 50, 100, 500, 1000] | None = None,
+    validate: bool | None = None,
+  ) -> UsdMWsOrderBook:
+    """Order book depth (bids and asks) for a symbol.
+
+    Args:
+      symbol: Trading symbol, e.g. BTCUSDT.
+      limit: Number of price levels to return per side.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/market-data#order-book)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    _Response = UsdMWsOrderBook
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'depth', params=params, validator=_validator, validate=validate
+    )

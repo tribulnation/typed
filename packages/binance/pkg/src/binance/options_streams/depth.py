@@ -1,0 +1,58 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.types import OrderBookLevel
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class PartialDepthEvent(TypedDict):
+  """Top `level` bids and asks for one option symbol."""
+
+  e: Literal['depthUpdate']
+  """Event type."""
+  E: Timestamp
+  """Event time."""
+  T: Timestamp
+  """Transaction time."""
+  s: str
+  """Option symbol."""
+  U: int
+  """First update ID in this event."""
+  u: int
+  """Final update ID in this event."""
+  pu: int
+  """Final update ID in the last pushed event."""
+  b: list[OrderBookLevel]
+  """Bid price levels, best (highest) first."""
+  a: list[OrderBookLevel]
+  """Ask price levels, best (lowest) first."""
+
+
+class Depth(StreamEndpoint):
+  """Partial book depth streams"""
+
+  def __call__(
+    self,
+    symbol: str,
+    level: Literal[5, 10, 20],
+    updateSpeed: Literal['100ms', '500ms'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[PartialDepthEvent]:
+    """Partial book depth streams
+
+    Args:
+      symbol: Option symbol, e.g. `BTC-250627-50000-C`.
+      level: Number of bid/ask levels to push.
+      updateSpeed: Push interval.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/ws-streams/public#partial-book-depth-streams)
+    """
+    _validator = validator[PartialDepthEvent](PartialDepthEvent)
+    return self.subscribe(
+      f'{symbol.lower()}@depth{level}@{updateSpeed}',
+      validator=_validator,
+      validate=validate,
+    )

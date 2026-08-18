@@ -1,0 +1,39 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UsdMFuturesFeeBurnToggleAck(TypedDict):
+  """Acknowledgement that the BNB fee discount setting was changed."""
+
+  code: NotRequired[int]
+  """Response code, `200` on success."""
+  msg: NotRequired[str]
+  """Human-readable confirmation message."""
+
+
+class ToggleFeeBurn(RpcEndpoint):
+  """Change this account's BNB fee discount status (fee discount on or off), on every symbol."""
+
+  async def toggle_fee_burn(
+    self,
+    *,
+    fee_burn: Literal['true', 'false'],
+    validate: bool | None = None,
+  ) -> UsdMFuturesFeeBurnToggleAck:
+    """Change this account's BNB fee discount status (fee discount on or off), on every symbol.
+
+    Args:
+      fee_burn: `"true"` enables the BNB fee discount; `"false"` disables it.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/account#toggle-bnb-burn-on-futures-trade)
+    """
+    params: dict = {
+      'feeBurn': fee_burn,
+    }
+    _Response = UsdMFuturesFeeBurnToggleAck
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST', '/fapi/v1/feeBurn', params=params, validator=_validator, validate=validate
+    )

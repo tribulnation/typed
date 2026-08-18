@@ -1,0 +1,31 @@
+from .account_commission import AccountCommission
+from .all_order_lists import AllOrderLists
+from .all_orders import AllOrders
+from .my_allocations import MyAllocations
+from .my_filters import MyFilters
+from .my_prevented_matches import MyPreventedMatches
+from .my_trades import MyTrades
+from .open_order_lists_status import OpenOrderListsStatus
+from .open_orders_status import OpenOrdersStatus
+from .order_amendments import OrderAmendments
+from .order_list_status import OrderListStatusEndpoint
+from .order_status import OrderStatusEndpoint
+from .rate_limit_orders import RateLimitOrders
+
+
+class Account(
+  AccountCommission,
+  AllOrderLists,
+  AllOrders,
+  MyAllocations,
+  MyFilters,
+  MyPreventedMatches,
+  MyTrades,
+  OpenOrderListsStatus,
+  OpenOrdersStatus,
+  OrderAmendments,
+  OrderListStatusEndpoint,
+  OrderStatusEndpoint,
+  RateLimitOrders,
+):
+  """Binance account endpoints."""

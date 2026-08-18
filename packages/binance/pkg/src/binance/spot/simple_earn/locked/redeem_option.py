@@ -1,0 +1,44 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class LockedRedeemOptionResult(TypedDict):
+  """Result of setting a locked position's redeem option."""
+
+  success: NotRequired[bool]
+  """Whether the setting was updated successfully."""
+
+
+class RedeemOption(RpcEndpoint):
+  """Set the redeem option (destination wallet at maturity) for a Simple Earn locked product position."""
+
+  async def __call__(
+    self,
+    *,
+    position_id: str,
+    redeem_to: Literal['SPOT', 'FLEXIBLE'],
+    validate: bool | None = None,
+  ) -> LockedRedeemOptionResult:
+    """Set the redeem option (destination wallet at maturity) for a Simple Earn locked product position.
+
+    Args:
+      position_id: Locked position identifier to set the redeem option for.
+      redeem_to: Wallet this position should redeem to at maturity.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#set-locked-product-redeem-option)
+    """
+    params: dict = {
+      'positionId': position_id,
+      'redeemTo': redeem_to,
+    }
+    _Response = LockedRedeemOptionResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/simple-earn/locked/setRedeemOption',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

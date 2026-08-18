@@ -1,0 +1,41 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OrderCancelResult(TypedDict):
+  """Result of canceling the order."""
+
+  success: NotRequired[bool]
+  """Whether the order was successfully canceled."""
+
+
+class OrderCancel(RpcEndpoint):
+  """Cancel an open Spot Block Matching order."""
+
+  async def order_cancel(
+    self,
+    *,
+    order_id: int,
+    validate: bool | None = None,
+  ) -> OrderCancelResult:
+    """Cancel an open Spot Block Matching order.
+
+    Args:
+      order_id: Order ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-spot-block-matching/api/rest-api/~#order-cancel)
+    """
+    params: dict = {
+      'orderId': order_id,
+    }
+    _Response = OrderCancelResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/block-match/order/cancel',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

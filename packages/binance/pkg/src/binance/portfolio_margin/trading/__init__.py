@@ -1,0 +1,131 @@
+from .cancel_all_cm_conditional_orders import CancelAllCmConditionalOrders
+from .cancel_all_cm_orders import CancelAllCmOrders
+from .cancel_all_margin_orders import CancelAllMarginOrders
+from .cancel_all_um_algo_orders import CancelAllUmAlgoOrders
+from .cancel_all_um_conditional_orders import CancelAllUmConditionalOrders
+from .cancel_all_um_orders import CancelAllUmOrders
+from .cancel_cm_conditional_order import CancelCmConditionalOrder
+from .cancel_cm_order import CancelCmOrder
+from .cancel_margin_oco import CancelMarginOco
+from .cancel_margin_order import CancelMarginOrder
+from .cancel_um_algo_order import CancelUmAlgoOrder
+from .cancel_um_conditional_order import CancelUmConditionalOrder
+from .cancel_um_order import CancelUmOrder
+from .cm_adl_quantile import CmAdlQuantile
+from .cm_all_conditional_orders import CmAllConditionalOrders
+from .cm_all_orders import CmAllOrders
+from .cm_conditional_order import CmConditionalOrder
+from .cm_conditional_order_history import CmConditionalOrderHistory
+from .cm_force_orders import CmForceOrders
+from .cm_open_conditional_orders import CmOpenConditionalOrders
+from .cm_open_order import CmOpenOrder
+from .cm_open_orders import CmOpenOrders
+from .cm_order import CmOrder
+from .cm_order_amendments import CmOrderAmendments
+from .cm_trades import CmTrades
+from .margin_all_oco import MarginAllOco
+from .margin_all_orders import MarginAllOrders
+from .margin_borrow import MarginBorrow
+from .margin_force_orders import MarginForceOrders
+from .margin_oco import MarginOco
+from .margin_open_oco import MarginOpenOco
+from .margin_open_orders import MarginOpenOrders
+from .margin_order import MarginOrder
+from .margin_repay import MarginRepay
+from .margin_repay_debt import MarginRepayDebt
+from .margin_trades import MarginTrades
+from .modify_cm_order import ModifyCmOrder
+from .modify_um_order import ModifyUmOrder
+from .new_cm_conditional_order import NewCmConditionalOrder
+from .new_cm_order import NewCmOrder
+from .new_margin_oco import NewMarginOco
+from .new_margin_order import NewMarginOrder
+from .new_um_algo_order import NewUmAlgoOrder
+from .new_um_conditional_order import NewUmConditionalOrder
+from .new_um_order import NewUmOrder
+from .set_um_bnb_burn import SetUmBnbBurn
+from .um_adl_quantile import UmAdlQuantile
+from .um_algo_order import UmAlgoOrder
+from .um_algo_order_history import UmAlgoOrderHistory
+from .um_all_conditional_orders import UmAllConditionalOrders
+from .um_all_orders import UmAllOrders
+from .um_bnb_burn_status import UmBnbBurnStatus
+from .um_conditional_order import UmConditionalOrder
+from .um_conditional_order_history import UmConditionalOrderHistory
+from .um_force_orders import UmForceOrders
+from .um_open_algo_orders import UmOpenAlgoOrders
+from .um_open_conditional_orders import UmOpenConditionalOrders
+from .um_open_order import UmOpenOrder
+from .um_open_orders import UmOpenOrders
+from .um_order import UmOrder
+from .um_order_amendments import UmOrderAmendments
+from .um_trades import UmTrades
+from .um_tradfi_perps_contract import UmTradfiPerpsContract
+
+
+class Trading(
+  CancelAllCmConditionalOrders,
+  CancelAllCmOrders,
+  CancelAllMarginOrders,
+  CancelAllUmAlgoOrders,
+  CancelAllUmConditionalOrders,
+  CancelAllUmOrders,
+  CancelCmConditionalOrder,
+  CancelCmOrder,
+  CancelMarginOco,
+  CancelMarginOrder,
+  CancelUmAlgoOrder,
+  CancelUmConditionalOrder,
+  CancelUmOrder,
+  CmAdlQuantile,
+  CmAllConditionalOrders,
+  CmAllOrders,
+  CmConditionalOrder,
+  CmConditionalOrderHistory,
+  CmForceOrders,
+  CmOpenConditionalOrders,
+  CmOpenOrder,
+  CmOpenOrders,
+  CmOrder,
+  CmOrderAmendments,
+  CmTrades,
+  MarginAllOco,
+  MarginAllOrders,
+  MarginBorrow,
+  MarginForceOrders,
+  MarginOco,
+  MarginOpenOco,
+  MarginOpenOrders,
+  MarginOrder,
+  MarginRepay,
+  MarginRepayDebt,
+  MarginTrades,
+  ModifyCmOrder,
+  ModifyUmOrder,
+  NewCmConditionalOrder,
+  NewCmOrder,
+  NewMarginOco,
+  NewMarginOrder,
+  NewUmAlgoOrder,
+  NewUmConditionalOrder,
+  NewUmOrder,
+  SetUmBnbBurn,
+  UmAdlQuantile,
+  UmAlgoOrder,
+  UmAlgoOrderHistory,
+  UmAllConditionalOrders,
+  UmAllOrders,
+  UmBnbBurnStatus,
+  UmConditionalOrder,
+  UmConditionalOrderHistory,
+  UmForceOrders,
+  UmOpenAlgoOrders,
+  UmOpenConditionalOrders,
+  UmOpenOrder,
+  UmOpenOrders,
+  UmOrder,
+  UmOrderAmendments,
+  UmTrades,
+  UmTradfiPerpsContract,
+):
+  """Binance trading endpoints."""

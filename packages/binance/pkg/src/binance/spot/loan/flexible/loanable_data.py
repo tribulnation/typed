@@ -1,0 +1,56 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FlexibleLoanAsset(TypedDict):
+  """One flexible loanable asset's interest rate and borrow limit."""
+
+  loanCoin: NotRequired[str]
+  """Loan coin."""
+  flexibleInterestRate: NotRequired[str]
+  """Flexible hourly interest rate, as a decimal string."""
+  flexibleMinLimit: NotRequired[str]
+  """Minimum borrowable amount."""
+  flexibleMaxLimit: NotRequired[str]
+  """Maximum borrowable amount, in USD value."""
+
+
+class FlexibleLoanAssetsData(TypedDict):
+  """Interest rate and borrow limit of flexible loanable assets."""
+
+  rows: NotRequired[list[FlexibleLoanAsset]]
+  """Matching loanable assets."""
+  total: NotRequired[int]
+  """Total number of matching loanable assets."""
+
+
+class LoanableData(RpcEndpoint):
+  """Get interest rate and borrow limit of flexible loanable assets. The borrow limit is shown in USD value."""
+
+  async def loanable_data(
+    self,
+    *,
+    loan_coin: str | None = None,
+    validate: bool | None = None,
+  ) -> FlexibleLoanAssetsData:
+    """Get interest rate and borrow limit of flexible loanable assets. The borrow limit is shown in USD value.
+
+    Args:
+      loan_coin: Loan coin to query. All loanable assets are returned when omitted.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-crypto-loan/api/rest-api/flexible-rate#get-flexible-loan-assets-data)
+    """
+    params = {}
+    if loan_coin is not None:
+      params['loanCoin'] = loan_coin
+    _Response = FlexibleLoanAssetsData
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v2/loan/flexible/loanable/data',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

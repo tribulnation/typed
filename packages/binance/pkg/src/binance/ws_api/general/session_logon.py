@@ -1,0 +1,37 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class SessionLogonResult(TypedDict):
+  """Status of the newly-authenticated WebSocket session."""
+
+  apiKey: str
+  """The API key now authenticated on this connection."""
+  authorizedSince: Timestamp
+  """Millisecond timestamp this connection was authenticated."""
+  connectedSince: Timestamp
+  """Millisecond timestamp this WebSocket connection was established."""
+  returnRateLimits: bool
+  """Whether rate limit usage is included in responses on this connection."""
+  serverTime: Timestamp
+  """Current server time."""
+  userDataStream: bool
+  """Whether a User Data Stream subscription is active on this connection."""
+
+
+class SessionLogon(WsRpcEndpoint):
+  """Log in with API key (SIGNED)"""
+
+  async def session_logon(self, *, validate: bool | None = None) -> SessionLogonResult:
+    """Authenticate the WebSocket connection using the provided API key. After calling `session.logon`, `apiKey` and `signature` may be omitted on later requests that require them. Only one API key can be authenticated at a time; calling `session.logon` again changes the current authenticated key. Ed25519 keys only.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#session-logon)
+    """
+    _Response = SessionLogonResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'session.logon', validator=_validator, validate=validate
+    )

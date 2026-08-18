@@ -1,0 +1,49 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmUmFuturesSymbolConfiguration(TypedDict):
+  """PmUmFuturesSymbolConfiguration."""
+
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  marginType: NotRequired[str]
+  """Margin Type."""
+  isAutoAddMargin: NotRequired[str]
+  """Is Auto Add Margin."""
+  leverage: NotRequired[int]
+  """current initial leverage."""
+  maxNotionalValue: NotRequired[str]
+  """Max Notional Value."""
+
+
+class UmSymbolConfig(RpcEndpoint):
+  """UM Futures Symbol Configuration"""
+
+  async def um_symbol_config(
+    self,
+    *,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> list[PmUmFuturesSymbolConfiguration]:
+    """Get current UM account symbol configuration.
+
+    Args:
+      symbol: Symbol.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#um-futures-symbol-configuration)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    _Response = list[PmUmFuturesSymbolConfiguration]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/um/symbolConfig',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

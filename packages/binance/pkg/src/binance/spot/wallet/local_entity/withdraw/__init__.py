@@ -1,0 +1,7 @@
+from .apply import Apply
+from .history import History
+from .history_v2 import HistoryV2
+
+
+class Withdraw(Apply, History, HistoryV2):
+  """Binance withdraw endpoints."""

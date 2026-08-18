@@ -1,0 +1,58 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesOrderRateLimitEntry(TypedDict):
+  """Order rate limit for one account."""
+
+  userId: NotRequired[int]
+  """Account user ID this rate limit applies to."""
+  userEmail: NotRequired[str]
+  """Email address of the account this rate limit applies to."""
+  limit: NotRequired[int]
+  """Order rate limit assigned to this account."""
+
+
+class FuturesOrderRateLimitsResult(TypedDict):
+  """Futures user order rate limits."""
+
+  status: NotRequired[str]
+  """Response status, e.g. `OK`."""
+  type: NotRequired[str]
+  """Response category, e.g. `GENERAL`."""
+  code: NotRequired[str]
+  """Response code; `"000000000"` on success."""
+  data: NotRequired[list[FuturesOrderRateLimitEntry]]
+  """One entry per account under this VIP relationship."""
+
+
+class FuturesOrderRateLimits(RpcEndpoint):
+  """Query futures user order rate limits."""
+
+  async def futures_order_rate_limits(
+    self,
+    *,
+    product_type: Literal['CM', 'UM'],
+    validate: bool | None = None,
+  ) -> FuturesOrderRateLimitsResult:
+    """Query futures user order rate limits.
+
+    Args:
+      product_type: Futures product type to query user order rate limits for.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-vip-service/api/rest-api/~#query-futures-userorder-rate-limits)
+    """
+    params: dict = {
+      'productType': product_type,
+    }
+    _Response = FuturesOrderRateLimitsResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/vip-portal/futures/rate-limits/orders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

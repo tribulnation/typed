@@ -1,0 +1,128 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class RiskUnitBorrowRepayRecord(TypedDict):
+  """One borrow/repay record."""
+
+  tranId: NotRequired[int]
+  """Transaction unique identifier."""
+  assetName: NotRequired[str]
+  """Asset name."""
+  amount: NotRequired[float]
+  """Transaction amount."""
+  principal: NotRequired[float]
+  """Principal portion of the transaction amount."""
+  interest: NotRequired[float]
+  """Interest portion of the transaction amount."""
+  status: NotRequired[str]
+  """Transaction status."""
+  type: NotRequired[Literal['BORROW', 'NORMAL_REPAY', 'FORCE_REPAY']]
+  """Transaction type."""
+  timestamp: NotRequired[int]
+  """Transaction timestamp, in milliseconds."""
+
+
+class RiskUnitBorrowRepayRecordsPage(TypedDict):
+  """One page of risk unit borrow/repay records."""
+
+  total: NotRequired[int]
+  """Total number of matching records."""
+  rows: NotRequired[list[RiskUnitBorrowRepayRecord]]
+  """Matching borrow/repay records."""
+
+
+class BorrowRepayRecords(RpcEndpoint):
+  """Get borrow/repay records for an institutional loan risk unit. Callable only with the credit account API key. When `groupId` is omitted, the currently activated risk unit is used; the credit account can also query a specific closed risk unit by `groupId`. Results are returned in descending order. If `asset` is provided, the maximum query span is 30 days before `endTime`; otherwise 7 days. If neither `startTime` nor `endTime` is provided, the most recent 7 days are returned; `startTime` defaults to `endTime` minus 7 days and `endTime` defaults to the current time. The span between `startTime` and `endTime` cannot exceed 100 days."""
+
+  async def borrow_repay_records(
+    self,
+    *,
+    group_id: int | None = None,
+    type: Literal['BORROW', 'REPAY'],
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> RiskUnitBorrowRepayRecordsPage:
+    """Get borrow/repay records for an institutional loan risk unit. Callable only with the credit account API key. When `groupId` is omitted, the currently activated risk unit is used; the credit account can also query a specific closed risk unit by `groupId`. Results are returned in descending order. If `asset` is provided, the maximum query span is 30 days before `endTime`; otherwise 7 days. If neither `startTime` nor `endTime` is provided, the most recent 7 days are returned; `startTime` defaults to `endTime` minus 7 days and `endTime` defaults to the current time. The span between `startTime` and `endTime` cannot exceed 100 days.
+
+    Args:
+      group_id: Risk unit unique identifier. Omit to use the currently activated risk unit.
+      type: Record type to query.
+      asset: Asset name to filter by, for example `USDT` or `USDC`.
+      start_time: Start time in milliseconds. Defaults to `endTime` minus 7 days.
+      end_time: End time in milliseconds. Defaults to the current time.
+      current: Current page number. Starts from 1.
+      size: Number of records per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-institutional-loan/api/rest-api/borrow-repay#risk-unit-borrow-repay-records)
+    """
+    params: dict = {
+      'type': type,
+    }
+    if group_id is not None:
+      params['groupId'] = group_id
+    if asset is not None:
+      params['asset'] = asset
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = RiskUnitBorrowRepayRecordsPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/loan-group/borrow-repay',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def borrow_repay_records_paged(
+    self,
+    *,
+    group_id: int | None = None,
+    type: Literal['BORROW', 'REPAY'],
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[RiskUnitBorrowRepayRecordsPage]:
+    """Yield successive pages of `borrow_repay_records`.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.borrow_repay_records(
+        group_id=group_id,
+        type=type,
+        asset=asset,
+        start_time=start_time,
+        end_time=end_time,
+        size=size,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

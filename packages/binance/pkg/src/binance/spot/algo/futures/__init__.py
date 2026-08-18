@@ -1,0 +1,12 @@
+from .cancel_order import CancelOrder
+from .historical_orders import HistoricalOrders
+from .new_order_twap import NewOrderTwap
+from .new_order_vp import NewOrderVp
+from .open_orders import OpenOrders
+from .sub_orders import SubOrders
+
+
+class Futures(
+  CancelOrder, HistoricalOrders, NewOrderTwap, NewOrderVp, OpenOrders, SubOrders
+):
+  """Binance futures endpoints."""

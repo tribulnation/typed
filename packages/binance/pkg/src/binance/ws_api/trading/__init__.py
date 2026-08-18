@@ -1,0 +1,35 @@
+from .open_orders_cancel_all import OpenOrdersCancelAll
+from .order_amend_keep_priority import OrderAmendKeepPriority
+from .order_cancel import OrderCancel
+from .order_cancel_replace import OrderCancelReplace
+from .order_list_cancel import OrderListCancel
+from .order_list_place import OrderListPlace
+from .order_list_place_oco import OrderListPlaceOco
+from .order_list_place_opo import OrderListPlaceOpo
+from .order_list_place_opoco import OrderListPlaceOpoco
+from .order_list_place_oto import OrderListPlaceOto
+from .order_list_place_otoco import OrderListPlaceOtoco
+from .order_place import OrderPlace
+from .order_test import OrderTest
+from .sor_order_place import SorOrderPlace
+from .sor_order_test import SorOrderTest
+
+
+class Trading(
+  OpenOrdersCancelAll,
+  OrderAmendKeepPriority,
+  OrderCancel,
+  OrderCancelReplace,
+  OrderListCancel,
+  OrderListPlace,
+  OrderListPlaceOco,
+  OrderListPlaceOpo,
+  OrderListPlaceOpoco,
+  OrderListPlaceOto,
+  OrderListPlaceOtoco,
+  OrderPlace,
+  OrderTest,
+  SorOrderPlace,
+  SorOrderTest,
+):
+  """Binance trading endpoints."""

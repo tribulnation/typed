@@ -1,0 +1,53 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OrderListOrder(TypedDict):
+  """One order belonging to an order list."""
+
+  symbol: str
+  """Symbol this order was placed on."""
+  orderId: int
+  """Order ID assigned by Binance."""
+  clientOrderId: str
+  """Client-supplied order ID."""
+
+
+class SpotOrderList(TypedDict):
+  """A spot order list (OCO/OTO)."""
+
+  orderListId: int
+  """Order list ID assigned by Binance."""
+  contingencyType: Literal['OCO', 'OTO']
+  """Contingency type of the order list."""
+  listStatusType: Literal['RESPONSE', 'EXEC_STARTED', 'UPDATED', 'ALL_DONE']
+  """Current status of the order list."""
+  listOrderStatus: Literal['EXECUTING', 'ALL_DONE', 'REJECT']
+  """Current status of the orders in the list."""
+  listClientOrderId: str
+  """Client-supplied order list ID."""
+  transactionTime: int
+  """Millisecond timestamp the order list was created or last updated."""
+  symbol: str
+  """Symbol this order list was placed on."""
+  orders: list[OrderListOrder]
+  """Orders belonging to this order list."""
+
+
+class OpenOrderLists(RpcEndpoint):
+  """Query open order lists"""
+
+  async def open_order_lists(
+    self, *, validate: bool | None = None
+  ) -> list[SpotOrderList]:
+    """Retrieve all currently open order lists on the account.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md)
+    """
+    _Response = list[SpotOrderList]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/api/v3/openOrderList', validator=_validator, validate=validate
+    )

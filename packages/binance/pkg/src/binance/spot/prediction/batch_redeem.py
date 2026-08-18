@@ -1,0 +1,67 @@
+from json import dumps
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionRedeemResult(TypedDict):
+  """Redeem result for one token."""
+
+  requestId: NotRequired[str]
+  """ID of this redeem request within the batch."""
+  txHash: NotRequired[str]
+  """On-chain transaction hash of the redeem, once submitted."""
+  status: NotRequired[str]
+  """Redeem submission status."""
+  error: NotRequired[str | None]
+  """Error message, or null if the redeem was submitted successfully."""
+
+
+class PredictionBatchRedeemResult(TypedDict):
+  """Results of a batch token redemption."""
+
+  batchId: NotRequired[str]
+  """ID of this redeem batch."""
+  results: NotRequired[list[PredictionRedeemResult]]
+  """Per-token redeem results."""
+
+
+class BatchRedeem(RpcEndpoint):
+  """Redeem one or more settled prediction tokens on-chain to claim winnings. Requires SAS authorization."""
+
+  async def batch_redeem(
+    self,
+    *,
+    wallet_address: str,
+    wallet_id: str,
+    token_ids: list[str],
+    chain_id: str | None = None,
+    validate: bool | None = None,
+  ) -> PredictionBatchRedeemResult:
+    """Redeem one or more settled prediction tokens on-chain to claim winnings. Requires SAS authorization.
+
+    Args:
+      wallet_address: User's prediction wallet address.
+      wallet_id: Wallet ID.
+      token_ids: Prediction token IDs to redeem. Not empty. Repeated as `tokenIds=112233&tokenIds=112234`.
+      chain_id: Chain ID. Default `56` (BSC).
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/redeem#batch-redeem)
+    """
+    params: dict = {
+      'walletAddress': wallet_address,
+      'walletId': wallet_id,
+      'tokenIds': dumps(token_ids, separators=(',', ':')),
+    }
+    if chain_id is not None:
+      params['chainId'] = chain_id
+    _Response = PredictionBatchRedeemResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/w3w/wallet/prediction/batch-redeem',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

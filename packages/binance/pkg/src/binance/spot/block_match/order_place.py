@@ -1,0 +1,52 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class OrderPlaceResult(TypedDict):
+  """The placed order's identifiers."""
+
+  orderId: NotRequired[int]
+  """ID of the placed order."""
+  settlementKey: NotRequired[str]
+  """Settlement key used to accept (take) this order via `spot.block_match.order_take`."""
+
+
+class OrderPlace(RpcEndpoint):
+  """Place a Spot Block Matching order. The order is valid for 30 minutes and automatically expires if not taken."""
+
+  async def order_place(
+    self,
+    *,
+    symbol: str,
+    side: Literal['BUY', 'SELL'],
+    price: float,
+    amount: float,
+    validate: bool | None = None,
+  ) -> OrderPlaceResult:
+    """Place a Spot Block Matching order. The order is valid for 30 minutes and automatically expires if not taken.
+
+    Args:
+      symbol: Trading symbol, e.g. `BTC/USDT`.
+      side: Order side.
+      price: Order price.
+      amount: Order amount.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-spot-block-matching/api/rest-api/~#order-place)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'side': side,
+      'price': price,
+      'amount': amount,
+    }
+    _Response = OrderPlaceResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/block-match/order/place',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

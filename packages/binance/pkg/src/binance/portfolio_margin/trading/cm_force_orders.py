@@ -1,0 +1,92 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp, timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmUsersCmForceOrders(TypedDict):
+  """PmUsersCmForceOrders."""
+
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  pair: NotRequired[str]
+  """Pair."""
+  status: NotRequired[str]
+  """Enum：completed，processing."""
+  clientOrderId: NotRequired[str]
+  """Client Order ID."""
+  price: NotRequired[str]
+  """Price."""
+  avgPrice: NotRequired[str]
+  """Avg Price."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  executedQty: NotRequired[str]
+  """Executed Qty."""
+  cumBase: NotRequired[str]
+  """Cum Base."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  origType: NotRequired[str]
+  """Orig Type."""
+  time: NotRequired[Timestamp]
+  """Event time."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+
+
+class CmForceOrders(RpcEndpoint):
+  """Query User's CM Force Orders"""
+
+  async def cm_force_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    auto_close_type: Literal['LIQUIDATION', 'ADL'] | None = None,
+    start_time: Timestamp | None = None,
+    end_time: Timestamp | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[PmUsersCmForceOrders]:
+    """Query User's CM Force Orders Weight: - 20 with `symbol` - 50 without `symbol` Security Type: USER_DATA Notes: - If "autoCloseType" is not sent, orders with both of the types will be returned - If "startTime" is not sent, data within 7 days before "endTime" can be queried Args: symbol (Optional[str] = None): auto_close_type (Optional[QueryUsersCmForceOrdersAutoCloseTypeEnum] = None): `LIQUIDATION` for liquidation orders, `ADL` for ADL orders. start_time (Optional[int] = None): Timestamp in ms to get funding from INCLUSIVE. end_time (Optional[int] = None): Timestamp in ms to get funding until INCLUSIVE. limit (Optional[int] = None): Number of results returned. recv_window (Optional[int] = None): The value cannot be greater than 60000 Returns: ApiResponse[QueryUsersCmForceOrdersResponse] Raises: RequiredError: If a required parameter is missing.
+
+    Args:
+      symbol: Trading pair symbol.
+      auto_close_type: `LIQUIDATION` for liquidation orders, `ADL` for ADL orders.
+      start_time: Timestamp in ms to get funding from INCLUSIVE.
+      end_time: Timestamp in ms to get funding until INCLUSIVE.
+      limit: Number of results returned.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#query-users-cm-force-orders)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if auto_close_type is not None:
+      params['autoCloseType'] = auto_close_type
+    if start_time is not None:
+      params['startTime'] = timestamp.dump(start_time)
+    if end_time is not None:
+      params['endTime'] = timestamp.dump(end_time)
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[PmUsersCmForceOrders]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/cm/forceOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

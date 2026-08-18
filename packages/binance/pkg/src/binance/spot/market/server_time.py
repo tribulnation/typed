@@ -1,0 +1,27 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class ServerTime(TypedDict):
+  """The exchange's current server time."""
+
+  serverTime: Timestamp
+  """Current server time."""
+
+
+class ServerTimeEndpoint(RpcEndpoint):
+  """Check server time"""
+
+  async def server_time(self, *, validate: bool | None = None) -> ServerTime:
+    """Test connectivity to the REST API and get the current server time.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#check-server-time)
+    """
+    _Response = ServerTime
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/api/v3/time', validator=_validator, validate=validate
+    )

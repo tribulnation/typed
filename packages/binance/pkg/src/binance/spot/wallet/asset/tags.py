@@ -1,0 +1,47 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SpotAssetTag(TypedDict):
+  """Tags configured for a single Spot-tradable asset."""
+
+  assetCode: str
+  """Asset symbol."""
+  assetName: str
+  """Asset display name."""
+  trading: bool
+  """Whether the asset is currently tradable on Spot."""
+  tags: list[str]
+  """Classification tags configured for this asset."""
+
+
+class Tags(RpcEndpoint):
+  """Fetch the classification tags configured for Spot-tradable assets, e.g. sector or chain groupings."""
+
+  async def __call__(
+    self,
+    *,
+    tag: str | None = None,
+    validate: bool | None = None,
+  ) -> list[SpotAssetTag]:
+    """Fetch the classification tags configured for Spot-tradable assets, e.g. sector or chain groupings.
+
+    Args:
+      tag: Tag filter. Supports multiple comma-separated tags with OR semantics (an asset is returned if it matches any one tag); leading/trailing whitespace around each tag is ignored. Returns every eligible asset when omitted.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset#get-spot-asset-tags)
+    """
+    params = {}
+    if tag is not None:
+      params['tag'] = tag
+    _Response = list[SpotAssetTag]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/sapi/v1/spot/asset/tags',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

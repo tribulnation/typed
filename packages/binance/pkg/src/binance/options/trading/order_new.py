@@ -1,0 +1,130 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class NewOrderResult(TypedDict):
+  """The order as accepted by the venue."""
+
+  orderId: NotRequired[int]
+  """System order number."""
+  symbol: NotRequired[str]
+  """Option trading pair, formatted UNDERLYING-EXPIRYDATE-STRIKE-C|P, e.g. BTC-260925-145000-C (a BTC call expiring 2026-09-25 with strike 145000)."""
+  price: NotRequired[str]
+  """Order price."""
+  quantity: NotRequired[str]
+  """Order quantity."""
+  executedQty: NotRequired[str]
+  """Quantity executed so far."""
+  fee: NotRequired[int]
+  """Fee."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Buy/sell direction."""
+  type: NotRequired[Literal['LIMIT']]
+  """Order type."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'GTX']]
+  """Time-in-force method."""
+  reduceOnly: NotRequired[bool]
+  """Whether the order is reduce-only."""
+  postOnly: NotRequired[bool]
+  """Whether the order is post-only."""
+  createTime: NotRequired[Timestamp]
+  """Order creation time."""
+  updateTime: NotRequired[Timestamp]
+  """Last update time."""
+  status: NotRequired[
+    Literal['ACCEPTED', 'PARTIALLY_FILLED', 'CANCELLED', 'FILLED', 'REJECTED']
+  ]
+  """Order status."""
+  avgPrice: NotRequired[str]
+  """Average price of completed trade."""
+  source: NotRequired[str]
+  """Order source."""
+  clientOrderId: NotRequired[str]
+  """Client order ID."""
+  priceScale: NotRequired[int]
+  """Price precision."""
+  quantityScale: NotRequired[int]
+  """Quantity precision."""
+  optionSide: NotRequired[Literal['CALL', 'PUT']]
+  """Option side."""
+  quoteAsset: NotRequired[str]
+  """Quote asset."""
+  mmp: NotRequired[bool]
+  """Whether this is a market-maker-protection order."""
+  selfTradePreventionMode: NotRequired[
+    Literal['NONE', 'EXPIRE_TAKER', 'EXPIRE_MAKER', 'EXPIRE_BOTH']
+  ]
+  """Self-trade prevention mode."""
+
+
+class OrderNew(RpcEndpoint):
+  """Send a new option order. LIMIT is the only documented order type; timeInForce, quantity and price are mandatory for it."""
+
+  async def order_new(
+    self,
+    *,
+    symbol: str,
+    side: Literal['BUY', 'SELL'],
+    type: Literal['LIMIT'],
+    quantity: str,
+    price: str | None = None,
+    time_in_force: Literal['GTC', 'IOC', 'FOK', 'GTX'] | None = None,
+    reduce_only: bool | None = None,
+    post_only: bool | None = None,
+    new_order_resp_type: Literal['ACK', 'RESULT'] | None = None,
+    client_order_id: str | None = None,
+    is_mmp: bool | None = None,
+    self_trade_prevention_mode: Literal[
+      'NONE', 'EXPIRE_TAKER', 'EXPIRE_MAKER', 'EXPIRE_BOTH'
+    ]
+    | None = None,
+    validate: bool | None = None,
+  ) -> NewOrderResult:
+    """Send a new option order. LIMIT is the only documented order type; timeInForce, quantity and price are mandatory for it.
+
+    Args:
+      symbol: Option trading pair, formatted UNDERLYING-EXPIRYDATE-STRIKE-C|P, e.g. BTC-260925-145000-C (a BTC call expiring 2026-09-25 with strike 145000).
+      side: Buy/sell direction.
+      type: Order type. Only LIMIT is documented for Options.
+      quantity: Order quantity.
+      price: Order price. Mandatory for LIMIT orders (the only documented type).
+      time_in_force: Time-in-force method. Mandatory for LIMIT orders.
+      reduce_only: Whether the order is reduce-only.
+      post_only: Whether the order is post-only.
+      new_order_resp_type: Response type.
+      client_order_id: User-defined order ID. Cannot repeat among pending orders.
+      is_mmp: Whether this is a market-maker-protection order.
+      self_trade_prevention_mode: Self-trade prevention mode. EXPIRE_TAKER expires the taker order when self-trade prevention triggers; EXPIRE_MAKER expires the maker order; EXPIRE_BOTH expires both. Default EXPIRE_MAKER.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/derivatives/option/trade#new-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'side': side,
+      'type': type,
+      'quantity': quantity,
+    }
+    if price is not None:
+      params['price'] = price
+    if time_in_force is not None:
+      params['timeInForce'] = time_in_force
+    if reduce_only is not None:
+      params['reduceOnly'] = reduce_only
+    if post_only is not None:
+      params['postOnly'] = post_only
+    if new_order_resp_type is not None:
+      params['newOrderRespType'] = new_order_resp_type
+    if client_order_id is not None:
+      params['clientOrderId'] = client_order_id
+    if is_mmp is not None:
+      params['isMmp'] = is_mmp
+    if self_trade_prevention_mode is not None:
+      params['selfTradePreventionMode'] = self_trade_prevention_mode
+    _Response = NewOrderResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST', '/eapi/v1/order', params=params, validator=_validator, validate=validate
+    )

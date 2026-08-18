@@ -1,0 +1,52 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SubAccountMarginAccountSummaryItem(TypedDict):
+  """One sub-account's margin account totals."""
+
+  email: NotRequired[str]
+  """Sub-account email."""
+  totalAssetOfBtc: NotRequired[str]
+  """Total asset value, in BTC."""
+  totalLiabilityOfBtc: NotRequired[str]
+  """Total liability, in BTC."""
+  totalNetAssetOfBtc: NotRequired[str]
+  """Total net asset value, in BTC."""
+
+
+class SubAccountMarginAccountSummary(TypedDict):
+  """Aggregated margin account summary."""
+
+  totalAssetOfBtc: NotRequired[str]
+  """Total asset value across all sub-accounts, in BTC."""
+  totalLiabilityOfBtc: NotRequired[str]
+  """Total liability across all sub-accounts, in BTC."""
+  totalNetAssetOfBtc: NotRequired[str]
+  """Total net asset value across all sub-accounts, in BTC."""
+  subAccountList: NotRequired[list[SubAccountMarginAccountSummaryItem]]
+  """Per-sub-account breakdown."""
+
+
+class MarginAccountSummary(RpcEndpoint):
+  """Get an aggregated summary of every sub-account's cross-margin account, for the master account."""
+
+  async def __call__(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> SubAccountMarginAccountSummary:
+    """Get an aggregated summary of every sub-account's cross-margin account, for the master account.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/asset-management#get-summary-of-sub-accounts-margin-account)
+    """
+    _Response = SubAccountMarginAccountSummary
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/sub-account/margin/accountSummary',
+      validator=_validator,
+      validate=validate,
+    )

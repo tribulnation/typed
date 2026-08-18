@@ -1,0 +1,50 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.types import OrderBookLevel
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class OrderBook(TypedDict):
+  """Order book snapshot for a symbol."""
+
+  lastUpdateId: int
+  """Last update ID of this snapshot."""
+  bids: list[OrderBookLevel]
+  """Bid price levels, best (highest) price first."""
+  asks: list[OrderBookLevel]
+  """Ask price levels, best (lowest) price first."""
+
+
+class Depth(WsRpcEndpoint):
+  """Order book"""
+
+  async def depth(
+    self,
+    *,
+    symbol: str,
+    limit: int | None = None,
+    symbol_status: Literal['TRADING', 'HALT', 'BREAK'] | None = None,
+    validate: bool | None = None,
+  ) -> OrderBook:
+    """Current order book depth for a symbol. Returns limited market depth; use WebSocket Streams' partial-book-depth or diff-depth channels to continuously monitor order book updates.
+
+    Args:
+      symbol: Symbol to query.
+      limit: Number of price levels to return per side. If limit > 5000, only 5000 entries are returned.
+      symbol_status: Filter for symbols with this trading status. A status mismatch returns error -1220 SYMBOL_DOES_NOT_MATCH_STATUS.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#order-book)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    if symbol_status is not None:
+      params['symbolStatus'] = symbol_status
+    _Response = OrderBook
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'depth', params=params, validator=_validator, validate=validate
+    )

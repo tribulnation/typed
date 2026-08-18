@@ -1,0 +1,68 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class RwusdFastRedemptionQuota(TypedDict):
+  """Remaining fast-redemption quota."""
+
+  leftQuota: NotRequired[str]
+  """Remaining fast-redeemable amount, as a decimal string."""
+  minimum: NotRequired[str]
+  """Minimum fast redemption amount, as a decimal string."""
+  fee: NotRequired[str]
+  """Fast redemption fee rate, as a decimal string."""
+  freeQuota: NotRequired[str]
+  """Amount that can be fast-redeemed with no fee, as a decimal string."""
+
+
+class RwusdStandardRedemptionQuota(TypedDict):
+  """Remaining standard-redemption quota."""
+
+  leftQuota: NotRequired[str]
+  """Remaining standard-redeemable amount, as a decimal string."""
+  minimum: NotRequired[str]
+  """Minimum standard redemption amount, as a decimal string."""
+  fee: NotRequired[str]
+  """Standard redemption fee rate, as a decimal string."""
+  redeemPeriod: NotRequired[int]
+  """Standard redemption settlement period, in days."""
+
+
+class RwusdSubscriptionQuota(TypedDict):
+  """Remaining subscription quota."""
+
+  assets: NotRequired[list[str]]
+  """Assets eligible for subscription."""
+  leftQuota: NotRequired[str]
+  """Remaining subscribable amount, as a decimal string."""
+  minimum: NotRequired[str]
+  """Minimum subscription amount, as a decimal string."""
+
+
+class RwusdQuota(TypedDict):
+  """Subscription and redemption quota for RWUSD."""
+
+  subscriptionQuota: NotRequired[RwusdSubscriptionQuota]
+  fastRedemptionQuota: NotRequired[RwusdFastRedemptionQuota]
+  standardRedemptionQuota: NotRequired[RwusdStandardRedemptionQuota]
+  subscribeEnable: NotRequired[bool]
+  """Whether subscription is currently enabled."""
+  redeemEnable: NotRequired[bool]
+  """Whether redemption is currently enabled."""
+
+
+class Quota(RpcEndpoint):
+  """Get RWUSD quota details: subscription quota, fast redemption quota, and standard redemption quota."""
+
+  async def __call__(self, *, validate: bool | None = None) -> RwusdQuota:
+    """Get RWUSD quota details: subscription quota, fast redemption quota, and standard redemption quota.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/rwusd#get-rwusd-quota-details)
+    """
+    _Response = RwusdQuota
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/sapi/v1/rwusd/quota', validator=_validator, validate=validate
+    )

@@ -1,0 +1,48 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DepositQuestionnaireSubmission(TypedDict):
+  """Result of submitting a travel rule deposit questionnaire."""
+
+  trId: NotRequired[int]
+  """Travel rule record id."""
+  accepted: NotRequired[bool]
+  """Whether the submitted questionnaire was accepted."""
+  info: NotRequired[str]
+  """Status message, e.g. "Deposit questionnaire accepted.\""""
+
+
+class ProvideInfo(RpcEndpoint):
+  """Submit a travel rule questionnaire for a pending deposit at a local entity that requires travel rule. Only applies to deposits from unhosted wallets or VASPs not yet onboarded with GTR (Global Travel Rule)."""
+
+  async def provide_info(
+    self,
+    *,
+    tran_id: int,
+    questionnaire: str,
+    validate: bool | None = None,
+  ) -> DepositQuestionnaireSubmission:
+    """Submit a travel rule questionnaire for a pending deposit at a local entity that requires travel rule. Only applies to deposits from unhosted wallets or VASPs not yet onboarded with GTR (Global Travel Rule).
+
+    Args:
+      tran_id: Wallet transaction id of the deposit this questionnaire is for.
+      questionnaire: JSON-formatted questionnaire answers, URL-encoded. Contents differ per local entity; see the entity's own Deposit Questionnaire Content page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule#submit-deposit-questionnaire-travel-rule)
+    """
+    params: dict = {
+      'tranId': tran_id,
+      'questionnaire': questionnaire,
+    }
+    _Response = DepositQuestionnaireSubmission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'PUT',
+      '/sapi/v1/localentity/deposit/provide-info',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

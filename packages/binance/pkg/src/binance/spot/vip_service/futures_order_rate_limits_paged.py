@@ -1,0 +1,105 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesOrderRateLimitPageEntry(TypedDict):
+  """Order rate limit for one account."""
+
+  userId: NotRequired[int]
+  """Account user ID this rate limit applies to."""
+  userEmail: NotRequired[str]
+  """Email address of the account this rate limit applies to."""
+  limit: NotRequired[int]
+  """Order rate limit assigned to this account."""
+
+
+class FuturesOrderRateLimitsPage(TypedDict):
+  """One page of order rate limit entries."""
+
+  total: NotRequired[int]
+  """Total number of matching order rate limit entries across all pages."""
+  rows: NotRequired[list[FuturesOrderRateLimitPageEntry]]
+  """Order rate limit entries for this page."""
+
+
+class FuturesOrderRateLimitsPageResult(TypedDict):
+  """A page of futures user order rate limits."""
+
+  status: NotRequired[str]
+  """Response status, e.g. `OK`."""
+  type: NotRequired[str]
+  """Response category, e.g. `GENERAL`."""
+  code: NotRequired[str]
+  """Response code; `"000000000"` on success."""
+  data: NotRequired[FuturesOrderRateLimitsPage]
+
+
+class FuturesOrderRateLimitsPaged(RpcEndpoint):
+  """Query futures user order rate limits, paginated."""
+
+  async def futures_order_rate_limits_paged(
+    self,
+    *,
+    product_type: Literal['CM', 'UM'],
+    page_index: int,
+    page_size: int,
+    validate: bool | None = None,
+  ) -> FuturesOrderRateLimitsPageResult:
+    """Query futures user order rate limits, paginated.
+
+    Args:
+      product_type: Futures product type to query user order rate limits for.
+      page_index: Page number, starting from 1.
+      page_size: Number of records per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-vip-service/api/rest-api/~#query-futures-userorder-rate-limits-with-pagination)
+    """
+    params: dict = {
+      'productType': product_type,
+      'pageIndex': page_index,
+      'pageSize': page_size,
+    }
+    _Response = FuturesOrderRateLimitsPageResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/vip-portal/futures/rate-limits/orders/pages',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def futures_order_rate_limits_paged_paged(
+    self,
+    *,
+    product_type: Literal['CM', 'UM'],
+    page_size: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[FuturesOrderRateLimitsPageResult]:
+    """Yield successive pages of `futures_order_rate_limits_paged`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the `data.total`
+    items the response reports, or after `max_pages` pages when one is given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.futures_order_rate_limits_paged(
+        product_type=product_type,
+        page_size=page_size,
+        page_index=page_index,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total_0 = response.get('data') if response is not None else None
+      total = total_0.get('total') if total_0 is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * page_size >= total:
+        break
+      page_index += 1

@@ -1,0 +1,6 @@
+from .status import Status
+from .toggle import Toggle
+
+
+class BnbBurn(Status, Toggle):
+  """Binance bnb_burn endpoints."""

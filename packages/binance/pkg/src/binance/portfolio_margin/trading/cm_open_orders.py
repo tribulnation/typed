@@ -1,0 +1,80 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmAllCmOrders(TypedDict):
+  """PmAllCmOrders."""
+
+  avgPrice: NotRequired[str]
+  """Avg Price."""
+  clientOrderId: NotRequired[str]
+  """Client Order ID."""
+  cumBase: NotRequired[str]
+  """Cum Base."""
+  executedQty: NotRequired[str]
+  """Executed Qty."""
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  origType: NotRequired[str]
+  """Orig Type."""
+  price: NotRequired[str]
+  """Price."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  status: NotRequired[str]
+  """Enum：completed，processing."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  pair: NotRequired[str]
+  """Pair."""
+  time: NotRequired[Timestamp]
+  """order time."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  updateTime: NotRequired[Timestamp]
+  """update time."""
+
+
+class CmOpenOrders(RpcEndpoint):
+  """Query All Current CM Open Orders"""
+
+  async def cm_open_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[PmAllCmOrders]:
+    """Get all open orders on a symbol. * If the symbol is not sent, orders for all symbols will be returned in an array. Weight: - 1 for a single `symbol` - 40 when `symbol` is omitted Security Type: USER_DATA Args: symbol (Optional[str] = None): pair (Optional[str] = None): recv_window (Optional[int] = None): Returns: ApiResponse[QueryAllCurrentCmOpenOrdersResponse] Raises: RequiredError: If a required parameter is missing.
+
+    Args:
+      symbol: Trading pair symbol.
+      pair: Trading pair.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#query-all-current-cm-open-orders)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[PmAllCmOrders]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/cm/openOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

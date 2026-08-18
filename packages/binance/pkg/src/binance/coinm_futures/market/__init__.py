@@ -1,0 +1,57 @@
+from .agg_trades import AggTrades
+from .basis import Basis
+from .constituents import Constituents
+from .continuous_klines import ContinuousKlines
+from .depth import Depth
+from .exchange_info import ExchangeInfo
+from .funding_info import FundingInfo
+from .funding_rate import FundingRate
+from .global_long_short_account_ratio import GlobalLongShortAccountRatio
+from .historical_trades import HistoricalTrades
+from .index_price_klines import IndexPriceKlines
+from .klines import Klines
+from .mark_price_klines import MarkPriceKlines
+from .open_interest import OpenInterest
+from .open_interest_hist import OpenInterestHist
+from .ping import Ping
+from .premium_index import PremiumIndex
+from .premium_index_klines import PremiumIndexKlines
+from .taker_buy_sell_vol import TakerBuySellVol
+from .ticker_24hr import Ticker24hr
+from .ticker_book_ticker import TickerBookTicker
+from .ticker_price import TickerPrice
+from .time import Time
+from .top_long_short_account_ratio import TopLongShortAccountRatio
+from .top_long_short_position_ratio import TopLongShortPositionRatio
+from .trades import Trades
+
+
+class Market(
+  AggTrades,
+  Basis,
+  Constituents,
+  ContinuousKlines,
+  Depth,
+  ExchangeInfo,
+  FundingInfo,
+  FundingRate,
+  GlobalLongShortAccountRatio,
+  HistoricalTrades,
+  IndexPriceKlines,
+  Klines,
+  MarkPriceKlines,
+  OpenInterest,
+  OpenInterestHist,
+  Ping,
+  PremiumIndex,
+  PremiumIndexKlines,
+  TakerBuySellVol,
+  Ticker24hr,
+  TickerBookTicker,
+  TickerPrice,
+  Time,
+  TopLongShortAccountRatio,
+  TopLongShortPositionRatio,
+  Trades,
+):
+  """Binance market endpoints."""

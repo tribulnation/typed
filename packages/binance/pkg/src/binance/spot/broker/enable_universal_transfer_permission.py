@@ -1,0 +1,51 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerUniversalTransferPermission(TypedDict):
+  """Updated universal-transfer permission for a sub-account API key."""
+
+  subaccountId: str
+  """Sub-account identifier."""
+  apikey: str
+  """API key updated."""
+  canUniversalTransfer: bool
+  """Whether universal-transfer permission is now enabled."""
+
+
+class EnableUniversalTransferPermission(RpcEndpoint):
+  """Enable Universal Transfer Permission For Sub Account Api Key"""
+
+  async def enable_universal_transfer_permission(
+    self,
+    *,
+    sub_account_id: int,
+    sub_account_api_key: str,
+    can_universal_transfer: bool,
+    validate: bool | None = None,
+  ) -> BrokerUniversalTransferPermission:
+    """Grant or revoke universal-transfer permission on a sub-account API key.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      sub_account_api_key: Sub-account API key.
+      can_universal_transfer: Grant universal-transfer permission to this API key.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'subAccountApiKey': sub_account_api_key,
+      'canUniversalTransfer': can_universal_transfer,
+    }
+    _Response = BrokerUniversalTransferPermission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccountApi/permission/universalTransfer',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

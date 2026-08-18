@@ -1,0 +1,47 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class ManagedSubAccountDepositResult(TypedDict):
+  """The executed deposit."""
+
+  tranId: NotRequired[int]
+  """Transfer id."""
+
+
+class Deposit(RpcEndpoint):
+  """Deposit an asset into a Managed Sub-Account, for the investor master account."""
+
+  async def deposit(
+    self,
+    *,
+    to_email: str,
+    asset: str,
+    amount: float,
+    validate: bool | None = None,
+  ) -> ManagedSubAccountDepositResult:
+    """Deposit an asset into a Managed Sub-Account, for the investor master account.
+
+    Args:
+      to_email: Managed Sub-Account email to deposit into.
+      asset: Asset to deposit.
+      amount: Amount to deposit.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/managed-sub-account#deposit-assets-into-the-managed-sub-account)
+    """
+    params: dict = {
+      'toEmail': to_email,
+      'asset': asset,
+      'amount': amount,
+    }
+    _Response = ManagedSubAccountDepositResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/managed-subaccount/deposit',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

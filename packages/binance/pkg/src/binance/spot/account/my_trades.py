@@ -1,0 +1,81 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SpotTradeItem(TypedDict):
+  """A fill on this account's own trade history."""
+
+  symbol: str
+  """Symbol this trade was made on."""
+  id: int
+  """Trade ID assigned by Binance."""
+  orderId: int
+  """ID of the order this trade filled."""
+  orderListId: int
+  """ID of the order list this trade's order belongs to, or -1 if it is not part of one."""
+  price: str
+  """Trade price, as a decimal string."""
+  qty: str
+  """Trade quantity, as a decimal string."""
+  quoteQty: str
+  """Quote asset quantity for this trade, as a decimal string."""
+  commission: str
+  """Commission charged on this trade, as a decimal string."""
+  commissionAsset: str
+  """Asset the commission was charged in."""
+  time: int
+  """Millisecond timestamp the trade was executed."""
+  isBuyer: bool
+  """Whether this account was the buyer in the trade."""
+  isMaker: bool
+  """Whether this account was the maker in the trade."""
+  isBestMatch: bool
+  """Whether this trade was the best price match available."""
+
+
+class MyTrades(RpcEndpoint):
+  """Account trade list"""
+
+  async def my_trades(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    from_id: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[SpotTradeItem]:
+    """Get trades for a specific account and symbol. If `fromId` is set, trades with id >= that value are returned; otherwise the most recent trades are returned. The time between `startTime` and `endTime` can't be longer than 24 hours. Supported combinations of parameters: `symbol`; `symbol` + `orderId`; `symbol` + `startTime`; `symbol` + `endTime`; `symbol` + `fromId`; `symbol` + `startTime` + `endTime`; `symbol` + `orderId` + `fromId`.
+
+    Args:
+      symbol: Symbol to query.
+      order_id: Order ID to filter by. Can only be used in combination with `symbol`.
+      start_time: Start of the time range, in milliseconds.
+      end_time: End of the time range, in milliseconds.
+      from_id: Trade ID to fetch from (inclusive). If omitted, the most recent trades are returned.
+      limit: Maximum number of trades to return.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if from_id is not None:
+      params['fromId'] = from_id
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[SpotTradeItem]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/api/v3/myTrades', params=params, validator=_validator, validate=validate
+    )

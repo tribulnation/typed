@@ -1,0 +1,8 @@
+from .account import Account
+from .positions import Positions
+from .product_list import ProductList
+from .subscribe import Subscribe
+
+
+class DiscountBuy(Account, Positions, ProductList, Subscribe):
+  """Binance discount_buy endpoints."""

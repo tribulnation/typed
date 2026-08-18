@@ -1,0 +1,120 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmModifyUmOrder(TypedDict):
+  """Order modify function, currently only LIMIT order modification is supported, modified orders will be reordered in the match queue."""
+
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  status: NotRequired[str]
+  """Enum：completed，processing."""
+  clientOrderId: NotRequired[str]
+  """Client Order ID."""
+  modifyId: NotRequired[int]
+  """user-defined modification identifier, only returned if provided in the request."""
+  price: NotRequired[str]
+  """Price."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  executedQty: NotRequired[str]
+  """Executed Qty."""
+  cumQty: NotRequired[str]
+  """Cum Qty."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  origType: NotRequired[str]
+  """Orig Type."""
+  selfTradePreventionMode: NotRequired[str]
+  """self trading preventation mode."""
+  goodTillDate: NotRequired[int]
+  """order pre-set auot cancel time for TIF GTD order."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+  priceMatch: NotRequired[
+    Literal[
+      'OPPONENT',
+      'OPPONENT_5',
+      'OPPONENT_10',
+      'OPPONENT_20',
+      'QUEUE',
+      'QUEUE_5',
+      'QUEUE_10',
+      'QUEUE_20',
+    ]
+  ]
+  """Price Match."""
+
+
+class ModifyUmOrder(RpcEndpoint):
+  """Modify UM Order"""
+
+  async def modify_um_order(
+    self,
+    *,
+    symbol: str,
+    side: Literal['BUY', 'SELL'],
+    quantity: float,
+    price: float,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    price_match: Literal[
+      'OPPONENT',
+      'OPPONENT_5',
+      'OPPONENT_10',
+      'OPPONENT_20',
+      'QUEUE',
+      'QUEUE_5',
+      'QUEUE_10',
+      'QUEUE_20',
+    ]
+    | None = None,
+    modify_id: int | None = None,
+    validate: bool | None = None,
+  ) -> PmModifyUmOrder:
+    """Order modify function, currently only LIMIT order modification is supported, modified orders will be reordered in the match queue.
+
+    Args:
+      symbol: Symbol.
+      side: Order side.
+      quantity: Order quantity.
+      price: Order price.
+      order_id: Order ID.
+      orig_client_order_id: Client order ID.
+      price_match: only avaliable for `LIMIT`/`STOP`/`TAKE_PROFIT` order; can be set to `OPPONENT`/ `OPPONENT_5`/ `OPPONENT_10`/ `OPPONENT_20`: /`QUEUE`/ `QUEUE_5`/ `QUEUE_10`/ `QUEUE_20`; Can't be passed together with `price`.
+      modify_id: User-defined modification identifier, returned as-is in the response. Optional; not validated for uniqueness.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#modify-um-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'side': side,
+      'quantity': quantity,
+      'price': price,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    if price_match is not None:
+      params['priceMatch'] = price_match
+    if modify_id is not None:
+      params['modifyId'] = modify_id
+    _Response = PmModifyUmOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'PUT', '/papi/v1/um/order', params=params, validator=_validator, validate=validate
+    )

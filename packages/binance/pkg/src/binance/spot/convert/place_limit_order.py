@@ -1,0 +1,76 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class ConvertLimitOrderPlaced(TypedDict):
+  """A newly placed Convert limit order."""
+
+  orderId: NotRequired[int]
+  """Order identifier."""
+  status: NotRequired[str]
+  """Order status right after placement."""
+
+
+class PlaceLimitOrder(RpcEndpoint):
+  """Place a Convert limit order: convert at a target price once the market ratio reaches `limitPrice`, instead of accepting an immediate quote."""
+
+  async def place_limit_order(
+    self,
+    *,
+    base_asset: str,
+    quote_asset: str,
+    limit_price: float,
+    side: Literal['BUY', 'SELL'],
+    expired_type: Literal['1_D', '3_D', '7_D', '30_D'],
+    base_amount: float | None = None,
+    quote_amount: float | None = None,
+    wallet_type: Literal[
+      'SPOT',
+      'FUNDING',
+      'EARN',
+      'SPOT_FUNDING',
+      'FUNDING_EARN',
+      'SPOT_FUNDING_EARN',
+      'SPOT_EARN',
+    ]
+    | None = None,
+    validate: bool | None = None,
+  ) -> ConvertLimitOrderPlaced:
+    """Place a Convert limit order: convert at a target price once the market ratio reaches `limitPrice`, instead of accepting an immediate quote.
+
+    Args:
+      base_asset: Base asset of the conversion pair.
+      quote_asset: Quote asset of the conversion pair.
+      limit_price: Target price, in `quoteAsset` per `baseAsset`, that triggers the conversion.
+      side: Order side, relative to `baseAsset`.
+      expired_type: How long the order stays open before expiring.
+      base_amount: Amount of `baseAsset` to convert. Either this or `quoteAmount` is required.
+      quote_amount: Amount of `quoteAsset` to convert. Either this or `baseAmount` is required.
+      wallet_type: Wallet(s) the conversion draws from.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/convert/trade)
+    """
+    params: dict = {
+      'baseAsset': base_asset,
+      'quoteAsset': quote_asset,
+      'limitPrice': limit_price,
+      'side': side,
+      'expiredType': expired_type,
+    }
+    if base_amount is not None:
+      params['baseAmount'] = base_amount
+    if quote_amount is not None:
+      params['quoteAmount'] = quote_amount
+    if wallet_type is not None:
+      params['walletType'] = wallet_type
+    _Response = ConvertLimitOrderPlaced
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/convert/limit/placeOrder',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

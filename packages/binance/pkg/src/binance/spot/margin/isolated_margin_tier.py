@@ -1,0 +1,57 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class IsolatedMarginTier(TypedDict):
+  """One isolated margin risk tier for a symbol."""
+
+  symbol: str
+  """Isolated margin symbol, e.g. BTCUSDT."""
+  tier: int
+  """Tier number."""
+  effectiveMultiple: str
+  """Effective leverage multiple at this tier, as a decimal string."""
+  initialRiskRatio: str
+  """Initial risk ratio required to open positions at this tier, as a decimal string."""
+  liquidationRiskRatio: str
+  """Risk ratio below which positions at this tier are liquidated, as a decimal string."""
+  baseAssetMaxBorrowable: str
+  """Maximum borrowable amount of the base asset at this tier, as a decimal string."""
+  quoteAssetMaxBorrowable: str
+  """Maximum borrowable amount of the quote asset at this tier, as a decimal string."""
+
+
+class IsolatedMarginTierEndpoint(RpcEndpoint):
+  """Query Isolated Margin Tier Data"""
+
+  async def isolated_margin_tier(
+    self,
+    *,
+    symbol: str,
+    tier: int | None = None,
+    validate: bool | None = None,
+  ) -> list[IsolatedMarginTier]:
+    """Query isolated margin tier data for a symbol -- effective leverage multiple and risk ratios by tier. Returns all tiers for the symbol, or one tier when `tier` is given.
+
+    Args:
+      symbol: Isolated margin symbol to query, e.g. BNBUSDT.
+      tier: Tier number to query. All tiers are returned if omitted.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/market-data#query-isolated-margin-tier-data)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if tier is not None:
+      params['tier'] = tier
+    _Response = list[IsolatedMarginTier]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/isolatedMarginTier',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,51 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginLiquidationLoan(TypedDict):
+  """This account's outstanding liquidation loan."""
+
+  asset: NotRequired[str]
+  """Asset of the liquidation loan (USDC by default)."""
+  amount: NotRequired[str]
+  """Total liquidation loan amount, as a decimal string."""
+  repaidAmount: NotRequired[str]
+  """Amount that has been repaid, as a decimal string."""
+  remainingAmount: NotRequired[str]
+  """Outstanding amount remaining to be repaid, as a decimal string."""
+
+
+class LiquidationLoan(RpcEndpoint):
+  """Query this account's outstanding liquidation loan — the debt transferred to a separate repayable loan when a margin position was force-liquidated."""
+
+  async def liquidation_loan(
+    self,
+    *,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> MarginLiquidationLoan:
+    """Query this account's outstanding liquidation loan — the debt transferred to a separate repayable loan when a margin position was force-liquidated.
+
+    Args:
+      current: Page to fetch, 1-indexed.
+      size: Number of records per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade#query-liquidation-loan)
+    """
+    params = {}
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = MarginLiquidationLoan
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/liquidation-loan',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

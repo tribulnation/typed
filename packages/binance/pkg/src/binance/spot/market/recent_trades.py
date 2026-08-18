@@ -1,0 +1,34 @@
+from typed_core.validation import validator
+from binance.types import SpotTrade
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class RecentTrades(RpcEndpoint):
+  """Recent trades list"""
+
+  async def recent_trades(
+    self,
+    *,
+    symbol: str,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[SpotTrade]:
+    """Get recent trades.
+
+    Args:
+      symbol: Symbol to query.
+      limit: Number of trades to return.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#recent-trades-list)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[SpotTrade]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/api/v3/trades', params=params, validator=_validator, validate=validate
+    )

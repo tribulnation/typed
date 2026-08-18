@@ -1,0 +1,196 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesSnapshotAsset(TypedDict):
+  """Futures balance of a single asset."""
+
+  asset: str
+  """Asset symbol."""
+  marginBalance: str
+  """Margin balance."""
+  walletBalance: str
+  """Wallet balance."""
+
+
+class FuturesSnapshotPosition(TypedDict):
+  """A single open Futures position."""
+
+  entryPrice: str
+  """Average entry price."""
+  markPrice: str
+  """Current mark price."""
+  positionAmt: str
+  """Position size (negative for short)."""
+  symbol: str
+  """Futures symbol."""
+  unRealizedProfit: str
+  """Unrealized profit."""
+
+
+class MarginSnapshotUserAsset(TypedDict):
+  """Margin balance of a single asset."""
+
+  asset: str
+  """Asset symbol."""
+  borrowed: str
+  """Borrowed amount."""
+  free: str
+  """Available (unlocked) balance."""
+  interest: str
+  """Accrued interest."""
+  locked: str
+  """Locked (e.g. in open orders) balance."""
+  netAsset: str
+  """Net asset amount (free + locked - borrowed - interest)."""
+
+
+class SpotSnapshotBalance(TypedDict):
+  """Balance of a single asset."""
+
+  asset: str
+  """Asset symbol."""
+  free: str
+  """Available (unlocked) balance."""
+  locked: str
+  """Locked (e.g. in open orders) balance."""
+
+
+class FuturesSnapshotData(TypedDict):
+  """Futures account state as of this snapshot."""
+
+  assets: list[FuturesSnapshotAsset]
+  """Per-asset Futures balances."""
+  position: list[FuturesSnapshotPosition]
+  """Open Futures positions."""
+
+
+class MarginSnapshotData(TypedDict):
+  """Cross-Margin account state as of this snapshot."""
+
+  marginLevel: str
+  """Margin level."""
+  totalAssetOfBtc: str
+  """Total asset value, denominated in BTC."""
+  totalLiabilityOfBtc: str
+  """Total liability, denominated in BTC."""
+  totalNetAssetOfBtc: str
+  """Total net asset value, denominated in BTC."""
+  userAssets: list[MarginSnapshotUserAsset]
+  """Per-asset Margin balances."""
+
+
+class SpotSnapshotData(TypedDict):
+  """Spot balances as of this snapshot."""
+
+  balances: list[SpotSnapshotBalance]
+  """Per-asset balances."""
+  totalAssetOfBtc: str
+  """Total account value, denominated in BTC."""
+
+
+class FuturesSnapshotEntry(TypedDict):
+  """A single day's Futures account snapshot."""
+
+  type: Literal['futures']
+  """Snapshot type."""
+  updateTime: int
+  """Snapshot time, as milliseconds since epoch."""
+  data: FuturesSnapshotData
+
+
+class MarginSnapshotEntry(TypedDict):
+  """A single day's Margin account snapshot."""
+
+  type: Literal['margin']
+  """Snapshot type."""
+  updateTime: int
+  """Snapshot time, as milliseconds since epoch."""
+  data: MarginSnapshotData
+
+
+class SpotSnapshotEntry(TypedDict):
+  """A single day's Spot account snapshot."""
+
+  type: Literal['spot']
+  """Snapshot type."""
+  updateTime: int
+  """Snapshot time, as milliseconds since epoch."""
+  data: SpotSnapshotData
+
+
+class FuturesAccountSnapshot(TypedDict):
+  """Daily USD-M Futures account snapshots."""
+
+  code: int
+  """Response code; 200 on success."""
+  msg: str
+  """Response message; empty on success."""
+  snapshotVos: list[FuturesSnapshotEntry]
+  """One entry per snapshotted day."""
+
+
+class MarginAccountSnapshot(TypedDict):
+  """Daily cross-Margin account snapshots."""
+
+  code: int
+  """Response code; 200 on success."""
+  msg: str
+  """Response message; empty on success."""
+  snapshotVos: list[MarginSnapshotEntry]
+  """One entry per snapshotted day."""
+
+
+class SpotAccountSnapshot(TypedDict):
+  """Daily Spot account snapshots."""
+
+  code: int
+  """Response code; 200 on success."""
+  msg: str
+  """Response message; empty on success."""
+  snapshotVos: list[SpotSnapshotEntry]
+  """One entry per snapshotted day."""
+
+
+class Snapshot(RpcEndpoint):
+  """Fetch daily account snapshots for Spot, Margin, or Futures. The query window must be under 30 days, and only the last month of history is queryable; when `startTime`/`endTime` are omitted, the last 7 days are returned by default. The response shape of each snapshot row depends on `type`."""
+
+  async def snapshot(
+    self,
+    *,
+    type: Literal['SPOT', 'MARGIN', 'FUTURES'],
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> SpotAccountSnapshot | MarginAccountSnapshot | FuturesAccountSnapshot:
+    """Fetch daily account snapshots for Spot, Margin, or Futures. The query window must be under 30 days, and only the last month of history is queryable; when `startTime`/`endTime` are omitted, the last 7 days are returned by default. The response shape of each snapshot row depends on `type`.
+
+    Args:
+      type: Which account type to snapshot.
+      start_time: Query period start, as milliseconds since epoch.
+      end_time: Query period end, as milliseconds since epoch.
+      limit: Number of snapshot rows to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/account#daily-account-snapshot)
+    """
+    params: dict = {
+      'type': type,
+    }
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = SpotAccountSnapshot | MarginAccountSnapshot | FuturesAccountSnapshot
+    _validator = validator[_Response](_Response)  # type: ignore
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/accountSnapshot',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

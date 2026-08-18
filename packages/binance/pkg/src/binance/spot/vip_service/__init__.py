@@ -1,0 +1,27 @@
+from .commission_fee import CommissionFee
+from .futures_ip_rate_limits import FuturesIpRateLimits
+from .futures_ip_rate_limits_paged import FuturesIpRateLimitsPaged
+from .futures_ip_whitelist import FuturesIpWhitelist
+from .futures_ip_whitelist_add import FuturesIpWhitelistAdd
+from .futures_ip_whitelist_remove import FuturesIpWhitelistRemove
+from .futures_order_rate_limits import FuturesOrderRateLimits
+from .futures_order_rate_limits_paged import FuturesOrderRateLimitsPaged
+from .liquidity_program_overview import LiquidityProgramOverview
+from .liquidity_program_performance import LiquidityProgramPerformance
+from .liquidity_program_weekly_result import LiquidityProgramWeeklyResult
+
+
+class VipService(
+  CommissionFee,
+  FuturesIpRateLimits,
+  FuturesIpRateLimitsPaged,
+  FuturesIpWhitelist,
+  FuturesIpWhitelistAdd,
+  FuturesIpWhitelistRemove,
+  FuturesOrderRateLimits,
+  FuturesOrderRateLimitsPaged,
+  LiquidityProgramOverview,
+  LiquidityProgramPerformance,
+  LiquidityProgramWeeklyResult,
+):
+  """Binance vip_service endpoints."""

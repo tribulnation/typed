@@ -1,0 +1,86 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class IndexBaseAsset0BaseAssetListItem(TypedDict):
+  """One component asset's weight in the composite index."""
+
+  baseAsset: str
+  """Component base asset, e.g. BAL."""
+  quoteAsset: str
+  """Quote asset the component is priced in, e.g. USDT."""
+  weightInQuantity: str
+  """Component weight, expressed as a quantity."""
+  weightInPercentage: str
+  """Component weight, expressed as a percentage."""
+
+
+class IndexBaseAssetItemBaseAssetListItem(TypedDict):
+  """One component asset's weight in the composite index."""
+
+  baseAsset: str
+  """Component base asset, e.g. BAL."""
+  quoteAsset: str
+  """Quote asset the component is priced in, e.g. USDT."""
+  weightInQuantity: str
+  """Component weight, expressed as a quantity."""
+  weightInPercentage: str
+  """Component weight, expressed as a percentage."""
+
+
+class CompositeIndexInfo0(TypedDict):
+  """Composition of one composite index symbol."""
+
+  symbol: str
+  """Composite index symbol."""
+  time: int
+  """Current time, in milliseconds since epoch."""
+  component: NotRequired[str]
+  """Component asset category, e.g. baseAsset."""
+  baseAssetList: list[IndexBaseAsset0BaseAssetListItem]
+  """Component assets and their weights in the index."""
+
+
+class CompositeIndexInfoItem(TypedDict):
+  """Composition of one composite index symbol."""
+
+  symbol: str
+  """Composite index symbol."""
+  time: int
+  """Current time, in milliseconds since epoch."""
+  component: NotRequired[str]
+  """Component asset category, e.g. baseAsset."""
+  baseAssetList: list[IndexBaseAssetItemBaseAssetListItem]
+  """Component assets and their weights in the index."""
+
+
+class IndexInfo(RpcEndpoint):
+  """Composition of a composite index symbol (e.g. DEFIUSDT), or every composite index symbol when omitted."""
+
+  async def index_info(
+    self,
+    *,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> CompositeIndexInfo0 | list[CompositeIndexInfoItem]:
+    """Composition of a composite index symbol (e.g. DEFIUSDT), or every composite index symbol when omitted.
+
+    Args:
+      symbol: Composite index symbol, e.g. DEFIUSDT. Omit to get every composite index symbol as an array.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data#composite-index-symbol-information)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    _Response = CompositeIndexInfo0 | list[CompositeIndexInfoItem]
+    _validator = validator[_Response](_Response)  # type: ignore
+    return await self.request(
+      'GET',
+      '/fapi/v1/indexInfo',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,102 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class CoinMWsAccountAsset(TypedDict):
+  """Balance and margin detail for one settlement asset (e.g. BTC, ETH). All monetary fields are denominated in this asset, not USDT."""
+
+  asset: str
+  """Asset symbol."""
+  walletBalance: str
+  """Total wallet balance, in this asset."""
+  unrealizedProfit: str
+  """Unrealized profit or loss, in this asset."""
+  marginBalance: str
+  """Margin balance, in this asset."""
+  maintMargin: str
+  """Maintenance margin required, in this asset."""
+  initialMargin: str
+  """Total initial margin required with the latest mark price, in this asset."""
+  positionInitialMargin: str
+  """Positions' initial margin required with the latest mark price, in this asset."""
+  openOrderInitialMargin: str
+  """Open orders' initial margin required with the latest mark price, in this asset."""
+  maxWithdrawAmount: str
+  """Maximum amount transferable out, in this asset."""
+  crossWalletBalance: str
+  """Wallet balance for crossed margin, in this asset."""
+  crossUnPnl: str
+  """Total unrealized profit or loss of crossed positions, in this asset."""
+  availableBalance: str
+  """Available margin balance, in this asset."""
+  updateTime: int
+  """Time this asset's balance was last updated."""
+
+
+class CoinMWsAccountPosition(TypedDict):
+  """One open position."""
+
+  symbol: str
+  """Trading symbol."""
+  positionAmt: str
+  """Position amount, in contracts."""
+  initialMargin: str
+  """Total initial margin required with the latest mark price."""
+  maintMargin: str
+  """Maintenance margin required."""
+  unrealizedProfit: str
+  """Unrealized profit or loss."""
+  positionInitialMargin: str
+  """Positions' margin required with the latest mark price."""
+  openOrderInitialMargin: str
+  """Open orders' initial margin required with the latest mark price."""
+  leverage: str
+  """Current leverage for this symbol."""
+  isolated: bool
+  """Whether isolated margin mode is enabled for this position."""
+  positionSide: Literal['BOTH', 'LONG', 'SHORT']
+  """Position side."""
+  entryPrice: str
+  """Position entry price."""
+  maxQty: str
+  """Maximum quantity of base asset, per the applicable notional bracket."""
+  updateTime: int
+  """Time this position was last updated."""
+  notionalValue: str
+  """Notional value of this position."""
+
+
+class CoinMWsAccountStatus(TypedDict):
+  """Current COIN-M Futures account information."""
+
+  feeTier: int
+  """Account's fee tier level."""
+  canTrade: bool
+  """Whether trading is enabled for this account."""
+  canDeposit: bool
+  """Whether deposits are enabled for this account."""
+  canWithdraw: bool
+  """Whether withdrawals are enabled for this account."""
+  updateTime: int
+  """Time the account was last updated."""
+  assets: list[CoinMWsAccountAsset]
+  """Balance detail for each settlement asset held by this account."""
+  positions: list[CoinMWsAccountPosition]
+  """Open position detail, one entry per symbol/side combination."""
+
+
+class Status(WsRpcEndpoint):
+  """Get current account information: per-asset balances and open positions. For a One-way Mode user, positions only shows the BOTH position per symbol; for a Hedge Mode user, it shows BOTH, LONG, and SHORT positions."""
+
+  async def status(self, *, validate: bool | None = None) -> CoinMWsAccountStatus:
+    """Get current account information: per-asset balances and open positions. For a One-way Mode user, positions only shows the BOTH position per symbol; for a Hedge Mode user, it shows BOTH, LONG, and SHORT positions.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/ws-api/account#account-information)
+    """
+    _Response = CoinMWsAccountStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'account.status', validator=_validator, validate=validate
+    )

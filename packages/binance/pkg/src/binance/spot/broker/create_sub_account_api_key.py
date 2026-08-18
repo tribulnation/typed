@@ -1,0 +1,62 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountApiKey(TypedDict):
+  """Newly created sub-account API key."""
+
+  subaccountId: str
+  """Sub-account identifier."""
+  apiKey: str
+  """Newly created API key."""
+  secretKey: str
+  """Newly created API secret. Shown only once, at creation."""
+  canTrade: bool
+  """Whether spot trading is enabled."""
+  marginTrade: bool
+  """Whether margin trading is enabled."""
+  futuresTrade: bool
+  """Whether futures trading is enabled."""
+
+
+class CreateSubAccountApiKey(RpcEndpoint):
+  """Create Api Key for Sub Account"""
+
+  async def create_sub_account_api_key(
+    self,
+    *,
+    sub_account_id: str,
+    can_trade: bool,
+    margin_trade: bool | None = None,
+    futures_trade: bool | None = None,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountApiKey:
+    """Create a new API key for a sub-account.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      can_trade: Grant spot trading permission to the new API key.
+      margin_trade: Grant margin trading permission to the new API key.
+      futures_trade: Grant futures trading permission to the new API key.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'canTrade': can_trade,
+    }
+    if margin_trade is not None:
+      params['marginTrade'] = margin_trade
+    if futures_trade is not None:
+      params['futuresTrade'] = futures_trade
+    _Response = BrokerSubAccountApiKey
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccountApi',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

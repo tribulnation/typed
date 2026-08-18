@@ -1,0 +1,10 @@
+from .buy_code import BuyCode
+from .create_code import CreateCode
+from .redeem_code import RedeemCode
+from .rsa_public_key import RsaPublicKey
+from .token_limit import TokenLimit
+from .verify import Verify
+
+
+class GiftCard(BuyCode, CreateCode, RedeemCode, RsaPublicKey, TokenLimit, Verify):
+  """Binance gift_card endpoints."""

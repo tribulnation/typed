@@ -1,0 +1,72 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class AlgoOrderAck(TypedDict):
+  """Acknowledgement that an Algo order was accepted for processing."""
+
+  clientAlgoId: str
+  """Client-supplied (or server-generated) unique Algo order identifier."""
+  success: bool
+  """Whether the order was accepted. Does not mean the order will be executed — check `openOrders`/`historicalOrders` for the real status."""
+  code: int
+  """Response code. `0` on success."""
+  msg: str
+  """Response message. `"OK"` on success."""
+
+
+class NewOrderTwap(RpcEndpoint):
+  """Time-Weighted Average Price (TWAP) New Order (TRADE)"""
+
+  async def new_order_twap(
+    self,
+    *,
+    symbol: str,
+    side: Literal['SELL', 'BUY'],
+    position_side: Literal['BOTH', 'LONG', 'SHORT'] | None = None,
+    quantity: float,
+    duration: int,
+    client_algo_id: str | None = None,
+    reduce_only: bool | None = None,
+    limit_price: float | None = None,
+    validate: bool | None = None,
+  ) -> AlgoOrderAck:
+    """Place a new USDⓈ-M futures TWAP order with the Algo service. Only supported on USDⓈ-M Contracts. Requires `Futures Trading Permission` enabled for the API key. Maximum 10 open Algo orders allowed. `quantity * 60 / duration` should be larger than the symbol's `minQty`. For delivery contracts, TWAP end time should be one hour earlier than the symbol's delivery time.
+
+    Args:
+      symbol: Trading symbol, e.g. BNBUSDT.
+      side: Order side.
+      position_side: Default `BOTH` for One-way Mode; `LONG` or `SHORT` for Hedge Mode. Must be sent in Hedge Mode.
+      quantity: Quantity of the base asset; the notional (quantity * mark price) must be more than the equivalent of 10,000 USDT and less than the equivalent of 1,000,000 USDT.
+      duration: TWAP duration in seconds. Range [300, 86400]; below 300 defaults to 300, above 86400 defaults to 86400.
+      client_algo_id: Unique 32-character client identifier for this Algo order. Auto-generated if omitted.
+      reduce_only: Default false. Cannot be sent in Hedge Mode; cannot be sent when opening a position.
+      limit_price: Limit price for child orders. Market price is used if omitted.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/algo/future-algo/Time-Weighted-Average-Price-New-Order)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'side': side,
+      'quantity': quantity,
+      'duration': duration,
+    }
+    if position_side is not None:
+      params['positionSide'] = position_side
+    if client_algo_id is not None:
+      params['clientAlgoId'] = client_algo_id
+    if reduce_only is not None:
+      params['reduceOnly'] = reduce_only
+    if limit_price is not None:
+      params['limitPrice'] = limit_price
+    _Response = AlgoOrderAck
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/algo/futures/newOrderTwap',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

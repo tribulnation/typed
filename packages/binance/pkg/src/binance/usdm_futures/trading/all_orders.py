@@ -1,0 +1,139 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesOrderHistoryEntry(TypedDict):
+  """One order in the account's order history."""
+
+  avgPrice: str
+  """Average fill price."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+  cumQuote: str
+  """Cumulative quote asset transacted quantity."""
+  cumBase: str
+  """Cumulative base asset transacted quantity."""
+  executedQty: str
+  """Cumulative filled quantity."""
+  orderId: int
+  """Order id."""
+  origQty: str
+  """Original order quantity."""
+  origType: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP',
+    'STOP_MARKET',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_MARKET',
+    'TRAILING_STOP_MARKET',
+  ]
+  """Order type at creation, unaffected by later amendments."""
+  price: str
+  """Order price."""
+  reduceOnly: bool
+  """Whether the order only reduces an existing position."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  positionSide: Literal['BOTH', 'LONG', 'SHORT']
+  """Position side."""
+  status: str
+  """Order status."""
+  stopPrice: str
+  """Trigger price for a conditional order. Ignored for LIMIT and MARKET orders."""
+  closePosition: bool
+  """Whether the order closes the entire position (Close-All)."""
+  symbol: str
+  """Trading symbol."""
+  pair: str
+  """Underlying contract pair."""
+  time: Timestamp
+  """Time the order was created."""
+  timeInForce: Literal['GTC', 'IOC', 'FOK', 'GTX', 'GTD', 'RPI']
+  """Time in force."""
+  type: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP',
+    'STOP_MARKET',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_MARKET',
+    'TRAILING_STOP_MARKET',
+  ]
+  """Order type."""
+  activatePrice: NotRequired[str]
+  """Activation price. Only returned for TRAILING_STOP_MARKET orders."""
+  priceRate: NotRequired[str]
+  """Callback rate. Only returned for TRAILING_STOP_MARKET orders."""
+  updateTime: Timestamp
+  """Time the order was last updated."""
+  workingType: Literal['MARK_PRICE', 'CONTRACT_PRICE']
+  """Price type used to trigger conditional orders."""
+  priceProtect: bool
+  """Whether price protection is active for a conditional order's trigger."""
+  priceMatch: Literal[
+    'OPPONENT',
+    'OPPONENT_5',
+    'OPPONENT_10',
+    'OPPONENT_20',
+    'QUEUE',
+    'QUEUE_5',
+    'QUEUE_10',
+    'QUEUE_20',
+  ]
+  """Price match mode used to auto-align the order price to the order book."""
+  selfTradePreventionMode: Literal[
+    'NONE', 'EXPIRE_TAKER', 'EXPIRE_BOTH', 'EXPIRE_MAKER'
+  ]
+  """Self-trade prevention mode."""
+  goodTillDate: int
+  """Auto-cancel time for a GTD order, as a Unix epoch in milliseconds."""
+
+
+class AllOrders(RpcEndpoint):
+  """Get all account orders on a symbol: active, canceled, or filled."""
+
+  async def all_orders(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[FuturesOrderHistoryEntry]:
+    """Get all account orders on a symbol: active, canceled, or filled.
+
+    Args:
+      symbol: Trading symbol.
+      order_id: Order id to page from. If set, returns orders with id >= orderId; otherwise the most recent orders are returned.
+      start_time: Start time.
+      end_time: End time.
+      limit: Number of orders to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#all-orders)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[FuturesOrderHistoryEntry]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/fapi/v1/allOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,36 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMFundingInfo(TypedDict):
+  """One symbol's adjusted funding rate configuration."""
+
+  symbol: str
+  """Trading symbol."""
+  adjustedFundingRateCap: str
+  """Adjusted funding rate cap."""
+  adjustedFundingRateFloor: str
+  """Adjusted funding rate floor."""
+  fundingIntervalHours: int
+  """Funding interval, in hours."""
+  disclaimer: bool
+  """Whether a disclaimer applies to this symbol."""
+
+
+class FundingInfo(RpcEndpoint):
+  """Funding rate info for symbols that had a FundingRateCap, FundingRateFloor, or fundingIntervalHours adjustment."""
+
+  async def funding_info(
+    self, *, validate: bool | None = None
+  ) -> list[CoinMFundingInfo]:
+    """Funding rate info for symbols that had a FundingRateCap, FundingRateFloor, or fundingIntervalHours adjustment.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#get-funding-rate-info)
+    """
+    _Response = list[CoinMFundingInfo]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/dapi/v1/fundingInfo', validator=_validator, validate=validate
+    )

@@ -1,0 +1,28 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class RwusdAccountSummary(TypedDict):
+  """This account's RWUSD holdings and profit."""
+
+  rwusdAmount: NotRequired[str]
+  """Amount of RWUSD held, as a decimal string."""
+  totalProfit: NotRequired[str]
+  """Cumulative profit, as a decimal string."""
+
+
+class Account(RpcEndpoint):
+  """Get this account's RWUSD account information."""
+
+  async def __call__(self, *, validate: bool | None = None) -> RwusdAccountSummary:
+    """Get this account's RWUSD account information.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/rwusd#get-rwusd-account)
+    """
+    _Response = RwusdAccountSummary
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/sapi/v1/rwusd/account', validator=_validator, validate=validate
+    )

@@ -1,0 +1,46 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMActionResult(TypedDict):
+  """Acknowledgement of the action."""
+
+  code: int
+  """Result code."""
+  msg: str
+  """Result message."""
+
+
+class ChangeMarginType(RpcEndpoint):
+  """Change Margin Type"""
+
+  async def change_margin_type(
+    self,
+    *,
+    symbol: str,
+    margin_type: Literal['ISOLATED', 'CROSSED'],
+    validate: bool | None = None,
+  ) -> CoinMActionResult:
+    """Change the account's margin type on a symbol. In Hedge Mode, the LONG and SHORT positions of one symbol share the same margin type. Under ISOLATED, the LONG and SHORT positions' margins are isolated from each other.
+
+    Args:
+      symbol: Symbol.
+      margin_type: Margin type.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/trade#change-margin-type)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'marginType': margin_type,
+    }
+    _Response = CoinMActionResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/dapi/v1/marginType',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

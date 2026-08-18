@@ -1,0 +1,78 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmCancelCmOrder(TypedDict):
+  """Cancel an active LIMIT order."""
+
+  clientOrderId: NotRequired[str]
+  """Client Order ID."""
+  cumQty: NotRequired[str]
+  """Cum Qty."""
+  executedQty: NotRequired[str]
+  """Executed Qty."""
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  price: NotRequired[str]
+  """Price."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  status: NotRequired[str]
+  """Enum：completed，processing."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  pair: NotRequired[str]
+  """Pair."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+
+
+class CancelCmOrder(RpcEndpoint):
+  """Cancel CM Order"""
+
+  async def cancel_cm_order(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    validate: bool | None = None,
+  ) -> PmCancelCmOrder:
+    """Cancel an active LIMIT order.
+
+    Args:
+      symbol: Symbol.
+      order_id: Order id to act on.
+      orig_client_order_id: Caller-supplied id of the order to act on, as given on placement.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#cancel-cm-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    _Response = PmCancelCmOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/papi/v1/cm/order',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

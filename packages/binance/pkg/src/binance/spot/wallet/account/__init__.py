@@ -1,0 +1,19 @@
+from .api_restrictions import ApiRestrictions
+from .api_trading_status import ApiTradingStatus
+from .disable_fast_withdraw_switch import DisableFastWithdrawSwitch
+from .enable_fast_withdraw_switch import EnableFastWithdrawSwitch
+from .info import Info
+from .snapshot import Snapshot
+from .status import Status
+
+
+class Account(
+  ApiRestrictions,
+  ApiTradingStatus,
+  DisableFastWithdrawSwitch,
+  EnableFastWithdrawSwitch,
+  Info,
+  Snapshot,
+  Status,
+):
+  """Binance account endpoints."""

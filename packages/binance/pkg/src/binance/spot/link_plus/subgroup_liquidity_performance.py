@@ -1,0 +1,207 @@
+from json import dumps
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CmMakerDailyStats(TypedDict):
+  """CmMaker Liquidity Program daily statistics."""
+
+  makerVol24h: NotRequired[str]
+  """COIN-M Futures maker trading volume over the trailing 24 hours."""
+  makerVol24hExclBTC: NotRequired[str]
+  """COIN-M Futures maker trading volume over the trailing 24 hours, excluding BTC pairs."""
+  makerVol24hPct: NotRequired[str]
+  """COIN-M Futures maker volume market-share percentage over the trailing 24 hours."""
+  makerVol24hPctExclBTC: NotRequired[str]
+  """COIN-M Futures maker volume market-share percentage over the trailing 24 hours, excluding BTC pairs."""
+
+
+class CmMakerWeeklyStats(TypedDict):
+  """CmMaker Liquidity Program weekly statistics."""
+
+  weeklyMakerVol: NotRequired[str]
+  """COIN-M Futures maker trading volume over the trailing week."""
+  weeklyMakerVolExclBTC: NotRequired[str]
+  """COIN-M Futures maker trading volume over the trailing week, excluding BTC pairs."""
+  weeklyMakerVolPct: NotRequired[str]
+  """COIN-M Futures maker volume market-share percentage over the trailing week."""
+  weeklyMakerVolPctExclBTC: NotRequired[str]
+  """COIN-M Futures maker volume market-share percentage over the trailing week, excluding BTC pairs."""
+
+
+class SpotMakerDailyStats(TypedDict):
+  """SpotMaker Liquidity Program daily statistics."""
+
+  makerVol24h: NotRequired[str]
+  """Spot maker trading volume over the trailing 24 hours."""
+  makerVol24hPct: NotRequired[str]
+  """Spot maker volume market-share percentage over the trailing 24 hours."""
+
+
+class SpotMakerWeeklyStats(TypedDict):
+  """SpotMaker Liquidity Program weekly statistics."""
+
+  weeklyMakerVol: NotRequired[str]
+  """Spot maker trading volume over the trailing week."""
+  weeklyMakerVolPct: NotRequired[str]
+  """Spot maker volume market-share percentage over the trailing week."""
+
+
+class UmMakerDailyStats(TypedDict):
+  """UmMaker Liquidity Program daily statistics."""
+
+  makerVol24h: NotRequired[str]
+  """USDⓈ-M Futures maker trading volume over the trailing 24 hours."""
+  makerVol24hExclBTC: NotRequired[str]
+  """USDⓈ-M Futures maker trading volume over the trailing 24 hours, excluding BTC pairs."""
+  makerVol24hPct: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing 24 hours."""
+  makerVol24hPctExclBTC: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing 24 hours, excluding BTC pairs."""
+  makerVol24hPctUSDC: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing 24 hours, USDC-margined pairs."""
+
+
+class UmMakerWeeklyStats(TypedDict):
+  """UmMaker Liquidity Program weekly statistics."""
+
+  weeklyMakerVol: NotRequired[str]
+  """USDⓈ-M Futures maker trading volume over the trailing week."""
+  weeklyMakerVolExclBTC: NotRequired[str]
+  """USDⓈ-M Futures maker trading volume over the trailing week, excluding BTC pairs."""
+  weeklyMakerVolPct: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing week."""
+  weeklyMakerVolPctExclBTC: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing week, excluding BTC pairs."""
+  weeklyMakerVolPctUSDC: NotRequired[str]
+  """USDⓈ-M Futures maker volume market-share percentage over the trailing week, USDC-margined pairs."""
+
+
+class UmTakerDailyStats(TypedDict):
+  """UmTaker Liquidity Program daily statistics."""
+
+  takerVol24hBTC: NotRequired[str]
+  """USDⓈ-M Futures taker trading volume over the trailing 24 hours, BTC pairs."""
+  takerVol24hAlt: NotRequired[str]
+  """USDⓈ-M Futures taker trading volume over the trailing 24 hours, altcoin pairs."""
+  takerVol24hTotal: NotRequired[str]
+  """USDⓈ-M Futures total taker trading volume over the trailing 24 hours."""
+  takerVol24hPctBTC: NotRequired[str]
+  """USDⓈ-M Futures taker volume market-share percentage over the trailing 24 hours, BTC pairs."""
+  takerVol24hPctAlt: NotRequired[str]
+  """USDⓈ-M Futures taker volume market-share percentage over the trailing 24 hours, altcoin pairs."""
+
+
+class UmTakerWeeklyStats(TypedDict):
+  """UmTaker Liquidity Program weekly statistics."""
+
+  weeklyTakerVolBTC: NotRequired[str]
+  """USDⓈ-M Futures taker trading volume over the trailing week, BTC pairs."""
+  weeklyTakerVolAlt: NotRequired[str]
+  """USDⓈ-M Futures taker trading volume over the trailing week, altcoin pairs."""
+  weeklyTakerVolTotal: NotRequired[str]
+  """USDⓈ-M Futures total taker trading volume over the trailing week."""
+  weeklyTakerVolPctBTC: NotRequired[str]
+  """USDⓈ-M Futures taker volume market-share percentage over the trailing week, BTC pairs."""
+  weeklyTakerVolPctAlt: NotRequired[str]
+  """USDⓈ-M Futures taker volume market-share percentage over the trailing week, altcoin pairs."""
+
+
+class CmMakerProgram(TypedDict):
+  """CmMaker Liquidity Program daily and weekly performance."""
+
+  date: NotRequired[int]
+  """Date this daily snapshot covers, as milliseconds since epoch."""
+  dailyStats: NotRequired[CmMakerDailyStats]
+  weeklyStats: NotRequired[CmMakerWeeklyStats]
+
+
+class SpotMakerProgram(TypedDict):
+  """SpotMaker Liquidity Program daily and weekly performance."""
+
+  date: NotRequired[int]
+  """Date this daily snapshot covers, as milliseconds since epoch."""
+  dailyStats: NotRequired[SpotMakerDailyStats]
+  weeklyStats: NotRequired[SpotMakerWeeklyStats]
+
+
+class UmMakerProgram(TypedDict):
+  """UmMaker Liquidity Program daily and weekly performance."""
+
+  date: NotRequired[int]
+  """Date this daily snapshot covers, as milliseconds since epoch."""
+  dailyStats: NotRequired[UmMakerDailyStats]
+  weeklyStats: NotRequired[UmMakerWeeklyStats]
+
+
+class UmTakerProgram(TypedDict):
+  """UmTaker Liquidity Program daily and weekly performance."""
+
+  date: NotRequired[int]
+  """Date this daily snapshot covers, as milliseconds since epoch."""
+  dailyStats: NotRequired[UmTakerDailyStats]
+  weeklyStats: NotRequired[UmTakerWeeklyStats]
+
+
+class SubGroupLiquidityProgramPerformanceEntry(TypedDict):
+  """Liquidity Program performance for one sub-group."""
+
+  userId: NotRequired[int]
+  """User ID of the sub-group's owning sub-account."""
+  groupId: NotRequired[int]
+  """Sub-group ID."""
+  groupName: NotRequired[str]
+  """Name of the sub-group."""
+  spotMakerProgram: NotRequired[SpotMakerProgram]
+  umMakerProgram: NotRequired[UmMakerProgram]
+  cmMakerProgram: NotRequired[CmMakerProgram]
+  umTakerProgram: NotRequired[UmTakerProgram]
+
+
+class SubGroupLiquidityProgramPerformance(TypedDict):
+  """Liquidity Program performance for one or more sub-groups."""
+
+  status: NotRequired[str]
+  """Response status, e.g. `OK`."""
+  type: NotRequired[str]
+  """Response category, e.g. `GENERAL`."""
+  code: NotRequired[str]
+  """Response code; `"000000000"` on success."""
+  data: NotRequired[list[SubGroupLiquidityProgramPerformanceEntry]]
+  """One entry per queried (or active) sub-group."""
+
+
+class SubgroupLiquidityPerformance(RpcEndpoint):
+  """Return sub-group Liquidity Program performance with daily and weekly statistics."""
+
+  async def subgroup_liquidity_performance(
+    self,
+    *,
+    group_id: list[int] | None = None,
+    date: int | None = None,
+    validate: bool | None = None,
+  ) -> SubGroupLiquidityProgramPerformance:
+    """Return sub-group Liquidity Program performance with daily and weekly statistics.
+
+    Args:
+      group_id: Sub-group IDs to query, up to 50. Sent as repeated `groupId` query params, e.g. `groupId=1001&groupId=1002`. Omit to query all active groups.
+      date: Query on a specific date, as milliseconds since epoch. Defaults to the latest data on Today - 1.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-link-plus/api/rest-api/~#query-liquidity-program-performance-for-sub-groups)
+    """
+    params = {}
+    if group_id is not None:
+      params['groupId'] = dumps(group_id, separators=(',', ':'))
+    if date is not None:
+      params['date'] = date
+    _Response = SubGroupLiquidityProgramPerformance
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/liquidity-programs/subgroups/performance',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

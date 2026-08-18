@@ -1,0 +1,38 @@
+from typing_extensions import Any
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CancelUmAlgoOrder(RpcEndpoint):
+  """Cancel UM Algo Order"""
+
+  async def cancel_um_algo_order(
+    self,
+    *,
+    algo_id: int | None = None,
+    client_algo_id: str | None = None,
+    validate: bool | None = None,
+  ) -> dict[str, Any]:
+    """Cancel an active UM algo order.
+
+    Args:
+      algo_id: Algo order ID.
+      client_algo_id: Client algo order ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#cancel-um-algo-order)
+    """
+    params = {}
+    if algo_id is not None:
+      params['algoId'] = algo_id
+    if client_algo_id is not None:
+      params['clientAlgoId'] = client_algo_id
+    _Response = dict[str, Any]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/papi/v1/um/algo/order',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

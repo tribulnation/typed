@@ -1,0 +1,31 @@
+from .account_earning import AccountEarning
+from .account_list import AccountList
+from .algo_list import AlgoList
+from .bonus_list import BonusList
+from .coin_list import CoinList
+from .earnings_list import EarningsList
+from .hashrate_resale_cancellation import HashrateResaleCancellation
+from .hashrate_resale_details import HashrateResaleDetails
+from .hashrate_resale_list import HashrateResaleList
+from .hashrate_resale_request import HashrateResaleRequestEndpoint
+from .statistics_list import StatisticsList
+from .worker_detail import WorkerDetail
+from .worker_list import WorkerList
+
+
+class Mining(
+  AccountEarning,
+  AccountList,
+  AlgoList,
+  BonusList,
+  CoinList,
+  EarningsList,
+  HashrateResaleCancellation,
+  HashrateResaleDetails,
+  HashrateResaleList,
+  HashrateResaleRequestEndpoint,
+  StatisticsList,
+  WorkerDetail,
+  WorkerList,
+):
+  """Binance mining endpoints."""

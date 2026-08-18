@@ -1,0 +1,39 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class InterestRebateBalance(TypedDict):
+  """Interest rebate balance."""
+
+  asset: NotRequired[str]
+  """Asset the balance is denominated in."""
+  balance: NotRequired[str]
+  """Current rebate balance remaining -- the amount still available to offset future interest charges."""
+  totalGranted: NotRequired[str]
+  """Total rebate amount ever credited to the account."""
+  totalConsumed: NotRequired[str]
+  """Total rebate amount already used to pay off interest."""
+
+
+class InterestRebateBalanceEndpoint(RpcEndpoint):
+  """Query the interest rebate balance for an institutional loan master account, including the remaining balance, total granted amount, and total consumed amount, all denominated in USDT. Requires the parent account API key."""
+
+  async def interest_rebate_balance(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> InterestRebateBalance:
+    """Query the interest rebate balance for an institutional loan master account, including the remaining balance, total granted amount, and total consumed amount, all denominated in USDT. Requires the parent account API key.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-institutional-loan/api/rest-api/borrow-repay#query-interest-rebate-balance)
+    """
+    _Response = InterestRebateBalance
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/loan-group/interest-rebate-balance',
+      validator=_validator,
+      validate=validate,
+    )
