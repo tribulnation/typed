@@ -1,0 +1,9 @@
+from dataclasses import dataclass
+from .batch import Batch
+from .fills import Fills
+from .get import Get
+
+
+@dataclass(frozen=True, kw_only=True)
+class Historical(Batch, Fills, Get):
+  """`historical` endpoints."""

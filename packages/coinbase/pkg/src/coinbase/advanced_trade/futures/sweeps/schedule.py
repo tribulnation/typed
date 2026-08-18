@@ -1,0 +1,42 @@
+from dataclasses import dataclass
+from typed_core.validation import validator
+from typing_extensions import NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class ScheduleFuturesSweepRequest(TypedDict):
+  """Request to schedule a futures sweep."""
+
+  usd_amount: NotRequired[str]
+  """The amount of USD to sweep. By default, sweeps all available excess funds."""
+
+
+class ScheduleFuturesSweepResponse(TypedDict):
+  """Result of scheduling a futures sweep."""
+
+  success: bool
+  """Whether the sweep was scheduled successfully."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Schedule(RpcEndpoint):
+  """`POST /api/v3/brokerage/cfm/sweeps/schedule`."""
+
+  async def schedule(
+    self,
+    schedule_futures_sweep_request: ScheduleFuturesSweepRequest,
+  ) -> ScheduleFuturesSweepResponse:
+    """Schedule a sweep of funds from the CFM futures wallet to the USD spot wallet.
+
+    Args:
+      schedule_futures_sweep_request: The sweep to schedule.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/futures/schedule-futures-sweep)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v3/brokerage/cfm/sweeps/schedule',
+      json=schedule_futures_sweep_request,
+      validator=validator(ScheduleFuturesSweepResponse),
+    )

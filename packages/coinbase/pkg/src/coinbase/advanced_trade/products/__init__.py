@@ -1,0 +1,31 @@
+from dataclasses import dataclass, field
+from coinbase.core.endpoint.rpc import RpcEndpoint
+from .best_bid_ask import BestBidAsk
+from .book import Book
+from .candles import Candles
+from .get import Get
+from .list import List
+from .market_trades import MarketTrades
+from .public import Public
+
+
+@dataclass(frozen=True, kw_only=True)
+class Products(RpcEndpoint):
+  """`products` endpoints."""
+
+  best_bid_ask: BestBidAsk = field(init=False)
+  book: Book = field(init=False)
+  candles: Candles = field(init=False)
+  get: Get = field(init=False)
+  list: List = field(init=False)
+  market_trades: MarketTrades = field(init=False)
+  public: Public = field(init=False)
+
+  def __post_init__(self):
+    object.__setattr__(self, 'best_bid_ask', BestBidAsk(client=self.client))
+    object.__setattr__(self, 'book', Book(client=self.client))
+    object.__setattr__(self, 'candles', Candles(client=self.client))
+    object.__setattr__(self, 'get', Get(client=self.client))
+    object.__setattr__(self, 'list', List(client=self.client))
+    object.__setattr__(self, 'market_trades', MarketTrades(client=self.client))
+    object.__setattr__(self, 'public', Public(client=self.client))

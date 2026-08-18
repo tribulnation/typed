@@ -1,0 +1,86 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typed_core.validation import validator
+from typing_extensions import NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class L2levelAsksItem(TypedDict):
+  """One order book price level."""
+
+  price: str
+  """Price at this level."""
+  size: str
+  """Aggregate size available at this level."""
+
+
+class L2levelBidsItem(TypedDict):
+  """One order book price level."""
+
+  price: str
+  """Price at this level."""
+  size: str
+  """Aggregate size available at this level."""
+
+
+class PriceBook(TypedDict):
+  """One product's order book snapshot."""
+
+  product_id: str
+  """The trading pair, e.g. `BTC-USD`."""
+  bids: list[L2levelBidsItem]
+  """Bid levels, best first."""
+  asks: list[L2levelAsksItem]
+  """Ask levels, best first."""
+  time: NotRequired[datetime]
+  """Time the book snapshot was taken."""
+
+
+class ProductBookResponse(TypedDict):
+  """An order book snapshot for one product."""
+
+  pricebook: PriceBook
+  last: NotRequired[str]
+  """Last trade price."""
+  mid_market: NotRequired[str]
+  """Mid-market price."""
+  spread_bps: NotRequired[str]
+  """Bid-ask spread, in basis points."""
+  spread_absolute: NotRequired[str]
+  """Bid-ask spread, in quote currency."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Book(RpcEndpoint):
+  """`GET /api/v3/brokerage/product_book`."""
+
+  async def __call__(
+    self,
+    *,
+    product_id: str,
+    limit: int | None = None,
+    aggregation_price_increment: str | None = None,
+  ) -> ProductBookResponse:
+    """Get an order book snapshot for one product.
+
+    Args:
+      product_id: The trading pair, e.g. `BTC-USD`.
+      limit: Number of bid/ask levels to return.
+      aggregation_price_increment: Minimum price interval to group bids/asks into.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/products/get-product-book)
+    """
+    params: dict = {
+      'product_id': product_id,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    if aggregation_price_increment is not None:
+      params['aggregation_price_increment'] = aggregation_price_increment
+    return await self.authed_request(
+      'GET',
+      '/api/v3/brokerage/product_book',
+      params=params,
+      validator=validator(ProductBookResponse),
+    )

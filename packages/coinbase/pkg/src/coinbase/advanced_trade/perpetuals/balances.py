@@ -1,0 +1,91 @@
+from dataclasses import dataclass
+from typed_core.validation import validator
+from typing_extensions import TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class PerpetualsAsset(TypedDict):
+  """The asset this balance is denominated in."""
+
+  asset_id: str
+  """The asset's identifier."""
+  asset_uuid: str
+  """The asset's UUID."""
+  asset_name: str
+  """The asset's display name."""
+  status: str
+  """The asset's current status."""
+  collateral_weight: str
+  """The weight applied to this asset as collateral."""
+  account_collateral_limit: str
+  """The maximum amount of this asset usable as collateral for the account."""
+  ecosystem_collateral_limit_breached: bool
+  """Whether the ecosystem-wide collateral limit for this asset has been breached."""
+  asset_icon_url: str
+  """URL of the asset's icon."""
+  supported_networks_enabled: bool
+  """Whether the asset's supported networks are enabled."""
+
+
+class PerpetualsBalance(TypedDict):
+  """The portfolio's balance in one asset."""
+
+  asset: PerpetualsAsset
+  quantity: str
+  """Total quantity held."""
+  hold: str
+  """Quantity held against open orders."""
+  transfer_hold: str
+  """Quantity held against pending transfers."""
+  collateral_value: str
+  """Value of this balance counted as collateral."""
+  collateral_weight: str
+  """The weight applied to this balance as collateral."""
+  max_withdraw_amount: str
+  """The maximum amount currently withdrawable."""
+  loan: str
+  """Outstanding loan amount in this asset."""
+  loan_collateral_requirement_usd: str
+  """USD collateral required against the outstanding loan."""
+  pledged_quantity: str
+  """Quantity pledged as collateral."""
+  max_portfolio_transfer_amount: str
+  """The maximum amount transferable out of the portfolio."""
+
+
+class PortfolioBalance(TypedDict):
+  """Balances held by one portfolio."""
+
+  portfolio_uuid: str
+  """The portfolio UUID."""
+  balances: list[PerpetualsBalance]
+  """One entry per asset held by the portfolio."""
+  is_margin_limit_reached: bool
+  """Whether the portfolio has reached its margin limit."""
+
+
+class GetPortfolioBalancesResponse(TypedDict):
+  """Per-asset balances for one or more perpetuals portfolios."""
+
+  portfolio_balances: list[PortfolioBalance]
+  """One entry per portfolio."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Balances(RpcEndpoint):
+  """`GET /api/v3/brokerage/intx/balances/{portfolio_uuid}`."""
+
+  async def __call__(self, portfolio_uuid: str) -> GetPortfolioBalancesResponse:
+    """Get per-asset balances for a perpetuals portfolio on Coinbase International Exchange (INTX). Deprecated: this INTX perpetuals surface retires 2026-09-09, replaced by a Deribit-powered derivatives gateway (see `upstream.md`).
+
+    Args:
+      portfolio_uuid: The portfolio UUID.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/perpetuals/get-portfolio-balances)
+    """
+    return await self.authed_request(
+      'GET',
+      f'/api/v3/brokerage/intx/balances/{portfolio_uuid}',
+      validator=validator(GetPortfolioBalancesResponse),
+    )

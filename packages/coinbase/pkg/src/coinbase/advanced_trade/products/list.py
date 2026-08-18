@@ -1,0 +1,321 @@
+from dataclasses import dataclass
+from typed_core.validation import validator
+from typing_extensions import Any, AsyncIterator, Literal, NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class Product(TypedDict):
+  """A tradable Advanced Trade product (spot pair, future, or equity)."""
+
+  product_id: str
+  """The trading pair, e.g. `BTC-USD`."""
+  price: str
+  """Current price in quote currency."""
+  price_percentage_change_24h: str
+  """Price change percent over the last 24 hours."""
+  volume_24h: str
+  """Trading volume over the last 24 hours."""
+  volume_percentage_change_24h: str
+  """Volume change percent over the last 24 hours."""
+  base_increment: str
+  """Minimum base currency amount change."""
+  quote_increment: str
+  """Minimum quote currency amount change."""
+  quote_min_size: str
+  """Minimum order size in quote currency."""
+  quote_max_size: str
+  """Maximum order size in quote currency."""
+  base_min_size: str
+  """Minimum order size in base currency."""
+  base_max_size: str
+  """Maximum order size in base currency."""
+  base_name: str
+  """Name of the base currency."""
+  quote_name: str
+  """Name of the quote currency."""
+  watched: bool
+  """Whether the product is on the caller's watchlist."""
+  is_disabled: bool
+  """Whether the product is disabled for trading."""
+  new: bool
+  """Whether the product is newly listed."""
+  status: str
+  """Status of the product."""
+  cancel_only: bool
+  """Whether orders on this product can only be cancelled."""
+  limit_only: bool
+  """Whether only limit orders are allowed on this product."""
+  post_only: bool
+  """Whether orders on this product can only be posted."""
+  trading_disabled: bool
+  """Whether trading is disabled for this product market-wide."""
+  auction_mode: bool
+  """Whether the product is in auction mode."""
+  base_display_symbol: str
+  """Display symbol for the base currency."""
+  quote_display_symbol: str
+  """Display symbol for the quote currency."""
+  product_type: NotRequired[
+    Literal[
+      'UNKNOWN_PRODUCT_TYPE', 'SPOT', 'FUTURE', 'EQUITY', 'OPTION_GROUP', 'FUTURE_GROUP'
+    ]
+  ]
+  """Product type."""
+  quote_currency_id: NotRequired[str]
+  """Symbol of the quote currency."""
+  base_currency_id: NotRequired[str]
+  """Symbol of the base currency."""
+  mid_market_price: NotRequired[str]
+  """Bid-ask spread midpoint."""
+  alias: NotRequired[str]
+  """Product id this product serves as a unified-book alias for."""
+  alias_to: NotRequired[list[str]]
+  """Product ids that alias to this product."""
+  view_only: NotRequired[bool]
+  """Tradability/expiration status of the product."""
+  price_increment: NotRequired[str]
+  """Minimum price change."""
+  display_name: NotRequired[str]
+  """Display name for the product."""
+  approximate_quote_24h_volume: NotRequired[str]
+  """24h volume in the current quote currency."""
+  new_at: NotRequired[str]
+  """Listing timestamp, when the product carries a 'new' tag."""
+  market_cap: NotRequired[str]
+  """Market capitalization of the base asset."""
+  icon_color: NotRequired[str]
+  """Color used to display the product icon."""
+  icon_url: NotRequired[str]
+  """URL to the product icon image."""
+  display_name_overwrite: NotRequired[str]
+  """Alternative display name for the product."""
+  about_description: NotRequired[str]
+  """Description shown in the product's about section."""
+  best_bid_price: NotRequired[str]
+  """Current best bid price."""
+  best_ask_price: NotRequired[str]
+  """Current best ask price."""
+  high_24h: NotRequired[str]
+  """Highest price over the last 24 hours."""
+  low_24h: NotRequired[str]
+  """Lowest price over the last 24 hours."""
+  product_venue: NotRequired[Literal['UNKNOWN_VENUE_TYPE', 'CBE', 'FCM', 'INTX']]
+  """Venue the product trades on."""
+  fcm_trading_session_details: NotRequired[dict[str, Any] | None]
+  """FCM (futures) trading session metadata, populated when `product_type` is `FUTURE`; `null` otherwise (verified live for SPOT products)."""
+  future_product_details: NotRequired[dict[str, Any]]
+  """Futures-specific product metadata, populated when `product_type` is `FUTURE`."""
+  equity_product_details: NotRequired[dict[str, Any]]
+  """Equity-specific product metadata, populated when `product_type` is `EQUITY`."""
+
+
+class ProductPagination(TypedDict):
+  """Cursor pagination metadata for a product listing."""
+
+  prev_cursor: NotRequired[str]
+  """Cursor for the previous page."""
+  next_cursor: NotRequired[str]
+  """Cursor for the next page."""
+  has_next: NotRequired[bool]
+  """Whether a next page exists."""
+  has_prev: NotRequired[bool]
+  """Whether a previous page exists."""
+
+
+class ListProductsResponse(TypedDict):
+  """The authenticated key's product catalog."""
+
+  products: list[Product]
+  """The matching products."""
+  num_products: int
+  """Number of products returned."""
+  pagination: NotRequired[ProductPagination]
+
+
+@dataclass(frozen=True, kw_only=True)
+class List(RpcEndpoint):
+  """`GET /api/v3/brokerage/products`."""
+
+  async def __call__(
+    self,
+    *,
+    limit: int | None = None,
+    offset: int | None = None,
+    product_type: Literal[
+      'UNKNOWN_PRODUCT_TYPE', 'SPOT', 'FUTURE', 'EQUITY', 'OPTION_GROUP', 'FUTURE_GROUP'
+    ]
+    | None = None,
+    product_ids: list[str] | None = None,
+    contract_expiry_type: Literal[
+      'UNKNOWN_CONTRACT_EXPIRY_TYPE', 'EXPIRING', 'PERPETUAL'
+    ]
+    | None = None,
+    expiring_contract_status: Literal[
+      'UNKNOWN_EXPIRING_CONTRACT_STATUS',
+      'STATUS_UNEXPIRED',
+      'STATUS_EXPIRED',
+      'STATUS_ALL',
+    ]
+    | None = None,
+    get_tradability_status: bool | None = None,
+    get_all_products: bool | None = None,
+    products_sort_order: Literal[
+      'PRODUCTS_SORT_ORDER_UNDEFINED',
+      'PRODUCTS_SORT_ORDER_VOLUME_24H_DESCENDING',
+      'PRODUCTS_SORT_ORDER_LIST_TIME_DESCENDING',
+    ]
+    | None = None,
+    cursor: str | None = None,
+    futures_underlying_type: Literal[
+      'UNKNOWN_FUTURES_UNDERLYING_TYPE',
+      'FUTURES_UNDERLYING_TYPE_SPOT',
+      'FUTURES_UNDERLYING_TYPE_INDEX',
+      'FUTURES_UNDERLYING_TYPE_EQUITY',
+      'FUTURES_UNDERLYING_TYPE_EQUITY_INDEX',
+      'FUTURES_UNDERLYING_TYPE_EQUITY_ETF',
+      'FUTURES_UNDERLYING_TYPE_PREIPO',
+      'FUTURES_UNDERLYING_TYPE_COMMOD',
+      'FUTURES_UNDERLYING_TYPE_COMMOD_ETF',
+      'FUTURES_UNDERLYING_TYPE_COMMOD_INDEX',
+      'FUTURES_UNDERLYING_TYPE_ADR',
+      'FUTURES_UNDERLYING_TYPE_FOREIGN_EQUITY',
+      'FUTURES_UNDERLYING_TYPE_OTC',
+    ]
+    | None = None,
+    user_country_code: str | None = None,
+    expired: bool | None = None,
+  ) -> ListProductsResponse:
+    """List the authenticated key's tradable products, including futures and equities the public catalog omits.
+
+    Args:
+      limit: Number of products to return.
+      offset: Number of products to skip before returning.
+      product_type: Filter by product type.
+      product_ids: Trading pairs to filter to, e.g. `BTC-USD`.
+      contract_expiry_type: Filter futures by expiry type.
+      expiring_contract_status: Filter expiring futures by status.
+      get_tradability_status: Populate `view_only` with tradability status; SPOT products only.
+      get_all_products: Return all products of all types, including expired futures.
+      products_sort_order: Sort order for the returned products. Defaults to 24h volume descending.
+      cursor: Base64-encoded pagination cursor.
+      futures_underlying_type: Filter futures by underlying type. Only applicable when `product_type` is `FUTURE`.
+      user_country_code: Country code for differentiated product display names.
+      expired: Return recently-expired instruments instead of active ones. Only applicable when `product_venue` is `DERIBIT`; ignored for other venues.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/products/list-products)
+    """
+    params = {}
+    if limit is not None:
+      params['limit'] = limit
+    if offset is not None:
+      params['offset'] = offset
+    if product_type is not None:
+      params['product_type'] = product_type
+    if product_ids is not None:
+      params['product_ids'] = product_ids
+    if contract_expiry_type is not None:
+      params['contract_expiry_type'] = contract_expiry_type
+    if expiring_contract_status is not None:
+      params['expiring_contract_status'] = expiring_contract_status
+    if get_tradability_status is not None:
+      params['get_tradability_status'] = get_tradability_status
+    if get_all_products is not None:
+      params['get_all_products'] = get_all_products
+    if products_sort_order is not None:
+      params['products_sort_order'] = products_sort_order
+    if cursor is not None:
+      params['cursor'] = cursor
+    if futures_underlying_type is not None:
+      params['futures_underlying_type'] = futures_underlying_type
+    if user_country_code is not None:
+      params['user_country_code'] = user_country_code
+    if expired is not None:
+      params['expired'] = expired
+    return await self.authed_request(
+      'GET',
+      '/api/v3/brokerage/products',
+      params=params,
+      validator=validator(ListProductsResponse),
+    )
+
+  async def paged(
+    self,
+    *,
+    limit: int | None = None,
+    offset: int | None = None,
+    product_type: Literal[
+      'UNKNOWN_PRODUCT_TYPE', 'SPOT', 'FUTURE', 'EQUITY', 'OPTION_GROUP', 'FUTURE_GROUP'
+    ]
+    | None = None,
+    product_ids: list[str] | None = None,
+    contract_expiry_type: Literal[
+      'UNKNOWN_CONTRACT_EXPIRY_TYPE', 'EXPIRING', 'PERPETUAL'
+    ]
+    | None = None,
+    expiring_contract_status: Literal[
+      'UNKNOWN_EXPIRING_CONTRACT_STATUS',
+      'STATUS_UNEXPIRED',
+      'STATUS_EXPIRED',
+      'STATUS_ALL',
+    ]
+    | None = None,
+    get_tradability_status: bool | None = None,
+    get_all_products: bool | None = None,
+    products_sort_order: Literal[
+      'PRODUCTS_SORT_ORDER_UNDEFINED',
+      'PRODUCTS_SORT_ORDER_VOLUME_24H_DESCENDING',
+      'PRODUCTS_SORT_ORDER_LIST_TIME_DESCENDING',
+    ]
+    | None = None,
+    futures_underlying_type: Literal[
+      'UNKNOWN_FUTURES_UNDERLYING_TYPE',
+      'FUTURES_UNDERLYING_TYPE_SPOT',
+      'FUTURES_UNDERLYING_TYPE_INDEX',
+      'FUTURES_UNDERLYING_TYPE_EQUITY',
+      'FUTURES_UNDERLYING_TYPE_EQUITY_INDEX',
+      'FUTURES_UNDERLYING_TYPE_EQUITY_ETF',
+      'FUTURES_UNDERLYING_TYPE_PREIPO',
+      'FUTURES_UNDERLYING_TYPE_COMMOD',
+      'FUTURES_UNDERLYING_TYPE_COMMOD_ETF',
+      'FUTURES_UNDERLYING_TYPE_COMMOD_INDEX',
+      'FUTURES_UNDERLYING_TYPE_ADR',
+      'FUTURES_UNDERLYING_TYPE_FOREIGN_EQUITY',
+      'FUTURES_UNDERLYING_TYPE_OTC',
+    ]
+    | None = None,
+    user_country_code: str | None = None,
+    expired: bool | None = None,
+    max_pages: int | None = None,
+  ) -> AsyncIterator[ListProductsResponse]:
+    """Yield successive pages of this endpoint.
+
+    Passes each page's token back as `cursor` and stops when a response carries no
+    `pagination.next_cursor`, or after `max_pages` pages when one is given.
+    """
+    cursor: str | None = None
+    pages = 0
+    while True:
+      response = await self.__call__(
+        limit=limit,
+        offset=offset,
+        product_type=product_type,
+        product_ids=product_ids,
+        contract_expiry_type=contract_expiry_type,
+        expiring_contract_status=expiring_contract_status,
+        get_tradability_status=get_tradability_status,
+        get_all_products=get_all_products,
+        products_sort_order=products_sort_order,
+        futures_underlying_type=futures_underlying_type,
+        user_country_code=user_country_code,
+        expired=expired,
+        cursor=cursor,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      cursor_0 = response.get('pagination') if response is not None else None
+      cursor = cursor_0.get('next_cursor') if cursor_0 is not None else None
+      if not cursor:
+        break

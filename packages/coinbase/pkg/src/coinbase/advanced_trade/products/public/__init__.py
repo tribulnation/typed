@@ -1,0 +1,11 @@
+from dataclasses import dataclass
+from .book import Book
+from .candles import Candles
+from .get import Get
+from .list import List
+from .market_trades import MarketTrades
+
+
+@dataclass(frozen=True, kw_only=True)
+class Public(Book, Candles, Get, List, MarketTrades):
+  """`public` endpoints."""

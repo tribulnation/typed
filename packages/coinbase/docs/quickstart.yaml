@@ -1,0 +1,71 @@
+env_setup:
+  body: >-
+    Create a `.env` with your CDP API Key — see
+    [API keys setup](/typed/coinbase/api-keys) for how to create one.
+  code: |
+    # .env
+    COINBASE_API_KEY_NAME="organizations/{org_id}/apiKeys/{key_id}"
+    COINBASE_PRIVATE_KEY="-----BEGIN EC PRIVATE KEY-----..."
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-coinbase python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from coinbase import Coinbase
+
+    load_dotenv()
+
+    async with Coinbase.new() as client:
+      product = await client.advanced_trade.products.public.get('BTC-USD')
+      print(product['price'])
+
+how_tos:
+  - title: Fetch market data
+    body: Products, order books, candles, and trades — all public, no credentials needed.
+    code: |
+      products = await client.advanced_trade.products.public.list(limit=50)                    # tradable products
+      book = await client.advanced_trade.products.public.book(product_id='BTC-USD', limit=50)   # order book
+      trades = await client.advanced_trade.products.public.market_trades('BTC-USD', limit=50)   # recent trades
+
+  - title: Manage account data
+    body: Coinbase App wallet balances and Advanced Trade brokerage balances. Needs credentials.
+    code: |
+      wallets = await client.accounts.list(limit=25)                     # v2 wallets
+      accounts = await client.advanced_trade.accounts.list(limit=50)     # v3 brokerage accounts
+      history = await client.accounts.transactions.list(wallets['data'][0]['id'], limit=25)  # transaction history
+
+  - title: Deposits & withdrawals
+    body: Fiat deposits/withdrawals and crypto sends against a Coinbase App wallet. Needs credentials.
+    code: |
+      methods = await client.advanced_trade.payment_methods.list()                 # linked payment methods
+      deposit = await client.accounts.deposits.create(                             # fiat deposit
+        'account-id', amount='10.00', currency='USD', payment_method=methods['payment_methods'][0]['id'],
+      )
+      address = await client.accounts.addresses.create('account-id', network='ethereum')  # receive address
+
+  - title: Place & manage orders
+    body: Submit, inspect, and cancel Advanced Trade orders. Needs credentials.
+    code: |
+      order = await client.advanced_trade.orders.create({                          # place a market order
+        'client_order_id': 'my-order-001', 'product_id': 'BTC-USD', 'side': 'BUY',
+        'order_configuration': {'market_market_ioc': {'quote_size': '10'}},
+      })
+      open_orders = await client.advanced_trade.orders.historical.batch(order_status=['OPEN'])  # open orders
+      await client.advanced_trade.orders.batch_cancel(order_ids=['order-id'])       # cancel an order
+
+  - title: Listen to streams
+    body: Real-time ticker and order-book updates over WebSocket. Public, no credentials needed.
+    code: |
+      async with client.market_data.ticker(['BTC-USD']) as stream:                  # ticker channel
+        async for message in stream:
+          print(message)
+
+  - title: Paginate through results
+    body: Walk every page of a cursor-paginated endpoint automatically.
+    code: |
+      async for page in client.accounts.list.paged(limit=25):                       # every v2 wallet
+        print(page['data'])

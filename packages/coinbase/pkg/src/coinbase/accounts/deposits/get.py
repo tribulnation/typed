@@ -1,0 +1,59 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typed_core.validation import validator
+from typing_extensions import Literal, NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+from coinbase.types import Money, PaymentMethodReference, TransactionReference
+
+
+class Deposit(TypedDict):
+  """A deposit of funds into a fiat account using a linked payment method. Each committed deposit also has an associated transaction."""
+
+  id: str
+  """Resource id."""
+  status: Literal['created', 'completed', 'canceled']
+  """Status of the deposit."""
+  payment_method: PaymentMethodReference
+  transaction: TransactionReference
+  amount: Money
+  subtotal: Money
+  fee: Money
+  created_at: datetime
+  """When this deposit was created, RFC3339."""
+  updated_at: datetime
+  """When this deposit was last updated, RFC3339."""
+  resource: Literal['deposit']
+  """Resource type, always `deposit`."""
+  resource_path: str
+  """API path to fetch this deposit resource."""
+  payout_at: NotRequired[datetime | None]
+  """When a deposit that isn't executed instantly will pay out, RFC3339, or null when not applicable."""
+  commited: bool
+  """Whether this deposit has been committed. Verified live: the wire key is `commited` (single 't'), not `committed` as documented."""
+
+
+class GetDepositResponse(TypedDict):
+  """Wrapper around a single deposit."""
+
+  data: Deposit
+
+
+@dataclass(frozen=True, kw_only=True)
+class Get(RpcEndpoint):
+  """`GET /v2/accounts/{account_id}/deposits/{deposit_id}`."""
+
+  async def get(self, account_id: str, deposit_id: str) -> GetDepositResponse:
+    """Get one deposit by id.
+
+    Args:
+      account_id: The fiat account the deposit belongs to.
+      deposit_id: The deposit to fetch.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/transfer-apis/deposit-fiat)
+    """
+    return await self.authed_request(
+      'GET',
+      f'/v2/accounts/{account_id}/deposits/{deposit_id}',
+      validator=validator(GetDepositResponse),
+    )

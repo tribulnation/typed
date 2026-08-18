@@ -1,0 +1,34 @@
+from dataclasses import dataclass
+from typed_core.validation import validator
+from typing_extensions import TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+from coinbase.types import V2transfer
+
+
+class CommitWithdrawalResponse(TypedDict):
+  """Wrapper around the committed withdrawal transfer."""
+
+  transfer: V2transfer
+
+
+@dataclass(frozen=True, kw_only=True)
+class Commit(RpcEndpoint):
+  """`POST /v2/accounts/{account_id}/withdrawals/{withdrawal_id}/commit`."""
+
+  async def commit(
+    self, account_id: str, withdrawal_id: str
+  ) -> CommitWithdrawalResponse:
+    """Complete a withdrawal that was created with `commit: false`.
+
+    Args:
+      account_id: The fiat account the withdrawal belongs to.
+      withdrawal_id: The withdrawal to commit.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/transfer-apis/withdraw-fiat)
+    """
+    return await self.authed_request(
+      'POST',
+      f'/v2/accounts/{account_id}/withdrawals/{withdrawal_id}/commit',
+      validator=validator(CommitWithdrawalResponse),
+    )

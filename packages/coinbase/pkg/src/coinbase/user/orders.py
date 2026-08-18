@@ -1,0 +1,211 @@
+from dataclasses import dataclass
+from typed_core.util import StreamManager
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from coinbase.core.endpoint.stream import StreamEndpoint
+
+
+class UserExpiringFuturesPosition(TypedDict):
+  """One open expiring futures position."""
+
+  product_id: str
+  """The ticker symbol, e.g. `BIT-28JUN24-CDE`."""
+  side: Literal['Long', 'Short']
+  """Side of the position."""
+  number_of_contracts: str
+  """Size of the position, in contracts."""
+  realized_pnl: NotRequired[str]
+  """Realized profit and loss on this position."""
+  unrealized_pnl: NotRequired[str]
+  """Unrealized profit and loss on this position."""
+  entry_price: NotRequired[str]
+  """Average entry price for this position."""
+
+
+class UserOrder(TypedDict):
+  """One order's current state."""
+
+  avg_price: NotRequired[str]
+  """Average fill price across this order's fills."""
+  cancel_reason: NotRequired[str]
+  """Reason the order was cancelled, when `status` is `CANCELLED`; empty otherwise. Not documented as an exhaustive enumeration."""
+  client_order_id: str
+  """Caller-supplied order id."""
+  completion_percentage: NotRequired[str]
+  """Percentage of the order filled so far."""
+  contract_expiry_type: NotRequired[
+    Literal['UNKNOWN_CONTRACT_EXPIRY_TYPE', 'EXPIRING', 'PERPETUAL']
+  ]
+  """Expiry type of the order's contract, for futures products."""
+  cumulative_quantity: NotRequired[str]
+  """Total base-currency quantity filled so far."""
+  filled_value: NotRequired[str]
+  """Total quote-currency value filled so far."""
+  leaves_quantity: NotRequired[str]
+  """Remaining unfilled base-currency quantity."""
+  limit_price: NotRequired[str]
+  """Limit price, for limit and stop-limit orders."""
+  number_of_fills: NotRequired[str]
+  """Number of fills applied to this order so far."""
+  order_id: str
+  """Venue-assigned order id."""
+  order_side: Literal['BUY', 'SELL']
+  """Side of the order."""
+  order_type: Literal['LIMIT', 'MARKET', 'STOP_LIMIT']
+  """Order type."""
+  outstanding_hold_amount: NotRequired[str]
+  """Amount currently held against this order."""
+  post_only: NotRequired[str]
+  """Whether the order was post-only, as a string-encoded boolean (e.g. `"false"`) per the observed example."""
+  product_id: str
+  """Product id the order is on, e.g. `BTC-USD`."""
+  product_type: Literal['UNKNOWN_PRODUCT_TYPE', 'SPOT', 'FUTURE']
+  """Type of product the order is on."""
+  reject_reason: NotRequired[str]
+  """Reason the order was rejected, when applicable; empty otherwise. Not documented as an exhaustive enumeration."""
+  retail_portfolio_id: NotRequired[str]
+  """The portfolio this order belongs to."""
+  risk_managed_by: NotRequired[
+    Literal['UNKNOWN_RISK_MANAGEMENT_TYPE', 'MANAGED_BY_FCM', 'MANAGED_BY_VENUE']
+  ]
+  """Which system manages risk for this order."""
+  status: Literal[
+    'PENDING', 'OPEN', 'FILLED', 'CANCEL_QUEUED', 'CANCELLED', 'EXPIRED', 'FAILED'
+  ]
+  """Current order status."""
+  stop_price: NotRequired[str]
+  """Stop trigger price, for stop-limit orders."""
+  time_in_force: Literal[
+    'UNKNOWN_TIME_IN_FORCE',
+    'GOOD_UNTIL_DATE_TIME',
+    'GOOD_UNTIL_CANCELLED',
+    'IMMEDIATE_OR_CANCEL',
+    'FILL_OR_KILL',
+  ]
+  """Time-in-force policy for this order."""
+  total_fees: NotRequired[str]
+  """Total fees charged on this order so far."""
+  total_value_after_fees: NotRequired[str]
+  """Total quote-currency value filled, net of fees."""
+  trigger_status: NotRequired[
+    Literal[
+      'UNKNOWN_TRIGGER_STATUS', 'INVALID_ORDER_TYPE', 'STOP_PENDING', 'STOP_TRIGGERED'
+    ]
+  ]
+  """Stop-order trigger status."""
+  creation_time: NotRequired[str]
+  """Order creation time, RFC 3339."""
+  end_time: NotRequired[str]
+  """Order end (expiry) time, RFC 3339; zero-value `0001-01-01T00:00:00Z` when not applicable."""
+  start_time: NotRequired[str]
+  """Order start time, RFC 3339; zero-value `0001-01-01T00:00:00Z` when not applicable."""
+
+
+class UserOrdersParams(TypedDict):
+  """Empty: `User.orders` sends no subscribe parameters beyond `type`/`channel`/`jwt`. The upstream `user` channel additionally accepts an optional `product_ids` array to scope the subscription; when omitted (as here) the subscription is open to all product ids."""
+
+
+class UserOrdersSubscriptionEvent(TypedDict):
+  """Snapshot of every channel currently subscribed on this connection."""
+
+  subscriptions: dict[str, list[str]]
+  """Map of channel name to the product ids subscribed on it (empty array here, since this method subscribes with no product scoping)."""
+
+
+class UserPerpetualFuturesPosition(TypedDict):
+  """One open perpetual futures position."""
+
+  product_id: str
+  """Product id, e.g. `BTC-PERP-INTX`."""
+  portfolio_uuid: str
+  """The INTX portfolio this position belongs to."""
+  vwap: NotRequired[str]
+  """Volume-weighted average price of the current position."""
+  entry_vwap: NotRequired[str]
+  """Volume-weighted average entry price of the current position."""
+  position_side: Literal['Long', 'Short']
+  """Side of the position."""
+  margin_type: Literal['Cross', 'Isolated']
+  """Margin mode the position is held under."""
+  net_size: str
+  """Net position size in contracts."""
+  buy_order_size: NotRequired[str]
+  """Aggregate size of open buy orders on this product."""
+  sell_order_size: NotRequired[str]
+  """Aggregate size of open sell orders on this product."""
+  leverage: NotRequired[str]
+  """Leverage applied to this position."""
+  mark_price: NotRequired[str]
+  """Current mark price used for margin and PnL calculations."""
+  liquidation_price: NotRequired[str]
+  """Price at which this position would be liquidated."""
+  im_notional: NotRequired[str]
+  """Initial margin notional for this position."""
+  mm_notional: NotRequired[str]
+  """Maintenance margin notional for this position."""
+  position_notional: NotRequired[str]
+  """Notional value of this position."""
+  unrealized_pnl: NotRequired[str]
+  """Unrealized profit and loss on this position."""
+  aggregated_pnl: NotRequired[str]
+  """Aggregated (realized plus unrealized) profit and loss on this position."""
+
+
+class UserOrdersSubscribeAck(TypedDict):
+  """Confirms the channel is now (un)subscribed."""
+
+  channel: Literal['subscriptions']
+  """Always `subscriptions` for an acknowledgement frame."""
+  timestamp: str
+  """Server timestamp the acknowledgement was generated, RFC 3339."""
+  sequence_num: int
+  """Per-connection sequence number of this frame."""
+  events: list[UserOrdersSubscriptionEvent]
+  """Always one event describing the connection's current subscriptions."""
+
+
+class UserPositions(TypedDict):
+  """The portfolio's non-spot position snapshots, grouped by kind."""
+
+  perpetual_futures_positions: list[UserPerpetualFuturesPosition]
+  """Open INTX perpetual futures positions."""
+  expiring_futures_positions: list[UserExpiringFuturesPosition]
+  """Open CFM (dated, expiring) futures positions."""
+  prediction_market_positions: list[dict[str, Any]]
+  """Open prediction-market positions. Always empty in the source page's example; field shape is otherwise undocumented."""
+
+
+class UserOrdersEvent(TypedDict):
+  """One batch of order and position updates."""
+
+  type: str
+  """Event kind; only `snapshot` is documented on the source page."""
+  orders: list[UserOrder]
+  """Open-order snapshots and updates."""
+  positions: UserPositions
+
+
+class UserOrdersMessage(TypedDict):
+  """The whole frame the caller receives: the client core does not unwrap `events`."""
+
+  channel: Literal['user']
+  """Always `user`."""
+  timestamp: str
+  """Server timestamp the message was generated, RFC 3339."""
+  sequence_num: int
+  """Monotonically increasing per-connection sequence number, used to detect dropped messages."""
+  events: list[UserOrdersEvent]
+  """One or more order/position events."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Orders(StreamEndpoint):
+  """`user` channel."""
+
+  def __call__(self) -> StreamManager[UserOrdersMessage, Any, Any]:
+    """Real-time open-order and futures/perpetuals/prediction-market position snapshots and updates for the key's portfolio. Authenticated: subscribed via `authed_subscribe`, embedding a fresh JWT in the subscribe message. The upstream channel accepts an optional `product_ids` filter; the `User.orders` core method does not expose it and always subscribes open to every product.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-channels)
+    """
+    return self.authed_subscribe('user', None, validator=validator(UserOrdersMessage))

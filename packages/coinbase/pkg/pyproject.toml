@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-coinbase"
+version = "0.1.1"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the Coinbase API."
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core", "lazy-loader", "cryptography",
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[tool.setuptools.package-data]
+"coinbase" = ["py.typed", "*.pyi", "**/*.pyi"]
+
+[project.urls]
+Repository = "https://github.com/tribulnation/coinbase.git"
+Documentation = "https://coinbase.tribulnation.com"
+Website = "https://tribulnation.com"

@@ -1,0 +1,9 @@
+from dataclasses import dataclass
+from .buy import Buy
+from .sell import Sell
+from .spot import Spot
+
+
+@dataclass(frozen=True, kw_only=True)
+class Prices(Buy, Sell, Spot):
+  """`prices` endpoints."""

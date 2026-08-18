@@ -1,0 +1,104 @@
+from dataclasses import dataclass
+from typed_core.util import StreamManager
+from typing_extensions import Any, Literal, TypedDict
+from typed_core.validation import validator
+from coinbase.core.endpoint.stream import StreamEndpoint
+
+
+class TickerEntry(TypedDict):
+  """One product's current ticker stats."""
+
+  type: str
+  """Entry kind; only `ticker` is documented on the source page."""
+  product_id: str
+  """Product id, e.g. `BTC-USD`."""
+  price: str
+  """Latest trade price."""
+  volume_24_h: str
+  """Trailing-24h traded volume in base currency."""
+  low_24_h: str
+  """Trailing-24h low price."""
+  high_24_h: str
+  """Trailing-24h high price."""
+  low_52_w: str
+  """Trailing-52-week low price."""
+  high_52_w: str
+  """Trailing-52-week high price."""
+  price_percent_chg_24_h: str
+  """Trailing-24h price change, as a percentage."""
+  best_bid: str
+  """Current best bid price."""
+  best_bid_quantity: str
+  """Size available at the current best bid price."""
+  best_ask: str
+  """Current best ask price."""
+  best_ask_quantity: str
+  """Size available at the current best ask price."""
+
+
+class TickerParams(TypedDict):
+  """Products to receive ticker updates for."""
+
+  product_ids: list[str]
+  """Product ids to stream, e.g. `["BTC-USD", "ETH-USD"]`."""
+
+
+class TickerSubscriptionEvent(TypedDict):
+  """Snapshot of every channel currently subscribed on this connection."""
+
+  subscriptions: dict[str, list[str]]
+  """Map of channel name to the product ids subscribed on it."""
+
+
+class TickerEvent(TypedDict):
+  """One batch of ticker updates."""
+
+  type: str
+  """Event kind; only `snapshot` is documented on the source page."""
+  tickers: list[TickerEntry]
+  """Updated tickers, one per product."""
+
+
+class TickerSubscribeAck(TypedDict):
+  """Confirms the channel is now (un)subscribed."""
+
+  channel: Literal['subscriptions']
+  """Always `subscriptions` for an acknowledgement frame."""
+  timestamp: str
+  """Server timestamp the acknowledgement was generated, RFC 3339."""
+  sequence_num: int
+  """Per-connection sequence number of this frame."""
+  events: list[TickerSubscriptionEvent]
+  """Always one event describing the connection's current subscriptions."""
+
+
+class TickerMessage(TypedDict):
+  """The whole frame the caller receives: the client core does not unwrap `events`."""
+
+  channel: Literal['ticker']
+  """Always `ticker`."""
+  timestamp: str
+  """Server timestamp the message was generated, RFC 3339."""
+  sequence_num: int
+  """Monotonically increasing per-connection sequence number, used to detect dropped messages."""
+  events: list[TickerEvent]
+  """One or more ticker events."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Ticker(StreamEndpoint):
+  """`ticker` channel."""
+
+  def __call__(self, product_ids: list[str]) -> StreamManager[TickerMessage, Any, Any]:
+    """Real-time best bid/ask and 24h stats for the given products, pushed on every trade. No authentication required.
+
+    Args:
+      product_ids: Product ids to stream, e.g. `["BTC-USD", "ETH-USD"]`.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-channels)
+    """
+    params: dict = {
+      'product_ids': product_ids,
+    }
+    return self.subscribe('ticker', params, validator=validator(TickerMessage))
