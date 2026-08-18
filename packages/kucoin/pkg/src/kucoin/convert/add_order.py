@@ -1,0 +1,47 @@
+"""`POST /api/v1/convert/order` — Add Convert Order."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.types import ConvertOrderResult
+from kucoin.core import RpcEndpoint
+
+
+class ConvertAddOrder(TypedDict):
+  """Parameters to execute a market currency conversion."""
+
+  clientOrderId: str
+  """Client-chosen order id, unique per account."""
+  quoteId: str
+  """Quote id from a prior Get Convert Quote call."""
+  accountType: str
+  """Account to draw from and settle into, for example `BOTH`. KuCoin does not publish a closed set for this field in an accessible parameter table, so it's left as a plain string rather than a guessed enum."""
+
+
+_Type = ConvertOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class AddOrder(RpcEndpoint):
+  """`Add Convert Order` — mixed into `Convert`, the product exposing `convert.add_order`."""
+
+  async def add_order(
+    self,
+    convert_add_order: ConvertAddOrder,
+    *,
+    validate: bool | None = None,
+  ) -> ConvertOrderResult:
+    """Execute a market currency conversion at a previously fetched quote's price.
+
+    Args:
+      convert_add_order: Conversion order parameters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/convert/order',
+      json=convert_add_order,
+      validator=adapter,
+      validate=validate,
+    )

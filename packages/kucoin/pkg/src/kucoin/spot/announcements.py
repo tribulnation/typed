@@ -1,0 +1,131 @@
+"""`GET /api/v3/announcements` — Get Announcements."""
+
+from typing_extensions import AsyncIterator
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class Announcement(TypedDict):
+  """One news announcement."""
+
+  annId: int
+  """Unique announcement id."""
+  annTitle: str
+  """Announcement title."""
+  annType: list[str]
+  """Categories this announcement was tagged with. Not a documented closed set — see the endpoint `notes`."""
+  annDesc: str
+  """Short announcement description."""
+  language: str
+  """Language of this announcement, e.g. `en_US`."""
+  annUrl: str
+  """URL to the full announcement on kucoin.com."""
+  cTime: int
+  """Creation time, Unix milliseconds."""
+
+
+class AnnouncementsPage(TypedDict):
+  """One page of the announcements list."""
+
+  totalNum: int
+  """Total number of announcements matching the search."""
+  totalPage: int
+  """Total number of pages."""
+  currentPage: int
+  """Current page number."""
+  pageSize: int
+  """Results per page."""
+  items: list[Announcement]
+  """Announcements on this page."""
+
+
+_Type = AnnouncementsPage
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Announcements(RpcEndpoint):
+  """`Get Announcements` — mixed into `Spot`, the product exposing `spot.announcements`."""
+
+  async def announcements(
+    self,
+    *,
+    current_page: int | None = None,
+    page_size: int | None = None,
+    ann_type: str | None = None,
+    lang: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    validate: bool | None = None,
+  ) -> AnnouncementsPage:
+    """Page through KuCoin's news announcements (new listings, delistings, maintenance, activities, ...), newest first. Default search window covers the last month unless `startTime`/`endTime` narrow it.
+
+    Args:
+      current_page: Page number.
+      page_size: Results per page.
+      ann_type: Announcement category filter, e.g. `latest-announcements`, `activities`, `new-listings`, `futures-announcements` (docs give these as examples, not an exhaustive set).
+      lang: Language code, e.g. `en_US`.
+      start_time: Start of the search window, Unix milliseconds.
+      end_time: End of the search window, Unix milliseconds.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if current_page is not None:
+      params['currentPage'] = current_page
+    if page_size is not None:
+      params['pageSize'] = page_size
+    if ann_type is not None:
+      params['annType'] = ann_type
+    if lang is not None:
+      params['lang'] = lang
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    return await self.request(
+      'GET',
+      '/api/v3/announcements',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def announcements_paged(
+    self,
+    *,
+    page_size: int | None = None,
+    ann_type: str | None = None,
+    lang: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[AnnouncementsPage]:
+    """Yield successive pages of `announcements`.
+
+    Requests `currentPage` from 1 upwards and stops once it has covered the `totalPage`
+    pages the response reports, or after `max_pages` pages when one is given.
+    """
+    current_page = 1
+    pages = 0
+    while True:
+      response = await self.announcements(
+        page_size=page_size,
+        ann_type=ann_type,
+        lang=lang,
+        start_time=start_time,
+        end_time=end_time,
+        current_page=current_page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('totalPage') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages >= total:
+        break
+      current_page += 1

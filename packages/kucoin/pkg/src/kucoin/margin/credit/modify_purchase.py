@@ -1,0 +1,39 @@
+"""`POST /api/v3/lend/purchase/update` — Modify Purchase."""
+
+from typed_core.validation import TypedDict
+from kucoin.core import RpcEndpoint
+
+
+class ModifyPurchaseRequest(TypedDict):
+  currency: str
+  """Currency of the purchase order, e.g. `BTC`, `ETH`, `USDT`."""
+  purchaseOrderNo: str
+  """Id of the purchase order to modify."""
+  interestRate: str
+  """New interest rate to offer, effective from the start of the next hour."""
+
+
+class ModifyPurchase(RpcEndpoint):
+  """`Modify Purchase` — mixed into `Credit`, the product exposing `margin.credit.modify_purchase`."""
+
+  async def modify_purchase(
+    self,
+    modify_purchase_request: ModifyPurchaseRequest,
+    *,
+    validate: bool | None = None,
+  ) -> None:
+    """Change the interest rate of an existing purchase (lend) order. The new rate takes effect at the start of the next hour.
+
+    Args:
+      modify_purchase_request: Modify-purchase parameters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    await self.authed_request(
+      'POST',
+      '/api/v3/lend/purchase/update',
+      json=modify_purchase_request,
+      validate=validate,
+    )

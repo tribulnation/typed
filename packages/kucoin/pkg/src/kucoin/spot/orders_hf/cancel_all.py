@@ -1,0 +1,39 @@
+"""`DELETE /api/v1/hf/orders/cancelAll` — Cancel All Orders."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class HfCancelAllOrdersResult(TypedDict):
+  """Which symbols' cancellation requests were accepted and which failed."""
+
+  succeedSymbols: list[str]
+  """Trading pair symbols whose open orders were successfully sent for cancellation."""
+  failedSymbols: list[str]
+  """Trading pair symbols whose cancellation request failed."""
+
+
+_Type = HfCancelAllOrdersResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class CancelAll(RpcEndpoint):
+  """`Cancel All Orders` — mixed into `OrdersHf`, the product exposing `spot.orders_hf.cancel_all`."""
+
+  async def cancel_all(
+    self, *, validate: bool | None = None
+  ) -> HfCancelAllOrdersResult:
+    """Cancel every open spot hf order across every trading pair for the authenticated account. Sends cancellation requests only -- confirm via Get Open Orders or the private order WebSocket feed.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'DELETE',
+      '/api/v1/hf/orders/cancelAll',
+      validator=adapter,
+      validate=validate,
+    )

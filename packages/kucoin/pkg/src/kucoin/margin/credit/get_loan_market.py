@@ -1,0 +1,63 @@
+"""`GET /api/v3/project/list` — Get Loan Market."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class LoanMarketCurrency(TypedDict):
+  currency: str
+  """Currency."""
+  purchaseEnable: bool
+  """Whether purchase (lending into this currency's market) is currently enabled."""
+  redeemEnable: bool
+  """Whether redeem is currently enabled."""
+  increment: str
+  """Increment precision for purchase and redemption size."""
+  minPurchaseSize: str
+  """Minimum purchase amount."""
+  maxPurchaseSize: str
+  """Maximum purchase amount."""
+  interestIncrement: str
+  """Increment precision for the interest rate."""
+  minInterestRate: str
+  """Minimum lending interest rate a purchase may request."""
+  marketInterestRate: str
+  """Latest market interest rate."""
+  maxInterestRate: str
+  """Maximum lending interest rate a purchase may request."""
+  autoPurchaseEnable: bool
+  """Whether automatic re-purchase (rolling redeemed funds back into a new purchase) is enabled."""
+
+
+_Type = list[LoanMarketCurrency]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetLoanMarket(RpcEndpoint):
+  """`Get Loan Market` — mixed into `Credit`, the product exposing `margin.credit.get_loan_market`."""
+
+  async def get_loan_market(
+    self,
+    *,
+    currency: str | None = None,
+    validate: bool | None = None,
+  ) -> list[LoanMarketCurrency]:
+    """Get the currencies available for margin lending (the credit / lend-to-other-traders market): per-currency purchase/redeem eligibility, size limits and interest-rate bounds.
+
+    Args:
+      currency: Currency to filter by, e.g. `BTC`, `ETH`, `KCS`. Queries every lendable currency if omitted.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if currency is not None:
+      params['currency'] = currency
+    return await self.authed_request(
+      'GET',
+      '/api/v3/project/list',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

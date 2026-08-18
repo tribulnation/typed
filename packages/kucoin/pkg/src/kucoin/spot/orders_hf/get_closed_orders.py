@@ -1,0 +1,111 @@
+"""`GET /api/v1/hf/orders/done` — Get Closed Orders."""
+
+from typing_extensions import AsyncIterator, Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint, Timestamp, timestamp
+from kucoin.types import HfOrder
+
+
+class HfClosedOrdersPage(TypedDict):
+  """Page of closed hf orders."""
+
+  lastId: int
+  """Cursor to pass as `lastId` to fetch the next older page."""
+  items: list[HfOrder]
+  """Closed hf orders on this page, newest first."""
+
+
+_Type = HfClosedOrdersPage | None
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetClosedOrders(RpcEndpoint):
+  """`Get Closed Orders` — mixed into `OrdersHf`, the product exposing `spot.orders_hf.get_closed_orders`."""
+
+  async def get_closed_orders(
+    self,
+    *,
+    symbol: str,
+    side: Literal['buy', 'sell'] | None = None,
+    type: Literal['limit', 'market'] | None = None,
+    last_id: int | None = None,
+    limit: int | None = None,
+    start_at: Timestamp | None = None,
+    end_at: Timestamp | None = None,
+    validate: bool | None = None,
+  ) -> HfClosedOrdersPage | None:
+    """Cursor-paginated list of completed (fully filled or cancelled) spot hf orders for the authenticated account. Cancelled orders are retrievable for 2 days, filled orders for 7 days.
+
+    Args:
+      symbol: Trading pair symbol to filter by.
+      side: Order side to filter by.
+      type: Order type to filter by.
+      last_id: Cursor from a previous page's `lastId`, to fetch the next older page.
+      limit: Results per page.
+      start_at: Start of the time range, inclusive.
+      end_at: End of the time range, inclusive.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if side is not None:
+      params['side'] = side
+    if type is not None:
+      params['type'] = type
+    if last_id is not None:
+      params['lastId'] = last_id
+    if limit is not None:
+      params['limit'] = limit
+    if start_at is not None:
+      params['startAt'] = timestamp.dump(start_at)
+    if end_at is not None:
+      params['endAt'] = timestamp.dump(end_at)
+    return await self.authed_request(
+      'GET',
+      '/api/v1/hf/orders/done',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def get_closed_orders_paged(
+    self,
+    *,
+    symbol: str,
+    side: Literal['buy', 'sell'] | None = None,
+    type: Literal['limit', 'market'] | None = None,
+    limit: int | None = None,
+    start_at: Timestamp | None = None,
+    end_at: Timestamp | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[HfClosedOrdersPage | None]:
+    """Yield successive pages of `get_closed_orders`.
+
+    Passes each page's token back as `lastId` and stops when a response carries no
+    `lastId`, or after `max_pages` pages when one is given.
+    """
+    last_id: int | None = None
+    pages = 0
+    while True:
+      response = await self.get_closed_orders(
+        symbol=symbol,
+        side=side,
+        type=type,
+        limit=limit,
+        start_at=start_at,
+        end_at=end_at,
+        last_id=last_id,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      last_id = response.get('lastId') if response is not None else None
+      if not last_id:
+        break

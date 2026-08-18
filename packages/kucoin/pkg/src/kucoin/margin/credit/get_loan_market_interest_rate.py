@@ -1,0 +1,45 @@
+"""`GET /api/v3/project/marketInterestRate` — Get Loan Market Interest Rate."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class LoanMarketInterestRatePoint(TypedDict):
+  time: str
+  """Hour this rate applied, `YYYYMMDDHHmm` with minutes always `00` (hourly granularity)."""
+  marketInterestRate: str
+  """Market interest rate for this hour."""
+
+
+_Type = list[LoanMarketInterestRatePoint]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetLoanMarketInterestRate(RpcEndpoint):
+  """`Get Loan Market Interest Rate` — mixed into `Credit`, the product exposing `margin.credit.get_loan_market_interest_rate`."""
+
+  async def get_loan_market_interest_rate(
+    self,
+    *,
+    currency: str,
+    validate: bool | None = None,
+  ) -> list[LoanMarketInterestRatePoint]:
+    """Get the margin lending market's interest rate for one currency over the past 7 days, one row per hour.
+
+    Args:
+      currency: Currency to query, e.g. `BTC`, `ETH`, `USDT`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'currency': currency,
+    }
+    return await self.request(
+      'GET',
+      '/api/v3/project/marketInterestRate',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

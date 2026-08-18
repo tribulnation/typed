@@ -1,0 +1,70 @@
+"""`POST /api/v1/broker/nd/mark-up` — Set Mark Up Fee."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class MarkUpFeeSetRequest(TypedDict):
+  tradeType: Literal['SPOT', 'FUTURES']
+  """Business line this mark-up fee applies to."""
+  effectiveType: Literal['DEFAULT', 'UID_SPECIFIC']
+  """Whether this sets the broker's account-wide default mark-up, or a mark-up scoped to specific sub-account UIDs (`subUids`)."""
+  makerMarkUp: float
+  """Absolute maker mark-up. Range `[0, 0.03]` for spot, `[0, 0.001]` for futures. Must be set together with `takerMarkUp`; setting both to `0` cancels the mark-up. KuCoin's docs additionally state: for spot, taker mark-up must be >= maker mark-up; for futures, maker mark-up minus taker mark-up must be <= 0.025%."""
+  takerMarkUp: float
+  """Absolute taker mark-up. Range `[0, 0.03]` for spot, `[0, 0.001]` for futures. Must be set together with `makerMarkUp`; setting both to `0` cancels the mark-up."""
+  subUids: NotRequired[list[int]]
+  """Sub-account UIDs this mark-up applies to, up to 20. Required in effect when `effectiveType` is `UID_SPECIFIC`; ignored when `DEFAULT`. KuCoin's docs mark this field optional at the schema level regardless of `effectiveType`."""
+  effectAt: NotRequired[int]
+  """Effective time for this mark-up, Unix milliseconds. If omitted, defaults to 00:10 UTC+8 on the next calendar day (T+1)."""
+
+
+class MarkUpFeeSetResult(TypedDict):
+  """The broker's mark-up fee configuration as just set. KuCoin's docs mark every field here optional despite the request's own required fields always echoing back in the docs' worked example -- see notes."""
+
+  tradeType: NotRequired[Literal['SPOT', 'FUTURES']]
+  """Business line this mark-up fee applies to."""
+  effectiveType: NotRequired[Literal['DEFAULT', 'UID_SPECIFIC']]
+  """Whether this is the broker's account-wide default mark-up, or scoped to specific sub-account UIDs."""
+  makerMarkUp: NotRequired[str]
+  """Maker mark-up as set. Documented `number` on the page, but the page's own worked example returns it as a numeric string (e.g. `"0.01"`) -- specced to the example."""
+  takerMarkUp: NotRequired[str]
+  """Taker mark-up as set. Documented `number` on the page, but the page's own worked example returns it as a numeric string (e.g. `"0.01"`) -- specced to the example."""
+  subUids: NotRequired[list[int] | None]
+  """Sub-account UIDs this mark-up applies to; `null` for a `DEFAULT`-scoped mark-up (observed in the docs' own example)."""
+  effectAt: NotRequired[int]
+  """Effective time for this mark-up, Unix milliseconds."""
+  createdAt: NotRequired[int]
+  """Time this request was received, Unix milliseconds."""
+
+
+_Type = MarkUpFeeSetResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class MarkUpSet(RpcEndpoint):
+  """`Set Mark Up Fee` — mixed into `Broker`, the product exposing `broker.mark_up_set`."""
+
+  async def mark_up_set(
+    self,
+    mark_up_fee_set_request: MarkUpFeeSetRequest,
+    *,
+    validate: bool | None = None,
+  ) -> MarkUpFeeSetResult:
+    """Set (or, with both values `0`, cancel) the Exchange (ND) Broker's mark-up fee -- the extra spread added on top of KuCoin's own trading fee -- either as the account-wide default or for a specific list of sub-account UIDs. Maker and taker mark-up must be set together; see `notes` for the numeric constraints KuCoin's docs state between them.
+
+    Args:
+      mark_up_fee_set_request: Business line, effective scope, the maker/taker mark-up values, and (for a UID-specific scope) which sub-accounts it applies to.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/broker/nd/mark-up',
+      json=mark_up_fee_set_request,
+      validator=adapter,
+      validate=validate,
+    )

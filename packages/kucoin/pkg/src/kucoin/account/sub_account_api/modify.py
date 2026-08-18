@@ -1,0 +1,60 @@
+"""`POST /api/v1/sub/api-key/update` — account.sub_account_api.modify."""
+
+from typing_extensions import NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class ModifySubAccountApiRequest(TypedDict):
+  subName: str
+  """Sub-account name the key belongs to."""
+  apiKey: str
+  """API key identifier to modify."""
+  passphrase: str
+  """The key's existing API passphrase, required to authorize the change."""
+  permission: str
+  """New permission(s) for the key, comma-joined (e.g. `General,Spot,Unified`)."""
+  ipWhitelist: NotRequired[str]
+  """New comma-separated IP whitelist for the key. Unrestricted when omitted."""
+
+
+class ModifySubAccountApiResult(TypedDict):
+  subName: str
+  """Sub-account name."""
+  apiKey: str
+  """API key identifier."""
+  permission: str
+  """Updated permission(s)."""
+  ipWhitelist: str
+  """Updated IP whitelist."""
+
+
+_Type = ModifySubAccountApiResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Modify(RpcEndpoint):
+  """`account.sub_account_api.modify` — mixed into `SubAccountApi`, the product exposing `account.sub_account_api.modify`."""
+
+  async def modify(
+    self,
+    modify_sub_account_api_request: ModifySubAccountApiRequest,
+    *,
+    validate: bool | None = None,
+  ) -> ModifySubAccountApiResult:
+    """Modify the permission(s) and/or IP whitelist of an existing sub-account API key. The key's passphrase must be supplied to authorize the change.
+
+    Args:
+      modify_sub_account_api_request: Sub-account API key modification parameters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/sub/api-key/update',
+      json=modify_sub_account_api_request,
+      validator=adapter,
+      validate=validate,
+    )

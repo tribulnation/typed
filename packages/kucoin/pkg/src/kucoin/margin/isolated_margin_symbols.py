@@ -1,0 +1,63 @@
+"""`GET /api/v1/isolated/symbols` — Get Symbols - Isolated Margin."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class IsolatedMarginSymbolRow(TypedDict):
+  symbol: str
+  """Symbol."""
+  symbolName: str
+  """Symbol name."""
+  baseCurrency: str
+  """Base currency, e.g. `BTC`."""
+  quoteCurrency: str
+  """Quote currency, e.g. `USDT`."""
+  maxLeverage: int
+  """Maximum leverage of this symbol."""
+  flDebtRatio: str
+  """Forced-liquidation debt ratio."""
+  tradeEnable: bool
+  """Whether trading is enabled for this symbol."""
+  autoRenewMaxDebtRatio: str
+  """Maximum debt ratio at which an existing loan may auto-renew."""
+  baseBorrowEnable: bool
+  """Whether borrowing the base currency is enabled."""
+  quoteBorrowEnable: bool
+  """Whether borrowing the quote currency is enabled."""
+  baseTransferInEnable: bool
+  """Whether transferring the base currency into this isolated symbol is enabled."""
+  quoteTransferInEnable: bool
+  """Whether transferring the quote currency into this isolated symbol is enabled."""
+  baseBorrowCoefficient: str
+  """Borrow-interest coefficient for the base currency."""
+  quoteBorrowCoefficient: str
+  """Borrow-interest coefficient for the quote currency."""
+
+
+_Type = list[IsolatedMarginSymbolRow]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class IsolatedMarginSymbols(RpcEndpoint):
+  """`Get Symbols - Isolated Margin` — mixed into `Margin`, the product exposing `margin.isolated_margin_symbols`."""
+
+  async def isolated_margin_symbols(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[IsolatedMarginSymbolRow]:
+    """Get the trading configuration of isolated-margin symbols: per-symbol max leverage, forced-liquidation debt ratio, and borrow/transfer-in enablement per side.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.request(
+      'GET',
+      '/api/v1/isolated/symbols',
+      validator=adapter,
+      validate=validate,
+    )

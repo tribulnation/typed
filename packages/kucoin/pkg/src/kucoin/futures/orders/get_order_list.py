@@ -1,0 +1,131 @@
+"""`GET /api/v1/orders` — Get Order List."""
+
+from typing_extensions import AsyncIterator, Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.types import FuturesOrder
+from kucoin.core import RpcEndpoint
+
+
+class FuturesOrderPage(TypedDict):
+  """One page of futures orders."""
+
+  currentPage: int
+  """Current page number."""
+  pageSize: int
+  """Results per page, as requested."""
+  totalNum: int
+  """Total matching orders."""
+  totalPage: int
+  """Total number of pages."""
+  items: list[FuturesOrder]
+  """Orders on this page."""
+
+
+_Type = FuturesOrderPage
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetOrderList(RpcEndpoint):
+  """`Get Order List` — mixed into `Orders`, the product exposing `futures.orders.get_order_list`."""
+
+  async def get_order_list(
+    self,
+    *,
+    status: Literal['active', 'done'] | None = None,
+    symbol: str | None = None,
+    side: Literal['buy', 'sell'] | None = None,
+    type: Literal[
+      'limit', 'market', 'limit_stop', 'market_stop', 'oco_limit', 'oco_stop'
+    ]
+    | None = None,
+    start_at: int | None = None,
+    end_at: int | None = None,
+    current_page: int | None = None,
+    page_size: int | None = None,
+    validate: bool | None = None,
+  ) -> FuturesOrderPage:
+    """List this account's futures orders. `status=done` (the default) is limited to a 168-hour (7-day) query window between `startAt`/`endAt`; `status=active` has no such limit.
+
+    Args:
+      status: Restrict to active or done orders.
+      symbol: Contract symbol to filter by.
+      side: Order side to filter by.
+      type: Order type to filter by.
+      start_at: Start of the time window, Unix milliseconds.
+      end_at: End of the time window, Unix milliseconds.
+      current_page: Page number.
+      page_size: Results per page.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if status is not None:
+      params['status'] = status
+    if symbol is not None:
+      params['symbol'] = symbol
+    if side is not None:
+      params['side'] = side
+    if type is not None:
+      params['type'] = type
+    if start_at is not None:
+      params['startAt'] = start_at
+    if end_at is not None:
+      params['endAt'] = end_at
+    if current_page is not None:
+      params['currentPage'] = current_page
+    if page_size is not None:
+      params['pageSize'] = page_size
+    return await self.authed_request(
+      'GET',
+      '/api/v1/orders',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def get_order_list_paged(
+    self,
+    *,
+    status: Literal['active', 'done'] | None = None,
+    symbol: str | None = None,
+    side: Literal['buy', 'sell'] | None = None,
+    type: Literal[
+      'limit', 'market', 'limit_stop', 'market_stop', 'oco_limit', 'oco_stop'
+    ]
+    | None = None,
+    start_at: int | None = None,
+    end_at: int | None = None,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[FuturesOrderPage]:
+    """Yield successive pages of `get_order_list`.
+
+    Requests `currentPage` from 1 upwards and stops once it has covered the `totalPage`
+    pages the response reports, or after `max_pages` pages when one is given.
+    """
+    current_page = 1
+    pages = 0
+    while True:
+      response = await self.get_order_list(
+        status=status,
+        symbol=symbol,
+        side=side,
+        type=type,
+        start_at=start_at,
+        end_at=end_at,
+        page_size=page_size,
+        current_page=current_page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('totalPage') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages >= total:
+        break
+      current_page += 1

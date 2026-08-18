@@ -1,0 +1,136 @@
+"""`GET /api/v2/affiliate/queryMyCommission` — Get Commission."""
+
+from typing_extensions import AsyncIterator, Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class AffiliateCommission(TypedDict):
+  """One commission record for a settlement period."""
+
+  siteType: str
+  """Source site of the commission, for example `global`. KuCoin does not publish a closed set for this field's response-side values (its request-side filter documents only `all` -- see notes), so it's left as a plain string rather than a guessed enum."""
+  rebateType: Literal[1, 2]
+  """Rebate type. KuCoin's docs list only `1`/`2` as allowed values here, narrower than the request filter's `0`/`1`/`2` -- see notes."""
+  payoutTime: int
+  """Commission payout time (T+1 settlement), Unix milliseconds, UTC+8."""
+  periodStartTime: int
+  """Start of the commission calculation period, Unix milliseconds."""
+  periodEndTime: int
+  """End of the commission calculation period, Unix milliseconds."""
+  status: Literal[1, 2, 3, 4]
+  """Payout status. KuCoin's docs list the allowed values without stating what each one means."""
+  takerVolume: str
+  """Invitee's taker trading volume for this period."""
+  makerVolume: str
+  """Invitee's maker trading volume for this period."""
+  commission: str
+  """Total rebate contributed by the invitee for this period."""
+  currency: Literal['USDT', 'USDC']
+  """Denomination unit for the volume/amount fields."""
+  kuminingVolume: str
+  """Kumining volume for this period."""
+  dataType: Literal['trade', 'kumining']
+  """Whether this record is trade-based or Kumining-based commission."""
+
+
+_Type = list[AffiliateCommission] | None
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Commission(RpcEndpoint):
+  """`Get Commission` — mixed into `Affiliate`, the product exposing `affiliate.commission`."""
+
+  async def commission(
+    self,
+    *,
+    site_type: Literal['all'] | None = None,
+    rebate_type: Literal[0, 1, 2] | None = None,
+    rebate_start_at: int | None = None,
+    rebate_end_at: int | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
+    user_id: str | None = None,
+    data_type: Literal['trade', 'kumining'] | None = None,
+    validate: bool | None = None,
+  ) -> list[AffiliateCommission] | None:
+    """Page through this affiliate account's own commission records: per-period payout, trading volume and rebate, for either trade-based or Kumining-based commission.
+
+    Args:
+      site_type: The source site of the commission. The only value KuCoin documents is `all`; live response rows carry a `siteType` of `global`, a value the request side never lists -- see notes.
+      rebate_type: Rebate type filter. KuCoin's docs list the allowed values without stating what each one means.
+      rebate_start_at: Restrict to commission issued at or after this Unix millisecond timestamp. If `rebateEndAt` is also given, must be earlier than it and within a one-year span of it.
+      rebate_end_at: Restrict to commission issued at or before this Unix millisecond timestamp. If `rebateStartAt` is also given, must be later than it and within a one-year span of it. Defaults to the current time.
+      page: Page number.
+      page_size: Results per page.
+      user_id: Restrict to one invitee's user id.
+      data_type: Whether to return trade-based or Kumining-based commission records.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if site_type is not None:
+      params['siteType'] = site_type
+    if rebate_type is not None:
+      params['rebateType'] = rebate_type
+    if rebate_start_at is not None:
+      params['rebateStartAt'] = rebate_start_at
+    if rebate_end_at is not None:
+      params['rebateEndAt'] = rebate_end_at
+    if page is not None:
+      params['page'] = page
+    if page_size is not None:
+      params['pageSize'] = page_size
+    if user_id is not None:
+      params['userId'] = user_id
+    if data_type is not None:
+      params['dataType'] = data_type
+    return await self.authed_request(
+      'GET',
+      '/api/v2/affiliate/queryMyCommission',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def commission_paged(
+    self,
+    *,
+    site_type: Literal['all'] | None = None,
+    rebate_type: Literal[0, 1, 2] | None = None,
+    rebate_start_at: int | None = None,
+    rebate_end_at: int | None = None,
+    page_size: int | None = None,
+    user_id: str | None = None,
+    data_type: Literal['trade', 'kumining'] | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[AffiliateCommission] | None]:
+    """Yield successive pages of `commission`.
+
+    Requests `page` from 1 upwards and stops on the first page shorter than `page_size`,
+    or after `max_pages` pages when one is given.
+    """
+    page = 1
+    pages = 0
+    while True:
+      response = await self.commission(
+        site_type=site_type,
+        rebate_type=rebate_type,
+        rebate_start_at=rebate_start_at,
+        rebate_end_at=rebate_end_at,
+        page_size=page_size,
+        user_id=user_id,
+        data_type=data_type,
+        page=page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response or (page_size is not None and len(response) < page_size):
+        break
+      page += 1

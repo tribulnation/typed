@@ -1,0 +1,50 @@
+"""`/contractMarket/level2:{symbol}` — Subscribe to real-time incremental full-depth order book changes for one futures contract. Each push carries a single level change, not a snapshot; no push when nothing has changed."""
+
+from typing_extensions import Any
+from typed_core.util import StreamManager
+from typed_core.validation import TypedDict, validator
+from kucoin.types import WsSubscriptionAck
+from kucoin.core import StreamEndpoint
+
+
+class FuturesOrderBookIncrementUpdate(TypedDict):
+  """One order book level change -- the unwrapped `data` field of the raw WebSocket frame (`SocketStreamClient.subscribe` extracts `data` before handing the stream to the caller; see `spec/core.md`'s WebSocket section)."""
+
+  sequence: int
+  """Sequence number, shared with the Ticker V2 topic -- apply changes in increasing `sequence` order and discard any already-applied one after a resync."""
+  change: str
+  """One level change, formatted as a comma-joined `price,side,size` triple -- for example `"64935.5,sell,65"` means the `sell` (ask) level at price `64935.5` now has size `65` (in contracts); `size` of `0` means the level was removed."""
+  timestamp: int
+  """Unix milliseconds when this change was generated."""
+
+
+_Type = FuturesOrderBookIncrementUpdate
+validate_update = validator[_Type](_Type)  # type: ignore
+
+
+class OrderbookIncrement(StreamEndpoint):
+  """Subscribe to `/contractMarket/level2:{symbol}` — mixed into `Market`, the product exposing `streams.futures.orderbook_increment`."""
+
+  def orderbook_increment(
+    self,
+    symbol: str,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[FuturesOrderBookIncrementUpdate, Any, Any]:
+    """Subscribe to real-time incremental full-depth order book changes for one futures contract. Each push carries a single level change, not a snapshot; no push when nothing has changed.
+
+    Args:
+      symbol: Contract symbol to watch, for example `XBTUSDTM`.
+      validate: Whether to validate pushed payloads against the expected schema.
+
+    Returns:
+      A manager for the subscription stream.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return self.subscribe(
+      f'/contractMarket/level2:{symbol}',
+      validator=validate_update,
+      validate=validate,
+    )

@@ -1,0 +1,121 @@
+"""`GET /api/v3/isolated/accounts` — Get Account - Isolated Margin."""
+
+from typing_extensions import Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class IsolatedMarginBaseAsset(TypedDict):
+  """Base-currency side of this isolated pair's balance."""
+
+  currency: str
+  """Currency."""
+  borrowEnabled: bool
+  """Whether borrowing this currency is supported."""
+  transferInEnabled: bool
+  """Whether transferring this currency in is supported."""
+  liability: str
+  """Liabilities."""
+  liabilityPrincipal: str
+  """Unpaid principal portion of `liability`."""
+  liabilityInterest: str
+  """Unpaid interest portion of `liability`."""
+  total: str
+  """Total assets."""
+  available: str
+  """Available assets (total minus frozen)."""
+  hold: str
+  """Frozen assets."""
+  maxBorrowSize: str
+  """Remaining amount the user may still borrow."""
+
+
+class IsolatedMarginQuoteAsset(TypedDict):
+  """Quote-currency side of this isolated pair's balance."""
+
+  currency: str
+  """Currency."""
+  borrowEnabled: bool
+  """Whether borrowing this currency is supported."""
+  transferInEnabled: bool
+  """Whether transferring this currency in is supported."""
+  liability: str
+  """Liabilities."""
+  liabilityPrincipal: str
+  """Unpaid principal portion of `liability`."""
+  liabilityInterest: str
+  """Unpaid interest portion of `liability`."""
+  total: str
+  """Total assets."""
+  available: str
+  """Available assets (total minus frozen)."""
+  hold: str
+  """Frozen assets."""
+  maxBorrowSize: str
+  """Remaining amount the user may still borrow."""
+
+
+class IsolatedMarginPair(TypedDict):
+  symbol: str
+  """Isolated trading pair, e.g. `BTC-USDT`."""
+  status: Literal['EFFECTIVE', 'BANKRUPTCY', 'LIQUIDATION', 'REPAY', 'BORROW']
+  """Position status."""
+  debtRatio: str
+  """Current debt ratio for this pair."""
+  baseAsset: IsolatedMarginBaseAsset
+  quoteAsset: IsolatedMarginQuoteAsset
+
+
+class IsolatedMarginAccount(TypedDict):
+  """Isolated margin account overview."""
+
+  totalAssetOfQuoteCurrency: str
+  """Total assets, valued in `quoteCurrency`."""
+  totalLiabilityOfQuoteCurrency: str
+  """Total liabilities, valued in `quoteCurrency`."""
+  timestamp: int
+  """Unix milliseconds this snapshot was computed at."""
+  assets: list[IsolatedMarginPair]
+  """One entry per isolated trading pair."""
+
+
+_Type = IsolatedMarginAccount
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class IsolatedMarginAccountEndpoint(RpcEndpoint):
+  """`Get Account - Isolated Margin` — mixed into `Account`, the product exposing `account.isolated_margin_account`."""
+
+  async def isolated_margin_account(
+    self,
+    *,
+    symbol: str | None = None,
+    quote_currency: Literal['USDT', 'KCS', 'BTC'] | None = None,
+    query_type: Literal['ISOLATED', 'ISOLATED_V2', 'ALL'] | None = None,
+    validate: bool | None = None,
+  ) -> IsolatedMarginAccount:
+    """Get the authenticated user's isolated margin account overview: total assets/liabilities valued in a quote currency, plus a per-symbol breakdown of base/quote balances.
+
+    Args:
+      symbol: Isolated trading pair to filter to, e.g. `BTC-USDT`. Omit to query all isolated pairs.
+      quote_currency: Currency the totals are valued in.
+      query_type: `ISOLATED` queries only the low-frequency isolated margin account; `ISOLATED_V2` only the high-frequency one; `ALL` aggregates both, matching the web UI.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if quote_currency is not None:
+      params['quoteCurrency'] = quote_currency
+    if query_type is not None:
+      params['queryType'] = query_type
+    return await self.authed_request(
+      'GET',
+      '/api/v3/isolated/accounts',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

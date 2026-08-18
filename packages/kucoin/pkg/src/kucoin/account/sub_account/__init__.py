@@ -1,0 +1,21 @@
+"""KuCoin SubAccount endpoints."""
+
+from .add import Add
+from .add_futures_permission import AddFuturesPermission
+from .add_margin_permission import AddMarginPermission
+from .balance import Balance
+from .list_futures_balance import ListFuturesBalance
+from .list_spot_balance import ListSpotBalance
+from .list_summary import ListSummary
+
+
+class SubAccount(
+  Add,
+  AddFuturesPermission,
+  AddMarginPermission,
+  Balance,
+  ListFuturesBalance,
+  ListSpotBalance,
+  ListSummary,
+):
+  """KuCoin SubAccount endpoints."""

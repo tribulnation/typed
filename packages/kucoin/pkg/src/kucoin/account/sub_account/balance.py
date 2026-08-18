@@ -1,0 +1,121 @@
+"""`GET /api/v1/sub-accounts/{subUserId}` — account.sub_account.balance."""
+
+from typing_extensions import NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class SubAccountBalanceAssetMainAccountsItem(TypedDict):
+  currency: NotRequired[str]
+  """Asset currency."""
+  balance: NotRequired[str]
+  """Total funds in the account."""
+  available: NotRequired[str]
+  """Funds available to withdraw or trade."""
+  holds: NotRequired[str]
+  """Funds on hold, unavailable for use."""
+  baseCurrency: NotRequired[str]
+  """Currency this balance is converted into, when `baseCurrency` was requested."""
+  baseCurrencyPrice: NotRequired[str]
+  """Conversion price used."""
+  baseAmount: NotRequired[str]
+  """Balance converted into `baseCurrency`."""
+  tag: NotRequired[str]
+  """Account tag, e.g. `DEFAULT`."""
+
+
+class SubAccountBalanceAssetMarginAccountsItem(TypedDict):
+  currency: NotRequired[str]
+  """Asset currency."""
+  balance: NotRequired[str]
+  """Total funds in the account."""
+  available: NotRequired[str]
+  """Funds available to withdraw or trade."""
+  holds: NotRequired[str]
+  """Funds on hold, unavailable for use."""
+  baseCurrency: NotRequired[str]
+  """Currency this balance is converted into, when `baseCurrency` was requested."""
+  baseCurrencyPrice: NotRequired[str]
+  """Conversion price used."""
+  baseAmount: NotRequired[str]
+  """Balance converted into `baseCurrency`."""
+  tag: NotRequired[str]
+  """Account tag, e.g. `DEFAULT`."""
+
+
+class SubAccountBalanceAssetTradeAccountsItem(TypedDict):
+  currency: NotRequired[str]
+  """Asset currency."""
+  balance: NotRequired[str]
+  """Total funds in the account."""
+  available: NotRequired[str]
+  """Funds available to withdraw or trade."""
+  holds: NotRequired[str]
+  """Funds on hold, unavailable for use."""
+  baseCurrency: NotRequired[str]
+  """Currency this balance is converted into, when `baseCurrency` was requested."""
+  baseCurrencyPrice: NotRequired[str]
+  """Conversion price used."""
+  baseAmount: NotRequired[str]
+  """Balance converted into `baseCurrency`."""
+  tag: NotRequired[str]
+  """Account tag, e.g. `DEFAULT`."""
+
+
+class SubAccountBalanceDetail(TypedDict):
+  subUserId: str
+  """The sub-account's user id."""
+  subName: str
+  """The sub-account's name."""
+  mainAccounts: list[SubAccountBalanceAssetMainAccountsItem]
+  """Funding-account balances, one entry per currency held."""
+  tradeAccounts: list[SubAccountBalanceAssetTradeAccountsItem]
+  """Spot-account balances, one entry per currency held."""
+  marginAccounts: list[SubAccountBalanceAssetMarginAccountsItem]
+  """Cross-margin-account balances, one entry per currency held."""
+  tradeHFAccounts: list[str]
+  """Deprecated; KuCoin documents this as valid only for some legacy users and it is otherwise always empty."""
+
+
+_Type = SubAccountBalanceDetail
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Balance(RpcEndpoint):
+  """`account.sub_account.balance` — mixed into `SubAccount`, the product exposing `account.sub_account.balance`."""
+
+  async def balance(
+    self,
+    sub_user_id: str,
+    *,
+    include_base_amount: bool | None = None,
+    base_currency: str | None = None,
+    base_amount: str | None = None,
+    validate: bool | None = None,
+  ) -> SubAccountBalanceDetail:
+    """Get one sub-account's balances across its Funding (main), Spot (trade) and Margin accounts, by sub-account user id.
+
+    Args:
+      sub_user_id: The sub-account's user id.
+      include_base_amount: Include currencies with a zero balance when true; omit zero-balance currencies when false.
+      base_currency: Currency to convert every balance into, for the `baseAmount`/`baseCurrencyPrice` fields.
+      base_amount: Only return currencies whose balance is greater than or equal to this amount, denominated in `baseCurrency`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if include_base_amount is not None:
+      params['includeBaseAmount'] = include_base_amount
+    if base_currency is not None:
+      params['baseCurrency'] = base_currency
+    if base_amount is not None:
+      params['baseAmount'] = base_amount
+    return await self.authed_request(
+      'GET',
+      f'/api/v1/sub-accounts/{sub_user_id}',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

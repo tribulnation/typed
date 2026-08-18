@@ -1,0 +1,52 @@
+"""`GET /api/v1/otc-loan/discount-rate-configs` — Get Discount Rate Configs."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class DiscountRateLevel(TypedDict):
+  """One USDT-denominated amount bracket and the discount rate applied within it."""
+
+  left: int
+  """Left (exclusive) end of the bracket, in USDT."""
+  right: int
+  """Right (inclusive) end of the bracket, in USDT. The top bracket for a currency uses a large sentinel (`99999999999` or `999999999999`, observed live) rather than a documented open-ended value."""
+  discountRate: str
+  """Discount rate applied to margin value in this bracket."""
+
+
+class DiscountRateCurrency(TypedDict):
+  """The gradient discount-rate schedule for one currency."""
+
+  currency: str
+  """Currency."""
+  usdtLevels: list[DiscountRateLevel]
+  """Gradient bracket list, amount bounds converted to USDT. Brackets are contiguous and half-open: `left < amount <= right`."""
+
+
+_Type = list[DiscountRateCurrency]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class DiscountRateConfigs(RpcEndpoint):
+  """`Get Discount Rate Configs` — mixed into `VipLending`, the product exposing `vip_lending.discount_rate_configs`."""
+
+  async def discount_rate_configs(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[DiscountRateCurrency]:
+    """Get the gradient collateral (discount) rate applied to each currency accepted as VIP Lending margin. Each currency carries one or more USDT-denominated amount brackets, each with its own discount rate applied to the margin value in that bracket.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'GET',
+      '/api/v1/otc-loan/discount-rate-configs',
+      validator=adapter,
+      validate=validate,
+    )

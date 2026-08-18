@@ -1,0 +1,47 @@
+"""`DELETE /api/v3/oco/orders` — spot.oco_orders.batch_cancel."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class CancelOcoOrderResult(TypedDict):
+  cancelledOrderIds: list[str]
+  """Leg order ids belonging to the cancelled OCO orders (two per OCO order cancelled)."""
+
+
+_Type = CancelOcoOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class BatchCancel(RpcEndpoint):
+  """`spot.oco_orders.batch_cancel` — mixed into `OcoOrders`, the product exposing `spot.oco_orders.batch_cancel`."""
+
+  async def batch_cancel(
+    self,
+    *,
+    order_ids: str | None = None,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> CancelOcoOrderResult:
+    """Batch-cancel OCO orders. Both filters are optional and each broadens the cancellation scope when omitted -- see `notes`. This only submits the cancellation requests; the matching engine processes them asynchronously, so confirm the outcome via a lookup or the private WebSocket order push rather than assuming immediate effect.
+
+    Args:
+      order_ids: Comma-separated OCO order ids to cancel. When omitted, every OCO order (optionally scoped by `symbol`) is cancelled instead.
+      symbol: Trading pair to scope the cancellation to. When omitted, OCO orders across all symbols are eligible.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if order_ids is not None:
+      params['orderIds'] = order_ids
+    if symbol is not None:
+      params['symbol'] = symbol
+    return await self.authed_request(
+      'DELETE',
+      '/api/v3/oco/orders',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

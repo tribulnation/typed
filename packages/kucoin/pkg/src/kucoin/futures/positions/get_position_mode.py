@@ -1,0 +1,35 @@
+"""`GET /api/v2/position/getPositionMode` — Get Position Mode."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class PositionMode(TypedDict):
+  """Position mode currently set for the account."""
+
+  positionMode: int
+  """Position mode. The venue's own docs page states `1` = one-way mode, `2` = hedge (two-way) mode, but a live call against this account returned `0` -- a third, undocumented value -- so this is left as a bare integer rather than an invented enum. See `notes`."""
+
+
+_Type = PositionMode
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetPositionMode(RpcEndpoint):
+  """`Get Position Mode` — mixed into `Positions`, the product exposing `futures.positions.get_position_mode`."""
+
+  async def get_position_mode(self, *, validate: bool | None = None) -> PositionMode:
+    """Query the position mode -- one-way or hedge -- currently set for the account.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'GET',
+      '/api/v2/position/getPositionMode',
+      validator=adapter,
+      validate=validate,
+    )

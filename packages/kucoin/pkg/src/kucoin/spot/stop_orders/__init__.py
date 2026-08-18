@@ -1,0 +1,21 @@
+"""KuCoin StopOrders endpoints."""
+
+from .add import Add
+from .batch_cancel import BatchCancel
+from .cancel_by_client_oid import CancelByClientOid
+from .cancel_by_order_id import CancelByOrderId
+from .get_by_client_oid import GetByClientOid
+from .get_by_order_id import GetByOrderId
+from .get_list import GetList
+
+
+class StopOrders(
+  Add,
+  BatchCancel,
+  CancelByClientOid,
+  CancelByOrderId,
+  GetByClientOid,
+  GetByOrderId,
+  GetList,
+):
+  """KuCoin StopOrders endpoints."""

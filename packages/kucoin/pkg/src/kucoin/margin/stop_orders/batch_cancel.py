@@ -1,0 +1,50 @@
+"""`DELETE /api/v3/hf/margin/stop-order/cancel` — Batch Cancel Stop Orders."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class CancelMarginStopOrderResult(TypedDict):
+  cancelledOrderIds: list[str]
+  """Ids of the stop orders successfully cancelled by this call."""
+
+
+_Type = CancelMarginStopOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class BatchCancel(RpcEndpoint):
+  """`Batch Cancel Stop Orders` — mixed into `StopOrders`, the product exposing `margin.stop_orders.batch_cancel`."""
+
+  async def batch_cancel(
+    self,
+    *,
+    symbol: str,
+    trade_type: str,
+    order_ids: str | None = None,
+    validate: bool | None = None,
+  ) -> CancelMarginStopOrderResult:
+    """Cancel multiple untriggered margin stop orders in a single request, scoped to a trading pair and margin mode and optionally narrowed to a specific list of order ids.
+
+    Args:
+      symbol: Trading pair to cancel open stop orders for.
+      trade_type: Margin mode the targeted orders were placed on. KuCoin's own examples show `MARGIN_TRADE` (cross) and `MARGIN_ISOLATED_TRADE` (isolated), matching `margin.orders_hf`'s confirmed pair, but this endpoint's own docs page never states the field is a closed set, so it is left as a plain string rather than a guessed enum.
+      order_ids: Comma-separated stop order ids to narrow the cancellation to. Omitted cancels every open stop order matching `symbol`/`tradeType`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'tradeType': trade_type,
+    }
+    if order_ids is not None:
+      params['orderIds'] = order_ids
+    return await self.authed_request(
+      'DELETE',
+      '/api/v3/hf/margin/stop-order/cancel',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

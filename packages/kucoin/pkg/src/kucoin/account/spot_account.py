@@ -1,0 +1,47 @@
+"""`GET /api/v1/accounts/{accountId}` — Get Account Detail - Spot."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class SpotAccountDetail(TypedDict):
+  """Detail for a single account."""
+
+  currency: str
+  """Currency held in this account."""
+  balance: str
+  """Total funds in the account."""
+  available: str
+  """Funds available to withdraw or trade."""
+  holds: str
+  """Funds on hold (not available for use)."""
+
+
+_Type = SpotAccountDetail
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class SpotAccount(RpcEndpoint):
+  """`Get Account Detail - Spot` — mixed into `Account`, the product exposing `account.spot_account`."""
+
+  async def spot_account(
+    self,
+    account_id: str,
+    *,
+    validate: bool | None = None,
+  ) -> SpotAccountDetail:
+    """Get information for a single account by its accountId (as returned by Get Account List - Spot).
+
+    Args:
+      account_id: The account's ID.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'GET',
+      f'/api/v1/accounts/{account_id}',
+      validator=adapter,
+      validate=validate,
+    )

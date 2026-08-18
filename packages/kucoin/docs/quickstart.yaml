@@ -1,0 +1,114 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014, schema extended for markdown `body` + links ADR
+# 0015). Mirrors docs/index.md and docs/how-to/*.md — kept in sync by hand
+# until those pages generate from this file instead, not yet decided. Every
+# snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset — links, code spans, emphasis;
+# no block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths
+# (`/typed/kucoin/...`), not relative doc-tree paths — this file is authored
+# for exactly one rendering location, unlike docs/*.md's portable relative
+# links (see ADR 0015).
+
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials — see
+    [API keys setup](/typed/kucoin/api-keys) for how to create them.
+  code: |
+    # .env
+    KUCOIN_API_KEY="your_api_key"
+    KUCOIN_API_SECRET="your_api_secret"
+    KUCOIN_API_PASSPHRASE="your_api_passphrase"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-kucoin python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    from kucoin import KuCoin
+
+    async with KuCoin.new() as client:
+      accounts = await client.account.spot_accounts()
+      print(accounts)
+
+how_tos:
+  - title: Fetch market data
+    body: Order books, candles, tickers, trades — all public, no credentials needed.
+    code: |
+      ticker = await client.spot.ticker(symbol='BTC-USDT')                          # ticker
+      book = await client.spot.part_orderbook('20', symbol='BTC-USDT')              # order book
+      candles = await client.spot.klines(symbol='BTC-USDT', type='1hour')           # candles
+      symbols = await client.spot.all_symbols()                                     # tradeable symbols
+
+  - title: Listen to streams
+    body: >-
+      Public topics need no credentials; private topics (like balance updates) need a
+      client built with real credentials.
+    code: |
+      async with client.streams.spot_margin.ticker('BTC-USDT') as stream:  # public ticker pushes
+        async for update in stream:
+          print(update['price'])
+      async with client.streams.spot_margin.balance() as stream:  # private balance pushes
+        async for update in stream:
+          print(update['currency'], update['available'])
+
+  - title: Place & manage orders
+    body: Spot trading goes through the high-frequency (`hf`) order book. Needs a `Trade` key.
+    code: |
+      order = await client.spot.orders_hf.add({                                    # place a limit order
+        'symbol': 'BTC-USDT', 'type': 'limit', 'side': 'buy', 'price': '10000', 'size': '0.0001',
+      })
+      detail = await client.spot.orders_hf.get_by_order_id(                        # query it
+        order['orderId'], symbol='BTC-USDT',
+      )
+      open_orders = await client.spot.orders_hf.get_open_orders(symbol='BTC-USDT')  # list open orders
+      await client.spot.orders_hf.cancel_by_order_id(order['orderId'], symbol='BTC-USDT')  # cancel it
+      await client.spot.orders_hf.cancel_all()                                      # cancel everything
+
+  - title: Manage account data
+    body: Balances, futures positions, and ledger history.
+    code: |
+      balances = await client.account.spot_accounts(currency='USDT')                # spot balances
+      positions = await client.futures.positions.get_position_list()                # futures positions
+      ledger = await client.account.ledgers(currency='USDT', page_size=50)          # ledger history
+      info = await client.account.user_info()                                       # account info
+
+  - title: Query & manage earn instruments
+    body: Savings, staking, and dual-investment products.
+    code: |
+      products = await client.earn.savings_products(currency='USDT')                # list products
+      holdings = await client.earn.account_holding(currency='USDT')                 # list your holdings
+      purchased = await client.earn.purchase({                                      # subscribe
+        'productId': products[0]['id'], 'amount': '10', 'accountType': 'TRADE',
+      })
+      preview = await client.earn.redeem_preview(order_id=purchased['orderId'])     # preview a redemption
+      await client.earn.redeem(order_id=purchased['orderId'], amount='10')          # redeem it
+
+  - title: Deposits & withdrawals
+    body: Deposit addresses, deposit/withdrawal history, and submitting a withdrawal.
+    code: |
+      addresses = await client.account.deposit.address(currency='USDT', chain='trx')  # deposit addresses
+      deposits = await client.account.deposit.history(currency='USDT')                # deposit history
+      quota = await client.account.withdrawals.quotas(currency='USDT', chain='trx')   # withdrawal quota
+      withdrawal = await client.account.withdrawals.withdraw({                        # submit a withdrawal
+        'currency': 'USDT', 'toAddress': 'destination-address', 'amount': '10',
+        'withdrawType': 'ADDRESS', 'chain': 'trx',
+      })
+      withdrawals = await client.account.withdrawals.history(currency='USDT')         # withdrawal history
+
+  - title: Paginate through results
+    body: Every `_paged` method walks all pages automatically; pass `max_pages` to cap it.
+    code: |
+      async for page in client.account.ledgers_paged(currency='USDT', page_size=50):  # walk ledger pages
+        for entry in page['items']:
+          print(entry['id'], entry['amount'])
+      async for candles in client.spot.klines_paged(                                  # walk a candle window
+        symbol='BTC-USDT', type='1hour', start_at=1_700_000_000, end_at=1_700_100_000,
+      ):
+        print(len(candles))

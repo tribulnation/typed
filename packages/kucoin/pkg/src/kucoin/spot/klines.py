@@ -1,0 +1,120 @@
+"""`GET /api/v1/market/candles` — Get Klines."""
+
+from typing_extensions import AsyncIterator, Literal
+from typed_core.validation import validator
+from kucoin.core import RpcEndpoint
+
+
+_Type = list[tuple[str, str, str, str, str, str, str]]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Klines(RpcEndpoint):
+  """`Get Klines` — mixed into `Spot`, the product exposing `spot.klines`."""
+
+  async def klines(
+    self,
+    *,
+    symbol: str,
+    type: Literal[
+      '1min',
+      '3min',
+      '5min',
+      '15min',
+      '30min',
+      '1hour',
+      '2hour',
+      '4hour',
+      '6hour',
+      '8hour',
+      '12hour',
+      '1day',
+      '1week',
+      '1month',
+    ],
+    start_at: int | None = None,
+    end_at: int | None = None,
+    validate: bool | None = None,
+  ) -> list[tuple[str, str, str, str, str, str, str]]:
+    """Get candlestick data for one trading pair at a given interval. The venue caps a single response at 1500 rows; a window wider than that needs multiple calls. No candle is published for an interval with no ticks, so a window can come back sparser than its nominal length.
+
+    Args:
+      symbol: Trading pair symbol, e.g. `BTC-USDT`.
+      type: Candle interval.
+      start_at: Start of the window, Unix seconds. Inclusive — confirmed live (see `notes`).
+      end_at: End of the window, Unix seconds. Exclusive — confirmed live (see `notes`).
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'type': type,
+    }
+    if start_at is not None:
+      params['startAt'] = start_at
+    if end_at is not None:
+      params['endAt'] = end_at
+    return await self.request(
+      'GET',
+      '/api/v1/market/candles',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def klines_paged(
+    self,
+    *,
+    symbol: str,
+    type: Literal[
+      '1min',
+      '3min',
+      '5min',
+      '15min',
+      '30min',
+      '1hour',
+      '2hour',
+      '4hour',
+      '6hour',
+      '8hour',
+      '12hour',
+      '1day',
+      '1week',
+      '1month',
+    ],
+    start_at: int | None = None,
+    end_at: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[tuple[str, str, str, str, str, str, str]]]:
+    """Yield successive pages of `klines`.
+
+    Moves the `start_at`–`end_at` window forwards by its own width and stops on the
+    first empty window, or after `max_pages` pages when one is given.
+
+    Every request spans the width the caller's own `start_at` and `end_at` state, so
+    choose a window the venue answers in one response: it caps a wider one, and the walk
+    moves past the rows that were left out.
+    """
+    if start_at is None or end_at is None:
+      raise ValueError(
+        '`klines_paged` walks a time window: pass both `start_at` and `end_at`'
+      )
+    lower = start_at
+    upper = end_at
+    width = upper - lower
+    pages = 0
+    while True:
+      response = await self.klines(
+        symbol=symbol, type=type, start_at=lower, end_at=upper, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response:
+        break
+      lower = upper
+      upper = lower + width

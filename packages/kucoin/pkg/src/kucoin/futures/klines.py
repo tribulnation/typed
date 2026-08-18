@@ -1,0 +1,88 @@
+"""`GET /api/v1/kline/query` — Get Klines."""
+
+from typing_extensions import AsyncIterator
+from typed_core.validation import validator
+from kucoin.core import RpcEndpoint
+
+
+_Type = list[tuple[int, float, float, float, float, float, float]]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Klines(RpcEndpoint):
+  """`Get Klines` — mixed into `Futures`, the product exposing `futures.klines`."""
+
+  async def klines(
+    self,
+    *,
+    symbol: str,
+    granularity: int,
+    from_: int | None = None,
+    to: int | None = None,
+    validate: bool | None = None,
+  ) -> list[tuple[int, float, float, float, float, float, float]]:
+    """Get candlestick data for one futures contract at a given interval. The venue caps a single response, and does not publish a candle for an interval with no ticks, so a window can come back sparser than its nominal length.
+
+    Args:
+      symbol: Contract symbol, e.g. `XBTUSDTM`.
+      granularity: Candle interval, in minutes. Confirmed live values include `1`, `60` (1 hour); KuCoin documents `1, 5, 15, 30, 60, 120, 240, 480, 720, 1440, 10080` (1min through 1week) -- not independently confirmed for every value, left bare (see notes) rather than guessing a closed enum for values this run did not probe.
+      from_: Start of the window, Unix ms. Inclusive -- confirmed live (see notes). Omit for the 500 most recent candles up to `to` (or now).
+      to: End of the window, Unix ms. Inclusive -- confirmed live (see notes). Omit for the 500 most recent candles from `from` (or now).
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'granularity': granularity,
+    }
+    if from_ is not None:
+      params['from'] = from_
+    if to is not None:
+      params['to'] = to
+    return await self.request(
+      'GET',
+      '/api/v1/kline/query',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def klines_paged(
+    self,
+    *,
+    symbol: str,
+    granularity: int,
+    from_: int | None = None,
+    to: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[tuple[int, float, float, float, float, float, float]]]:
+    """Yield successive pages of `klines`.
+
+    Moves the `from_`–`to` window forwards by its own width and stops on the first empty
+    window, or after `max_pages` pages when one is given.
+
+    Every request spans the width the caller's own `from_` and `to` state, so choose a
+    window the venue answers in one response: it caps a wider one, and the walk moves
+    past the rows that were left out.
+    """
+    if from_ is None or to is None:
+      raise ValueError('`klines_paged` walks a time window: pass both `from_` and `to`')
+    lower = from_
+    upper = to
+    width = upper - lower
+    pages = 0
+    while True:
+      response = await self.klines(
+        symbol=symbol, granularity=granularity, from_=lower, to=upper, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response:
+        break
+      lower = upper + 1
+      upper = lower + width
