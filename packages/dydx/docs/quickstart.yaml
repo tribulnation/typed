@@ -1,0 +1,76 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014, schema extended for markdown `body` + links ADR
+# 0015). Mirrors docs/index.md and docs/how-to/*.md — kept in sync by hand
+# until those pages generate from this file instead, not yet decided. Every
+# snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset — links, code spans, emphasis;
+# no block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths
+# (`/typed/dydx/...`), not relative doc-tree paths — this file is authored
+# for exactly one rendering location, unlike docs/*.md's portable relative
+# links (see ADR 0015).
+
+env_setup:
+  body: >-
+    Create a `.env` with your wallet mnemonic — see
+    [wallet setup](/typed/dydx/authenticated-setup) for where to get one.
+  code: |
+    # .env
+    DYDX_MNEMONIC="your wallet mnemonic"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-dydx python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    from dydx import Dydx
+
+    async with Dydx.mainnet() as client:
+      market = await client.indexer.data.get_market('BTC-USD')
+      print(market)
+
+how_tos:
+  - title: Fetch market data
+    body: Use the indexer for trading-facing market data — prices, order books, trades.
+    code: |
+      book = await client.indexer.data.get_order_book('BTC-USD')
+      print(book['bids'][:1], book['asks'][:1])
+
+  - title: Check open positions
+    body: List open positions for a subaccount from the indexer.
+    code: |
+      address = 'dydx1...'
+      positions = await client.indexer.data.list_positions(address, subaccount=0)
+      print(positions)
+
+  - title: Place an order
+    body: Build, sign, and broadcast a long-term order, then inspect its ID.
+    code: |
+      market = await client.indexer.data.get_market('ETH-USD')
+      placed = await client.node.place_order(
+        market,
+        order={'side': 'BUY', 'size': '0.001', 'price': '1', 'flags': 'LONG_TERM'},
+        simulate=True,
+      )
+      print(placed.order.order_id)
+
+  - title: Query chain state
+    body: Read protocol state directly from the chain, no indexer needed.
+    code: |
+      address = 'dydx1...'
+      account = await client.chain.auth.account(address)
+      balances = await client.chain.bank.all_balances(address, resolve_denom=False)
+      print(account, balances)
+
+  - title: Listen to a live stream
+    body: Subscribe to live indexer WebSocket updates.
+    code: |
+      stream = await client.indexer.streams.candles('ETH-USD', resolution='1MIN')
+      async for candle in stream:
+        print(candle)
