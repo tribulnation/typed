@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-mexc"
-version = "1.2.3"
+version = "1.2.4"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -30,9 +30,9 @@ requires-python = ">=3.10"
 readme = {file="README.md", content-type="text/markdown"}
 
 [project.urls]
-Repository = "https://github.com/tribulnation/mexc.git"
-Documentation = "https://mexc.tribulnation.com"
-Website = "https://tribulnation.com"
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/mexc"
+Website = "https://tribulnation.com/typed"
 
 [tool.setuptools.package-data]
 mexc = ["py.typed", "*.pyi", "**/*.pyi"]

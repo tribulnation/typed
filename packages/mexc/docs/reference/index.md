@@ -6,6 +6,7 @@ Use it when you need exact behavior, environment configuration, lifecycle detail
 
 ## Sections
 
+- [Async Usage](async-usage.md)
 - [Error Handling](error-handling.md)
 - [Environment Variables](env-vars.md)
 - [Timestamps](timestamps.md)

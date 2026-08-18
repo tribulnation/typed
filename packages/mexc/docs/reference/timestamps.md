@@ -64,16 +64,16 @@ Use the helper exported by the client when you explicitly need raw millisecond i
 from datetime import datetime
 from mexc.core import timestamp as ts
 
-timestamp_ms = ts.dump_ms(datetime.now())
+timestamp_ms = ts.dump(datetime.now())
 current_ms = ts.now()
 parsed = ts.parse(1715200000000)
 ```
 
-For second-based values, use `dump_s`.
+For second-based values, use `timestamp_s`.
 
 ```python
 from datetime import datetime
-from mexc.core import timestamp as ts
+from mexc.core import timestamp_s as ts_s
 
-timestamp_s = ts.dump_s(datetime.now())
+timestamp_s = ts_s.dump(datetime.now())
 ```
