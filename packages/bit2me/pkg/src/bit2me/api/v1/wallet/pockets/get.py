@@ -1,0 +1,49 @@
+from decimal import Decimal
+from datetime import datetime
+from typing_extensions import TypedDict
+from bit2me.types import PocketColor
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class Entry(TypedDict):
+  id: str
+  """Pocket id."""
+  name: str
+  """Pocket name, as set by the user."""
+  color: PocketColor
+  currency: str
+  """Valid currency symbol"""
+  balance: Decimal
+  """Available balance in the pocket."""
+  blockedBalance: Decimal
+  """Balance in the pocket that is currently blocked (e.g. reserved by a pending operation) and not available to spend."""
+  createdAt: datetime
+  """When the pocket was created (ISO 8601)"""
+
+
+validate_response = validator(list[Entry])
+
+
+class Get(RpcEndpoint):
+  async def get(
+    self, *, id: str | None = None, validate: bool | None = None
+  ) -> list[Entry]:
+    """Get the data of a specific pocket or the data of all pockets of the user (if the *id* param is not set)
+
+    Args:
+      id: With this parameter you can specify the pocket you want to get the data from.
+    If this parameter is not set, all pockets of the user are returned
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/wallet/GET/v1/wallet/pocket)
+    """
+    params = {'id': id} if id is not None else None
+    return await self.authed_request(
+      'GET',
+      '/v1/wallet/pocket',
+      params=params,
+      validator=validate_response,
+      validate=validate,
+    )

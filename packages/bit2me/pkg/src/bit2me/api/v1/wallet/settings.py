@@ -1,0 +1,33 @@
+from typing_extensions import Any, NotRequired, TypedDict
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class Entry(TypedDict):
+  symbol: str
+  """Valid currency symbol"""
+  actions: list[str]
+  """Wallet actions currently enabled for this asset (e.g. deposit, withdrawal, transfer, instant buy/sell/swap, purchase, earn deposit/withdrawal). Left bare rather than enum: live responses send values (e.g. "deposit-app", "instant-buy", "earn-deposit") that the venue's own published spec, whose enum lists only deposit/withdraw/transfer/instant, does not cover."""
+  limit: NotRequired[dict[str, Any]]
+  """Per-action operation limits for this asset (e.g. min/max amount for instant trades), when the venue defines any; omitted entirely for assets with no published limits."""
+
+
+validate_response = validator(list[Entry])
+
+
+class Settings(RpcEndpoint):
+  async def __call__(self, *, validate: bool | None = None) -> list[Entry]:
+    """Get the list of assets Bit2Me supports and, for each one, the wallet actions currently enabled on it.
+
+    Args:
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/wallet/GET/v1/wallet/settings/assets)
+    """
+    return await self.request(
+      'GET',
+      '/v1/wallet/settings/assets',
+      validator=validate_response,
+      validate=validate,
+    )

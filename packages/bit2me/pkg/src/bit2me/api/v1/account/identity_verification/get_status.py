@@ -1,0 +1,97 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from bit2me.types import PointsParam
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class ExtraMeasuresNotApproved(TypedDict):
+  """Additional due-diligence measures the user has not yet had approved."""
+
+  compliance: list[Literal['MR2']]
+  """Pending compliance measures."""
+
+
+class KycExpress(TypedDict):
+  """Status of the expedited (express) KYC flow, when applicable."""
+
+  status: NotRequired[Literal['success', 'rejected', 'uncompleted']]
+  """Outcome of the express KYC flow."""
+  updatedAt: NotRequired[str]
+  """Date the express KYC status was last updated, in ISO 8601 format."""
+
+
+class Risk(TypedDict):
+  """The user's current risk assessment."""
+
+  level: Literal['undefined', 'low', 'medium', 'high', 'unacceptable']
+  """Risk level assigned to the user."""
+  minPoints: NotRequired[PointsParam]
+  maxPoints: NotRequired[PointsParam]
+  action: NotRequired[str]
+  """Action the user must take as a result of the risk assessment, e.g. `accepted` or `document-required`."""
+
+
+class IdentityVerificationResponse(TypedDict):
+  status: Literal['nodata', 'pending', 'verified', 'error']
+  """Overall identity verification status."""
+  error: NotRequired[
+    list[
+      Literal[
+        'number',
+        'expiryDate',
+        'noDocUploaded',
+        'imageDoc',
+        'imageSelfie',
+        'other',
+        'unacceptableRisk',
+        'underAge',
+        'fraud',
+        'noNationality',
+        'idCountryDiffersResidenceCountry',
+        'kycUpdateRequired',
+      ]
+    ]
+  ]
+  """Reasons the identity verification failed or is blocked, when `status` is `error`."""
+  image: list[str]
+  """Identity images the user still has to upload."""
+  disableProcess: bool
+  """Whether the identity verification process is disabled for this user."""
+  risk: NotRequired[Risk]
+  kycExpress: NotRequired[KycExpress]
+  questions: NotRequired[bool]
+  """Whether the user has completed the KYC questionnaire."""
+  extraMeasurePending: NotRequired[bool]
+  """Whether an additional due-diligence measure is pending on this user."""
+  extraMeasuresNotApproved: NotRequired[ExtraMeasuresNotApproved]
+  tier: NotRequired[float]
+  """Verification tier the user is currently assigned to."""
+  verified: NotRequired[list[str]]
+  """Aspects of the account already verified, e.g. `email`, `phone`, `questions`, `identity`."""
+  countryFormRequired: NotRequired[bool]
+  """Whether the user still has to submit the country-specific verification form."""
+
+
+validate_response = validator(IdentityVerificationResponse)
+
+
+class GetStatus(RpcEndpoint):
+  async def get_status(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> IdentityVerificationResponse:
+    """Return the current status of the identity verification
+
+    Args:
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/account/GET/v1/account/verify/identity)
+    """
+    return await self.authed_request(
+      'GET',
+      '/v1/account/verify/identity',
+      validator=validate_response,
+      validate=validate,
+    )

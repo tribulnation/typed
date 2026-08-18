@@ -1,0 +1,42 @@
+from typing_extensions import TypedDict
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class CreatePocketRequest(TypedDict):
+  currency: str
+  """Valid currency symbol"""
+  name: str
+
+
+class CreatePocketResponse(TypedDict):
+  id: str
+  """Id of the newly created pocket."""
+
+
+validate_response = validator(CreatePocketResponse)
+
+
+class Create(RpcEndpoint):
+  async def create(
+    self,
+    create_pocket_request: CreatePocketRequest,
+    *,
+    validate: bool | None = None,
+  ) -> CreatePocketResponse:
+    """Create a new pocket
+
+    Args:
+      create_pocket_request: Currency and name for the new pocket.
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/wallet/POST/v1/wallet/pocket)
+    """
+    return await self.authed_request(
+      'POST',
+      '/v1/wallet/pocket',
+      json=create_pocket_request,
+      validator=validate_response,
+      validate=validate,
+    )

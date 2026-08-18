@@ -1,0 +1,16 @@
+from .get import Get
+from .get_rewards_config import GetRewardsConfig
+from .get_rewards_summary import GetRewardsSummary
+from .list_movements import ListMovements
+from .list_rewards_config import ListRewardsConfig
+from .update_rewards_config import UpdateRewardsConfig
+
+
+class Wallets(
+  Get,
+  GetRewardsConfig,
+  GetRewardsSummary,
+  ListMovements,
+  ListRewardsConfig,
+  UpdateRewardsConfig,
+): ...

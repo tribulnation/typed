@@ -1,0 +1,7 @@
+from .create import Create
+from .delete import Delete
+from .get import Get
+from .update import Update
+
+
+class Pockets(Create, Delete, Get, Update): ...
