@@ -1,0 +1,59 @@
+name: Release bit2me
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths: ['packages/bit2me/**']
+permissions:
+  id-token: write
+  contents: write
+jobs:
+  check:
+    if: github.event.pull_request.merged == true && github.head_ref == 'release/bit2me'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      published: ${{ steps.check.outputs.published }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - id: version
+        run: |
+          version=$(grep -m1 '^version = ' packages/bit2me/pkg/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - id: check
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/typed-bit2me/${{ steps.version.outputs.version }}/json")
+          if [ "$code" = "200" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+  release:
+    needs: check
+    if: needs.check.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e packages/core
+      - run: pip install -e packages/bit2me/pkg
+      - run: pip install ruff pyright build
+      - run: ruff check --select TID251 packages/bit2me/pkg
+      - run: pyright packages/bit2me/pkg
+      - run: cp packages/bit2me/README.md packages/bit2me/LICENSE packages/bit2me/pkg/
+      - run: python -m build packages/bit2me/pkg
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/bit2me/pkg/dist
+      - run: git tag bit2me-v${{ needs.check.outputs.version }}
+      - run: git push origin bit2me-v${{ needs.check.outputs.version }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bit2me-v${{ needs.check.outputs.version }}
+          generate_release_notes: true
