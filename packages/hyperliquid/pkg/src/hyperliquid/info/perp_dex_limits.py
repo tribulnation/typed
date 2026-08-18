@@ -1,0 +1,44 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class PerpDexLimits(TypedDict):
+  """A builder-deployed perp dex's configured open-interest and transfer limits."""
+
+  coinToOiCap: list[tuple[str, str]]
+  """Per-coin open-interest cap overrides, as `[coin, cap]` pairs."""
+  maxTransferNtl: str
+  """Maximum notional value transferable into or out of the dex in one action, as a decimal string."""
+  oiSzCapPerPerp: str
+  """Default open-interest size cap applied per perp on the dex, as a decimal string."""
+  totalOiCap: str
+  """Total open-interest cap across all perps on the dex, as a decimal string."""
+
+
+class PerpDexLimitsAction(TypedDict):
+  type: Literal['perpDexLimits']
+  dex: str
+
+
+adapter = pydantic.TypeAdapter(PerpDexLimits)
+
+
+class PerpDexLimitsEndpoint(InfoMixin):
+  async def perp_dex_limits(self, *, dex: str) -> PerpDexLimits:
+    """Retrieve a builder-deployed (HIP-3) perp dex's open-interest and transfer limits, plus its per-coin open-interest caps.
+
+    Args:
+      dex: Perp dex name to look up limits for.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
+    """
+    params: PerpDexLimitsAction = {
+      'type': 'perpDexLimits',
+      'dex': dex,
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

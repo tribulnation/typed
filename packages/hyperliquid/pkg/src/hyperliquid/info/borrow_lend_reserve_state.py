@@ -1,0 +1,52 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class BorrowLendReserveState(TypedDict):
+  """Borrow/lend reserve state for a single spot token."""
+
+  borrowYearlyRate: str
+  """Annualized interest rate charged to borrowers of this token, as a decimal fraction."""
+  supplyYearlyRate: str
+  """Annualized interest rate paid to suppliers of this token, as a decimal fraction."""
+  balance: str
+  """Total token balance held in the reserve, as a decimal string."""
+  utilization: str
+  """Fraction of supplied liquidity currently borrowed (totalBorrowed / totalSupplied), as a decimal fraction."""
+  oraclePx: str
+  """Oracle mark price of the token in USD, as a decimal string."""
+  ltv: str
+  """Maximum loan-to-value ratio accepted for this token as collateral, as a decimal fraction."""
+  totalSupplied: str
+  """Total amount of the token supplied to the reserve, as a decimal string."""
+  totalBorrowed: str
+  """Total amount of the token currently borrowed from the reserve, as a decimal string."""
+
+
+class BorrowLendReserveStateAction(TypedDict):
+  type: Literal['borrowLendReserveState']
+  token: int
+
+
+adapter = pydantic.TypeAdapter(BorrowLendReserveState)
+
+
+class BorrowLendReserveStateEndpoint(InfoMixin):
+  async def borrow_lend_reserve_state(self, *, token: int) -> BorrowLendReserveState:
+    """Look up the borrow/lend money-market reserve state for a single spot token, by token index.
+
+    Args:
+      token: Spot token index (see spotMeta's per-token `index`).
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
+    """
+    params: BorrowLendReserveStateAction = {
+      'type': 'borrowLendReserveState',
+      'token': token,
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

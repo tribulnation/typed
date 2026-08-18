@@ -1,0 +1,41 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class PerpDeployAuctionStatus(TypedDict):
+  """State of the Dutch auction pricing a new HIP-3 perp dex deployment."""
+
+  currentGas: str
+  """Current auction gas price (deployment cost, in USDC) at this point in the decay, as a decimal string."""
+  durationSeconds: int
+  """Total duration of the auction's decay period, in seconds."""
+  endGas: str | None
+  """Final gas price the auction settled at, or `null` while the auction is still decaying."""
+  startGas: str
+  """Starting auction gas price at the beginning of the decay period, as a decimal string."""
+  startTimeSeconds: int
+  """Unix timestamp, in seconds, when the auction's decay period began."""
+
+
+class PerpDeployAuctionStatusAction(TypedDict):
+  type: Literal['perpDeployAuctionStatus']
+
+
+adapter = pydantic.TypeAdapter(PerpDeployAuctionStatus)
+
+
+class PerpDeployAuctionStatusEndpoint(InfoMixin):
+  async def perp_deploy_auction_status(self) -> PerpDeployAuctionStatus:
+    """Retrieve the current state of the Dutch auction that prices deploying a new HIP-3 perp dex.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
+    """
+    params: PerpDeployAuctionStatusAction = {
+      'type': 'perpDeployAuctionStatus',
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

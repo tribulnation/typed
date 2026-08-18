@@ -1,0 +1,91 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class OutcomeDeployer(TypedDict):
+  """One registered, activated outcome deployer."""
+
+  deployer: str
+  """Deployer address, as a 42-character hexadecimal string."""
+  venue: str
+  """Venue name this deployer is activated under."""
+
+
+class OutcomeMetaAction(TypedDict):
+  type: Literal['outcomeMeta']
+
+
+class OutcomeQuestion(TypedDict):
+  """One deployed HIP-4 question, grouping several named outcomes plus a fallback."""
+
+  question: int
+  """Question id."""
+  name: str
+  """Question display name."""
+  description: str
+  """Question description, including its resolution criteria."""
+  fallbackOutcome: int
+  """Id of the protocol-created fallback outcome, which resolves Yes when no named outcome does."""
+  namedOutcomes: list[int]
+  """Ids of the question's named (non-fallback) outcomes, still open for settlement."""
+  settledNamedOutcomes: list[int]
+  """Ids of the question's named outcomes that have already settled."""
+
+
+class OutcomeSideSpec(TypedDict):
+  """One tradeable side of an outcome."""
+
+  name: str
+  """Display name for this side of the outcome (e.g. `"Yes"`, `"No"`)."""
+
+
+class OutcomeMetaEntry(TypedDict):
+  """One deployed HIP-4 outcome."""
+
+  outcome: int
+  """Outcome id."""
+  name: str
+  """Outcome display name."""
+  description: str
+  """Outcome description, or the empty string when none was set."""
+  sideSpecs: list[OutcomeSideSpec]
+  """The outcome's tradeable sides, always two entries."""
+  quoteToken: str
+  """Symbol of the spot token this outcome is quoted/settled in."""
+  venue: NotRequired[str]
+  """Name of the venue/market this outcome is deployed under."""
+  deployerFeeScale: NotRequired[str]
+  """Per-outcome override of the deployer fee scale, as a decimal string. Absent when the outcome uses the response's top-level `feeScale`."""
+
+
+class OutcomeMetaResponse(TypedDict):
+  """HIP-4 prediction-market deployer metadata: outcomes, their grouping questions, activated deployers, and the fee scale."""
+
+  outcomes: list[OutcomeMetaEntry]
+  """Every deployed outcome with a non-null deployer."""
+  questions: list[OutcomeQuestion]
+  """Every deployed question."""
+  deployers: list[OutcomeDeployer]
+  """Every activated outcome deployer."""
+  feeScale: str
+  """Current default deployer fee scale, as a decimal string; overridden per outcome by `deployerFeeScale` where present."""
+
+
+adapter = pydantic.TypeAdapter(OutcomeMetaResponse)
+
+
+class OutcomeMeta(InfoMixin):
+  async def outcome_meta(self) -> OutcomeMetaResponse:
+    """Retrieve HIP-4 prediction-market metadata: every deployed outcome and question, the registered outcome deployers, and the current deployer fee scale. Includes only non-null outcome deployers.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/hip-4-deployer-actions)
+    """
+    params: OutcomeMetaAction = {
+      'type': 'outcomeMeta',
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

@@ -1,0 +1,37 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class Annotation(TypedDict):
+  """Compact annotation: `category` (required), plus `displayName`/`keywords` when set -- unlike `perpAnnotation`'s full shape, `description` is omitted."""
+
+  category: str
+  """Category tag assigned to the coin."""
+  displayName: NotRequired[str]
+  """Short display name for the coin, when one was set."""
+  keywords: NotRequired[list[str]]
+  """Search keywords for the coin, when any were set."""
+
+
+class PerpConciseAnnotationsAction(TypedDict):
+  type: Literal['perpConciseAnnotations']
+
+
+adapter = pydantic.TypeAdapter(list[tuple[str, Annotation]])
+
+
+class PerpConciseAnnotations(InfoMixin):
+  async def perp_concise_annotations(self) -> list[tuple[str, Annotation]]:
+    """Retrieve every deployer-set perp annotation across all perp dexs in one compact call, keyed by coin. Unlike `perpAnnotation`, which looks up one coin's full annotation, this returns the whole annotated set at once with only the two fields that fit the compact shape.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals)
+    """
+    params: PerpConciseAnnotationsAction = {
+      'type': 'perpConciseAnnotations',
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

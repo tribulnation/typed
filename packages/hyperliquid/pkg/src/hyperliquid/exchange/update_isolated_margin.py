@@ -1,0 +1,72 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class UpdateIsolatedMarginAction(TypedDict):
+  type: Literal['updateIsolatedMargin']
+  asset: int
+  isBuy: bool
+  ntli: int
+
+
+class UpdateIsolatedMarginActionResult(TypedDict):
+  """Result of an accepted update-isolated-margin action."""
+
+  type: Literal['default']
+  """Discriminator confirming this is an update-isolated-margin result. The venue carries no further data alongside it."""
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[UpdateIsolatedMarginActionResult])
+
+
+class UpdateIsolatedMargin(ExchangeMixin):
+  async def update_isolated_margin(
+    self,
+    *,
+    asset: int,
+    is_buy: bool,
+    ntli: int,
+    vault_address: str | None = None,
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[UpdateIsolatedMarginActionResult]:
+    """Add or remove margin from an isolated position, through Hyperliquid POST /exchange using action type `updateIsolatedMargin`. To target a specific leverage instead of a USDC amount, use `topUpIsolatedOnlyMargin` instead.
+
+    Args:
+      asset: Asset index of the isolated position to update, per `info.meta`'s `universe` ordering.
+      is_buy: Side of the isolated position to update: true for the long side, false for the short side.
+      ntli: USDC amount, with 6 decimals, to add to (positive) or remove from (negative) the isolated margin -- e.g. 1000000 for $1.
+      vault_address: Optional vault address for the signed action.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/exchange-endpoint)
+    """
+    ts = timestamp.now()
+    action: UpdateIsolatedMarginAction = {
+      'type': 'updateIsolatedMargin',
+      'asset': asset,
+      'isBuy': is_buy,
+      'ntli': ntli,
+    }
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=vault_address,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': vault_address,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result

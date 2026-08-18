@@ -1,0 +1,102 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014). Mirrors docs/index.md and docs/how-to/*.md, kept in sync by
+# hand. Every snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset -- links, code spans, emphasis; no
+# block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths (`/typed/hyperliquid/...`),
+# not relative doc-tree paths.
+
+env_setup:
+  body: >-
+    Create a `.env` with your wallet's private key -- see
+    [Authenticated Setup](/typed/hyperliquid/authenticated-setup) for how to create an
+    API wallet instead of using your real one.
+  code: |
+    # .env
+    HYPERLIQUID_PRIVATE_KEY="your_api_wallet_private_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-hyperliquid python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from hyperliquid import Hyperliquid
+
+    load_dotenv()
+
+    async with Hyperliquid.http() as client:
+      mids = await client.info.all_mids()
+      print(mids['BTC'])
+
+how_tos:
+  - title: Fetch market data
+    body: Order books, candles, current funding, and mid prices -- all public, no credentials needed.
+    code: |
+      from hyperliquid.core import timestamp as ts
+
+      book = await client.info.l2_book(coin='BTC')                        # order book
+      candles = await client.info.candle_snapshot(
+        coin='BTC', interval='1m', start_time=ts.now() - 3_600_000, end_time=ts.now(),
+      )                                                                    # recent candles
+      meta, ctxs = await client.info.perp_meta_and_asset_ctxs()            # current funding rates
+
+  - title: Place & manage orders
+    body: Submit, query, list, and cancel orders. Needs credentials.
+    code: |
+      meta = await client.info.perp_meta()
+      btc_asset = next(i for i, a in enumerate(meta['universe']) if a['name'] == 'BTC')  # resolve asset id
+
+      result = await client.exchange.order(
+        orders=[{'a': btc_asset, 'b': True, 'p': '90000', 's': '0.001', 'r': False, 't': {'limit': {'tif': 'Gtc'}}}],
+        grouping='na',
+      )                                                                    # place an order
+      user = client.exchange.wallet.address
+      order = await client.info.order_status(user=user, oid=123456789)    # check an order's status
+      open_orders = await client.info.open_orders(user=user)              # list open orders
+      await client.exchange.cancel(cancels=[{'a': btc_asset, 'o': 123456789}])  # cancel it
+
+  - title: Fetch balances & positions
+    body: Spot balances, perp positions and margin, and portfolio history.
+    code: |
+      user = client.exchange.wallet.address
+
+      spot = await client.info.spot_clearinghouse_state(user=user)  # spot balances
+      state = await client.info.clearinghouse_state(user=user)      # perp positions & margin
+      portfolio = await client.info.user_portfolio(user=user)       # account-value & PnL history
+
+  - title: Fetch transactions
+    body: Fills, funding payments, and other ledger flows over a time range.
+    code: |
+      from datetime import datetime, timedelta
+      from hyperliquid.core import timestamp as ts
+
+      user = client.exchange.wallet.address
+      start_ms = ts.dump(datetime.now() - timedelta(days=7))
+
+      fills = await client.info.user_fills_by_time(user=user, start_time=start_ms)          # fills
+      funding = await client.info.user_funding(user=user, start_time=start_ms)              # funding payments
+      flows = await client.info.user_non_funding_ledger_updates(user=user, start_time=start_ms)  # other ledger flows
+
+  - title: Listen to public data
+    body: Public order book and trade subscriptions -- no credentials needed.
+    code: |
+      book = await client.streams.l2_book('BTC')  # order book updates
+      async for update in book:
+        print(update['coin'])
+
+      trades = await client.streams.trades('BTC')  # public trade prints
+      async for batch in trades:
+        print(batch)
+
+  - title: Listen to your trades
+    body: Stream your own fills as they happen.
+    code: |
+      user = client.exchange.wallet.address
+
+      fills = await client.streams.user_fills(user)  # your fills, as they happen
+      async for update in fills:
+        print(update['fills'])

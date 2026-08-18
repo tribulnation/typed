@@ -1,0 +1,8 @@
+build
+twine
+ipykernel
+pyright
+python-dotenv
+pytest
+pytest-asyncio
+-e pkg

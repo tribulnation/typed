@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-hyperliquid"
+version = "1.2.4"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the Hyperliquid API."
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core>=0.2.0",
+  "lazy-loader",
+  "eth-account",
+  "msgpack"
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[project.urls]
+Repository = "https://github.com/tribulnation/hyperliquid.git"
+Documentation = "https://hyperliquid.tribulnation.com"
+Website = "https://tribulnation.com"
+
+[tool.setuptools.package-data]
+hyperliquid = ["py.typed", "*.pyi", "**/*.pyi"]

@@ -1,0 +1,246 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class FilledOrderInfo(TypedDict):
+  """The order filled immediately."""
+
+  oid: int
+  """Venue-assigned order id."""
+  avgPx: str
+  """Average fill price, as a decimal string."""
+  totalSz: str
+  """Total filled size, as a decimal string."""
+
+
+class LimitOrderParamsOrderOrdersItemTAnyOf0Limit(TypedDict):
+  """A resting limit order, governed by a time-in-force."""
+
+  tif: Literal['Alo', 'Ioc', 'Gtc']
+  """Time-in-force: `Alo` (add-liquidity-only / post-only, rejected rather than taking liquidity), `Ioc` (immediate-or-cancel), or `Gtc` (good-til-canceled)."""
+
+
+class LimitOrderParamsParameterOrdersItemTAnyOf0Limit(TypedDict):
+  """A resting limit order, governed by a time-in-force."""
+
+  tif: Literal['Alo', 'Ioc', 'Gtc']
+  """Time-in-force: `Alo` (add-liquidity-only / post-only, rejected rather than taking liquidity), `Ioc` (immediate-or-cancel), or `Gtc` (good-til-canceled)."""
+
+
+class OrderBuilder(TypedDict):
+  b: str
+  """Builder's wallet address to receive the fee."""
+  f: int
+  """Builder fee rate, in tenths of a basis point."""
+
+
+class OrderPriorityGroupingOrderGroupingAnyOf1(TypedDict):
+  """Order (write) priority grouping. Only valid when every order in the batch is on a non-outcome asset, and either every order is IOC or every order is non-reduce-only ALO."""
+
+  p: int
+  """Priority rate, interpreted as the fraction `p / 100000000.0` of filled notional (IOC) or resting notional (non-reduce-only ALO). Charged from undelegated staking balance, converted to HYPE at the spot mark price, and burned; readable back from `user_fills`' `priorityGas` field (a node-local log field, not the HTTP `/info` response)."""
+
+
+class OrderPriorityGroupingParameterGroupingAnyOf1(TypedDict):
+  """Order (write) priority grouping. Only valid when every order in the batch is on a non-outcome asset, and either every order is IOC or every order is non-reduce-only ALO."""
+
+  p: int
+  """Priority rate, interpreted as the fraction `p / 100000000.0` of filled notional (IOC) or resting notional (non-reduce-only ALO). Charged from undelegated staking balance, converted to HYPE at the spot mark price, and burned; readable back from `user_fills`' `priorityGas` field (a node-local log field, not the HTTP `/info` response)."""
+
+
+class OrderStatusError(TypedDict):
+  """Outcome for an order the venue rejected individually within an otherwise-accepted batch."""
+
+  error: str
+  """Reason this specific order was rejected, e.g. 'Order must have minimum value of $10.'."""
+
+
+class RestingOrderInfo(TypedDict):
+  """The order rested on the book unfilled."""
+
+  oid: int
+  """Venue-assigned order id."""
+  cloid: NotRequired[str]
+  """Caller-chosen client order id echoed back, when the request's order set one."""
+
+
+class TriggerOrderParamsOrderOrdersItemTAnyOf1Trigger(TypedDict):
+  """A trigger order, guarded by a mark-price condition."""
+
+  isMarket: bool
+  """True if the trigger fires a market order; false if it fires a limit order at the order's own price."""
+  triggerPx: str
+  """Mark price at which the trigger fires, as a decimal string."""
+  tpsl: Literal['tp', 'sl']
+  """Whether this trigger order closes the position as a take-profit (`tp`) or a stop-loss (`sl`)."""
+
+
+class TriggerOrderParamsParameterOrdersItemTAnyOf1Trigger(TypedDict):
+  """A trigger order, guarded by a mark-price condition."""
+
+  isMarket: bool
+  """True if the trigger fires a market order; false if it fires a limit order at the order's own price."""
+  triggerPx: str
+  """Mark price at which the trigger fires, as a decimal string."""
+  tpsl: Literal['tp', 'sl']
+  """Whether this trigger order closes the position as a take-profit (`tp`) or a stop-loss (`sl`)."""
+
+
+class FilledOrderStatus(TypedDict):
+  """Outcome for an order that filled immediately."""
+
+  filled: FilledOrderInfo
+
+
+class LimitOrderTypeOrderOrdersItemTAnyOf0(TypedDict):
+  """Order type variant for a limit order."""
+
+  limit: LimitOrderParamsOrderOrdersItemTAnyOf0Limit
+
+
+class LimitOrderTypeParameterOrdersItemTAnyOf0(TypedDict):
+  """Order type variant for a limit order."""
+
+  limit: LimitOrderParamsParameterOrdersItemTAnyOf0Limit
+
+
+class RestingOrderStatus(TypedDict):
+  """Outcome for an order that rested on the book."""
+
+  resting: RestingOrderInfo
+
+
+class TriggerOrderTypeOrderOrdersItemTAnyOf1(TypedDict):
+  """Order type variant for a trigger (take-profit / stop-loss) order."""
+
+  trigger: TriggerOrderParamsOrderOrdersItemTAnyOf1Trigger
+
+
+class TriggerOrderTypeParameterOrdersItemTAnyOf1(TypedDict):
+  """Order type variant for a trigger (take-profit / stop-loss) order."""
+
+  trigger: TriggerOrderParamsParameterOrdersItemTAnyOf1Trigger
+
+
+class HyperliquidOrderOrderOrdersItem(TypedDict):
+  """One order to place."""
+
+  a: int
+  """Asset index this order trades, per `info.meta`'s `universe` ordering."""
+  b: bool
+  """True to buy, false to sell."""
+  p: str
+  """Limit price, as a decimal string."""
+  s: str
+  """Order size, as a decimal string."""
+  r: bool
+  """True to mark this order reduce-only."""
+  t: LimitOrderTypeOrderOrdersItemTAnyOf0 | TriggerOrderTypeOrderOrdersItemTAnyOf1
+  """Order type: a resting limit order with a time-in-force, or a trigger order guarded by a mark-price condition."""
+  c: NotRequired[str]
+  """Caller-chosen client order id: a 128-bit hex string, e.g. `0x1234567890abcdef1234567890abcdef`."""
+
+
+class HyperliquidOrderParameterOrdersItem(TypedDict):
+  """One order to place."""
+
+  a: int
+  """Asset index this order trades, per `info.meta`'s `universe` ordering."""
+  b: bool
+  """True to buy, false to sell."""
+  p: str
+  """Limit price, as a decimal string."""
+  s: str
+  """Order size, as a decimal string."""
+  r: bool
+  """True to mark this order reduce-only."""
+  t: (
+    LimitOrderTypeParameterOrdersItemTAnyOf0
+    | TriggerOrderTypeParameterOrdersItemTAnyOf1
+  )
+  """Order type: a resting limit order with a time-in-force, or a trigger order guarded by a mark-price condition."""
+  c: NotRequired[str]
+  """Caller-chosen client order id: a 128-bit hex string, e.g. `0x1234567890abcdef1234567890abcdef`."""
+
+
+class OrderActionData(TypedDict):
+  """Per-order outcomes for this action."""
+
+  statuses: list[RestingOrderStatus | FilledOrderStatus | OrderStatusError]
+  """One entry per order in the request, in the same order: resting, filled, or rejected."""
+
+
+class OrderAction(TypedDict):
+  type: Literal['order']
+  orders: list[HyperliquidOrderOrderOrdersItem]
+  grouping: (
+    Literal['na', 'normalTpsl', 'positionTpsl']
+    | OrderPriorityGroupingOrderGroupingAnyOf1
+  )
+  builder: NotRequired[OrderBuilder]
+
+
+class OrderActionResult(TypedDict):
+  """Result of an accepted order-placement action."""
+
+  type: Literal['order']
+  """Discriminator confirming this is an order-placement result."""
+  data: OrderActionData
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[OrderActionResult])
+
+
+class Order(ExchangeMixin):
+  async def order(
+    self,
+    *,
+    orders: list[HyperliquidOrderParameterOrdersItem],
+    grouping: Literal['na', 'normalTpsl', 'positionTpsl']
+    | OrderPriorityGroupingParameterGroupingAnyOf1,
+    builder: OrderBuilder | None = None,
+    vault_address: str | None = None,
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[OrderActionResult]:
+    """Place one or more orders through Hyperliquid POST /exchange using action type `order`.
+
+    Args:
+      orders: Orders to place, one entry per order sent in this batch.
+      grouping: How the orders in this batch relate to each other: `na` for independent orders, `normalTpsl` for a normal take-profit/stop-loss pair, `positionTpsl` for a take-profit/stop-loss tied to the whole position, or an `OrderPriorityGrouping` object to pay for write-priority instead.
+      builder: Builder fee to attach to this action, when routed through a builder integration.
+      vault_address: Optional vault address for the signed action.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/exchange-endpoint)
+    """
+    ts = timestamp.now()
+    action: OrderAction = {
+      'type': 'order',
+      'orders': orders,
+      'grouping': grouping,
+    }
+    if builder is not None:
+      action['builder'] = builder
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=vault_address,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': vault_address,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result
