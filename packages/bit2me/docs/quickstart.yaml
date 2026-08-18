@@ -1,0 +1,82 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials, see
+    [Getting Started](/typed/bit2me/getting-started) for how to create them.
+  code: |
+    # .env
+    BIT2ME_API_KEY="your_api_key"
+    BIT2ME_SECRET_KEY="your_secret_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-bit2me python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from bit2me import Bit2Me
+
+    load_dotenv()
+
+    async with Bit2Me.new() as client:
+      balances = await client.v1.trading.balance()
+      print(balances[0].get('currency'), balances[0].get('balance'))
+
+how_tos:
+  - title: Fetch market data
+    body: Tickers, order book, market config, and recent trades, all public, no credentials needed.
+    code: |
+      tickers = await client.v2.trading.tickers(symbol='BTC/EUR')                  # 24h ticker stats
+      book = await client.v2.trading.order_book(symbol='BTC/EUR')                  # order book
+      markets = await client.v1.trading.markets(symbol='BTC/EUR')                  # market config
+      trades = await client.v1.trading.trades.get_last(symbol='BTC/EUR', limit=5)  # recent trades
+
+  - title: Listen to streams
+    body: Public order book/trade streams and your own private feed, over one WebSocket connection.
+    code: |
+      async with client.trading_ws as trading:
+        async with trading.order_book(symbol='BTC/EUR') as public_stream:
+          async for update in public_stream:
+            print(update)                        # public order book updates
+        async with trading.my_orders() as private_stream:
+          async for update in private_stream:
+            print(update)                         # your own order updates
+
+  - title: Place & manage orders
+    body: Submit, inspect, and cancel orders. Needs credentials.
+    code: |
+      order = await client.v1.trading.orders.create({                # place an order
+        'side': 'buy', 'symbol': 'BTC/EUR', 'price': '50000',
+        'amount': '0.001', 'orderType': 'limit', 'timeInForce': 'GTC',
+      })
+      order_id = order.get('id')
+      assert order_id is not None
+      fetched = await client.v1.trading.orders.get(order_id)         # check its status
+      open_orders = await client.v1.trading.orders.list(status='open')  # list open orders
+      await client.v1.trading.orders.cancel(order_id)                # cancel it
+
+  - title: Fetch account data
+    body: Trading balance, wallet pockets, and wallet transaction history.
+    code: |
+      balance = await client.v1.trading.balance()                    # trading balance
+      pockets = await client.v1.wallet.pockets.get()                 # wallet pockets
+      transactions = await client.v2.wallet.transactions(limit=20)   # wallet transaction history
+
+  - title: Query & manage earn
+    body: Earn yields and assets, your Earn wallets, and moving funds into Earn.
+    code: |
+      apy = await client.v2.earn.apy()                               # yields per currency
+      wallets = await client.v2.earn.wallets(limit=20)                # your earn wallets
+      deposit = await client.v1.earn.movements.create({               # deposit into earn
+        'currency': 'BTC', 'amount': '0.001', 'type': 'deposit',
+      })
+
+  - title: Query & manage deposits/withdrawals
+    body: Wallet pockets, deposit addresses, and moving funds between Wallet and Trading.
+    code: |
+      pockets = await client.v1.wallet.pockets.get()
+      addresses = await client.v2.wallet.pockets(pockets[0]['id'], 'bitcoin')  # deposit address
+      await client.v1.trading.wallets.request_deposit({                       # wallet -> trading
+        'fromPocketId': pockets[0]['id'], 'amount': '100', 'currency': 'EUR',
+      })

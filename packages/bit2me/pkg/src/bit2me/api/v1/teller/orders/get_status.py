@@ -1,0 +1,39 @@
+from typing_extensions import NotRequired, TypedDict
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class TellerOrderStatusResponse(TypedDict):
+  status: NotRequired[str]
+  """The status of the order (accepted or pending)"""
+
+
+validate_response = validator(TellerOrderStatusResponse)
+
+
+class GetStatus(RpcEndpoint):
+  async def get_status(
+    self,
+    *,
+    id: str,
+    validate: bool | None = None,
+  ) -> TellerOrderStatusResponse:
+    """Gets order status. If no order is found, "pending" status is returned as default value.
+
+    Args:
+      id: The order ID or the wallet proforma ID
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/funding/GET/v1/teller/order/status)
+    """
+    params: dict = {
+      'id': id,
+    }
+    return await self.authed_request(
+      'GET',
+      '/v1/teller/order/status',
+      params=params,
+      validator=validate_response,
+      validate=validate,
+    )

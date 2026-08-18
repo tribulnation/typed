@@ -1,0 +1,33 @@
+from typing_extensions import TypedDict
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class IdentityVerificationRetryEligibilityResponse(TypedDict):
+  result: bool
+  """Whether the user is currently allowed to retry the identity verification process."""
+
+
+validate_response = validator(IdentityVerificationRetryEligibilityResponse)
+
+
+class GetRetryWindow(RpcEndpoint):
+  async def get_retry_window(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> IdentityVerificationRetryEligibilityResponse:
+    """Gets a response based on whether the user can retry the verification process
+
+    Args:
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/kyc/GET/v1/account/verify/identity/verification/retry)
+    """
+    return await self.authed_request(
+      'GET',
+      '/v1/account/verify/identity/verification/retry',
+      validator=validate_response,
+      validate=validate,
+    )
