@@ -1,6 +1,38 @@
-# Typed Binance
+<p align="center">
+  <a href="https://tribulnation.com/typed/binance">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-light.svg">
+      <img alt="Typed Binance" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> A fully typed, validated async client for the Binance API.
+<p align="center">
+  <em>A fully typed, validated async client for the Binance API.</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/typed-binance/">
+    <img src="https://img.shields.io/pypi/v/typed-binance.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/typed-binance/">
+    <img src="https://img.shields.io/pypi/pyversions/typed-binance.svg" alt="Python versions">
+  </a>
+  <a href="https://tribulnation.com/typed/binance">
+    <img src="https://img.shields.io/badge/docs-live-black" alt="Docs">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/pypi/l/typed-binance.svg" alt="License">
+  </a>
+</p>
+
+---
+
+- **Documentation**: [https://tribulnation.com/typed/binance](https://tribulnation.com/typed/binance)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/binance](https://github.com/tribulnation/typed/tree/main/packages/binance)
+
+---
 
 ```python
 from binance import Binance
@@ -33,8 +65,20 @@ pip install typed-binance
 - [Manage Deposits & Withdrawals](https://tribulnation.com/typed/binance/how-to/manage-deposits-and-withdrawals) — deposit addresses/history and withdrawals
 - [Paginate Through Results](https://tribulnation.com/typed/binance/how-to/paginate-through-results) — walk a time range across multiple pages
 
-## Documentation
+## Reference
 
 - [API Keys Setup](https://tribulnation.com/typed/binance/api-keys)
-- [How To](https://tribulnation.com/typed/binance/how-to)
-- [Reference](https://tribulnation.com/typed/binance/reference)
+- [Async Usage](https://tribulnation.com/typed/binance/reference/async-usage)
+- [Error Handling](https://tribulnation.com/typed/binance/reference/error-handling)
+- [Environment Variables](https://tribulnation.com/typed/binance/reference/env-vars)
+- [Timestamps](https://tribulnation.com/typed/binance/reference/timestamps)
+
+## Design Philosophy
+
+Typed Binance follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT — see [LICENSE](LICENSE).

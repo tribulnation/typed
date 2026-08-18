@@ -23,8 +23,26 @@ async with Binance.new(public=True) as client:
 pip install typed-binance
 ```
 
-## Documentation
+## How To
+
+- [Fetch Market Data](how-to/fetch-market-data.md) — public prices, order books, and candles
+- [Listen To Streams](how-to/listen-to-streams.md) — subscribe to market data and account event streams
+- [Place & Manage Orders](how-to/place-and-manage-orders.md) — submit, query, cancel, and list spot orders
+- [Fetch Account Data](how-to/manage-account-data.md) — balances, positions, and trade history
+- [Query & Manage Earn Instruments](how-to/manage-earn.md) — Simple Earn products, positions, subscribe, and redeem
+- [Manage Deposits & Withdrawals](how-to/manage-deposits-and-withdrawals.md) — deposit addresses/history and withdrawals
+- [Paginate Through Results](how-to/paginate-through-results.md) — walk a time range across multiple pages
+
+## Reference
 
 - [API Keys Setup](api-keys.md)
-- [How To](how-to/index.md)
-- [Reference](reference/index.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
+
+## Design Philosophy
+
+Typed Binance follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*

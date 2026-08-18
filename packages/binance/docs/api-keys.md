@@ -2,12 +2,21 @@
 
 `Binance.new()` reads credentials from the environment by default.
 
+You can get your API keys from the [Binance website](https://www.binance.com/en/my/settings/api-management):
+
+| 1) Create API keys                                  | 2) Copy API & Secret key |
+| --------------------------------------------------- | --------------------------------------------------- |
+|![How to create API keys](media/create_api_keys.png) | ![How to copy API keys](media/copy_api_keys.png) |
+
 ## Environment Variables
 
 ```bash
 export BINANCE_API_KEY="your_api_key"
 export BINANCE_SECRET_KEY="your_api_secret"
 ```
+
+sB8TT5op
+j10ASBtw
 
 ```python
 from binance import Binance
