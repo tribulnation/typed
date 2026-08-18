@@ -1,0 +1,98 @@
+from dataclasses import dataclass
+from typed_core.util import StreamManager
+from typing_extensions import Any, Literal, TypedDict
+from typed_core.validation import validator
+from coinbase.core.endpoint.stream import StreamEndpoint
+
+
+class ProductStatus(TypedDict):
+  """One product's trading status and increments."""
+
+  product_type: str
+  """Product category; only `SPOT` is documented on the source page."""
+  id: str
+  """Product id, e.g. `BTC-USD`."""
+  base_currency: str
+  """Base currency symbol."""
+  quote_currency: str
+  """Quote currency symbol."""
+  base_increment: str
+  """Smallest allowed increment of the base currency."""
+  quote_increment: str
+  """Smallest allowed increment of the quote currency."""
+  display_name: str
+  """Human-readable product name."""
+  status: str
+  """Trading status; only `online` is documented on the source page."""
+  status_message: str
+  """Free-text elaboration on `status`, empty when there's nothing to add."""
+  min_market_funds: str
+  """Minimum quote-currency funds required to place a market order."""
+
+
+class StatusParams(TypedDict):
+  """Products to receive status updates for."""
+
+  product_ids: list[str]
+  """Product ids to stream, e.g. `["BTC-USD", "ETH-USD"]`."""
+
+
+class StatusSubscriptionEvent(TypedDict):
+  """Snapshot of every channel currently subscribed on this connection."""
+
+  subscriptions: dict[str, list[str]]
+  """Map of channel name to the product ids subscribed on it."""
+
+
+class StatusEvent(TypedDict):
+  """One batch of product status updates."""
+
+  type: str
+  """Event kind; only `snapshot` is documented on the source page."""
+  products: list[ProductStatus]
+  """Updated products."""
+
+
+class StatusSubscribeAck(TypedDict):
+  """Confirms the channel is now (un)subscribed."""
+
+  channel: Literal['subscriptions']
+  """Always `subscriptions` for an acknowledgement frame."""
+  timestamp: str
+  """Server timestamp the acknowledgement was generated, RFC 3339."""
+  sequence_num: int
+  """Per-connection sequence number of this frame."""
+  events: list[StatusSubscriptionEvent]
+  """Always one event describing the connection's current subscriptions."""
+
+
+class StatusMessage(TypedDict):
+  """The whole frame the caller receives: the client core does not unwrap `events`."""
+
+  channel: Literal['status']
+  """Always `status`."""
+  timestamp: str
+  """Server timestamp the message was generated, RFC 3339."""
+  sequence_num: int
+  """Monotonically increasing per-connection sequence number, used to detect dropped messages."""
+  events: list[StatusEvent]
+  """One or more status-batch events."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Status(StreamEndpoint):
+  """`status` channel."""
+
+  def __call__(self, product_ids: list[str]) -> StreamManager[StatusMessage, Any, Any]:
+    """Product and currency status information, pushed at preset intervals. No authentication required.
+
+    Args:
+      product_ids: Product ids to stream, e.g. `["BTC-USD", "ETH-USD"]`.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-channels)
+    """
+    params: dict = {
+      'product_ids': product_ids,
+    }
+    return self.subscribe('status', params, validator=validator(StatusMessage))

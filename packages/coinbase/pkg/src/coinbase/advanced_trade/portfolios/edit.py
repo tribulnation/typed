@@ -1,0 +1,52 @@
+from dataclasses import dataclass
+from typed_core.validation import validator
+from typing_extensions import Literal, NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class EditPortfolioRequest(TypedDict):
+  name: NotRequired[str]
+  """The new name of the portfolio."""
+
+
+class Portfolio(TypedDict):
+  """The updated portfolio."""
+
+  name: str
+  """Portfolio display name."""
+  uuid: str
+  """Portfolio id."""
+  type: Literal['UNDEFINED', 'DEFAULT', 'CONSUMER', 'INTX']
+  """Portfolio classification."""
+  deleted: bool
+  """Whether the portfolio has been deleted."""
+
+
+class EditPortfolioResponse(TypedDict):
+  portfolio: NotRequired[Portfolio]
+
+
+@dataclass(frozen=True, kw_only=True)
+class Edit(RpcEndpoint):
+  """`PUT /api/v3/brokerage/portfolios/{portfolio_uuid}`."""
+
+  async def edit(
+    self,
+    portfolio_uuid: str,
+    edit_portfolio_request: EditPortfolioRequest,
+  ) -> EditPortfolioResponse:
+    """Rename a portfolio.
+
+    Args:
+      portfolio_uuid: The id of the portfolio to edit.
+      edit_portfolio_request: The fields to update.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/portfolios/edit-portfolio)
+    """
+    return await self.authed_request(
+      'PUT',
+      f'/api/v3/brokerage/portfolios/{portfolio_uuid}',
+      json=edit_portfolio_request,
+      validator=validator(EditPortfolioResponse),
+    )

@@ -1,0 +1,70 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typed_core.validation import validator
+from typing_extensions import Literal, NotRequired, TypedDict
+from coinbase.core.endpoint.rpc import RpcEndpoint
+
+
+class Address(TypedDict):
+  """An address for a Coinbase-supported asset. An account can have more than one address, but an address belongs to exactly one account."""
+
+  id: str
+  """Resource id."""
+  address: str
+  """The address string for the asset's network."""
+  name: str | None
+  """User-defined label for the address, or null when unset."""
+  callback_url: NotRequired[str | None]
+  """Notification callback URL for this address, or null when unset. Observed on Show Address; undocumented in the field table."""
+  created_at: datetime
+  """When this address was created, RFC3339."""
+  updated_at: datetime
+  """When this address was last updated, RFC3339."""
+  network: str
+  """Name of the blockchain this address belongs to, e.g. `ethereum`, `bitcoin`."""
+  resource: Literal['addresses']
+  """Resource type. Documented as `address`, but verified live to be `addresses` (plural)."""
+  resource_path: str
+  """API path to fetch this address resource."""
+  destination_tag: NotRequired[str]
+  """Destination tag / memo for networks that use one, or an empty string when not applicable. Verified live."""
+
+
+class CreateAddressResponse(TypedDict):
+  """Wrapper around the newly created address."""
+
+  data: Address
+
+
+@dataclass(frozen=True, kw_only=True)
+class Create(RpcEndpoint):
+  """`POST /v2/accounts/{account_id}/addresses`."""
+
+  async def create(
+    self,
+    account_id: str,
+    *,
+    name: str | None = None,
+    network: str | None = None,
+  ) -> CreateAddressResponse:
+    """Create a new receive address for an account. All arguments are optional, so an empty request is enough to generate a new address on-demand.
+
+    Args:
+      account_id: The account to create the address under.
+      name: User-defined label for the address.
+      network: The blockchain network for the address, e.g. `ethereum`, `solana`, `bitcoin`, `base`, `polygon`. Defaults to the account's asset's default network when omitted.
+
+    References:
+      - [Official docs](https://docs.cdp.coinbase.com/coinbase-app/transfer-apis/onchain-addresses)
+    """
+    body = {}
+    if name is not None:
+      body['name'] = name
+    if network is not None:
+      body['network'] = network
+    return await self.authed_request(
+      'POST',
+      f'/v2/accounts/{account_id}/addresses',
+      json=(body or None),
+      validator=validator(CreateAddressResponse),
+    )
