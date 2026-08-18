@@ -1,7 +1,6 @@
-# typed
+# Typed Clients
 
-Async, typed, response-validated Python clients for the crypto venues we trade on — one
-package per venue, each independently versioned and published to PyPI.
+Async, typed, validated Python clients for every crypto venue we trade on. One namespace. Every exchange.
 
 ```python
 from binance import Binance
@@ -13,12 +12,10 @@ async with Binance.new(public=True) as client:
 
 ## Why typed?
 
-- **Precise types** — every parameter and response is a real Python type, not `dict`/`Any`.
-- **Validated by default** — every response is checked against its schema at runtime, not
-  just typed on paper.
-- **Async first** — built for concurrent HTTP and WebSocket workflows.
-- **Explicit about auth** — public and authenticated surfaces are distinct in the API,
-  never gated behind an implicit flag.
+- **🎯 Precise Types**: Typed endpoint inputs and responses, not `dict`/`Any`.
+- **✅ Runtime Validation**: Responses validated by default, not just typed on paper.
+- **⚡ Async First**: Async HTTP and streaming, built for concurrent workflows.
+- **📚 Full Surface**: Every documented endpoint, not just the popular ones.
 
 ## Packages
 
@@ -31,9 +28,7 @@ More venues are on the way — see the [full catalog](https://tribulnation.com/t
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md): most of a client's source is generated from spec,
-so a bug in generated code is an issue, not a PR — hand-written surfaces (`core/`, docs,
-this README) take PRs directly.
+See [CONTRIBUTING.md](CONTRIBUTING.md): most of the source code is generated from an internal spec. So, open issues not PRs please! If you want to collaborate further, please reach out to us at marcel@tribulnation.com :)
 
 ## License
 
