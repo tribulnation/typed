@@ -38,6 +38,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: main
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -51,9 +53,20 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/binance/pkg/dist
+      - id: previous_tag
+        run: |
+          previous=$(git tag -l 'binance-v*' | sort -V | tail -1)
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
       - run: git tag binance-v${{ needs.check.outputs.version }}
       - run: git push origin binance-v${{ needs.check.outputs.version }}
-      - uses: softprops/action-gh-release@v2
+      - if: steps.previous_tag.outputs.previous != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: binance-v${{ needs.check.outputs.version }}
+          previous_tag_name: ${{ steps.previous_tag.outputs.previous }}
+          generate_release_notes: true
+      - if: steps.previous_tag.outputs.previous == ''
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: binance-v${{ needs.check.outputs.version }}
           generate_release_notes: true
