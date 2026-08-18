@@ -1,0 +1,51 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountCoinmFuturesCommissionInfo(TypedDict):
+  """COIN-M futures commission for one sub-account pair."""
+
+  subAccountId: int
+  """Sub-account identifier."""
+  pair: str
+  """COIN-M futures pair."""
+  makerCommission: int
+  """Effective maker commission."""
+  takerCommission: int
+  """Effective taker commission."""
+
+
+class SubAccountCoinmFuturesCommission(RpcEndpoint):
+  """Query Sub Account COIN-Ⓜ Futures Commission Adjustment"""
+
+  async def sub_account_coinm_futures_commission(
+    self,
+    *,
+    sub_account_id: str,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[BrokerSubAccountCoinmFuturesCommissionInfo]:
+    """Query a sub-account's COIN-M futures commission rates.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      pair: COIN-M futures pair. All pairs if omitted.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+    }
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[BrokerSubAccountCoinmFuturesCommissionInfo]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/broker/subAccountApi/commission/coinFutures',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

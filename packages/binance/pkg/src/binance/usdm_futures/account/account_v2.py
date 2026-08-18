@@ -1,0 +1,134 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UsdMFuturesAccountV2asset(TypedDict):
+  """Per-asset balance and margin detail within a USD-M Futures account."""
+
+  asset: NotRequired[str]
+  """Asset name."""
+  walletBalance: NotRequired[str]
+  """Wallet balance."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit."""
+  marginBalance: NotRequired[str]
+  """Margin balance."""
+  maintMargin: NotRequired[str]
+  """Maintenance margin requirement."""
+  initialMargin: NotRequired[str]
+  """Total initial margin requirement."""
+  positionInitialMargin: NotRequired[str]
+  """Initial margin required for positions."""
+  openOrderInitialMargin: NotRequired[str]
+  """Initial margin required for open orders."""
+  crossWalletBalance: NotRequired[str]
+  """Cross wallet balance."""
+  crossUnPnl: NotRequired[str]
+  """Unrealized PnL for cross positions."""
+  availableBalance: NotRequired[str]
+  """Available balance."""
+  maxWithdrawAmount: NotRequired[str]
+  """Maximum transferable/withdrawable amount."""
+  marginAvailable: NotRequired[bool]
+  """Whether the asset can be used as margin in multi-assets mode."""
+  updateTime: NotRequired[int]
+  """Last update time, in milliseconds."""
+
+
+class UsdMFuturesAccountV2position(TypedDict):
+  """Per-symbol position detail within a USD-M Futures account."""
+
+  symbol: NotRequired[str]
+  """Symbol."""
+  initialMargin: NotRequired[str]
+  """Initial margin requirement."""
+  maintMargin: NotRequired[str]
+  """Maintenance margin requirement."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit."""
+  positionInitialMargin: NotRequired[str]
+  """Initial margin required for positions."""
+  openOrderInitialMargin: NotRequired[str]
+  """Initial margin required for open orders."""
+  leverage: NotRequired[str]
+  """Current initial leverage."""
+  isolated: NotRequired[bool]
+  """Whether the position uses isolated margin mode."""
+  entryPrice: NotRequired[str]
+  """Average entry price."""
+  maxNotional: NotRequired[str]
+  """Maximum available notional under current leverage."""
+  bidNotional: NotRequired[str]
+  """Bid notional (reserved, ignore)."""
+  askNotional: NotRequired[str]
+  """Ask notional (reserved, ignore)."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """Position side."""
+  positionAmt: NotRequired[str]
+  """Position quantity."""
+  updateTime: NotRequired[int]
+  """Last update time, in milliseconds."""
+
+
+class UsdMFuturesAccountV2(TypedDict):
+  """USD-M Futures account information (v2)."""
+
+  feeTier: NotRequired[int]
+  """Account commission tier."""
+  feeBurn: NotRequired[bool]
+  """Whether fee discount (BNB burn) is enabled."""
+  canTrade: NotRequired[bool]
+  """Whether trading is enabled."""
+  canDeposit: NotRequired[bool]
+  """Whether transfer-in is enabled."""
+  canWithdraw: NotRequired[bool]
+  """Whether transfer-out is enabled."""
+  updateTime: NotRequired[int]
+  """Reserved field, ignore."""
+  multiAssetsMargin: NotRequired[bool]
+  """Whether multi-assets mode is enabled."""
+  tradeGroupId: NotRequired[int]
+  """Trade group identifier."""
+  totalInitialMargin: NotRequired[str]
+  """Total initial margin requirement. USDT only in single-asset mode; the sum of USD value of all cross positions/open order initial margin in multi-assets mode."""
+  totalMaintMargin: NotRequired[str]
+  """Total maintenance margin requirement. USDT only in single-asset mode; the sum of USD value of all cross positions maintenance margin in multi-assets mode."""
+  totalWalletBalance: NotRequired[str]
+  """Total wallet balance. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  totalUnrealizedProfit: NotRequired[str]
+  """Total unrealized profit. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  totalMarginBalance: NotRequired[str]
+  """Total margin balance. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  totalPositionInitialMargin: NotRequired[str]
+  """Initial margin required for positions. USDT only in single-asset mode; the sum of USD value of all cross positions initial margin in multi-assets mode."""
+  totalOpenOrderInitialMargin: NotRequired[str]
+  """Initial margin required for open orders. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  totalCrossWalletBalance: NotRequired[str]
+  """Cross wallet balance. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  totalCrossUnPnl: NotRequired[str]
+  """Unrealized PnL for cross positions. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  availableBalance: NotRequired[str]
+  """Available balance. USDT only in single-asset mode; USD-denominated in multi-assets mode."""
+  maxWithdrawAmount: NotRequired[str]
+  """Maximum transferable/withdrawable amount. USDT only in single-asset mode; a maximum virtual USD amount in multi-assets mode."""
+  assets: NotRequired[list[UsdMFuturesAccountV2asset]]
+  """Asset-level account details."""
+  positions: NotRequired[list[UsdMFuturesAccountV2position]]
+  """Position details for symbols. One-way mode returns `BOTH`; hedge mode returns `LONG`/`SHORT`."""
+
+
+class AccountV2(RpcEndpoint):
+  """Get current account information. A user in single-asset mode and one in multi-assets mode see different values for the USD-denominated total fields, per the field descriptions below."""
+
+  async def account_v2(self, *, validate: bool | None = None) -> UsdMFuturesAccountV2:
+    """Get current account information. A user in single-asset mode and one in multi-assets mode see different values for the USD-denominated total fields, per the field descriptions below.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/account#account-information-v2)
+    """
+    _Response = UsdMFuturesAccountV2
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/fapi/v2/account', validator=_validator, validate=validate
+    )

@@ -1,0 +1,79 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesPositionRiskV3row(TypedDict):
+  """A single symbol/position-side's current position information (v3)."""
+
+  symbol: str
+  """Trading symbol."""
+  positionSide: Literal['BOTH', 'LONG', 'SHORT']
+  """Position side."""
+  positionAmt: str
+  """Position amount, positive for long, negative for short."""
+  entryPrice: NotRequired[str]
+  """Entry price."""
+  breakEvenPrice: NotRequired[str]
+  """Break-even price."""
+  markPrice: NotRequired[str]
+  """Current mark price."""
+  unRealizedProfit: NotRequired[str]
+  """Unrealized profit."""
+  liquidationPrice: NotRequired[str]
+  """Liquidation price."""
+  isolatedMargin: NotRequired[str]
+  """Isolated margin (if isolated position)."""
+  notional: NotRequired[str]
+  """Notional value of position."""
+  marginAsset: NotRequired[str]
+  """Margin asset."""
+  isolatedWallet: NotRequired[str]
+  """Isolated wallet (if isolated position)."""
+  initialMargin: NotRequired[str]
+  """Initial margin required at current mark price."""
+  maintMargin: NotRequired[str]
+  """Maintenance margin required."""
+  positionInitialMargin: NotRequired[str]
+  """Initial margin required for positions at current mark price."""
+  openOrderInitialMargin: NotRequired[str]
+  """Initial margin required for open orders at current mark price."""
+  adl: NotRequired[int]
+  """Auto-deleverage ranking."""
+  bidNotional: NotRequired[str]
+  """Bid notional (reserved field, per docs value can be ignored)."""
+  askNotional: NotRequired[str]
+  """Ask notional (reserved field, per docs value can be ignored)."""
+  updateTime: NotRequired[int]
+  """Last update time, milliseconds since epoch."""
+
+
+class PositionRiskV3(RpcEndpoint):
+  """Get current position information (v3) — only symbols that have a position or open orders are returned. Adds margin/notional breakdown fields not present in v2. Use with the ACCOUNT_UPDATE user data stream event to meet timeliness/accuracy needs."""
+
+  async def position_risk_v3(
+    self,
+    *,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> list[FuturesPositionRiskV3row]:
+    """Get current position information (v3) — only symbols that have a position or open orders are returned. Adds margin/notional breakdown fields not present in v2. Use with the ACCOUNT_UPDATE user data stream event to meet timeliness/accuracy needs.
+
+    Args:
+      symbol: Trading symbol. If omitted, positions for every symbol with a position or open order are returned.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#position-information-v3)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    _Response = list[FuturesPositionRiskV3row]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/fapi/v3/positionRisk',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

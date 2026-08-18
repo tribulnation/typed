@@ -1,0 +1,94 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SubAccountDeliveryPosition(TypedDict):
+  """One COIN-M (delivery) futures position held by the sub-account."""
+
+  entryPrice: NotRequired[str]
+  """Average entry price."""
+  markPrice: NotRequired[str]
+  """Current mark price."""
+  leverage: NotRequired[str]
+  """Position leverage."""
+  isolated: NotRequired[str]
+  """Whether the position uses isolated margin (`"true"`/`"false"`)."""
+  isolatedWallet: NotRequired[str]
+  """Isolated wallet balance backing the position."""
+  isolatedMargin: NotRequired[str]
+  """Isolated margin currently allocated to the position."""
+  isAutoAddMargin: NotRequired[str]
+  """Whether auto-margin-addition is enabled (`"true"`/`"false"`)."""
+  positionSide: NotRequired[str]
+  """Position side."""
+  positionAmount: NotRequired[str]
+  """Signed position size (negative for short)."""
+  symbol: NotRequired[str]
+  """Delivery contract symbol."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit/loss."""
+
+
+class SubAccountFuturesPosition(TypedDict):
+  """One USD-M futures position held by the sub-account."""
+
+  entryPrice: NotRequired[str]
+  """Average entry price."""
+  leverage: NotRequired[str]
+  """Position leverage."""
+  maxNotional: NotRequired[str]
+  """Maximum notional value allowed at the current leverage."""
+  liquidationPrice: NotRequired[str]
+  """Estimated liquidation price."""
+  markPrice: NotRequired[str]
+  """Current mark price."""
+  positionAmount: NotRequired[str]
+  """Signed position size (negative for short)."""
+  symbol: NotRequired[str]
+  """Futures symbol."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit/loss."""
+
+
+class SubAccountFuturesPositionRiskV2(TypedDict):
+  """The sub-account's open futures positions, by product."""
+
+  futurePositionRiskVos: NotRequired[list[SubAccountFuturesPosition]]
+  """Open USD-M futures positions."""
+  deliveryPositionRiskVos: NotRequired[list[SubAccountDeliveryPosition]]
+  """Open COIN-M (delivery) futures positions."""
+
+
+class FuturesPositionRiskV2(RpcEndpoint):
+  """Get the futures position risk of a sub-account, for the master account, split by USD-M and COIN-M futures."""
+
+  async def __call__(
+    self,
+    *,
+    email: str,
+    futures_type: int,
+    validate: bool | None = None,
+  ) -> SubAccountFuturesPositionRiskV2:
+    """Get the futures position risk of a sub-account, for the master account, split by USD-M and COIN-M futures.
+
+    Args:
+      email: Sub-account email.
+      futures_type: Which futures product to query: `1` = USD-M (USDT-margined) futures, `2` = COIN-M (coin-margined) futures.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/account-management#get-futures-position-risk-of-sub-account-v2)
+    """
+    params: dict = {
+      'email': email,
+      'futuresType': futures_type,
+    }
+    _Response = SubAccountFuturesPositionRiskV2
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v2/sub-account/futures/positionRisk',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

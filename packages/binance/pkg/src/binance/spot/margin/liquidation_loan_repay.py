@@ -1,0 +1,52 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginLiquidationLoanRepayment(TypedDict):
+  """A repayment applied to this account's liquidation loan."""
+
+  repayId: NotRequired[int]
+  """Unique identifier for this repayment transaction."""
+  asset: NotRequired[str]
+  """Asset used for repayment."""
+  amount: NotRequired[str]
+  """Actual repayment amount, as a decimal string."""
+  status: NotRequired[Literal['SUCCESS', 'PENDING']]
+  """Repayment status."""
+  createTime: NotRequired[int]
+  """Millisecond timestamp the repayment was created."""
+
+
+class LiquidationLoanRepay(RpcEndpoint):
+  """Repay this account's liquidation loan (see `spot.margin.liquidation_loan`) with `asset`."""
+
+  async def liquidation_loan_repay(
+    self,
+    *,
+    asset: str,
+    amount: float,
+    validate: bool | None = None,
+  ) -> MarginLiquidationLoanRepayment:
+    """Repay this account's liquidation loan (see `spot.margin.liquidation_loan`) with `asset`.
+
+    Args:
+      asset: Asset to repay with, e.g. USDT, USDC.
+      amount: Repayment amount. Must be greater than 0.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade#liquidation-loan-repay)
+    """
+    params: dict = {
+      'asset': asset,
+      'amount': amount,
+    }
+    _Response = MarginLiquidationLoanRepayment
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/margin/liquidation-loan/repay',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

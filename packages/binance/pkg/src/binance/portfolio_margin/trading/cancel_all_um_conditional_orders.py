@@ -1,0 +1,43 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmCancelAllUmOpenConditionalOrders(TypedDict):
+  """Cancel All UM Open Conditional Orders."""
+
+  code: NotRequired[str]
+  """Code."""
+  msg: NotRequired[str]
+  """Msg."""
+
+
+class CancelAllUmConditionalOrders(RpcEndpoint):
+  """Cancel All UM Open Conditional Orders"""
+
+  async def cancel_all_um_conditional_orders(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> PmCancelAllUmOpenConditionalOrders:
+    """Cancel All UM Open Conditional Orders.
+
+    Args:
+      symbol: Symbol.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#cancel-all-um-open-conditional-orders)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = PmCancelAllUmOpenConditionalOrders
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/papi/v1/um/conditional/allOpenOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

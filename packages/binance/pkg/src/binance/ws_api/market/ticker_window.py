@@ -1,0 +1,149 @@
+from json import dumps
+from typing_extensions import Literal
+from typed_core.validation import validator
+from binance.types import TickerWindowFull, TickerWindowMini
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class TickerWindow(WsRpcEndpoint):
+  """Rolling window price change statistics"""
+
+  async def ticker_window(
+    self,
+    *,
+    symbol: str | None = None,
+    symbols: list[str] | None = None,
+    window_size: Literal[
+      '1m',
+      '2m',
+      '3m',
+      '4m',
+      '5m',
+      '6m',
+      '7m',
+      '8m',
+      '9m',
+      '10m',
+      '11m',
+      '12m',
+      '13m',
+      '14m',
+      '15m',
+      '16m',
+      '17m',
+      '18m',
+      '19m',
+      '20m',
+      '21m',
+      '22m',
+      '23m',
+      '24m',
+      '25m',
+      '26m',
+      '27m',
+      '28m',
+      '29m',
+      '30m',
+      '31m',
+      '32m',
+      '33m',
+      '34m',
+      '35m',
+      '36m',
+      '37m',
+      '38m',
+      '39m',
+      '40m',
+      '41m',
+      '42m',
+      '43m',
+      '44m',
+      '45m',
+      '46m',
+      '47m',
+      '48m',
+      '49m',
+      '50m',
+      '51m',
+      '52m',
+      '53m',
+      '54m',
+      '55m',
+      '56m',
+      '57m',
+      '58m',
+      '59m',
+      '1h',
+      '2h',
+      '3h',
+      '4h',
+      '5h',
+      '6h',
+      '7h',
+      '8h',
+      '9h',
+      '10h',
+      '11h',
+      '12h',
+      '13h',
+      '14h',
+      '15h',
+      '16h',
+      '17h',
+      '18h',
+      '19h',
+      '20h',
+      '21h',
+      '22h',
+      '23h',
+      '1d',
+      '2d',
+      '3d',
+      '4d',
+      '5d',
+      '6d',
+      '7d',
+    ]
+    | None = None,
+    type: Literal['FULL', 'MINI'] | None = None,
+    symbol_status: Literal['TRADING', 'HALT', 'BREAK'] | None = None,
+    validate: bool | None = None,
+  ) -> (
+    TickerWindowFull
+    | list[TickerWindowFull]
+    | TickerWindowMini
+    | list[TickerWindowMini]
+  ):
+    """Price change statistics over a caller-chosen rolling window. Distinct from ticker.24hr, whose window is always a fixed 24 hours. The window used to compute statistics will be no more than 59999ms wider than the requested windowSize: openTime always starts on a minute boundary, while closeTime is the current time of the request.
+
+    Args:
+      symbol: Single symbol to query. Either `symbol` or `symbols` must be provided; the two cannot be combined.
+      symbols: Symbols to query, e.g. ["BTCUSDT","BNBUSDT"]. Either `symbol` or `symbols` must be provided; the two cannot be combined. Maximum 200 symbols per request.
+      window_size: Rolling window size. Units cannot be combined (e.g. '1d2h' is not allowed).
+      type: Response field set.
+      symbol_status: Filter for symbols with this trading status. For a single symbol, a status mismatch returns error -1220 SYMBOL_DOES_NOT_MATCH_STATUS; for multiple symbols, non-matching ones are simply excluded from the response.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#rolling-window-price-change-statistics)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if symbols is not None:
+      params['symbols'] = dumps(symbols, separators=(',', ':'))
+    if window_size is not None:
+      params['windowSize'] = window_size
+    if type is not None:
+      params['type'] = type
+    if symbol_status is not None:
+      params['symbolStatus'] = symbol_status
+    _Response = (
+      TickerWindowFull
+      | list[TickerWindowFull]
+      | TickerWindowMini
+      | list[TickerWindowMini]
+    )
+    _validator = validator[_Response](_Response)  # type: ignore
+    return await self.request(
+      'ticker', params=params, validator=_validator, validate=validate
+    )

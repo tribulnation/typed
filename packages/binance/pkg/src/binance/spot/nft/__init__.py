@@ -1,0 +1,8 @@
+from .asset import Asset
+from .deposit_history import DepositHistory
+from .transaction_history import TransactionHistory
+from .withdraw_history import WithdrawHistory
+
+
+class Nft(Asset, DepositHistory, TransactionHistory, WithdrawHistory):
+  """Binance nft endpoints."""

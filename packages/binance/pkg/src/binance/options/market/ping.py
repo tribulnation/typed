@@ -1,0 +1,23 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PingResponse(TypedDict):
+  """Empty object on success."""
+
+
+class Ping(RpcEndpoint):
+  """Test connectivity to the Options REST API."""
+
+  async def ping(self, *, validate: bool | None = None) -> PingResponse:
+    """Test connectivity to the Options REST API.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/derivatives/option/market-data#test-connectivity)
+    """
+    _Response = PingResponse
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/eapi/v1/ping', validator=_validator, validate=validate
+    )

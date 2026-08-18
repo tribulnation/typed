@@ -1,0 +1,119 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMOpenOrder(TypedDict):
+  """The open order."""
+
+  avgPrice: NotRequired[str]
+  """Average execution price."""
+  clientOrderId: NotRequired[str]
+  """Client order ID."""
+  cumBase: NotRequired[str]
+  """Cumulative filled quantity denominated in the pair's base asset."""
+  executedQty: NotRequired[str]
+  """Executed quantity, in contracts."""
+  orderId: int
+  """Order ID."""
+  origQty: NotRequired[str]
+  """Original order quantity, in contracts."""
+  origType: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Original order type."""
+  price: NotRequired[str]
+  """Order price."""
+  reduceOnly: NotRequired[bool]
+  """Whether the order is reduce-only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Order side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """Position side."""
+  status: Literal['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'EXPIRED']
+  """Order status. Documented closed set (COIN-M common-definition doc)."""
+  stopPrice: NotRequired[str]
+  """Stop trigger price. Ignored when order type is TRAILING_STOP_MARKET."""
+  closePosition: NotRequired[bool]
+  """Whether the order closes the whole position (Close-All)."""
+  symbol: str
+  """Symbol."""
+  pair: NotRequired[str]
+  """Underlying pair."""
+  time: NotRequired[int]
+  """Order creation time."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'GTX']]
+  """Time in force."""
+  type: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Order type. See `notes` — after the CM/UM migration this endpoint rejects the five stop-type values with -4120; only LIMIT and MARKET are currently accepted here."""
+  activatePrice: NotRequired[str]
+  """Activation price. Only returned for TRAILING_STOP_MARKET orders."""
+  priceRate: NotRequired[str]
+  """Callback rate. Only returned for TRAILING_STOP_MARKET orders."""
+  updateTime: NotRequired[int]
+  """Last update time."""
+  workingType: NotRequired[Literal['MARK_PRICE', 'CONTRACT_PRICE']]
+  """stopPrice trigger price type."""
+  priceProtect: NotRequired[bool]
+  """Whether the conditional order's trigger is price-protected."""
+  priceMatch: NotRequired[str]
+  """Price match mode."""
+  selfTradePreventionMode: NotRequired[str]
+  """Self-trade prevention mode."""
+
+
+class QueryCurrentOpenOrder(RpcEndpoint):
+  """Query Current Open Order"""
+
+  async def query_current_open_order(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    validate: bool | None = None,
+  ) -> CoinMOpenOrder:
+    """Query a specific currently-open order. Returns 'Order does not exist' if the order has already been filled or canceled.
+
+    Args:
+      symbol: Symbol.
+      order_id: Order ID. Either `orderId` or `origClientOrderId` must be sent.
+      orig_client_order_id: Client order ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/trade#query-current-open-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    _Response = CoinMOpenOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/dapi/v1/openOrder',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,130 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class LockedSubscriptionRecord(TypedDict):
+  """One locked product subscription."""
+
+  positionId: NotRequired[int]
+  """Identifier of the locked position created."""
+  purchaseId: NotRequired[str]
+  """Identifier of the subscription, as a numeric string."""
+  projectId: NotRequired[str]
+  """Locked product identifier subscribed to."""
+  time: NotRequired[int]
+  """Millisecond epoch time the subscription was recorded."""
+  asset: NotRequired[str]
+  """Underlying asset subscribed."""
+  amount: NotRequired[str]
+  """Subscribed amount, as a decimal string."""
+  lockPeriod: NotRequired[str]
+  """Lock duration in days, as a numeric string."""
+  type: NotRequired[str]
+  """Subscription type (e.g. a normal subscription vs. an automatic renewal)."""
+  sourceAccount: NotRequired[str]
+  """Wallet the subscription amount was debited from."""
+  amtFromSpot: NotRequired[str]
+  """Portion of the subscribed amount debited from the Spot wallet, as a decimal string."""
+  amtFromFunding: NotRequired[str]
+  """Portion of the subscribed amount debited from the Funding wallet, as a decimal string."""
+  status: NotRequired[str]
+  """Subscription status."""
+
+
+class LockedSubscriptionRecordPage(TypedDict):
+  """One page of this account's locked product subscription history."""
+
+  rows: NotRequired[list[LockedSubscriptionRecord]]
+  """Matching records on this page."""
+  total: NotRequired[int]
+  """Total number of matching records."""
+
+
+class SubscriptionRecord(RpcEndpoint):
+  """Get this account's Simple Earn locked product subscription history."""
+
+  async def subscription_record(
+    self,
+    *,
+    purchase_id: str | None = None,
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> LockedSubscriptionRecordPage:
+    """Get this account's Simple Earn locked product subscription history.
+
+    Args:
+      purchase_id: Restrict results to this subscription.
+      asset: Restrict results to this underlying asset.
+      start_time: Millisecond epoch start of the queried window.
+      end_time: Millisecond epoch end of the queried window.
+      current: Currently querying page. Starts from 1.
+      size: Number of results per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#get-locked-subscription-record)
+    """
+    params = {}
+    if purchase_id is not None:
+      params['purchaseId'] = purchase_id
+    if asset is not None:
+      params['asset'] = asset
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = LockedSubscriptionRecordPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/simple-earn/locked/history/subscriptionRecord',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def subscription_record_paged(
+    self,
+    *,
+    purchase_id: str | None = None,
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[LockedSubscriptionRecordPage]:
+    """Yield successive pages of `subscription_record`.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.subscription_record(
+        purchase_id=purchase_id,
+        asset=asset,
+        start_time=start_time,
+        end_time=end_time,
+        size=size,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

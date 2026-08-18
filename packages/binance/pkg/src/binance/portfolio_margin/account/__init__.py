@@ -1,0 +1,97 @@
+from .asset_collection import AssetCollection
+from .auto_collection import AutoCollection
+from .auto_repay_futures_status import AutoRepayFuturesStatus
+from .balance import Balance
+from .bnb_transfer import BnbTransfer
+from .cm_account import CmAccount
+from .cm_commission_rate import CmCommissionRate
+from .cm_income import CmIncome
+from .cm_leverage_brackets import CmLeverageBrackets
+from .cm_position_mode import CmPositionMode
+from .cm_position_risk import CmPositionRisk
+from .info import Info
+from .margin_interest_history import MarginInterestHistory
+from .margin_loan_history import MarginLoanHistory
+from .margin_max_borrowable import MarginMaxBorrowable
+from .margin_max_withdraw import MarginMaxWithdraw
+from .margin_repay_history import MarginRepayHistory
+from .negative_balance_auto_exchange_history import NegativeBalanceAutoExchangeHistory
+from .negative_balance_interest_history import NegativeBalanceInterestHistory
+from .order_rate_limit import OrderRateLimit
+from .ping import Ping
+from .repay_futures_negative_balance import RepayFuturesNegativeBalance
+from .set_auto_repay_futures_status import SetAutoRepayFuturesStatus
+from .set_cm_leverage import SetCmLeverage
+from .set_cm_position_mode import SetCmPositionMode
+from .set_um_leverage import SetUmLeverage
+from .set_um_position_mode import SetUmPositionMode
+from .um_account import UmAccount
+from .um_account_config import UmAccountConfig
+from .um_account_v2 import UmAccountV2
+from .um_commission_rate import UmCommissionRate
+from .um_income import UmIncome
+from .um_income_history_download_id import UmIncomeHistoryDownloadId
+from .um_income_history_download_link import UmIncomeHistoryDownloadLink
+from .um_leverage_brackets import UmLeverageBrackets
+from .um_order_history_download_id import UmOrderHistoryDownloadId
+from .um_order_history_download_link import UmOrderHistoryDownloadLink
+from .um_position_mode import UmPositionMode
+from .um_position_risk import UmPositionRisk
+from .um_symbol_config import UmSymbolConfig
+from .um_trade_history_download_id import UmTradeHistoryDownloadId
+from .um_trade_history_download_link import UmTradeHistoryDownloadLink
+from .um_trading_quantitative_rules import UmTradingQuantitativeRules
+from .user_data_stream_close import UserDataStreamClose
+from .user_data_stream_keepalive import UserDataStreamKeepalive
+from .user_data_stream_start import UserDataStreamStart
+
+
+class Account(
+  AssetCollection,
+  AutoCollection,
+  AutoRepayFuturesStatus,
+  Balance,
+  BnbTransfer,
+  CmAccount,
+  CmCommissionRate,
+  CmIncome,
+  CmLeverageBrackets,
+  CmPositionMode,
+  CmPositionRisk,
+  Info,
+  MarginInterestHistory,
+  MarginLoanHistory,
+  MarginMaxBorrowable,
+  MarginMaxWithdraw,
+  MarginRepayHistory,
+  NegativeBalanceAutoExchangeHistory,
+  NegativeBalanceInterestHistory,
+  OrderRateLimit,
+  Ping,
+  RepayFuturesNegativeBalance,
+  SetAutoRepayFuturesStatus,
+  SetCmLeverage,
+  SetCmPositionMode,
+  SetUmLeverage,
+  SetUmPositionMode,
+  UmAccount,
+  UmAccountConfig,
+  UmAccountV2,
+  UmCommissionRate,
+  UmIncome,
+  UmIncomeHistoryDownloadId,
+  UmIncomeHistoryDownloadLink,
+  UmLeverageBrackets,
+  UmOrderHistoryDownloadId,
+  UmOrderHistoryDownloadLink,
+  UmPositionMode,
+  UmPositionRisk,
+  UmSymbolConfig,
+  UmTradeHistoryDownloadId,
+  UmTradeHistoryDownloadLink,
+  UmTradingQuantitativeRules,
+  UserDataStreamClose,
+  UserDataStreamKeepalive,
+  UserDataStreamStart,
+):
+  """Binance account endpoints."""

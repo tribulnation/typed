@@ -1,0 +1,59 @@
+from .account_trade_list import AccountTradeList
+from .algo_open_orders import AlgoOpenOrders
+from .algo_order_cancel import AlgoOrderCancel
+from .algo_order_place import AlgoOrderPlace
+from .all_orders import AllOrders
+from .auto_cancel_all_open_orders import AutoCancelAllOpenOrders
+from .cancel_all_open_orders import CancelAllOpenOrders
+from .cancel_multiple_orders import CancelMultipleOrders
+from .cancel_order import CancelOrder
+from .change_initial_leverage import ChangeInitialLeverage
+from .change_margin_type import ChangeMarginType
+from .change_position_mode import ChangePositionMode
+from .current_all_open_orders import CurrentAllOpenOrders
+from .get_current_position_mode import GetCurrentPositionMode
+from .get_order_modify_history import GetOrderModifyHistory
+from .get_position_margin_change_history import GetPositionMarginChangeHistory
+from .modify_isolated_position_margin import ModifyIsolatedPositionMargin
+from .modify_multiple_orders import ModifyMultipleOrders
+from .modify_order import ModifyOrder
+from .new_order import NewOrder
+from .order_test import OrderTest
+from .place_multiple_orders import PlaceMultipleOrders
+from .position_adl_quantile_estimation import PositionAdlQuantileEstimation
+from .position_information import PositionInformation
+from .query_current_open_order import QueryCurrentOpenOrder
+from .query_order import QueryOrder
+from .users_force_orders import UsersForceOrders
+
+
+class Trading(
+  AccountTradeList,
+  AlgoOpenOrders,
+  AlgoOrderCancel,
+  AlgoOrderPlace,
+  AllOrders,
+  AutoCancelAllOpenOrders,
+  CancelAllOpenOrders,
+  CancelMultipleOrders,
+  CancelOrder,
+  ChangeInitialLeverage,
+  ChangeMarginType,
+  ChangePositionMode,
+  CurrentAllOpenOrders,
+  GetCurrentPositionMode,
+  GetOrderModifyHistory,
+  GetPositionMarginChangeHistory,
+  ModifyIsolatedPositionMargin,
+  ModifyMultipleOrders,
+  ModifyOrder,
+  NewOrder,
+  OrderTest,
+  PlaceMultipleOrders,
+  PositionAdlQuantileEstimation,
+  PositionInformation,
+  QueryCurrentOpenOrder,
+  QueryOrder,
+  UsersForceOrders,
+):
+  """Binance trading endpoints."""

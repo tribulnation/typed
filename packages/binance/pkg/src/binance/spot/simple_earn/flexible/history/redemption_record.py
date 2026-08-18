@@ -1,0 +1,126 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FlexibleRedemptionRecord(TypedDict):
+  """One flexible product redemption."""
+
+  amount: NotRequired[str]
+  """Redeemed amount, as a decimal string."""
+  asset: NotRequired[str]
+  """Underlying asset redeemed."""
+  time: NotRequired[int]
+  """Millisecond epoch time the redemption was recorded."""
+  projectId: NotRequired[str]
+  """Flexible product identifier the redemption was made from."""
+  redeemId: NotRequired[int]
+  """Identifier of the redemption."""
+  destAccount: NotRequired[Literal['SPOT', 'FUND']]
+  """Wallet the redeemed amount was credited to."""
+  status: NotRequired[str]
+  """Redemption status."""
+
+
+class FlexibleRedemptionRecordPage(TypedDict):
+  """One page of this account's flexible product redemption history."""
+
+  rows: NotRequired[list[FlexibleRedemptionRecord]]
+  """Matching records on this page."""
+  total: NotRequired[int]
+  """Total number of matching records."""
+
+
+class RedemptionRecord(RpcEndpoint):
+  """Get this account's Simple Earn flexible product redemption history."""
+
+  async def redemption_record(
+    self,
+    *,
+    product_id: str | None = None,
+    redeem_id: str | None = None,
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    current: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> FlexibleRedemptionRecordPage:
+    """Get this account's Simple Earn flexible product redemption history.
+
+    Args:
+      product_id: Restrict results to this flexible product.
+      redeem_id: Restrict results to this redemption.
+      asset: Restrict results to this underlying asset.
+      start_time: Millisecond epoch start of the queried window.
+      end_time: Millisecond epoch end of the queried window.
+      current: Currently querying page. Starts from 1.
+      size: Number of results per page.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#get-flexible-redemption-record)
+    """
+    params = {}
+    if product_id is not None:
+      params['productId'] = product_id
+    if redeem_id is not None:
+      params['redeemId'] = redeem_id
+    if asset is not None:
+      params['asset'] = asset
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if current is not None:
+      params['current'] = current
+    if size is not None:
+      params['size'] = size
+    _Response = FlexibleRedemptionRecordPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/simple-earn/flexible/history/redemptionRecord',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def redemption_record_paged(
+    self,
+    *,
+    product_id: str | None = None,
+    redeem_id: str | None = None,
+    asset: str | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[FlexibleRedemptionRecordPage]:
+    """Yield successive pages of `redemption_record`.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.redemption_record(
+        product_id=product_id,
+        redeem_id=redeem_id,
+        asset=asset,
+        start_time=start_time,
+        end_time=end_time,
+        size=size,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

@@ -1,0 +1,144 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesAccountAssetDeliveryAccountRespAssetsItem(TypedDict):
+  """One asset's margin/balance detail within a futures account."""
+
+  asset: NotRequired[str]
+  """Asset symbol."""
+  initialMargin: NotRequired[str]
+  """Initial margin required across open positions and orders."""
+  maintenanceMargin: NotRequired[str]
+  """Maintenance margin required across open positions."""
+  marginBalance: NotRequired[str]
+  """Margin balance (wallet balance plus unrealized profit)."""
+  maxWithdrawAmount: NotRequired[str]
+  """Maximum amount currently withdrawable."""
+  openOrderInitialMargin: NotRequired[str]
+  """Initial margin required by open orders."""
+  positionInitialMargin: NotRequired[str]
+  """Initial margin required by open positions."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit/loss."""
+  walletBalance: NotRequired[str]
+  """Wallet balance."""
+
+
+class FuturesAccountAssetFutureAccountRespAssetsItem(TypedDict):
+  """One asset's margin/balance detail within a futures account."""
+
+  asset: NotRequired[str]
+  """Asset symbol."""
+  initialMargin: NotRequired[str]
+  """Initial margin required across open positions and orders."""
+  maintenanceMargin: NotRequired[str]
+  """Maintenance margin required across open positions."""
+  marginBalance: NotRequired[str]
+  """Margin balance (wallet balance plus unrealized profit)."""
+  maxWithdrawAmount: NotRequired[str]
+  """Maximum amount currently withdrawable."""
+  openOrderInitialMargin: NotRequired[str]
+  """Initial margin required by open orders."""
+  positionInitialMargin: NotRequired[str]
+  """Initial margin required by open positions."""
+  unrealizedProfit: NotRequired[str]
+  """Unrealized profit/loss."""
+  walletBalance: NotRequired[str]
+  """Wallet balance."""
+
+
+class SubAccountCoinMFuturesAccount(TypedDict):
+  """COIN-M futures account detail."""
+
+  email: NotRequired[str]
+  """Sub-account email."""
+  assets: NotRequired[list[FuturesAccountAssetDeliveryAccountRespAssetsItem]]
+  """Per-asset margin/balance detail."""
+  canDeposit: NotRequired[bool]
+  """Whether the account can deposit."""
+  canTrade: NotRequired[bool]
+  """Whether the account can trade."""
+  canWithdraw: NotRequired[bool]
+  """Whether the account can withdraw."""
+  feeTier: NotRequired[int]
+  """Account fee tier."""
+  updateTime: NotRequired[int]
+  """Time the account snapshot was taken."""
+
+
+class SubAccountUsdMFuturesAccount(TypedDict):
+  """Futures account detail."""
+
+  email: NotRequired[str]
+  """Sub-account email."""
+  assets: NotRequired[list[FuturesAccountAssetFutureAccountRespAssetsItem]]
+  """Per-asset margin/balance detail."""
+  canDeposit: NotRequired[bool]
+  """Whether the account can deposit."""
+  canTrade: NotRequired[bool]
+  """Whether the account can trade."""
+  canWithdraw: NotRequired[bool]
+  """Whether the account can withdraw."""
+  feeTier: NotRequired[int]
+  """Account fee tier."""
+  maxWithdrawAmount: NotRequired[str]
+  """Maximum amount currently withdrawable."""
+  totalInitialMargin: NotRequired[str]
+  """Total initial margin required across positions and orders."""
+  totalMaintenanceMargin: NotRequired[str]
+  """Total maintenance margin required across positions."""
+  totalMarginBalance: NotRequired[str]
+  """Total margin balance across all assets."""
+  totalOpenOrderInitialMargin: NotRequired[str]
+  """Total initial margin required by open orders."""
+  totalPositionInitialMargin: NotRequired[str]
+  """Total initial margin required by open positions."""
+  totalUnrealizedProfit: NotRequired[str]
+  """Total unrealized profit/loss across all assets."""
+  totalWalletBalance: NotRequired[str]
+  """Total wallet balance across all assets."""
+  updateTime: NotRequired[int]
+  """Time the account snapshot was taken."""
+
+
+class SubAccountFuturesAccountV2(TypedDict):
+  """Futures account detail, by product."""
+
+  futureAccountResp: NotRequired[SubAccountUsdMFuturesAccount]
+  deliveryAccountResp: NotRequired[SubAccountCoinMFuturesAccount]
+
+
+class FuturesAccountV2(RpcEndpoint):
+  """Get detail on a sub-account's futures account, for the master account, selecting USD-M or COIN-M futures."""
+
+  async def __call__(
+    self,
+    *,
+    email: str,
+    futures_type: int,
+    validate: bool | None = None,
+  ) -> SubAccountFuturesAccountV2:
+    """Get detail on a sub-account's futures account, for the master account, selecting USD-M or COIN-M futures.
+
+    Args:
+      email: Sub-account email.
+      futures_type: Which futures product: `1` = USD-M (USDT-margined) futures, `2` = COIN-M (coin-margined) futures.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/asset-management#get-detail-on-sub-accounts-futures-account-v2)
+    """
+    params: dict = {
+      'email': email,
+      'futuresType': futures_type,
+    }
+    _Response = SubAccountFuturesAccountV2
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v2/sub-account/futures/account',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

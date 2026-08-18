@@ -1,0 +1,46 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountBnbBurnMarginInterest(TypedDict):
+  """Updated margin-interest BNB Burn setting."""
+
+  subAccountId: int
+  """Sub-account identifier."""
+  interestBNBBurn: bool
+  """Whether margin loan interest is now paid in BNB."""
+
+
+class EnableBnbBurnMarginInterest(RpcEndpoint):
+  """Enable Or Disable BNB Burn for Sub Account Margin Interest"""
+
+  async def enable_bnb_burn_margin_interest(
+    self,
+    *,
+    sub_account_id: str,
+    interest_bnbburn: bool,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountBnbBurnMarginInterest:
+    """Toggle whether a sub-account pays margin loan interest in BNB.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      interest_bnbburn: Whether margin loan interest should be paid in BNB.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'interestBNBBurn': interest_bnbburn,
+    }
+    _Response = BrokerSubAccountBnbBurnMarginInterest
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccount/bnbBurn/marginInterest',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

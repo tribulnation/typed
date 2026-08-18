@@ -1,0 +1,145 @@
+from .account import Account
+from .all_assets import AllAssets
+from .all_oco_orders import AllOcoOrders
+from .all_orders import AllOrders
+from .all_pairs import AllPairs
+from .available_inventory import AvailableInventory
+from .borrow_repay import BorrowRepay
+from .borrow_repay_history import BorrowRepayHistory
+from .cancel_oco_order import CancelOcoOrder
+from .cancel_open_orders import CancelOpenOrders
+from .cancel_order import CancelOrder
+from .capital_flow import CapitalFlow
+from .cross_margin_collateral_ratio import CrossMarginCollateralRatio
+from .cross_margin_data import CrossMarginData
+from .delist_schedule import DelistSchedule
+from .exit_special_key_mode import ExitSpecialKeyMode
+from .force_liquidation_record import ForceLiquidationRecord
+from .interest_history import InterestHistory
+from .interest_rate_history import InterestRateHistory
+from .isolated_account import IsolatedAccount
+from .isolated_account_disable import IsolatedAccountDisable
+from .isolated_account_enable import IsolatedAccountEnable
+from .isolated_account_limit import IsolatedAccountLimit
+from .isolated_all_pairs import IsolatedAllPairs
+from .isolated_margin_data import IsolatedMarginData
+from .isolated_margin_tier import IsolatedMarginTierEndpoint
+from .legacy_isolated_listen_key_close import LegacyIsolatedListenKeyClose
+from .legacy_isolated_listen_key_create import LegacyIsolatedListenKeyCreate
+from .legacy_isolated_listen_key_keepalive import LegacyIsolatedListenKeyKeepalive
+from .legacy_listen_key_close import LegacyListenKeyClose
+from .legacy_listen_key_create import LegacyListenKeyCreate
+from .legacy_listen_key_keepalive import LegacyListenKeyKeepalive
+from .leverage_bracket import LeverageBracket
+from .limit_price_pairs import LimitPricePairs
+from .liquidation_loan import LiquidationLoan
+from .liquidation_loan_repay import LiquidationLoanRepay
+from .liquidation_loan_repay_history import LiquidationLoanRepayHistory
+from .list_schedule import ListSchedule
+from .listen_key_close import ListenKeyClose
+from .listen_key_create import ListenKeyCreate
+from .listen_key_keepalive import ListenKeyKeepalive
+from .manual_liquidation import ManualLiquidation
+from .max_borrowable import MaxBorrowable
+from .max_leverage import MaxLeverage
+from .max_transferable import MaxTransferable
+from .my_trades import MyTrades
+from .new_oco_order import NewOcoOrder
+from .new_order import NewOrder
+from .new_oto_order import NewOtoOrder
+from .new_otoco_order import NewOtocoOrder
+from .next_hourly_interest_rate import NextHourlyInterestRate
+from .oco_order import OcoOrder
+from .open_oco_orders import OpenOcoOrders
+from .open_orders import OpenOrders
+from .order import Order
+from .order_rate_limit import OrderRateLimit
+from .prevented_matches import PreventedMatches
+from .price_index import PriceIndex
+from .restricted_asset import RestrictedAsset
+from .risk_based_liquidation_ratio import RiskBasedLiquidationRatio
+from .small_liability_exchange import SmallLiabilityExchange
+from .small_liability_exchange_coins import SmallLiabilityExchangeCoins
+from .small_liability_exchange_history import SmallLiabilityExchangeHistory
+from .special_key import SpecialKey
+from .special_key_create import SpecialKeyCreate
+from .special_key_delete import SpecialKeyDelete
+from .special_key_ip_update import SpecialKeyIpUpdate
+from .special_key_list import SpecialKeyList
+from .trade_coeff import TradeCoeff
+from .transfer_history import TransferHistory
+
+
+class Margin(
+  Account,
+  AllAssets,
+  AllOcoOrders,
+  AllOrders,
+  AllPairs,
+  AvailableInventory,
+  BorrowRepay,
+  BorrowRepayHistory,
+  CancelOcoOrder,
+  CancelOpenOrders,
+  CancelOrder,
+  CapitalFlow,
+  CrossMarginCollateralRatio,
+  CrossMarginData,
+  DelistSchedule,
+  ExitSpecialKeyMode,
+  ForceLiquidationRecord,
+  InterestHistory,
+  InterestRateHistory,
+  IsolatedAccount,
+  IsolatedAccountDisable,
+  IsolatedAccountEnable,
+  IsolatedAccountLimit,
+  IsolatedAllPairs,
+  IsolatedMarginData,
+  IsolatedMarginTierEndpoint,
+  LegacyIsolatedListenKeyClose,
+  LegacyIsolatedListenKeyCreate,
+  LegacyIsolatedListenKeyKeepalive,
+  LegacyListenKeyClose,
+  LegacyListenKeyCreate,
+  LegacyListenKeyKeepalive,
+  LeverageBracket,
+  LimitPricePairs,
+  LiquidationLoan,
+  LiquidationLoanRepay,
+  LiquidationLoanRepayHistory,
+  ListSchedule,
+  ListenKeyClose,
+  ListenKeyCreate,
+  ListenKeyKeepalive,
+  ManualLiquidation,
+  MaxBorrowable,
+  MaxLeverage,
+  MaxTransferable,
+  MyTrades,
+  NewOcoOrder,
+  NewOrder,
+  NewOtoOrder,
+  NewOtocoOrder,
+  NextHourlyInterestRate,
+  OcoOrder,
+  OpenOcoOrders,
+  OpenOrders,
+  Order,
+  OrderRateLimit,
+  PreventedMatches,
+  PriceIndex,
+  RestrictedAsset,
+  RiskBasedLiquidationRatio,
+  SmallLiabilityExchange,
+  SmallLiabilityExchangeCoins,
+  SmallLiabilityExchangeHistory,
+  SpecialKey,
+  SpecialKeyCreate,
+  SpecialKeyDelete,
+  SpecialKeyIpUpdate,
+  SpecialKeyList,
+  TradeCoeff,
+  TransferHistory,
+):
+  """Binance margin endpoints."""

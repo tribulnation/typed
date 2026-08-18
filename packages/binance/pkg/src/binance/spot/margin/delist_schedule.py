@@ -1,0 +1,34 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginDelistSchedule(TypedDict):
+  """One scheduled delisting event."""
+
+  delistTime: int
+  """Millisecond epoch the delisting takes effect."""
+  crossMarginAssets: list[str]
+  """Cross margin assets being delisted."""
+  isolatedMarginSymbols: list[str]
+  """Isolated margin symbols being delisted."""
+
+
+class DelistSchedule(RpcEndpoint):
+  """Get Delist Schedule"""
+
+  async def delist_schedule(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[MarginDelistSchedule]:
+    """Query the upcoming delist schedule for cross margin assets and isolated margin symbols.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/market-data#get-delist-schedule)
+    """
+    _Response = list[MarginDelistSchedule]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/sapi/v1/margin/delist-schedule', validator=_validator, validate=validate
+    )

@@ -1,0 +1,58 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class IndexConstituent(TypedDict):
+  """One source exchange's contribution to the index price."""
+
+  exchange: str
+  """Source exchange, e.g. binance."""
+  symbol: str
+  """The constituent's trading pair on that exchange."""
+  price: str
+  """Current price on that exchange. -1 when hidden (TradFi perp constituents)."""
+  weight: str
+  """Proportional weight of this constituent in the index."""
+
+
+class IndexConstituents(TypedDict):
+  """The exchanges and prices making up a symbol's index price."""
+
+  symbol: str
+  """Trading symbol."""
+  time: int
+  """Current time, in milliseconds since epoch."""
+  constituents: list[IndexConstituent]
+  """One entry per source exchange contributing to the index."""
+
+
+class Constituents(RpcEndpoint):
+  """The exchanges and prices that make up a symbol's index price."""
+
+  async def constituents(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> IndexConstituents:
+    """The exchanges and prices that make up a symbol's index price.
+
+    Args:
+      symbol: Trading symbol, e.g. BTCUSDT.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data#query-index-price-constituents)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = IndexConstituents
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/fapi/v1/constituents',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,34 @@
+from typed_core.validation import validator
+from binance.types import SpotTrade
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class TradesRecent(WsRpcEndpoint):
+  """Recent trades"""
+
+  async def trades_recent(
+    self,
+    *,
+    symbol: str,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[SpotTrade]:
+    """Get recent trades. Use WebSocket Streams' trade channel for real-time trading activity instead.
+
+    Args:
+      symbol: Symbol to query.
+      limit: Number of trades to return.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#recent-trades)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[SpotTrade]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'trades.recent', params=params, validator=_validator, validate=validate
+    )

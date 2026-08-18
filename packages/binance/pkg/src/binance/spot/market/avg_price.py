@@ -1,0 +1,39 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class AveragePrice(TypedDict):
+  """The volume-weighted average price for a symbol over a trailing window."""
+
+  mins: int
+  """Average price interval, in minutes."""
+  price: str
+  """Average price."""
+  closeTime: Timestamp
+  """Time of the last trade considered."""
+
+
+class AvgPrice(RpcEndpoint):
+  """Current average price"""
+
+  async def avg_price(
+    self, *, symbol: str, validate: bool | None = None
+  ) -> AveragePrice:
+    """Current average price for a symbol.
+
+    Args:
+      symbol: Symbol to query.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#current-average-price)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = AveragePrice
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/api/v3/avgPrice', params=params, validator=_validator, validate=validate
+    )

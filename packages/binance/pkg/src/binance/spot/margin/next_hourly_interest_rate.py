@@ -1,0 +1,47 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginNextHourlyInterestRate(TypedDict):
+  """The estimated next hourly interest rate for one asset."""
+
+  asset: str
+  """Interest rate asset."""
+  nextHourlyInterestRate: str
+  """Estimated interest rate for the next hourly accrual."""
+
+
+class NextHourlyInterestRate(RpcEndpoint):
+  """Get a future hourly interest rate"""
+
+  async def next_hourly_interest_rate(
+    self,
+    *,
+    assets: str | None = None,
+    is_isolated: Literal['TRUE', 'FALSE'],
+    validate: bool | None = None,
+  ) -> list[MarginNextHourlyInterestRate]:
+    """Get this account's estimated next hourly interest rate for the given assets.
+
+    Args:
+      assets: Comma-separated list of assets, up to 20.
+      is_isolated: Whether to query isolated margin assets. Corrected from live evidence: the docs-only pass had this optional, but Binance returns BadRequest(400, -3026, "Required request parameter 'isIsolated' ... is not present") when it's omitted -- see spec/status.md.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay#get-future-hourly-interest-rate)
+    """
+    params: dict = {
+      'isIsolated': is_isolated,
+    }
+    if assets is not None:
+      params['assets'] = assets
+    _Response = list[MarginNextHourlyInterestRate]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/next-hourly-interest-rate',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

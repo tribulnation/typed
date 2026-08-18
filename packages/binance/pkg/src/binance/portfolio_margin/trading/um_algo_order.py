@@ -1,0 +1,93 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmCurrentUmOpenAlgoOrder(TypedDict):
+  """Check an UM algo order's status. Orders will not be found if: status is CANCELED/EXPIRED with no fills and created 3+ days ago; or created 90+ days ago."""
+
+  algoId: NotRequired[int]
+  """algoId."""
+  clientAlgoId: NotRequired[str]
+  """clientAlgoId."""
+  algoType: NotRequired[str]
+  """algoType."""
+  orderType: NotRequired[str]
+  """orderType."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """positionSide."""
+  timeInForce: NotRequired[str]
+  """timeInForce."""
+  algoStatus: NotRequired[str]
+  """algoStatus."""
+  actualOrderId: NotRequired[str]
+  """actualOrderId."""
+  actualPrice: NotRequired[str]
+  """actualPrice."""
+  triggerPrice: NotRequired[str]
+  """triggerPrice."""
+  workingType: NotRequired[Literal['MARK_PRICE', 'CONTRACT_PRICE']]
+  """workingType."""
+  priceMatch: NotRequired[
+    Literal[
+      'OPPONENT',
+      'OPPONENT_5',
+      'OPPONENT_10',
+      'OPPONENT_20',
+      'QUEUE',
+      'QUEUE_5',
+      'QUEUE_10',
+      'QUEUE_20',
+    ]
+  ]
+  """priceMatch."""
+  closePosition: NotRequired[bool]
+  """closePosition."""
+  priceProtect: NotRequired[bool]
+  """priceProtect."""
+  reduceOnly: NotRequired[bool]
+  """reduceOnly."""
+  createTime: NotRequired[Timestamp]
+  """createTime."""
+  updateTime: NotRequired[Timestamp]
+  """updateTime."""
+  triggerTime: NotRequired[Timestamp]
+  """triggerTime."""
+  goodTillDate: NotRequired[int]
+  """goodTillDate."""
+
+
+class UmAlgoOrder(RpcEndpoint):
+  """Query Current UM Open Algo Order"""
+
+  async def um_algo_order(
+    self,
+    *,
+    algo_id: int | None = None,
+    client_algo_id: str | None = None,
+    validate: bool | None = None,
+  ) -> PmCurrentUmOpenAlgoOrder:
+    """Check an UM algo order's status. Orders will not be found if: status is CANCELED/EXPIRED with no fills and created 3+ days ago; or created 90+ days ago.
+
+    Args:
+      algo_id: Algo order ID.
+      client_algo_id: Client algo order ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#query-current-um-open-algo-order)
+    """
+    params = {}
+    if algo_id is not None:
+      params['algoId'] = algo_id
+    if client_algo_id is not None:
+      params['clientAlgoId'] = client_algo_id
+    _Response = PmCurrentUmOpenAlgoOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/um/algo/algoOrder',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

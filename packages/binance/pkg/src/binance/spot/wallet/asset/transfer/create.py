@@ -1,0 +1,56 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.types import UniversalTransferType
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UniversalTransferResult(TypedDict):
+  """Result of a universal transfer."""
+
+  tranId: int
+  """Transaction ID of the created transfer."""
+
+
+class Create(RpcEndpoint):
+  """Transfer an asset between two of the account's own wallets (Spot, Margin, Futures, Funding, Options, Portfolio Margin, ...). The API key must have the `Permits Universal Transfer` option enabled."""
+
+  async def create(
+    self,
+    *,
+    type: UniversalTransferType,
+    asset: str,
+    amount: float,
+    from_symbol: str | None = None,
+    to_symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> UniversalTransferResult:
+    """Transfer an asset between two of the account's own wallets (Spot, Margin, Futures, Funding, Options, Portfolio Margin, ...). The API key must have the `Permits Universal Transfer` option enabled.
+
+    Args:
+      type:
+      asset: Asset to transfer.
+      amount: Amount to transfer.
+      from_symbol: Isolated margin symbol transferred from, e.g. "BNBUSDT". Required when `type` is `ISOLATEDMARGIN_MARGIN` or `ISOLATEDMARGIN_ISOLATEDMARGIN`.
+      to_symbol: Isolated margin symbol transferred to, e.g. "BNBUSDT". Required when `type` is `MARGIN_ISOLATEDMARGIN` or `ISOLATEDMARGIN_ISOLATEDMARGIN`.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset#user-universal-transfer)
+    """
+    params: dict = {
+      'type': type,
+      'asset': asset,
+      'amount': amount,
+    }
+    if from_symbol is not None:
+      params['fromSymbol'] = from_symbol
+    if to_symbol is not None:
+      params['toSymbol'] = to_symbol
+    _Response = UniversalTransferResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/asset/transfer',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

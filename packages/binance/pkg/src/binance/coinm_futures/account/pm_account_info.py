@@ -1,0 +1,45 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMPortfolioMarginAccountInfo(TypedDict):
+  """Classic Portfolio Margin account information for one asset."""
+
+  maxWithdrawAmountUSD: str
+  """Classic Portfolio Margin maximum virtual amount transferable out, expressed in USD."""
+  asset: str
+  """The queried asset."""
+  maxWithdrawAmount: str
+  """Maximum amount transferable out to the spot wallet, in this asset."""
+
+
+class PmAccountInfo(RpcEndpoint):
+  """Get Classic Portfolio Margin current account information for one asset: how much of that asset can be transferred out to the spot wallet."""
+
+  async def pm_account_info(
+    self,
+    *,
+    asset: str,
+    validate: bool | None = None,
+  ) -> CoinMPortfolioMarginAccountInfo:
+    """Get Classic Portfolio Margin current account information for one asset: how much of that asset can be transferred out to the spot wallet.
+
+    Args:
+      asset: Asset to query, e.g. BTC.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/portfolio-margin-endpoints#classic-portfolio-margin-account-information)
+    """
+    params: dict = {
+      'asset': asset,
+    }
+    _Response = CoinMPortfolioMarginAccountInfo
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/dapi/v1/pmAccountInfo',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,271 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CanceledOrderEntry(TypedDict):
+  """A single canceled order, not part of an order list. Structurally identical to spot.trading.cancel_order's CanceledOrder, titled distinctly because this file inlines its own copy rather than using a $ref."""
+
+  symbol: str
+  """Trading pair symbol."""
+  orderId: int
+  """Order id."""
+  orderListId: int
+  """Id of the order list this order belongs to, or -1 if it is not part of one."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+  transactTime: Timestamp
+  """Time the order was processed."""
+  origClientOrderId: str
+  """Client order id of the canceled order, as originally supplied."""
+  price: str
+  """Order price."""
+  origQty: str
+  """Original order quantity."""
+  executedQty: str
+  """Cumulative filled quantity."""
+  origQuoteOrderQty: str
+  """Original quoteOrderQty, or "0" when quoteOrderQty was not used."""
+  cummulativeQuoteQty: str
+  """Cumulative quote asset transacted quantity."""
+  status: Literal[
+    'NEW',
+    'PENDING_NEW',
+    'PARTIALLY_FILLED',
+    'FILLED',
+    'CANCELED',
+    'PENDING_CANCEL',
+    'REJECTED',
+    'EXPIRED',
+    'EXPIRED_IN_MATCH',
+  ]
+  """Order status."""
+  timeInForce: Literal['GTC', 'IOC', 'FOK']
+  """Time in force."""
+  type: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP_LOSS',
+    'STOP_LOSS_LIMIT',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_LIMIT',
+    'LIMIT_MAKER',
+  ]
+  """Order type."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  workingTime: NotRequired[Timestamp]
+  """Time the order started working on the order book."""
+  selfTradePreventionMode: Literal[
+    'NONE', 'EXPIRE_MAKER', 'EXPIRE_TAKER', 'EXPIRE_BOTH', 'DECREMENT', 'TRANSFER'
+  ]
+  """Self-trade prevention mode in effect for the order."""
+  icebergQty: NotRequired[str]
+  """Quantity for the iceberg order. Present only when icebergQty was sent in the request."""
+  preventedMatchId: NotRequired[int]
+  """Id of a prevented match, usable together with symbol to query it. Present only when the order expired due to self-trade prevention."""
+  preventedQuantity: NotRequired[str]
+  """Order quantity that expired due to self-trade prevention. Present only when the order expired due to self-trade prevention."""
+  stopPrice: NotRequired[str]
+  """Price at which the algorithmic order triggers. Present for STOP_LOSS, TAKE_PROFIT, STOP_LOSS_LIMIT and TAKE_PROFIT_LIMIT orders."""
+  strategyId: NotRequired[int]
+  """Id labeling the order strategy this order is part of. Present when strategyId was sent in the request."""
+  strategyType: NotRequired[int]
+  """Type labeling the order strategy this order is part of. Present when strategyType was sent in the request."""
+  trailingDelta: NotRequired[int]
+  """Delta price change required before order activation. Present for trailing stop orders."""
+  trailingTime: NotRequired[Timestamp]
+  """Time the trailing order became active and started tracking price changes. Present only for trailing stop orders."""
+  usedSor: NotRequired[bool]
+  """Whether the order used smart order routing (SOR). Present when the order was placed using SOR."""
+  workingFloor: NotRequired[Literal['EXCHANGE', 'SOR']]
+  """Whether the order is being filled by SOR or by the order book it was submitted to. Present when the order was placed using SOR."""
+  pegPriceType: NotRequired[Literal['PRIMARY_PEG', 'MARKET_PEG']]
+  """Peg reference type. Present only for pegged orders."""
+  pegOffsetType: NotRequired[Literal['PRICE_LEVEL']]
+  """Peg offset type. Present only for pegged orders that requested one."""
+  pegOffsetValue: NotRequired[int]
+  """Peg offset value. Present only for pegged orders that requested one."""
+  peggedPrice: NotRequired[str]
+  """Current price the order is pegged at. Present only for pegged orders, once determined."""
+  expiryReason: NotRequired[
+    Literal[
+      'NONE',
+      'REJECTED',
+      'EXCHANGE_CANCELED',
+      'OCO_TRIGGER',
+      'OTO_PHASE_ONE_EXPIRED',
+      'UNFILLED_IOC_QUANTITY_EXPIRED',
+      'UNFILLED_FOK_ORDER_EXPIRED',
+      'INSUFFICIENT_LIQUIDITY',
+      'EXECUTION_RULE_PRICE_RANGE_EXCEEDED',
+    ]
+  ]
+  """Cause of the order's expiration. Present when the order has expired."""
+
+
+class OrderListOrder(TypedDict):
+  """One order belonging to an order list."""
+
+  symbol: str
+  """Trading pair symbol."""
+  orderId: int
+  """Order id."""
+  clientOrderId: str
+  """Client order id."""
+
+
+class OrderListOrderReport(TypedDict):
+  """The cancellation result for one order belonging to this order list."""
+
+  symbol: str
+  """Trading pair symbol."""
+  orderId: int
+  """Order id."""
+  orderListId: int
+  """Id of the order list this order belongs to, or -1 if it is not part of one."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+  transactTime: Timestamp
+  """Time the order was processed."""
+  origClientOrderId: str
+  """Client order id of the canceled order, as originally supplied."""
+  price: str
+  """Order price."""
+  origQty: str
+  """Original order quantity."""
+  executedQty: str
+  """Cumulative filled quantity."""
+  origQuoteOrderQty: str
+  """Original quoteOrderQty, or "0" when quoteOrderQty was not used."""
+  cummulativeQuoteQty: str
+  """Cumulative quote asset transacted quantity."""
+  status: Literal[
+    'NEW',
+    'PENDING_NEW',
+    'PARTIALLY_FILLED',
+    'FILLED',
+    'CANCELED',
+    'PENDING_CANCEL',
+    'REJECTED',
+    'EXPIRED',
+    'EXPIRED_IN_MATCH',
+  ]
+  """Order status."""
+  timeInForce: Literal['GTC', 'IOC', 'FOK']
+  """Time in force."""
+  type: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP_LOSS',
+    'STOP_LOSS_LIMIT',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_LIMIT',
+    'LIMIT_MAKER',
+  ]
+  """Order type."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  workingTime: NotRequired[Timestamp]
+  """Time the order started working on the order book."""
+  selfTradePreventionMode: Literal[
+    'NONE', 'EXPIRE_MAKER', 'EXPIRE_TAKER', 'EXPIRE_BOTH', 'DECREMENT', 'TRANSFER'
+  ]
+  """Self-trade prevention mode in effect for the order."""
+  icebergQty: NotRequired[str]
+  """Quantity for the iceberg order. Present only when icebergQty was sent in the request."""
+  preventedMatchId: NotRequired[int]
+  """Id of a prevented match, usable together with symbol to query it. Present only when the order expired due to self-trade prevention."""
+  preventedQuantity: NotRequired[str]
+  """Order quantity that expired due to self-trade prevention. Present only when the order expired due to self-trade prevention."""
+  stopPrice: NotRequired[str]
+  """Price at which the algorithmic order triggers. Present for STOP_LOSS, TAKE_PROFIT, STOP_LOSS_LIMIT and TAKE_PROFIT_LIMIT orders."""
+  strategyId: NotRequired[int]
+  """Id labeling the order strategy this order is part of. Present when strategyId was sent in the request."""
+  strategyType: NotRequired[int]
+  """Type labeling the order strategy this order is part of. Present when strategyType was sent in the request."""
+  trailingDelta: NotRequired[int]
+  """Delta price change required before order activation. Present for trailing stop orders."""
+  trailingTime: NotRequired[Timestamp]
+  """Time the trailing order became active and started tracking price changes. Present only for trailing stop orders."""
+  usedSor: NotRequired[bool]
+  """Whether the order used smart order routing (SOR). Present when the order was placed using SOR."""
+  workingFloor: NotRequired[Literal['EXCHANGE', 'SOR']]
+  """Whether the order is being filled by SOR or by the order book it was submitted to. Present when the order was placed using SOR."""
+  pegPriceType: NotRequired[Literal['PRIMARY_PEG', 'MARKET_PEG']]
+  """Peg reference type. Present only for pegged orders."""
+  pegOffsetType: NotRequired[Literal['PRICE_LEVEL']]
+  """Peg offset type. Present only for pegged orders that requested one."""
+  pegOffsetValue: NotRequired[int]
+  """Peg offset value. Present only for pegged orders that requested one."""
+  peggedPrice: NotRequired[str]
+  """Current price the order is pegged at. Present only for pegged orders, once determined."""
+  expiryReason: NotRequired[
+    Literal[
+      'NONE',
+      'REJECTED',
+      'EXCHANGE_CANCELED',
+      'OCO_TRIGGER',
+      'OTO_PHASE_ONE_EXPIRED',
+      'UNFILLED_IOC_QUANTITY_EXPIRED',
+      'UNFILLED_FOK_ORDER_EXPIRED',
+      'INSUFFICIENT_LIQUIDITY',
+      'EXECUTION_RULE_PRICE_RANGE_EXCEEDED',
+    ]
+  ]
+  """Cause of the order's expiration. Present when the order has expired."""
+
+
+class CanceledOrderList(TypedDict):
+  """The cancellation report for an order list, returned once per canceled order list."""
+
+  orderListId: int
+  """Id of the order list."""
+  contingencyType: Literal['OCO', 'OTO']
+  """Contingency type of the order list."""
+  listStatusType: Literal['RESPONSE', 'EXEC_STARTED', 'UPDATED', 'ALL_DONE']
+  """Status of the order list."""
+  listOrderStatus: Literal['EXECUTING', 'ALL_DONE', 'REJECT']
+  """Status of the orders within the order list."""
+  listClientOrderId: str
+  """Client order id of the order list."""
+  transactionTime: Timestamp
+  """Time the order list cancellation was processed."""
+  symbol: str
+  """Trading pair symbol."""
+  orders: list[OrderListOrder]
+  """Orders belonging to this order list."""
+  orderReports: list[OrderListOrderReport]
+  """Cancellation detail for each order belonging to this order list."""
+
+
+class CancelOpenOrders(RpcEndpoint):
+  """Cancel All Open Orders on a Symbol"""
+
+  async def cancel_open_orders(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> list[CanceledOrderEntry | CanceledOrderList]:
+    """Cancel all active orders on a symbol, including orders that are part of an order list.
+
+    Args:
+      symbol: Trading pair symbol.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = list[CanceledOrderEntry | CanceledOrderList]
+    _validator = validator[_Response](_Response)  # type: ignore
+    return await self.authed_request(
+      'DELETE',
+      '/api/v3/openOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

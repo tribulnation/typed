@@ -1,0 +1,143 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PayCounterpartyInfoPayerInfo(TypedDict):
+  """The transaction's payer."""
+
+  name: NotRequired[str]
+  """Nickname or merchant name."""
+  type: NotRequired[Literal['USER', 'MERCHANT']]
+  """Account type."""
+  binanceId: NotRequired[str]
+  """Binance UID."""
+  email: NotRequired[str]
+  """Email address."""
+  accountId: NotRequired[str]
+  """Binance Pay ID."""
+  countryCode: NotRequired[str]
+  """International phone area code."""
+  phoneNumber: NotRequired[str]
+  """Phone number."""
+  mobileCode: NotRequired[str]
+  """Country code."""
+
+
+class PayCounterpartyInfoReceiverInfo(TypedDict):
+  """The transaction's receiver."""
+
+  name: NotRequired[str]
+  """Nickname or merchant name."""
+  type: NotRequired[Literal['USER', 'MERCHANT']]
+  """Account type."""
+  binanceId: NotRequired[str]
+  """Binance UID."""
+  email: NotRequired[str]
+  """Email address."""
+  accountId: NotRequired[str]
+  """Binance Pay ID."""
+  countryCode: NotRequired[str]
+  """International phone area code."""
+  phoneNumber: NotRequired[str]
+  """Phone number."""
+  mobileCode: NotRequired[str]
+  """Country code."""
+
+
+class PayFundsDetail(TypedDict):
+  """Funds drawn from one asset for this transaction."""
+
+  currency: NotRequired[str]
+  """Asset."""
+  amount: NotRequired[str]
+  """Asset amount."""
+  walletAssetCost: NotRequired[dict[str, str]]
+  """Cost amount for this asset, keyed by wallet type id."""
+
+
+class PayTransactionExtend(TypedDict):
+  """Payment-method-specific extension fields."""
+
+  institutionName: NotRequired[str]
+  """Bank or digital wallet name."""
+  cardNumber: NotRequired[str]
+  """Card number."""
+  digitalWalletId: NotRequired[str]
+  """Digital wallet identifier."""
+
+
+class PayTransaction(TypedDict):
+  """One Binance Pay transaction."""
+
+  orderType: NotRequired[str]
+  """Pay order type, e.g. PAY, PAY_REFUND, C2C, CRYPTO_BOX."""
+  transactionId: NotRequired[str]
+  """Transaction identifier."""
+  transactionTime: NotRequired[int]
+  """Millisecond epoch trade timestamp."""
+  amount: NotRequired[str]
+  """Order amount, up to 8 decimal places. Positive means income, negative means expenditure."""
+  currency: NotRequired[str]
+  """Order asset."""
+  walletType: NotRequired[int]
+  """Wallet the transaction was funded from: 1 funding, 2 spot, 3 fiat, 4/6 card, 5 earn."""
+  walletTypes: NotRequired[list[int]]
+  """Wallet types combined to fund the transaction, when more than one was used."""
+  fundsDetail: NotRequired[list[PayFundsDetail]]
+  """Per-asset breakdown of funds used for this transaction."""
+  payerInfo: NotRequired[PayCounterpartyInfoPayerInfo]
+  receiverInfo: NotRequired[PayCounterpartyInfoReceiverInfo]
+  extend: NotRequired[PayTransactionExtend]
+
+
+class PayTradeHistoryResponse(TypedDict):
+  """Pay transaction history response frame. This product line wraps its business data in {code,message,data,success} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[str]
+  """Response code. "000000" indicates success."""
+  message: NotRequired[str]
+  """Response message."""
+  success: NotRequired[bool]
+  """Whether the call succeeded."""
+  data: NotRequired[list[PayTransaction]]
+  """Pay transaction records."""
+
+
+class TradeHistory(RpcEndpoint):
+  """Query this account's Binance Pay transaction history (payments, refunds, C2C, crypto box, and other Pay order types). Supports querying orders within the last 18 months."""
+
+  async def trade_history(
+    self,
+    *,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> PayTradeHistoryResponse:
+    """Query this account's Binance Pay transaction history (payments, refunds, C2C, crypto box, and other Pay order types). Supports querying orders within the last 18 months.
+
+    Args:
+      start_time: Millisecond epoch start of the queried window. If omitted along with `endTime`, the recent 90 days are returned.
+      end_time: Millisecond epoch end of the queried window. Max interval from `startTime` is 90 days.
+      limit: Number of records to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/pay/rest-api)
+    """
+    params = {}
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = PayTradeHistoryResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/pay/transactions',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

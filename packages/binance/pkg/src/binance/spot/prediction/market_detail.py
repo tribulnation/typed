@@ -1,0 +1,161 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionMarketTimelineEntry(TypedDict):
+  """One prior topic in the same recurring series."""
+
+  marketTopicId: NotRequired[int]
+  """Market topic ID of the prior topic."""
+  startDate: NotRequired[Timestamp]
+  """Time the prior topic opened for trading."""
+  endDate: NotRequired[Timestamp]
+  """Time the prior topic closed for trading."""
+
+
+class PredictionMarketVariantData(TypedDict):
+  """Chart-type-specific variant data for this topic."""
+
+  type: NotRequired[str]
+  """Variant type, matching the topic's `chartType`."""
+  startPrice: NotRequired[str]
+  """Reference start price for the underlying, as a decimal string."""
+  endPrice: NotRequired[str | None]
+  """Reference end price for the underlying, as a decimal string, or null before resolution."""
+  priceFeedId: NotRequired[str]
+  """Identifier of the price feed backing this topic."""
+  priceFeedProvider: NotRequired[str]
+  """Provider of the price feed backing this topic."""
+  priceFeedSymbol: NotRequired[str]
+  """Symbol used to query the price feed."""
+
+
+class PredictionSubmarketOutcome(TypedDict):
+  """One tradeable outcome token for a market."""
+
+  name: NotRequired[str]
+  """Outcome name."""
+  price: NotRequired[str]
+  """Current outcome price, as a decimal string."""
+  chance: NotRequired[str]
+  """Current implied probability, as a decimal string."""
+  index: NotRequired[int]
+  """Zero-based outcome index."""
+  tokenId: NotRequired[str]
+  """Prediction outcome token ID."""
+
+
+class PredictionSubmarket(TypedDict):
+  """One individual market under a prediction market topic."""
+
+  marketId: NotRequired[int]
+  """Market ID."""
+  externalId: NotRequired[str]
+  """Vendor-side identifier for this market."""
+  title: NotRequired[str]
+  """Market title."""
+  question: NotRequired[str]
+  """Market question."""
+  description: NotRequired[str]
+  """Market description."""
+  conditionId: NotRequired[str]
+  """On-chain condition identifier resolving this market."""
+  status: NotRequired[str]
+  """Market lifecycle status."""
+  tradingStatus: NotRequired[str]
+  """Current trading status for this market."""
+  tradeVolume: NotRequired[str]
+  """Cumulative trade volume, in collateral units, as a decimal string."""
+  liquidity: NotRequired[str]
+  """Current liquidity, in collateral units, as a decimal string."""
+  decimalPrecision: NotRequired[int]
+  """Number of decimal places used to display prices for this market."""
+  outcomes: NotRequired[list[PredictionSubmarketOutcome]]
+  """Tradeable outcome tokens for this market."""
+
+
+class PredictionMarketDetail(TypedDict):
+  """Full detail for a prediction market topic."""
+
+  marketTopicId: NotRequired[int]
+  """Market topic ID."""
+  vendor: NotRequired[str]
+  """Prediction liquidity vendor backing this topic."""
+  chainId: NotRequired[str]
+  """Chain ID the topic settles on."""
+  slug: NotRequired[str]
+  """URL-friendly topic slug."""
+  title: NotRequired[str]
+  """Topic title."""
+  question: NotRequired[str]
+  """Topic question shown to users."""
+  description: NotRequired[str]
+  """Topic description."""
+  imageUrl: NotRequired[str]
+  """Topic display image URL."""
+  topicType: NotRequired[str]
+  """Topic layout type."""
+  chartType: NotRequired[str]
+  """Chart rendering type for this topic."""
+  symbol: NotRequired[str]
+  """Underlying price symbol this topic tracks, when applicable."""
+  variantData: NotRequired[PredictionMarketVariantData]
+  participantCount: NotRequired[int]
+  """Number of participants in this topic."""
+  collateral: NotRequired[str]
+  """Collateral asset symbol."""
+  feeRateBps: NotRequired[int]
+  """Fee rate in basis points."""
+  slippageBps: NotRequired[int]
+  """Default slippage tolerance in basis points."""
+  isYieldBearing: NotRequired[bool]
+  """Whether the collateral backing this topic is yield-bearing."""
+  tradeVolume: NotRequired[str]
+  """Cumulative trade volume, in collateral units, as a decimal string."""
+  liquidity: NotRequired[str]
+  """Current liquidity, in collateral units, as a decimal string."""
+  publishedAt: NotRequired[Timestamp]
+  """Time the topic was published."""
+  startDate: NotRequired[Timestamp]
+  """Time the topic opens for trading."""
+  endDate: NotRequired[Timestamp]
+  """Time the topic closes for trading."""
+  status: NotRequired[str]
+  """Topic lifecycle status."""
+  timeline: NotRequired[list[PredictionMarketTimelineEntry]]
+  """Prior topics in the same recurring series."""
+  markets: NotRequired[list[PredictionSubmarket]]
+  """Individual markets under this topic."""
+
+
+class MarketDetail(RpcEndpoint):
+  """Get full details for a specific prediction market topic, including variant data and timeline."""
+
+  async def market_detail(
+    self,
+    *,
+    market_topic_id: int,
+    validate: bool | None = None,
+  ) -> PredictionMarketDetail:
+    """Get full details for a specific prediction market topic, including variant data and timeline.
+
+    Args:
+      market_topic_id: Market topic ID. Must be > 0.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/market-data#get-market-detail)
+    """
+    params: dict = {
+      'marketTopicId': market_topic_id,
+    }
+    _Response = PredictionMarketDetail
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/w3w/wallet/prediction/market/detail',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

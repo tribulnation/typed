@@ -1,0 +1,93 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmCancelUmOrder(TypedDict):
+  """Cancel an active UM LIMIT order."""
+
+  clientOrderId: NotRequired[str]
+  """Client Order ID."""
+  cumQty: NotRequired[str]
+  """Cum Qty."""
+  executedQty: NotRequired[str]
+  """Executed Qty."""
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  price: NotRequired[str]
+  """Price."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  status: NotRequired[str]
+  """Enum：completed，processing."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+  selfTradePreventionMode: NotRequired[str]
+  """self trading preventation mode."""
+  goodTillDate: NotRequired[int]
+  """order pre-set auot cancel time for TIF GTD order."""
+  priceMatch: NotRequired[
+    Literal[
+      'OPPONENT',
+      'OPPONENT_5',
+      'OPPONENT_10',
+      'OPPONENT_20',
+      'QUEUE',
+      'QUEUE_5',
+      'QUEUE_10',
+      'QUEUE_20',
+    ]
+  ]
+  """Price Match."""
+
+
+class CancelUmOrder(RpcEndpoint):
+  """Cancel UM Order"""
+
+  async def cancel_um_order(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    validate: bool | None = None,
+  ) -> PmCancelUmOrder:
+    """Cancel an active UM LIMIT order.
+
+    Args:
+      symbol: Symbol.
+      order_id: Order id to act on.
+      orig_client_order_id: Caller-supplied id of the order to act on, as given on placement.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#cancel-um-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    _Response = PmCancelUmOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/papi/v1/um/order',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

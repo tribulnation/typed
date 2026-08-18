@@ -1,0 +1,119 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UsdMFuturesForceOrder(TypedDict):
+  """A single force-liquidation or ADL order."""
+
+  orderId: NotRequired[int]
+  """Order ID assigned by Binance."""
+  symbol: NotRequired[str]
+  """Symbol this order was placed on."""
+  pair: NotRequired[str]
+  """Underlying pair this order was placed on."""
+  status: NotRequired[str]
+  """Order status. Not confirmed as a closed set in this docs-only pass — see notes."""
+  clientOrderId: NotRequired[str]
+  """Client-supplied order ID."""
+  price: NotRequired[str]
+  """Order price, as a decimal string."""
+  avgPrice: NotRequired[str]
+  """Average fill price, as a decimal string."""
+  origQty: NotRequired[str]
+  """Original order quantity, as a decimal string."""
+  executedQty: NotRequired[str]
+  """Quantity that has been filled, as a decimal string."""
+  cumQuote: NotRequired[str]
+  """Cumulative quote asset quantity filled, as a decimal string."""
+  cumBase: NotRequired[str]
+  """Cumulative base asset quantity filled, as a decimal string."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'GTX', 'GTD', 'RPI']]
+  """Time in force."""
+  type: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Order type."""
+  reduceOnly: NotRequired[bool]
+  """Whether this order was reduce-only."""
+  closePosition: NotRequired[bool]
+  """Whether this order was a close-position order."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Order side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """Position side this order applies to."""
+  stopPrice: NotRequired[str]
+  """Stop trigger price, as a decimal string."""
+  workingType: NotRequired[Literal['MARK_PRICE', 'CONTRACT_PRICE']]
+  """Price type used to trigger conditional orders."""
+  origType: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Original order type as submitted."""
+  time: NotRequired[int]
+  """Order creation time, as milliseconds since epoch."""
+  updateTime: NotRequired[int]
+  """Order last-update time, as milliseconds since epoch."""
+
+
+class ForceOrders(RpcEndpoint):
+  """Query user's force liquidation and ADL orders. If `autoCloseType` is omitted, orders of both types are returned. If `startTime` is omitted, data within the 7 days before `endTime` can be queried."""
+
+  async def force_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    auto_close_type: Literal['LIQUIDATION', 'ADL'] | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[UsdMFuturesForceOrder]:
+    """Query user's force liquidation and ADL orders. If `autoCloseType` is omitted, orders of both types are returned. If `startTime` is omitted, data within the 7 days before `endTime` can be queried.
+
+    Args:
+      symbol: Symbol to filter by.
+      auto_close_type: Type of forced close to filter by. If omitted, orders of both types are returned.
+      start_time: Query window start, as milliseconds since epoch.
+      end_time: Query window end, as milliseconds since epoch.
+      limit: Number of orders to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#users-force-orders)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if auto_close_type is not None:
+      params['autoCloseType'] = auto_close_type
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[UsdMFuturesForceOrder]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/fapi/v1/forceOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

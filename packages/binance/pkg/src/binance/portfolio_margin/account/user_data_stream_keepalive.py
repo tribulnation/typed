@@ -1,0 +1,13 @@
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UserDataStreamKeepalive(RpcEndpoint):
+  """Keepalive User Data Stream"""
+
+  async def user_data_stream_keepalive(self, *, validate: bool | None = None):
+    """Keepalive a user data stream to prevent a time out. User data streams will close after 60 minutes. It's recommended to send a ping about every 60 minutes.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/user-data-streams#keepalive-user-data-stream)
+    """
+    return await self.request('PUT', '/papi/v1/listenKey', validate=validate)

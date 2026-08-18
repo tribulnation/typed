@@ -1,0 +1,116 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SubAccountMovePositionRecord(TypedDict):
+  """One futures position moved between accounts."""
+
+  fromUserEmail: NotRequired[str]
+  """Email of the account the position moved from."""
+  toUserEmail: NotRequired[str]
+  """Email of the account the position moved to."""
+  productType: NotRequired[str]
+  """Product type moved (e.g. `UM` for USD-M futures)."""
+  symbol: NotRequired[str]
+  """Futures symbol."""
+  price: NotRequired[str]
+  """Price the move was executed at."""
+  quantity: NotRequired[str]
+  """Quantity moved."""
+  positionSide: NotRequired[str]
+  """Position side."""
+  side: NotRequired[str]
+  """Order side of the move."""
+  timeStamp: NotRequired[int]
+  """Time the move was executed."""
+
+
+class SubAccountMovePositionHistory(TypedDict):
+  """Matching move-position records."""
+
+  total: NotRequired[int]
+  """Total number of matching records."""
+  futureMovePositionOrderVoList: NotRequired[list[SubAccountMovePositionRecord]]
+  """Move-position records on this page."""
+
+
+class FuturesMovePositionHistory(RpcEndpoint):
+  """Query the history of futures positions moved between master/sub-accounts."""
+
+  async def __call__(
+    self,
+    *,
+    symbol: str,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    page: int,
+    rows: int,
+    validate: bool | None = None,
+  ) -> SubAccountMovePositionHistory:
+    """Query the history of futures positions moved between master/sub-accounts.
+
+    Args:
+      symbol: Futures symbol to filter by.
+      start_time: Start of the query window. Defaults to 90 days before `endTime` (or before now, if `endTime` is also omitted).
+      end_time: End of the query window. Defaults to now.
+      page: Page number.
+      rows: Page size.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/asset-management#get-move-position-history-for-sub-account)
+    """
+    params: dict = {
+      'symbol': symbol,
+      'page': page,
+      'rows': rows,
+    }
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    _Response = SubAccountMovePositionHistory
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/sub-account/futures/move-position',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def paged(
+    self,
+    *,
+    symbol: str,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    rows: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[SubAccountMovePositionHistory]:
+    """Yield successive pages of this endpoint.
+
+    Requests `page` from 1 upwards and stops once it has covered the `total` items the
+    response reports, or after `max_pages` pages when one is given.
+    """
+    page = 1
+    pages = 0
+    while True:
+      response = await self.__call__(
+        symbol=symbol,
+        start_time=start_time,
+        end_time=end_time,
+        rows=rows,
+        page=page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * rows >= total:
+        break
+      page += 1

@@ -1,0 +1,134 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DiscountBuyPosition(TypedDict):
+  """One Discount Buy position."""
+
+  id: NotRequired[str]
+  """Position identifier."""
+  investAsset: NotRequired[str]
+  """Subscription (stablecoin) asset."""
+  targetAsset: NotRequired[str]
+  """Target (non-stablecoin) asset."""
+  depositAmount: NotRequired[str]
+  """Amount deposited into this position, as a decimal string."""
+  strikePrice: NotRequired[str]
+  """Strike price of the accumulator, as a decimal string."""
+  knockoutPrice: NotRequired[str]
+  """Knock-out price of the accumulator, as a decimal string."""
+  duration: NotRequired[int]
+  """Product duration in days."""
+  settleDate: NotRequired[int]
+  """Millisecond epoch settlement date."""
+  purchaseStatus: NotRequired[
+    Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+  ]
+  """Purchase status."""
+  knockoutApr: NotRequired[str]
+  """Annual percentage rate if the product knocks out, as a decimal string."""
+  orderId: NotRequired[int]
+  """Order identifier of the originating subscription."""
+
+
+class DiscountBuyPositionPage(TypedDict):
+  """One page of this account's Discount Buy positions."""
+
+  total: NotRequired[int]
+  """Total number of matching positions."""
+  list: NotRequired[list[DiscountBuyPosition]]
+  """Matching positions on this page."""
+
+
+class Positions(RpcEndpoint):
+  """Get this account's Discount Buy positions."""
+
+  async def positions(
+    self,
+    *,
+    status: Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+    | None = None,
+    page_size: int,
+    page_index: int,
+    validate: bool | None = None,
+  ) -> DiscountBuyPositionPage:
+    """Get this account's Discount Buy positions.
+
+    Args:
+      status: Restrict results to this position status. `PENDING`: purchasing, result pending; `PURCHASE_SUCCESS`: purchased successfully; `SETTLED`: settlement finished; `PURCHASE_FAIL`: purchase failed; `REFUNDING`: refund in progress; `REFUND_SUCCESS`: refunded to the Spot account; `SETTLING`: settlement in progress. Returns positions in every status when omitted.
+      page_size: Number of records per page.
+      page_index: Page index to return, starting from 1.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-discount-buy/api/rest-api/trade#get-discount-buy-positions)
+    """
+    params: dict = {
+      'pageSize': page_size,
+      'pageIndex': page_index,
+    }
+    if status is not None:
+      params['status'] = status
+    _Response = DiscountBuyPositionPage
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/accumulator/product/position/list',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def positions_paged(
+    self,
+    *,
+    status: Literal[
+      'PENDING',
+      'PURCHASE_SUCCESS',
+      'SETTLED',
+      'PURCHASE_FAIL',
+      'REFUNDING',
+      'REFUND_SUCCESS',
+      'SETTLING',
+    ]
+    | None = None,
+    page_size: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[DiscountBuyPositionPage]:
+    """Yield successive pages of `positions`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.positions(
+        status=status, page_size=page_size, page_index=page_index, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * page_size >= total:
+        break
+      page_index += 1

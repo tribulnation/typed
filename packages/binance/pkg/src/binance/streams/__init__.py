@@ -1,0 +1,77 @@
+from functools import cached_property
+
+from binance.core.endpoint.stream import StreamEndpoint
+from .agg_trade import AggTrade
+from .avg_price import AvgPrice
+from .block_trade import BlockTrade
+from .book_ticker import BookTicker
+from .diff_depth import DiffDepth
+from .kline import KlineEndpoint
+from .mini_ticker import MiniTicker
+from .mini_ticker_all import MiniTickerAll
+from .partial_depth import PartialDepth
+from .reference_price import ReferencePrice
+from .ticker import Ticker
+from .ticker_window import TickerWindow
+from .ticker_window_all import TickerWindowAll
+from .trade import Trade
+
+
+class Streams(StreamEndpoint):
+  """Binance streams endpoints."""
+
+  @cached_property
+  def agg_trade(self) -> AggTrade:
+    return AggTrade(client=self.client)
+
+  @cached_property
+  def avg_price(self) -> AvgPrice:
+    return AvgPrice(client=self.client)
+
+  @cached_property
+  def block_trade(self) -> BlockTrade:
+    return BlockTrade(client=self.client)
+
+  @cached_property
+  def book_ticker(self) -> BookTicker:
+    return BookTicker(client=self.client)
+
+  @cached_property
+  def diff_depth(self) -> DiffDepth:
+    return DiffDepth(client=self.client)
+
+  @cached_property
+  def kline(self) -> KlineEndpoint:
+    return KlineEndpoint(client=self.client)
+
+  @cached_property
+  def mini_ticker(self) -> MiniTicker:
+    return MiniTicker(client=self.client)
+
+  @cached_property
+  def mini_ticker_all(self) -> MiniTickerAll:
+    return MiniTickerAll(client=self.client)
+
+  @cached_property
+  def partial_depth(self) -> PartialDepth:
+    return PartialDepth(client=self.client)
+
+  @cached_property
+  def reference_price(self) -> ReferencePrice:
+    return ReferencePrice(client=self.client)
+
+  @cached_property
+  def ticker(self) -> Ticker:
+    return Ticker(client=self.client)
+
+  @cached_property
+  def ticker_window(self) -> TickerWindow:
+    return TickerWindow(client=self.client)
+
+  @cached_property
+  def ticker_window_all(self) -> TickerWindowAll:
+    return TickerWindowAll(client=self.client)
+
+  @cached_property
+  def trade(self) -> Trade:
+    return Trade(client=self.client)

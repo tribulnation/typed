@@ -1,0 +1,101 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProBankruptcyLoanRepayHistoryRow(TypedDict):
+  """One repay record."""
+
+  asset: NotRequired[str]
+  """Asset name."""
+  amount: NotRequired[str]
+  """Repay amount."""
+  repayTime: NotRequired[Timestamp]
+  """Repay time."""
+
+
+class PmProBankruptcyLoanRepayHistory(TypedDict):
+  """Bankruptcy loan repay history."""
+
+  total: NotRequired[int]
+  """Total number of records."""
+  rows: NotRequired[list[PmProBankruptcyLoanRepayHistoryRow]]
+  """Repay history rows."""
+
+
+class BankruptcyLoanRepayHistory(RpcEndpoint):
+  """Query Portfolio Margin Pro Bankruptcy Loan Repay History"""
+
+  async def bankruptcy_loan_repay_history(
+    self,
+    *,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    current: int | None = None,
+    validate: bool | None = None,
+  ) -> PmProBankruptcyLoanRepayHistory:
+    """Query repay history of pmloan for portfolio margin pro.
+
+    Args:
+      start_time: Start time.
+      end_time: End time.
+      size: Number of results returned.
+      current: Currently querying page. Start from 1.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account#query-portfolio-margin-pro-bankruptcy-loan-repay-history)
+    """
+    params = {}
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if size is not None:
+      params['size'] = size
+    if current is not None:
+      params['current'] = current
+    _Response = PmProBankruptcyLoanRepayHistory
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/portfolio/pmloan-history',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def bankruptcy_loan_repay_history_paged(
+    self,
+    *,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[PmProBankruptcyLoanRepayHistory]:
+    """Yield successive pages of `bankruptcy_loan_repay_history`.
+
+    Requests `current` from 1 upwards and stops once it has covered the `total` items
+    the response reports, or after `max_pages` pages when one is given.
+    """
+    current = 1
+    pages = 0
+    while True:
+      response = await self.bankruptcy_loan_repay_history(
+        start_time=start_time,
+        end_time=end_time,
+        size=size,
+        current=current,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('total') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or size is None or pages * size >= total:
+        break
+      current += 1

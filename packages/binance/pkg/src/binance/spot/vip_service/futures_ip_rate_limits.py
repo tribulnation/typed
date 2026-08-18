@@ -1,0 +1,56 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesIpRateLimitEntry(TypedDict):
+  """Rate limit for one whitelisted IP address."""
+
+  ipAddress: NotRequired[str]
+  """Whitelisted IP address."""
+  limit: NotRequired[int]
+  """Rate limit assigned to this IP address."""
+
+
+class FuturesIpRateLimitsResult(TypedDict):
+  """Futures IP rate limits."""
+
+  status: NotRequired[str]
+  """Response status, e.g. `OK`."""
+  type: NotRequired[str]
+  """Response category, e.g. `GENERAL`."""
+  code: NotRequired[str]
+  """Response code; `"000000000"` on success."""
+  data: NotRequired[list[FuturesIpRateLimitEntry]]
+  """One entry per whitelisted IP address."""
+
+
+class FuturesIpRateLimits(RpcEndpoint):
+  """Query futures IP rate limits."""
+
+  async def futures_ip_rate_limits(
+    self,
+    *,
+    product_type: Literal['CM', 'UM'],
+    validate: bool | None = None,
+  ) -> FuturesIpRateLimitsResult:
+    """Query futures IP rate limits.
+
+    Args:
+      product_type: Futures product type to query IP rate limits for.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-vip-service/api/rest-api/~#query-futures-ip-rate-limits)
+    """
+    params: dict = {
+      'productType': product_type,
+    }
+    _Response = FuturesIpRateLimitsResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/vip-portal/futures/rate-limits/ips',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

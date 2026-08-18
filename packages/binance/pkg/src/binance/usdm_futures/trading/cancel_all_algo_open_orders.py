@@ -1,0 +1,43 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CancelAllAlgoOpenOrdersResult(TypedDict):
+  """Result of canceling all open algo orders on a symbol."""
+
+  code: int
+  """Result code."""
+  msg: NotRequired[str]
+  """Result message."""
+
+
+class CancelAllAlgoOpenOrders(RpcEndpoint):
+  """Cancel all open algo (conditional) orders on a symbol, including TP/SL (Take Profit / Stop Loss) and trailing stop orders on USD-M Futures."""
+
+  async def cancel_all_algo_open_orders(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> CancelAllAlgoOpenOrdersResult:
+    """Cancel all open algo (conditional) orders on a symbol, including TP/SL (Take Profit / Stop Loss) and trailing stop orders on USD-M Futures.
+
+    Args:
+      symbol: Trading symbol, e.g. BTCUSDT.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#cancel-all-algo-open-orders)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = CancelAllAlgoOpenOrdersResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/fapi/v1/algoOpenOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

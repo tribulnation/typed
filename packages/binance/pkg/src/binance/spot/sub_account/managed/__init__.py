@@ -1,0 +1,27 @@
+from .account_snapshot import AccountSnapshot
+from .asset import Asset
+from .deposit import Deposit
+from .deposit_address import DepositAddress
+from .futures_asset import FuturesAsset
+from .list import List
+from .margin_asset import MarginAsset
+from .transfer_log import TransferLog
+from .transfer_log_investor import TransferLogInvestor
+from .transfer_log_trade_parent import TransferLogTradeParent
+from .withdraw import Withdraw
+
+
+class Managed(
+  AccountSnapshot,
+  Asset,
+  Deposit,
+  DepositAddress,
+  FuturesAsset,
+  List,
+  MarginAsset,
+  TransferLog,
+  TransferLogInvestor,
+  TransferLogTradeParent,
+  Withdraw,
+):
+  """Binance managed endpoints."""

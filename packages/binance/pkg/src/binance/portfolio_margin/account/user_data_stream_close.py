@@ -1,0 +1,13 @@
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UserDataStreamClose(RpcEndpoint):
+  """Close User Data Stream"""
+
+  async def user_data_stream_close(self, *, validate: bool | None = None):
+    """Close out a user data stream.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/user-data-streams#close-user-data-stream)
+    """
+    return await self.request('DELETE', '/papi/v1/listenKey', validate=validate)

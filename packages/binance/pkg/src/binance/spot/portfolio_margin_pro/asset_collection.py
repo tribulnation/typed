@@ -1,0 +1,41 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProFundCollectionByAsset(TypedDict):
+  """Fund collection result."""
+
+  msg: NotRequired[str]
+  """Result message."""
+
+
+class AssetCollection(RpcEndpoint):
+  """Fund Collection by Asset"""
+
+  async def asset_collection(
+    self,
+    *,
+    asset: str,
+    validate: bool | None = None,
+  ) -> PmProFundCollectionByAsset:
+    """Transfers specific asset from Futures Account to Margin account.
+
+    Args:
+      asset: Asset name.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account#fund-collection-by-asset)
+    """
+    params: dict = {
+      'asset': asset,
+    }
+    _Response = PmProFundCollectionByAsset
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/portfolio/asset-collection',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

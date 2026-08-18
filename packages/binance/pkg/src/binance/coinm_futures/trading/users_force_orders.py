@@ -1,0 +1,123 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMForceOrder(TypedDict):
+  """One force-close order."""
+
+  orderId: int
+  """Order ID."""
+  symbol: str
+  """Symbol."""
+  pair: NotRequired[str]
+  """Underlying pair."""
+  status: Literal['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'EXPIRED']
+  """Order status. Documented closed set (COIN-M common-definition doc)."""
+  clientOrderId: NotRequired[str]
+  """Client order ID."""
+  price: NotRequired[str]
+  """Order price."""
+  avgPrice: NotRequired[str]
+  """Average execution price."""
+  origQty: NotRequired[str]
+  """Original order quantity, in contracts."""
+  executedQty: NotRequired[str]
+  """Executed quantity, in contracts."""
+  cumBase: NotRequired[str]
+  """Cumulative filled quantity denominated in the pair's base asset."""
+  cumQuote: NotRequired[str]
+  """Cumulative filled quantity denominated in the quote asset."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'GTX']]
+  """Time in force."""
+  type: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Order type. See `notes` — after the CM/UM migration this endpoint rejects the five stop-type values with -4120; only LIMIT and MARKET are currently accepted here."""
+  reduceOnly: NotRequired[bool]
+  """Whether the order is reduce-only."""
+  closePosition: NotRequired[bool]
+  """Whether the order closes the whole position (Close-All)."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Order side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """Position side."""
+  stopPrice: NotRequired[str]
+  """Stop trigger price. Ignored when order type is TRAILING_STOP_MARKET."""
+  workingType: NotRequired[Literal['MARK_PRICE', 'CONTRACT_PRICE']]
+  """stopPrice trigger price type."""
+  priceProtect: NotRequired[bool]
+  """Whether the conditional order's trigger is price-protected."""
+  origType: NotRequired[
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP',
+      'STOP_MARKET',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'TRAILING_STOP_MARKET',
+    ]
+  ]
+  """Original order type."""
+  time: NotRequired[int]
+  """Order creation time."""
+  updateTime: NotRequired[int]
+  """Last update time."""
+  goodTillDate: NotRequired[int]
+  """Auto-cancel time for a GTD order."""
+
+
+class UsersForceOrders(RpcEndpoint):
+  """User's Force Orders"""
+
+  async def users_force_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    auto_close_type: Literal['LIQUIDATION', 'ADL'] | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[CoinMForceOrder]:
+    """Get liquidation and ADL orders for the account. Only the past 90 days are queryable.
+
+    Args:
+      symbol: Symbol. If omitted, force orders for every symbol are returned.
+      auto_close_type: Filter by close reason. If omitted, both types are returned.
+      start_time: Start time.
+      end_time: End time.
+      limit: Maximum number of records to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/trade#user's-force-orders)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if auto_close_type is not None:
+      params['autoCloseType'] = auto_close_type
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[CoinMForceOrder]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/dapi/v1/forceOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

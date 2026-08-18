@@ -1,0 +1,87 @@
+from .adl_quantile import AdlQuantile
+from .algo_open_orders import AlgoOpenOrders
+from .all_algo_orders import AllAlgoOrders
+from .all_orders import AllOrders
+from .cancel_algo_order import CancelAlgoOrder
+from .cancel_all_algo_open_orders import CancelAllAlgoOpenOrders
+from .cancel_all_open_orders import CancelAllOpenOrders
+from .cancel_multiple_orders import CancelMultipleOrders
+from .cancel_order import CancelOrder
+from .change_multi_assets_mode import ChangeMultiAssetsMode
+from .change_position_mode import ChangePositionMode
+from .countdown_cancel_all import CountdownCancelAll
+from .force_orders import ForceOrders
+from .income_asyn import IncomeAsyn
+from .income_asyn_id import IncomeAsynId
+from .leverage import Leverage
+from .margin_type import MarginType
+from .modify_multiple_orders import ModifyMultipleOrders
+from .modify_order import ModifyOrder
+from .multi_assets_mode import MultiAssetsModeEndpoint
+from .new_algo_order import NewAlgoOrder
+from .new_order import NewOrder
+from .open_order import OpenOrder
+from .open_orders import OpenOrders
+from .order_asyn import OrderAsyn
+from .order_asyn_id import OrderAsynId
+from .order_modify_history import OrderModifyHistory
+from .place_multiple_orders import PlaceMultipleOrders
+from .position_margin import PositionMargin
+from .position_margin_history import PositionMarginHistory
+from .position_mode import PositionModeEndpoint
+from .position_risk_v2 import PositionRiskV2
+from .position_risk_v3 import PositionRiskV3
+from .query_algo_order import QueryAlgoOrder
+from .query_order import QueryOrder
+from .test_order import TestOrder
+from .trade_asyn import TradeAsyn
+from .trade_asyn_id import TradeAsynId
+from .tradfi_perps_contract import TradfiPerpsContract
+from .trading_fee import TradingFee
+from .user_trades import UserTrades
+
+
+class Trading(
+  AdlQuantile,
+  AlgoOpenOrders,
+  AllAlgoOrders,
+  AllOrders,
+  CancelAlgoOrder,
+  CancelAllAlgoOpenOrders,
+  CancelAllOpenOrders,
+  CancelMultipleOrders,
+  CancelOrder,
+  ChangeMultiAssetsMode,
+  ChangePositionMode,
+  CountdownCancelAll,
+  ForceOrders,
+  IncomeAsyn,
+  IncomeAsynId,
+  Leverage,
+  MarginType,
+  ModifyMultipleOrders,
+  ModifyOrder,
+  MultiAssetsModeEndpoint,
+  NewAlgoOrder,
+  NewOrder,
+  OpenOrder,
+  OpenOrders,
+  OrderAsyn,
+  OrderAsynId,
+  OrderModifyHistory,
+  PlaceMultipleOrders,
+  PositionMargin,
+  PositionMarginHistory,
+  PositionModeEndpoint,
+  PositionRiskV2,
+  PositionRiskV3,
+  QueryAlgoOrder,
+  QueryOrder,
+  TestOrder,
+  TradeAsyn,
+  TradeAsynId,
+  TradfiPerpsContract,
+  TradingFee,
+  UserTrades,
+):
+  """Binance trading endpoints."""

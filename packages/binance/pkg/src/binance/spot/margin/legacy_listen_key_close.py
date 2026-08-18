@@ -1,0 +1,34 @@
+from typing_extensions import Any
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class LegacyListenKeyClose(RpcEndpoint):
+  """Close a cross margin user data stream (legacy path)."""
+
+  async def legacy_listen_key_close(
+    self,
+    *,
+    listen_key: str,
+    validate: bool | None = None,
+  ) -> dict[str, Any]:
+    """Close a cross margin user data stream (legacy path).
+
+    Args:
+      listen_key: Listen key returned by `legacy_listen_key_create`, identifying the cross margin stream to close.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/margin-api.md)
+    """
+    params: dict = {
+      'listenKey': listen_key,
+    }
+    _Response = dict[str, Any]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'DELETE',
+      '/sapi/v1/userDataStream',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

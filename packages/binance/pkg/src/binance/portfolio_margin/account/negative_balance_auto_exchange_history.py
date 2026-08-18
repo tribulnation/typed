@@ -1,0 +1,45 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp, timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmUserNegativeBalanceAutoExchangeRecord(TypedDict):
+  """Query user negative balance auto exchange record."""
+
+  total: NotRequired[int]
+  """Total."""
+
+
+class NegativeBalanceAutoExchangeHistory(RpcEndpoint):
+  """Query User Negative Balance Auto Exchange Record"""
+
+  async def negative_balance_auto_exchange_history(
+    self,
+    *,
+    start_time: Timestamp,
+    end_time: Timestamp,
+    validate: bool | None = None,
+  ) -> PmUserNegativeBalanceAutoExchangeRecord:
+    """Query user negative balance auto exchange record.
+
+    Args:
+      start_time: Lower bound of the query window, inclusive.
+      end_time: Upper bound of the query window, inclusive.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#query-user-negative-balance-auto-exchange-record)
+    """
+    params: dict = {
+      'startTime': timestamp.dump(start_time),
+      'endTime': timestamp.dump(end_time),
+    }
+    _Response = PmUserNegativeBalanceAutoExchangeRecord
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/portfolio/negative-balance-exchange-record',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

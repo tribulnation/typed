@@ -1,0 +1,77 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMTicker24hr(TypedDict):
+  """24 hour rolling window price change statistics for one symbol."""
+
+  symbol: str
+  """Trading symbol."""
+  pair: str
+  """Underlying pair."""
+  priceChange: str
+  """Absolute price change in the 24h window."""
+  priceChangePercent: str
+  """Percentage price change in the 24h window."""
+  weightedAvgPrice: str
+  """Weighted average price in the 24h window."""
+  lastPrice: str
+  """Latest traded price."""
+  lastQty: str
+  """Quantity of the latest trade."""
+  openPrice: str
+  """Opening price of the 24h window."""
+  highPrice: str
+  """Highest price in the 24h window."""
+  lowPrice: str
+  """Lowest price in the 24h window."""
+  volume: str
+  """Volume in the 24h window, in contracts."""
+  baseVolume: str
+  """Base asset volume in the 24h window."""
+  openTime: int
+  """Start time of the 24h window, in milliseconds since epoch."""
+  closeTime: int
+  """End time of the 24h window, in milliseconds since epoch."""
+  firstId: int
+  """First trade ID in the 24h window."""
+  lastId: int
+  """Last trade ID in the 24h window."""
+  count: int
+  """Total number of trades in the 24h window."""
+
+
+class Ticker24hr(RpcEndpoint):
+  """24 hour rolling window price change statistics, for a symbol, for every symbol of a pair, or for every symbol."""
+
+  async def ticker_24hr(
+    self,
+    *,
+    symbol: str | None = None,
+    pair: str | None = None,
+    validate: bool | None = None,
+  ) -> list[CoinMTicker24hr]:
+    """24 hour rolling window price change statistics, for a symbol, for every symbol of a pair, or for every symbol.
+
+    Args:
+      symbol: Symbol. Mutually exclusive with `pair`. Omit to get every symbol.
+      pair: Underlying pair. Mutually exclusive with `symbol`. Returns every symbol of the pair.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#ticker24hr-price-change-statistics)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if pair is not None:
+      params['pair'] = pair
+    _Response = list[CoinMTicker24hr]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/dapi/v1/ticker/24hr',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

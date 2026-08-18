@@ -1,0 +1,51 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class IsolatedMarginPair(TypedDict):
+  """One isolated margin trading pair."""
+
+  symbol: str
+  """Trading pair symbol, e.g. BTCUSDT."""
+  base: str
+  """Base asset of the pair."""
+  quote: str
+  """Quote asset of the pair."""
+  isMarginTrade: bool
+  """Whether isolated margin trading is enabled for this pair."""
+  isBuyAllowed: bool
+  """Whether buying is currently allowed on isolated margin for this pair."""
+  isSellAllowed: bool
+  """Whether selling is currently allowed on isolated margin for this pair."""
+
+
+class IsolatedAllPairs(RpcEndpoint):
+  """Get All Isolated Margin Symbol"""
+
+  async def isolated_all_pairs(
+    self,
+    *,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> list[IsolatedMarginPair]:
+    """Query this account's isolated margin trading pairs, or a single pair when `symbol` is given.
+
+    Args:
+      symbol: Trading pair to filter by, e.g. BTCUSDT. Omit to return all isolated margin pairs.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/market-data#get-all-isolated-margin-symbol)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    _Response = list[IsolatedMarginPair]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/margin/isolated/allPairs',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

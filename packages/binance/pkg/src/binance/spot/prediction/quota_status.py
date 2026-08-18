@@ -1,0 +1,33 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionQuotaStatus(TypedDict):
+  """This user's daily prediction trading quota."""
+
+  dailyLimit: NotRequired[str]
+  """Daily trading quota limit, in collateral units, as a decimal string."""
+  remainingDailyLimit: NotRequired[str]
+  """Remaining daily trading quota, in collateral units, as a decimal string."""
+
+
+class QuotaStatus(RpcEndpoint):
+  """Query the current user's daily trading quota limit and remaining allowance for prediction markets."""
+
+  async def quota_status(
+    self, *, validate: bool | None = None
+  ) -> PredictionQuotaStatus:
+    """Query the current user's daily trading quota limit and remaining allowance for prediction markets.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/wallet#get-quota-status)
+    """
+    _Response = PredictionQuotaStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/w3w/wallet/prediction/quota/limit/status',
+      validator=_validator,
+      validate=validate,
+    )

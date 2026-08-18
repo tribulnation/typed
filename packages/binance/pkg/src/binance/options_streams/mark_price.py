@@ -1,0 +1,73 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class MarkPriceEvent(TypedDict):
+  """Mark price and Greeks update for one option symbol."""
+
+  s: str
+  """Option symbol."""
+  mp: str
+  """Mark price."""
+  E: Timestamp
+  """Event time."""
+  e: Literal['markPrice']
+  """Event type."""
+  i: str
+  """Index price."""
+  P: str
+  """Estimated settle price, only meaningful in the 30 minutes before settlement starts."""
+  bo: str
+  """Best buy (bid) price."""
+  ao: str
+  """Best sell (ask) price."""
+  bq: str
+  """Best buy (bid) quantity."""
+  aq: str
+  """Best sell (ask) quantity."""
+  b: str
+  """Buy implied volatility."""
+  a: str
+  """Sell implied volatility."""
+  hl: str
+  """Buy maximum price."""
+  ll: str
+  """Sell minimum price."""
+  vo: str
+  """Mark implied volatility."""
+  rf: str
+  """Risk-free interest rate."""
+  d: str
+  """Delta."""
+  t: str
+  """Theta."""
+  g: str
+  """Gamma."""
+  v: str
+  """Vega."""
+
+
+class MarkPrice(StreamEndpoint):
+  """Option mark price"""
+
+  def __call__(
+    self,
+    underlying: str,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[MarkPriceEvent]]:
+    """Option mark price
+
+    Args:
+      underlying: Underlying asset, e.g. `BTCUSDT`.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/ws-streams/market#option-mark-price)
+    """
+    _validator = validator[list[MarkPriceEvent]](list[MarkPriceEvent])
+    return self.subscribe(
+      f'{underlying}@optionMarkPrice', validator=_validator, validate=validate
+    )

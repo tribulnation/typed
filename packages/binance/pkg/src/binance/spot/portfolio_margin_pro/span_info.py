@@ -1,0 +1,61 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProSpanRiskUnitMM(TypedDict):
+  """Maintenance margin for one risk unit."""
+
+  asset: NotRequired[str]
+  """Asset name."""
+  uniMaintainUsd: NotRequired[str]
+  """Uni maintenance margin, unit: USD."""
+
+
+class PmProSpanAccountInfo(TypedDict):
+  """Portfolio Margin Pro SPAN account info."""
+
+  uniMMR: NotRequired[str]
+  """Uni MMR."""
+  accountEquity: NotRequired[str]
+  """Account equity, unit: USD."""
+  actualEquity: NotRequired[str]
+  """Actual equity, unit: USD."""
+  accountMaintMargin: NotRequired[str]
+  """Account maintenance margin, unit: USD."""
+  riskUnitMMList: NotRequired[list[PmProSpanRiskUnitMM]]
+  """Maintenance margin by risk unit."""
+  marginMM: NotRequired[str]
+  """Margin MM."""
+  otherMM: NotRequired[str]
+  """Other MM."""
+  accountStatus: NotRequired[
+    Literal[
+      'NORMAL',
+      'MARGIN_CALL',
+      'SUPPLY_MARGIN',
+      'REDUCE_ONLY',
+      'ACTIVE_LIQUIDATION',
+      'FORCE_LIQUIDATION',
+      'BANKRUPTED',
+    ]
+  ]
+  """Classic Portfolio margin account status."""
+  accountType: NotRequired[Literal['PM_1', 'PM_2', 'PM_3']]
+  """PM_1 for classic PM, PM_2 for PM, PM_3 for PM Pro (SPAN)."""
+
+
+class SpanInfo(RpcEndpoint):
+  """Get Portfolio Margin Pro SPAN Account Info"""
+
+  async def span_info(self, *, validate: bool | None = None) -> PmProSpanAccountInfo:
+    """Get Portfolio Margin Pro SPAN Account Info (for Portfolio Margin Pro SPAN users only).
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account#get-portfolio-margin-pro-span-account-info)
+    """
+    _Response = PmProSpanAccountInfo
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/sapi/v2/portfolio/account', validator=_validator, validate=validate
+    )

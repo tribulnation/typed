@@ -1,0 +1,37 @@
+from typing_extensions import Any
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DeleteApiKey(RpcEndpoint):
+  """Delete an API key of a sub-account, for the master account."""
+
+  async def __call__(
+    self,
+    *,
+    email: str,
+    sub_account_api_key: str,
+    validate: bool | None = None,
+  ) -> dict[str, Any]:
+    """Delete an API key of a sub-account, for the master account.
+
+    Args:
+      email: Sub-account email.
+      sub_account_api_key: The sub-account API key to delete.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/api-management#delete-sub-account-api-key)
+    """
+    params: dict = {
+      'email': email,
+      'subAccountApiKey': sub_account_api_key,
+    }
+    _Response = dict[str, Any]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/sapi/v1/sub-account/subAccountApi',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

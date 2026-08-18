@@ -1,0 +1,53 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMOrderBook(TypedDict):
+  """Order book snapshot for a symbol."""
+
+  lastUpdateId: int
+  """Last update ID."""
+  symbol: str
+  """Trading symbol."""
+  pair: str
+  """Underlying pair."""
+  E: int
+  """Message output time, in milliseconds since epoch."""
+  T: int
+  """Transaction time, in milliseconds since epoch."""
+  bids: list[tuple[str, str]]
+  """Bid price levels, best (highest) bid first."""
+  asks: list[tuple[str, str]]
+  """Ask price levels, best (lowest) ask first."""
+
+
+class Depth(RpcEndpoint):
+  """Order book (bids and asks) for a symbol."""
+
+  async def depth(
+    self,
+    *,
+    symbol: str,
+    limit: Literal[5, 10, 20, 50, 100, 500, 1000] | None = None,
+    validate: bool | None = None,
+  ) -> CoinMOrderBook:
+    """Order book (bids and asks) for a symbol.
+
+    Args:
+      symbol: Trading symbol, e.g. BTCUSD_PERP.
+      limit: Number of price levels to return per side.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#order-book)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if limit is not None:
+      params['limit'] = limit
+    _Response = CoinMOrderBook
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/dapi/v1/depth', params=params, validator=_validator, validate=validate
+    )

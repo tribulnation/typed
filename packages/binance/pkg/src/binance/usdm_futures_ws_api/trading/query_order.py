@@ -1,0 +1,122 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class UsdMWsOrder(TypedDict):
+  """The queried order."""
+
+  avgPrice: str
+  """Average fill price."""
+  clientOrderId: str
+  """Client order id, either caller-supplied or venue-generated."""
+  cumQuote: str
+  """Cumulative quote asset transacted quantity."""
+  executedQty: str
+  """Cumulative filled quantity."""
+  orderId: int
+  """Order id."""
+  origQty: str
+  """Original order quantity."""
+  origType: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP',
+    'STOP_MARKET',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_MARKET',
+    'TRAILING_STOP_MARKET',
+  ]
+  """Order type at creation, unaffected by later amendments."""
+  price: str
+  """Order price."""
+  reduceOnly: bool
+  """Whether the order only reduces an existing position."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  positionSide: Literal['BOTH', 'LONG', 'SHORT']
+  """Position side."""
+  status: str
+  """Order status."""
+  stopPrice: str
+  """Trigger price for a conditional order. Ignored for LIMIT and MARKET orders."""
+  closePosition: bool
+  """Whether the order closes the entire position (Close-All)."""
+  symbol: str
+  """Trading symbol."""
+  time: int
+  """Time the order was created, in milliseconds since epoch."""
+  timeInForce: Literal['GTC', 'IOC', 'FOK', 'GTX', 'GTD', 'RPI']
+  """Time in force."""
+  type: Literal[
+    'LIMIT',
+    'MARKET',
+    'STOP',
+    'STOP_MARKET',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_MARKET',
+    'TRAILING_STOP_MARKET',
+  ]
+  """Order type."""
+  activatePrice: NotRequired[str]
+  """Activation price. Only returned for TRAILING_STOP_MARKET orders."""
+  priceRate: NotRequired[str]
+  """Callback rate. Only returned for TRAILING_STOP_MARKET orders."""
+  updateTime: int
+  """Time the order was last updated, in milliseconds since epoch."""
+  workingType: Literal['MARK_PRICE', 'CONTRACT_PRICE']
+  """Price type used to trigger conditional orders."""
+  priceProtect: bool
+  """Whether price protection is active for a conditional order's trigger."""
+  priceMatch: Literal[
+    'OPPONENT',
+    'OPPONENT_5',
+    'OPPONENT_10',
+    'OPPONENT_20',
+    'QUEUE',
+    'QUEUE_5',
+    'QUEUE_10',
+    'QUEUE_20',
+  ]
+  """Price match mode used to auto-align the order price to the order book."""
+  selfTradePreventionMode: Literal[
+    'NONE', 'EXPIRE_TAKER', 'EXPIRE_BOTH', 'EXPIRE_MAKER'
+  ]
+  """Self-trade prevention mode."""
+  goodTillDate: int
+  """Auto-cancel time for a GTD order, as a Unix epoch in milliseconds."""
+
+
+class QueryOrder(WsRpcEndpoint):
+  """Check an order's status."""
+
+  async def query_order(
+    self,
+    *,
+    symbol: str,
+    order_id: int | None = None,
+    orig_client_order_id: str | None = None,
+    validate: bool | None = None,
+  ) -> UsdMWsOrder:
+    """Check an order's status.
+
+    Args:
+      symbol: Trading symbol.
+      order_id: Id of the order to query. Either orderId or origClientOrderId must be sent. Self-increments for each specific symbol.
+      orig_client_order_id: Client order id of the order to query. Either orderId or origClientOrderId must be sent.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/trade#query-order)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if orig_client_order_id is not None:
+      params['origClientOrderId'] = orig_client_order_id
+    _Response = UsdMWsOrder
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'order.status', params=params, validator=_validator, validate=validate
+    )

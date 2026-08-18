@@ -1,0 +1,45 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class WithdrawAddress(TypedDict):
+  """One saved withdrawal address."""
+
+  address: str
+  """Withdrawal address."""
+  addressTag: str
+  """Memo/tag saved with this address, for coins/networks that use one."""
+  coin: str
+  """Coin this address is saved for."""
+  name: str
+  """Caller-supplied label for this address."""
+  network: str
+  """Network this address is saved for."""
+  origin: str
+  """How this address was added to the address book."""
+  originType: str
+  """Category of `origin`."""
+  whiteStatus: bool
+  """Whether this address is whitelisted."""
+
+
+class AddressList(RpcEndpoint):
+  """Fetch the account's saved withdrawal address book."""
+
+  async def address_list(
+    self, *, validate: bool | None = None
+  ) -> list[WithdrawAddress]:
+    """Fetch the account's saved withdrawal address book.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital#fetch-withdraw-address-list)
+    """
+    _Response = list[WithdrawAddress]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/capital/withdraw/address/list',
+      validator=_validator,
+      validate=validate,
+    )

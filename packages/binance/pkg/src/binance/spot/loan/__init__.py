@@ -1,0 +1,22 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .flexible import Flexible
+from .stable import Stable
+from .vip import Vip
+
+
+class Loan(RpcEndpoint):
+  """Binance loan endpoints."""
+
+  @cached_property
+  def flexible(self) -> Flexible:
+    return Flexible(client=self.client)
+
+  @cached_property
+  def stable(self) -> Stable:
+    return Stable(client=self.client)
+
+  @cached_property
+  def vip(self) -> Vip:
+    return Vip(client=self.client)

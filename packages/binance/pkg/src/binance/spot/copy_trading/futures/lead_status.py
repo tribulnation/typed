@@ -1,0 +1,46 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FuturesLeadTraderStatusData(TypedDict):
+  """Lead trader status detail."""
+
+  isLeadTrader: bool
+  """Whether this account is currently a futures lead trader."""
+  time: Timestamp
+  """Time this status was computed."""
+
+
+class FuturesLeadTraderStatus(TypedDict):
+  """Whether this account is a futures lead trader."""
+
+  code: str
+  """Response code. `"000000"` on success."""
+  message: str
+  """Response message. `"success"` on success."""
+  data: FuturesLeadTraderStatusData
+  success: bool
+  """Whether the request succeeded."""
+
+
+class LeadStatus(RpcEndpoint):
+  """Get Futures Lead Trader Status (TRADE)"""
+
+  async def lead_status(
+    self, *, validate: bool | None = None
+  ) -> FuturesLeadTraderStatus:
+    """Check whether this account is currently a futures Copy Trading lead trader.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/copy_trading/future-copy-trading)
+    """
+    _Response = FuturesLeadTraderStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/copyTrading/futures/userStatus',
+      validator=_validator,
+      validate=validate,
+    )

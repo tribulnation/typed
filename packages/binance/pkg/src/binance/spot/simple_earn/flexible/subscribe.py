@@ -1,0 +1,54 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FlexibleSubscription(TypedDict):
+  """Result of a flexible product subscription."""
+
+  purchaseId: NotRequired[int]
+  """Identifier of the created subscription (purchase)."""
+  success: NotRequired[bool]
+  """Whether the subscription succeeded."""
+
+
+class Subscribe(RpcEndpoint):
+  """Subscribe an amount of an asset into a Simple Earn flexible product."""
+
+  async def __call__(
+    self,
+    *,
+    product_id: str,
+    amount: str,
+    auto_subscribe: bool | None = None,
+    source_account: Literal['SPOT', 'FUND', 'ALL'] | None = None,
+    validate: bool | None = None,
+  ) -> FlexibleSubscription:
+    """Subscribe an amount of an asset into a Simple Earn flexible product.
+
+    Args:
+      product_id: Flexible product identifier to subscribe to, as returned by `flexible.list`.
+      amount: Amount to subscribe, as a decimal string.
+      auto_subscribe: Whether to enable auto-subscription of future rewards into this product. Defaults to `true` when omitted.
+      source_account: Wallet to debit the subscription amount from.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#subscribe-flexible-product)
+    """
+    params: dict = {
+      'productId': product_id,
+      'amount': amount,
+    }
+    if auto_subscribe is not None:
+      params['autoSubscribe'] = auto_subscribe
+    if source_account is not None:
+      params['sourceAccount'] = source_account
+    _Response = FlexibleSubscription
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/simple-earn/flexible/subscribe',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,55 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmAccountInformation(TypedDict):
+  """Query account information."""
+
+  uniMMR: NotRequired[str]
+  """Portfolio margin account maintenance margin rate."""
+  accountEquity: NotRequired[str]
+  """Account equity, in USD value."""
+  actualEquity: NotRequired[str]
+  """Account equity without collateral rate, in USD value."""
+  accountInitialMargin: NotRequired[str]
+  """Account Initial Margin."""
+  accountMaintMargin: NotRequired[str]
+  """Portfolio margin account maintenance margin, unit：USD."""
+  virtualMaxWithdrawAmount: NotRequired[str]
+  """Portfolio margin maximum amount for transfer out in USD."""
+  totalAvailableBalance: NotRequired[str]
+  """Total Available Balance."""
+  totalMarginOpenLoss: NotRequired[str]
+  """in USD margin open order."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+  accountStatus: NotRequired[
+    Literal[
+      'NORMAL',
+      'MARGIN_CALL',
+      'SUPPLY_MARGIN',
+      'REDUCE_ONLY',
+      'ACTIVE_LIQUIDATION',
+      'FORCE_LIQUIDATION',
+      'BANKRUPTED',
+    ]
+  ]
+  """Portfolio margin account status:"NORMAL", "MARGIN_CALL", "SUPPLY_MARGIN", "REDUCE_ONLY", "ACTIVE_LIQUIDATION", "FORCE_LIQUIDATION", "BANKRUPTED"."""
+
+
+class Info(RpcEndpoint):
+  """Account Information"""
+
+  async def info(self, *, validate: bool | None = None) -> PmAccountInformation:
+    """Query account information.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#account-information)
+    """
+    _Response = PmAccountInformation
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/papi/v1/account', validator=_validator, validate=validate
+    )

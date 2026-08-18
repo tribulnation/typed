@@ -1,0 +1,37 @@
+from .cancel_all_orders import CancelAllOrders
+from .cancel_order import CancelOrder
+from .convert_status import ConvertStatus
+from .disclaimer import Disclaimer
+from .exchange_info import ExchangeInfo
+from .listen_key import ListenKey
+from .mint import Mint
+from .open_orders import OpenOrders
+from .order_detail import OrderDetail
+from .order_history import OrderHistory
+from .place_order import PlaceOrder
+from .quote import Quote
+from .redeem import Redeem
+from .tokenized_assets import TokenizedAssets
+from .tokenized_history import TokenizedHistory
+from .trade_history import TradeHistory
+
+
+class Stocks(
+  CancelAllOrders,
+  CancelOrder,
+  ConvertStatus,
+  Disclaimer,
+  ExchangeInfo,
+  ListenKey,
+  Mint,
+  OpenOrders,
+  OrderDetail,
+  OrderHistory,
+  PlaceOrder,
+  Quote,
+  Redeem,
+  TokenizedAssets,
+  TokenizedHistory,
+  TradeHistory,
+):
+  """Binance stocks endpoints."""

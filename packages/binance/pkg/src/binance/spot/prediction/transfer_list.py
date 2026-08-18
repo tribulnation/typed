@@ -1,0 +1,94 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionTransferHistoryRow(TypedDict):
+  """One prediction wallet transfer."""
+
+  transferId: NotRequired[str]
+  """Transfer ID."""
+  direction: NotRequired[Literal['INBOUND', 'OUTBOUND']]
+  """Transfer direction."""
+  status: NotRequired[str]
+  """Transfer status."""
+  walletAddress: NotRequired[str]
+  """User's prediction wallet address."""
+  fromToken: NotRequired[str]
+  """Source token symbol."""
+  fromTokenAmount: NotRequired[str]
+  """Source amount, as a decimal string."""
+  toToken: NotRequired[str]
+  """Destination token symbol."""
+  toTokenAmount: NotRequired[str]
+  """Destination amount, as a decimal string."""
+  errorCode: NotRequired[str | None]
+  """Error code, or null if the transfer had no error."""
+  errorMessage: NotRequired[str | None]
+  """Error message, or null if the transfer had no error."""
+  createTime: NotRequired[str]
+  """Time this transfer was created, as an ISO 8601 timestamp with timezone offset (e.g. `2026-05-25T04:00:00.000+00:00`)."""
+  updateTime: NotRequired[str]
+  """Time this transfer was last updated, as an ISO 8601 timestamp with timezone offset."""
+  completeAt: NotRequired[str]
+  """Time this transfer completed, as an ISO 8601 timestamp with timezone offset."""
+
+
+class PredictionTransferListResult(TypedDict):
+  """This user's prediction wallet transfer history."""
+
+  transfers: NotRequired[list[PredictionTransferHistoryRow]]
+  """Transfers matching the filter."""
+
+
+class TransferList(RpcEndpoint):
+  """Get the authenticated user's prediction wallet transfer history within a date range."""
+
+  async def transfer_list(
+    self,
+    *,
+    wallet_address: str,
+    start_date: str,
+    end_date: str,
+    token_symbol: str | None = None,
+    direction: Literal['INBOUND', 'OUTBOUND'] | None = None,
+    offset: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> PredictionTransferListResult:
+    """Get the authenticated user's prediction wallet transfer history within a date range.
+
+    Args:
+      wallet_address: User's prediction wallet address.
+      start_date: Start date. Format `yyyy-MM-dd`. Must be <= `endDate`.
+      end_date: End date. Format `yyyy-MM-dd`. Must be >= `startDate`.
+      token_symbol: Filter by token symbol (e.g. `USDT`).
+      direction: Filter by transfer direction.
+      offset: Pagination offset. Default `0`.
+      limit: Page size. Default `20`, range 1-100.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/transfer#query-transfer-list)
+    """
+    params: dict = {
+      'walletAddress': wallet_address,
+      'startDate': start_date,
+      'endDate': end_date,
+    }
+    if token_symbol is not None:
+      params['tokenSymbol'] = token_symbol
+    if direction is not None:
+      params['direction'] = direction
+    if offset is not None:
+      params['offset'] = offset
+    if limit is not None:
+      params['limit'] = limit
+    _Response = PredictionTransferListResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/w3w/wallet/prediction/transfer/list',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

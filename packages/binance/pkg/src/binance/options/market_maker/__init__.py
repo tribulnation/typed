@@ -1,0 +1,17 @@
+from .countdown_cancel_all_get import CountdownCancelAllGet
+from .countdown_cancel_all_heartbeat import CountdownCancelAllHeartbeat
+from .countdown_cancel_all_set import CountdownCancelAllSet
+from .mmp_get import MmpGet
+from .mmp_reset import MmpReset
+from .mmp_set import MmpSet
+
+
+class MarketMaker(
+  CountdownCancelAllGet,
+  CountdownCancelAllHeartbeat,
+  CountdownCancelAllSet,
+  MmpGet,
+  MmpReset,
+  MmpSet,
+):
+  """Binance market_maker endpoints."""

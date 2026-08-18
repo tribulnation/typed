@@ -1,0 +1,46 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMDownloadId(TypedDict):
+  """Download id for an asynchronous history export."""
+
+  avgCostTimestampOfLast30d: int
+  """Average time, in milliseconds, taken to prepare a download over the past 30 days. A duration, not a point in time."""
+  downloadId: str
+  """Download task id, usable with the matching download-link endpoint to retrieve the export's URL."""
+
+
+class OrderHistoryDownloadId(RpcEndpoint):
+  """Start an asynchronous export of this account's futures order history for the given time window and get back a download id. The window between startTime and endTime cannot exceed 1 year."""
+
+  async def order_history_download_id(
+    self,
+    *,
+    start_time: int,
+    end_time: int,
+    validate: bool | None = None,
+  ) -> CoinMDownloadId:
+    """Start an asynchronous export of this account's futures order history for the given time window and get back a download id. The window between startTime and endTime cannot exceed 1 year.
+
+    Args:
+      start_time: Timestamp in ms.
+      end_time: Timestamp in ms.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/account#get-download-id-for-futures-order-history)
+    """
+    params: dict = {
+      'startTime': start_time,
+      'endTime': end_time,
+    }
+    _Response = CoinMDownloadId
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/dapi/v1/order/asyn',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

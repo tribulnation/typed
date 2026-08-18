@@ -1,0 +1,132 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarkupTradeAggregation(TypedDict):
+  """One day's aggregated markup commission income for a sub-account under a fee group."""
+
+  date: NotRequired[int]
+  """Millisecond epoch date of the aggregation bucket."""
+  subUserId: NotRequired[int]
+  """Sub-user ID."""
+  groupCode: NotRequired[str]
+  """Fee group code."""
+  groupName: NotRequired[str]
+  """Fee group name."""
+  totalVolumeUsdt: NotRequired[str]
+  """Total traded volume for the bucket, in USDT, as a decimal string."""
+  markupAsset: NotRequired[str]
+  """Asset the markup income is denominated in."""
+  markupMakerIncome: NotRequired[str]
+  """Maker markup income for the bucket, as a decimal string."""
+  markupTakerIncome: NotRequired[str]
+  """Taker markup income for the bucket, as a decimal string."""
+  status: NotRequired[str]
+  """Distribution status of the markup income for this bucket."""
+
+
+class MarkupTradeAggregationPage(TypedDict):
+  """One page of aggregated markup trade commission records."""
+
+  total: NotRequired[int]
+  """Total number of matching aggregation records."""
+  rows: NotRequired[list[MarkupTradeAggregation]]
+  """Aggregation records on this page."""
+
+
+class QueryMarkupTradeCommissionAggregationReportingsResponse(TypedDict):
+  """Markup trade aggregation reporting response frame. This product line wraps its business data in {code,message,data} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[str]
+  """Response code. "000000" indicates success."""
+  message: NotRequired[str]
+  """Response message."""
+  data: NotRequired[MarkupTradeAggregationPage]
+
+
+class MarkupTradeAggregations(RpcEndpoint):
+  """Query aggregated markup fee history records by date, sub-account, and fee group."""
+
+  async def markup_trade_aggregations(
+    self,
+    *,
+    group_code: str | None = None,
+    sub_user_id: int | None = None,
+    start_time: int,
+    end_time: int,
+    page_index: int,
+    page_size: int,
+    validate: bool | None = None,
+  ) -> QueryMarkupTradeCommissionAggregationReportingsResponse:
+    """Query aggregated markup fee history records by date, sub-account, and fee group.
+
+    Args:
+      group_code: Fee group code filter.
+      sub_user_id: Sub-user ID filter.
+      start_time: Start of search window (milliseconds).
+      end_time: End of search window (milliseconds).
+      page_index: Page index, starting from 1.
+      page_size: Page size (1-100).
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-vip-caas/api/rest-api/reportings#query-markup-trade-commission-aggregation-reportings)
+    """
+    params: dict = {
+      'startTime': start_time,
+      'endTime': end_time,
+      'pageIndex': page_index,
+      'pageSize': page_size,
+    }
+    if group_code is not None:
+      params['groupCode'] = group_code
+    if sub_user_id is not None:
+      params['subUserId'] = sub_user_id
+    _Response = QueryMarkupTradeCommissionAggregationReportingsResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/caas/commission/markup-trade-aggregations',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def markup_trade_aggregations_paged(
+    self,
+    *,
+    group_code: str | None = None,
+    sub_user_id: int | None = None,
+    start_time: int,
+    end_time: int,
+    page_size: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[QueryMarkupTradeCommissionAggregationReportingsResponse]:
+    """Yield successive pages of `markup_trade_aggregations`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the `data.total`
+    items the response reports, or after `max_pages` pages when one is given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.markup_trade_aggregations(
+        group_code=group_code,
+        sub_user_id=sub_user_id,
+        start_time=start_time,
+        end_time=end_time,
+        page_size=page_size,
+        page_index=page_index,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total_0 = response.get('data') if response is not None else None
+      total = total_0.get('total') if total_0 is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * page_size >= total:
+        break
+      page_index += 1

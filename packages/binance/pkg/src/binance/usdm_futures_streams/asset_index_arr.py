@@ -1,0 +1,51 @@
+from typing_extensions import TypedDict
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class AssetIndexEvent(TypedDict):
+  """Asset index price for one asset."""
+
+  e: str
+  """Event type."""
+  E: Timestamp
+  """Event time."""
+  s: str
+  """Asset index symbol."""
+  i: str
+  """Index price."""
+  b: str
+  """Bid buffer."""
+  a: str
+  """Ask buffer."""
+  B: str
+  """Bid rate."""
+  A: str
+  """Ask rate."""
+  q: str
+  """Auto exchange bid buffer."""
+  g: str
+  """Auto exchange ask buffer."""
+  Q: str
+  """Auto exchange bid rate."""
+  G: str
+  """Auto exchange ask rate."""
+
+
+class AssetIndexArr(StreamEndpoint):
+  """Multi-assets mode asset index stream (all assets)"""
+
+  def __call__(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[AssetIndexEvent]]:
+    """Multi-assets mode asset index stream (all assets)
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-streams/market#asset-index)
+    """
+    _validator = validator[list[AssetIndexEvent]](list[AssetIndexEvent])
+    return self.subscribe('!assetIndex@arr', validator=_validator, validate=validate)

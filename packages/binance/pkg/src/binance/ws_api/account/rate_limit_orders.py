@@ -1,0 +1,38 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class OrderRateLimit(TypedDict):
+  """This account's unfilled order count and limit for one rate-limit interval."""
+
+  rateLimitType: Literal['REQUEST_WEIGHT', 'ORDERS', 'RAW_REQUESTS']
+  """Type of rate limit this entry describes."""
+  interval: Literal['SECOND', 'MINUTE', 'DAY']
+  """Time unit of the rate-limit interval."""
+  intervalNum: int
+  """Number of `interval` units in this rate-limit window."""
+  limit: int
+  """Maximum unfilled orders allowed in this window."""
+  count: int
+  """Unfilled orders placed by this account in the current window."""
+
+
+class RateLimitOrders(WsRpcEndpoint):
+  """Query unfilled order count"""
+
+  async def rate_limit_orders(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[OrderRateLimit]:
+    """Query your current unfilled order count for all configured order-rate-limit intervals.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md#query-unfilled-order-count)
+    """
+    _Response = list[OrderRateLimit]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'account.rateLimits.orders', validator=_validator, validate=validate
+    )

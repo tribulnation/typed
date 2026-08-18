@@ -1,0 +1,12 @@
+from .cancel_algo_order import CancelAlgoOrder
+from .cancel_order import CancelOrder
+from .modify_order import ModifyOrder
+from .new_algo_order import NewAlgoOrder
+from .new_order import NewOrder
+from .query_order import QueryOrder
+
+
+class Trading(
+  CancelAlgoOrder, CancelOrder, ModifyOrder, NewAlgoOrder, NewOrder, QueryOrder
+):
+  """Binance trading endpoints."""

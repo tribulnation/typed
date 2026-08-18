@@ -1,0 +1,21 @@
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from binance.types import MiniTickerEvent
+from binance.core.endpoint.stream import StreamEndpoint
+
+
+class MiniTickerAll(StreamEndpoint):
+  """All market mini tickers stream"""
+
+  def __call__(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[MiniTickerEvent]]:
+    """All market mini tickers stream
+
+    References:
+      - [Official docs](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#all-market-mini-tickers-stream)
+    """
+    _validator = validator[list[MiniTickerEvent]](list[MiniTickerEvent])
+    return self.subscribe('!miniTicker@arr', validator=_validator, validate=validate)

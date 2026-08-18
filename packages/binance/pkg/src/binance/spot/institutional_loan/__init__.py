@@ -1,0 +1,37 @@
+from .active_risk_units import ActiveRiskUnits
+from .add_collateral_accounts import AddCollateralAccounts
+from .borrow import Borrow
+from .borrow_repay_records import BorrowRepayRecords
+from .close_risk_unit import CloseRiskUnit
+from .closed_risk_units import ClosedRiskUnits
+from .force_liquidation_records import ForceLiquidationRecords
+from .force_liquidation_transfer_records import ForceLiquidationTransferRecords
+from .interest_history import InterestHistory
+from .interest_rebate_balance import InterestRebateBalanceEndpoint
+from .interest_rebate_balance_records import InterestRebateBalanceRecords
+from .max_borrowable import MaxBorrowableEndpoint
+from .repay import Repay
+from .risk_unit import RiskUnit
+from .risk_unit_ltv import RiskUnitLtv
+from .transfer_out import TransferOut
+
+
+class InstitutionalLoan(
+  ActiveRiskUnits,
+  AddCollateralAccounts,
+  Borrow,
+  BorrowRepayRecords,
+  CloseRiskUnit,
+  ClosedRiskUnits,
+  ForceLiquidationRecords,
+  ForceLiquidationTransferRecords,
+  InterestHistory,
+  InterestRebateBalanceEndpoint,
+  InterestRebateBalanceRecords,
+  MaxBorrowableEndpoint,
+  Repay,
+  RiskUnit,
+  RiskUnitLtv,
+  TransferOut,
+):
+  """Binance institutional_loan endpoints."""

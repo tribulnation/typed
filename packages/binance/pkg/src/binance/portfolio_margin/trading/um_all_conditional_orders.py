@@ -1,0 +1,117 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp, timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmAllUmConditionalOrders(TypedDict):
+  """PmAllUmConditionalOrders."""
+
+  newClientStrategyId: NotRequired[str]
+  """New Client Strategy ID."""
+  strategyId: NotRequired[int]
+  """Strategy ID."""
+  strategyStatus: NotRequired[str]
+  """Strategy Status."""
+  strategyType: NotRequired[
+    Literal[
+      'STOP', 'STOP_MARKET', 'TAKE_PROFIT', 'TAKE_PROFIT_MARKET', 'TRAILING_STOP_MARKET'
+    ]
+  ]
+  """Strategy Type."""
+  origQty: NotRequired[str]
+  """Orig Qty."""
+  price: NotRequired[str]
+  """Price."""
+  reduceOnly: NotRequired[bool]
+  """Reduce Only."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT']]
+  """BOTH means that it is the position of One-way Mode."""
+  stopPrice: NotRequired[str]
+  """please ignore when order type is TRAILING_STOP_MARKET."""
+  symbol: NotRequired[str]
+  """Trade symbol, if existing."""
+  orderId: NotRequired[int]
+  """Normal orderID after trigger if appliable, only have when the strategy is triggered."""
+  status: NotRequired[str]
+  """Normal order status after trigger if appliable, only have when the strategy is triggered."""
+  bookTime: NotRequired[Timestamp]
+  """order time."""
+  updateTime: NotRequired[Timestamp]
+  """last update time."""
+  triggerTime: NotRequired[Timestamp]
+  """Trigger Time."""
+  timeInForce: NotRequired[str]
+  """Time In Force."""
+  type: NotRequired[str]
+  """Normal order type after trigger if appliable."""
+  activatePrice: NotRequired[str]
+  """activation price, only return with TRAILING_STOP_MARKET order."""
+  priceRate: NotRequired[str]
+  """callback rate, only return with TRAILING_STOP_MARKET order."""
+  selfTradePreventionMode: NotRequired[str]
+  """self trading preventation mode."""
+  goodTillDate: NotRequired[int]
+  """order pre-set auot cancel time for TIF GTD order."""
+  priceMatch: NotRequired[
+    Literal[
+      'OPPONENT',
+      'OPPONENT_5',
+      'OPPONENT_10',
+      'OPPONENT_20',
+      'QUEUE',
+      'QUEUE_5',
+      'QUEUE_10',
+      'QUEUE_20',
+    ]
+  ]
+  """Price Match."""
+
+
+class UmAllConditionalOrders(RpcEndpoint):
+  """Query All UM Conditional Orders"""
+
+  async def um_all_conditional_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    strategy_id: int | None = None,
+    start_time: Timestamp | None = None,
+    end_time: Timestamp | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[PmAllUmConditionalOrders]:
+    """Query All UM Conditional Orders Weight: - 1 for a single `symbol` - 40 when `symbol` is omitted Security Type: USER_DATA Notes: - These orders will not be found: - order strategyStatus is `CANCELED` or `EXPIRED`, **AND** - order has NO filled trade, **AND** - created time + 7 days * The query time period must be less than 7 days( default as the recent 7 days). Args: symbol (Optional[str] = None): strategy_id (Optional[int] = None): start_time (Optional[int] = None): Timestamp in ms to get funding from INCLUSIVE. end_time (Optional[int] = None): Timestamp in ms to get funding until INCLUSIVE. limit (Optional[int] = None): Number of results returned. recv_window (Optional[int] = None): Returns: ApiResponse[QueryAllUmConditionalOrdersResponse] Raises: RequiredError: If a required parameter is missing.
+
+    Args:
+      symbol: Trading pair symbol.
+      strategy_id: Conditional order strategy id to act on.
+      start_time: Timestamp in ms to get funding from INCLUSIVE.
+      end_time: Timestamp in ms to get funding until INCLUSIVE.
+      limit: Number of results returned.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade#query-all-um-conditional-orders)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if strategy_id is not None:
+      params['strategyId'] = strategy_id
+    if start_time is not None:
+      params['startTime'] = timestamp.dump(start_time)
+    if end_time is not None:
+      params['endTime'] = timestamp.dump(end_time)
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[PmAllUmConditionalOrders]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/papi/v1/um/conditional/allOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

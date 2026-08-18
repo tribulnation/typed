@@ -1,0 +1,41 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmProChangeAutoRepayFuturesStatus(TypedDict):
+  """Change auto-repay-futures status."""
+
+  msg: NotRequired[str]
+  """Result message."""
+
+
+class SetAutoRepayFuturesStatus(RpcEndpoint):
+  """Change Auto-repay-futures Status"""
+
+  async def set_auto_repay_futures_status(
+    self,
+    *,
+    auto_repay: Literal['true', 'false'],
+    validate: bool | None = None,
+  ) -> PmProChangeAutoRepayFuturesStatus:
+    """Change Auto-repay-futures Status.
+
+    Args:
+      auto_repay: `false` for turn off the auto-repay futures negative balance function.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account#change-auto-repay-futures-status)
+    """
+    params: dict = {
+      'autoRepay': auto_repay,
+    }
+    _Response = PmProChangeAutoRepayFuturesStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/portfolio/repay-futures-switch',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

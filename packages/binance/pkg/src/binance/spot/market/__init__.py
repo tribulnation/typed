@@ -1,0 +1,37 @@
+from .agg_trades import AggTrades
+from .avg_price import AvgPrice
+from .book_ticker import BookTickerEndpoint
+from .exchange_info import ExchangeInfoEndpoint
+from .historical_trades import HistoricalTrades
+from .klines import Klines
+from .order_book import OrderBookEndpoint
+from .ping import Ping
+from .recent_trades import RecentTrades
+from .reference_price import ReferencePriceEndpoint
+from .server_time import ServerTimeEndpoint
+from .ticker_24hr import Ticker24hr
+from .ticker_price import TickerPrice
+from .ticker_trading_day import TickerTradingDay
+from .ticker_window import TickerWindow
+from .ui_klines import UiKlines
+
+
+class Market(
+  AggTrades,
+  AvgPrice,
+  BookTickerEndpoint,
+  ExchangeInfoEndpoint,
+  HistoricalTrades,
+  Klines,
+  OrderBookEndpoint,
+  Ping,
+  RecentTrades,
+  ReferencePriceEndpoint,
+  ServerTimeEndpoint,
+  Ticker24hr,
+  TickerPrice,
+  TickerTradingDay,
+  TickerWindow,
+  UiKlines,
+):
+  """Binance market endpoints."""

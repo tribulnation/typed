@@ -1,0 +1,107 @@
+from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class FeeGroupMember(TypedDict):
+  """A sub-account assigned to a fee group, with its effective commission markup rates."""
+
+  subUserId: NotRequired[int]
+  """Sub-user ID."""
+  groupCode: NotRequired[str]
+  """Fee group code."""
+  groupName: NotRequired[str]
+  """Fee group name."""
+  makerMarkup: NotRequired[str]
+  """Maker markup rate, as a decimal string."""
+  takerMarkup: NotRequired[str]
+  """Taker markup rate, as a decimal string."""
+
+
+class FeeGroupMemberPage(TypedDict):
+  """One page of a fee group's assigned sub-accounts."""
+
+  total: NotRequired[int]
+  """Total number of matching sub-accounts."""
+  rows: NotRequired[list[FeeGroupMember]]
+  """Sub-accounts on this page."""
+
+
+class QueryFeeGroupMembersResponse(TypedDict):
+  """Fee group member listing response frame. This product line wraps its business data in {code,message,data} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[str]
+  """Response code. "000000" indicates success."""
+  message: NotRequired[str]
+  """Response message."""
+  data: NotRequired[FeeGroupMemberPage]
+
+
+class FeeGroupMembers(RpcEndpoint):
+  """Query sub-accounts assigned to a commission fee group, with pagination."""
+
+  async def fee_group_members(
+    self,
+    *,
+    group_code: str,
+    page_index: int,
+    page_size: int,
+    validate: bool | None = None,
+  ) -> QueryFeeGroupMembersResponse:
+    """Query sub-accounts assigned to a commission fee group, with pagination.
+
+    Args:
+      group_code: Fee group code.
+      page_index: Page index, starting from 1.
+      page_size: Page size (1-100).
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-vip-caas/api/rest-api/fee-groups#query-fee-group-members)
+    """
+    params: dict = {
+      'groupCode': group_code,
+      'pageIndex': page_index,
+      'pageSize': page_size,
+    }
+    _Response = QueryFeeGroupMembersResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/caas/commission/fee-groups/members',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def fee_group_members_paged(
+    self,
+    *,
+    group_code: str,
+    page_size: int,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[QueryFeeGroupMembersResponse]:
+    """Yield successive pages of `fee_group_members`.
+
+    Requests `pageIndex` from 1 upwards and stops once it has covered the `data.total`
+    items the response reports, or after `max_pages` pages when one is given.
+    """
+    page_index = 1
+    pages = 0
+    while True:
+      response = await self.fee_group_members(
+        group_code=group_code,
+        page_size=page_size,
+        page_index=page_index,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total_0 = response.get('data') if response is not None else None
+      total = total_0.get('total') if total_0 is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * page_size >= total:
+        break
+      page_index += 1

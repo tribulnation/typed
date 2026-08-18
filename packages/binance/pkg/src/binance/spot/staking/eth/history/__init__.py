@@ -1,0 +1,8 @@
+from .rate_history import RateHistory
+from .redemption_history import RedemptionHistory
+from .staking_history import StakingHistory
+from .wbeth_rewards_history import WbethRewardsHistory
+
+
+class History(RateHistory, RedemptionHistory, StakingHistory, WbethRewardsHistory):
+  """Binance history endpoints."""

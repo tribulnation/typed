@@ -1,0 +1,35 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class UnclaimedReward(TypedDict):
+  """Unclaimed reward balance for one asset."""
+
+  amount: NotRequired[str]
+  """Unclaimed reward amount, as a decimal string."""
+  rewardsAsset: NotRequired[str]
+  """Asset this unclaimed reward is denominated in."""
+
+
+class UnclaimedRewards(RpcEndpoint):
+  """Query this account's unclaimed Boost APR airdrop rewards, by asset."""
+
+  async def unclaimed_rewards(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> list[UnclaimedReward]:
+    """Query this account's unclaimed Boost APR airdrop rewards, by asset.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/sol-staking#get-unclaimed-rewards)
+    """
+    _Response = list[UnclaimedReward]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/sol-staking/sol/history/unclaimedRewards',
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,13 @@
+from .order_accept import OrderAccept
+from .order_cancel import OrderCancel
+from .order_details import OrderDetails
+from .order_extend import OrderExtend
+from .order_new import OrderNew
+from .orders_query import OrdersQuery
+from .user_trades import UserTrades
+
+
+class BlockTrade(
+  OrderAccept, OrderCancel, OrderDetails, OrderExtend, OrderNew, OrdersQuery, UserTrades
+):
+  """Binance block_trade endpoints."""

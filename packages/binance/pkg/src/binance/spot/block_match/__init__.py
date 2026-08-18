@@ -1,0 +1,13 @@
+from .open_orders import OpenOrders
+from .order_cancel import OrderCancel
+from .order_extend import OrderExtend
+from .order_history import OrderHistory
+from .order_place import OrderPlace
+from .order_take import OrderTake
+from .symbols import Symbols
+
+
+class BlockMatch(
+  OpenOrders, OrderCancel, OrderExtend, OrderHistory, OrderPlace, OrderTake, Symbols
+):
+  """Binance block_match endpoints."""

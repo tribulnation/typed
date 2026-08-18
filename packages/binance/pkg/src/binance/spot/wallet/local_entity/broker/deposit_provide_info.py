@@ -1,0 +1,74 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerDepositQuestionnaireSubmission(TypedDict):
+  """Result of submitting a broker travel rule deposit questionnaire."""
+
+  trId: NotRequired[int]
+  """Travel rule record id."""
+  accepted: NotRequired[bool]
+  """Whether the submitted questionnaire was accepted."""
+  info: NotRequired[str]
+  """Status message, e.g. "Deposit questionnaire accepted.\""""
+
+
+class DepositProvideInfo(RpcEndpoint):
+  """Submit a travel rule questionnaire for a pending sub-account deposit, for brokers of local entities that require travel rule. Only applies to deposits from unhosted wallets or VASPs not yet onboarded with GTR (Global Travel Rule)."""
+
+  async def deposit_provide_info(
+    self,
+    *,
+    sub_account_id: str,
+    deposit_id: int,
+    questionnaire: str,
+    beneficiary_pii: str,
+    network: str | None = None,
+    coin: str | None = None,
+    amount: float | None = None,
+    address: str | None = None,
+    address_tag: str | None = None,
+    validate: bool | None = None,
+  ) -> BrokerDepositQuestionnaireSubmission:
+    """Submit a travel rule questionnaire for a pending sub-account deposit, for brokers of local entities that require travel rule. Only applies to deposits from unhosted wallets or VASPs not yet onboarded with GTR (Global Travel Rule).
+
+    Args:
+      sub_account_id: External user id of the sub-account the deposit belongs to.
+      deposit_id: Wallet deposit id this questionnaire is for.
+      questionnaire: JSON-formatted questionnaire answers, URL-encoded. Contents differ per local entity; see the entity's own Deposit Questionnaire Content page.
+      beneficiary_pii: JSON-formatted beneficiary personally-identifiable-information, per the StandardPii format Binance's docs define for this product.
+      network: Deposit network.
+      coin: Deposit coin.
+      amount: Deposit amount.
+      address: Deposit address.
+      address_tag: Secondary address identifier, for coins like XRP, XMR, etc.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule#submit-deposit-questionnaire)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'depositId': deposit_id,
+      'questionnaire': questionnaire,
+      'beneficiaryPii': beneficiary_pii,
+    }
+    if network is not None:
+      params['network'] = network
+    if coin is not None:
+      params['coin'] = coin
+    if amount is not None:
+      params['amount'] = amount
+    if address is not None:
+      params['address'] = address
+    if address_tag is not None:
+      params['addressTag'] = address_tag
+    _Response = BrokerDepositQuestionnaireSubmission
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'PUT',
+      '/sapi/v1/localentity/broker/deposit/provide-info',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

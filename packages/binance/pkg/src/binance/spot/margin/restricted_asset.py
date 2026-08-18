@@ -1,0 +1,32 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginRestrictedAssets(TypedDict):
+  """Margin-restricted assets, by restriction type."""
+
+  openLongRestrictedAsset: list[str]
+  """Assets currently blocked from opening new long positions."""
+  maxCollateralExceededAsset: list[str]
+  """Assets that have exceeded the maximum allowed collateral limit."""
+
+
+class RestrictedAsset(RpcEndpoint):
+  """Get Margin Restricted Assets"""
+
+  async def restricted_asset(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> MarginRestrictedAssets:
+    """Query margin-restricted assets -- assets currently blocked from opening new long positions, and assets that have exceeded the maximum collateral limit.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/market-data#get-margin-restricted-assets)
+    """
+    _Response = MarginRestrictedAssets
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET', '/sapi/v1/margin/restricted-asset', validator=_validator, validate=validate
+    )

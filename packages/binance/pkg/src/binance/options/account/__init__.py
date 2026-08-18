@@ -1,0 +1,11 @@
+from .bill import Bill
+from .listen_key_close import ListenKeyClose
+from .listen_key_create import ListenKeyCreate
+from .listen_key_keepalive import ListenKeyKeepalive
+from .margin_account import MarginAccountEndpoint
+
+
+class Account(
+  Bill, ListenKeyClose, ListenKeyCreate, ListenKeyKeepalive, MarginAccountEndpoint
+):
+  """Binance account endpoints."""

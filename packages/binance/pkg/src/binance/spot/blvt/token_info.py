@@ -1,0 +1,81 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BlvtBasketPosition(TypedDict):
+  """One futures position backing a leveraged token's basket."""
+
+  symbol: str
+  """Futures symbol of the position."""
+  amount: str
+  """Position amount (signed: negative for short)."""
+  notionalValue: str
+  """Notional value of the position."""
+
+
+class BlvtTokenInfo(TypedDict):
+  """Leveraged token information: composition, NAV, leverage, fees, and limits."""
+
+  tokenName: str
+  """Leveraged token name, e.g. `BTCDOWN`."""
+  description: str
+  """Human-readable token description, e.g. `3X Short Bitcoin Token`."""
+  underlying: str
+  """Underlying asset the token tracks."""
+  tokenIssued: str
+  """Total units of the token currently issued."""
+  basket: str
+  """Human-readable summary of the basket's net futures position."""
+  currentBaskets: list[BlvtBasketPosition]
+  """Futures positions making up the basket."""
+  nav: str
+  """Net Asset Value per token unit, in USDT."""
+  realLeverage: str
+  """Actual leverage the basket is currently running (signed)."""
+  fundingRate: str
+  """Funding rate currently applied to the basket's futures positions."""
+  dailyManagementFee: str
+  """Daily management fee rate."""
+  purchaseFeePct: str
+  """Subscription fee rate."""
+  dailyPurchaseLimit: str
+  """Maximum subscribable amount per day, in USDT."""
+  redeemFeePct: str
+  """Redemption fee rate."""
+  dailyRedeemLimit: str
+  """Maximum redeemable amount per day, in USDT."""
+  timestamp: Timestamp
+  """Time this snapshot was computed."""
+
+
+class TokenInfo(RpcEndpoint):
+  """BLVT Info (MARKET_DATA)"""
+
+  async def token_info(
+    self,
+    *,
+    token_name: str | None = None,
+    validate: bool | None = None,
+  ) -> list[BlvtTokenInfo]:
+    """Get information about Binance Leveraged Tokens (BLVT): composition, NAV, real leverage, funding rate, fees, and daily limits.
+
+    Args:
+      token_name: Leveraged token name, e.g. `BTCDOWN`, `BTCUP`.
+
+    References:
+      - [Official docs](https://github.com/binance/binance-api-swagger)
+    """
+    params = {}
+    if token_name is not None:
+      params['tokenName'] = token_name
+    _Response = list[BlvtTokenInfo]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/sapi/v1/blvt/tokenInfo',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

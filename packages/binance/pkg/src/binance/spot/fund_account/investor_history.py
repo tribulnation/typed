@@ -1,0 +1,59 @@
+from typing_extensions import Any, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class InvestorSubscriptionEntry(TypedDict):
+  """One subscription entry."""
+
+  date: NotRequired[int]
+  """Millisecond epoch time of the subscription."""
+  subscriptionAmt: NotRequired[float]
+  """Subscribed amount, in `fundCurrency`."""
+
+
+class InvestorOperationHistory(TypedDict):
+  """One investor's subscription and redemption history under a fund."""
+
+  fundAccountId: NotRequired[int]
+  """Fund account ID."""
+  fundName: NotRequired[str]
+  """Fund name."""
+  investorSubscriptions: NotRequired[list[InvestorSubscriptionEntry]]
+  """This investor's subscription (buy-in) entries into the fund."""
+  investorRedemptions: NotRequired[list[dict[str, Any]]]
+  """This investor's redemption entries from the fund."""
+
+
+class InvestorHistory(RpcEndpoint):
+  """Query subscription and redemption history for a given investor under a fund."""
+
+  async def investor_history(
+    self,
+    *,
+    fund_account_id: int,
+    investor_uid: int,
+    validate: bool | None = None,
+  ) -> InvestorOperationHistory:
+    """Query subscription and redemption history for a given investor under a fund.
+
+    Args:
+      fund_account_id: Fund Account ID.
+      investor_uid: Investor account ID.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-fund-account/api/rest-api/~#query-investor-operation-history)
+    """
+    params: dict = {
+      'fundAccountId': fund_account_id,
+      'investorUid': investor_uid,
+    }
+    _Response = InvestorOperationHistory
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/vip/fund-info/fund-investor-his-info',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

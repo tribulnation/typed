@@ -1,0 +1,46 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerSubAccountBnbBurnSpot(TypedDict):
+  """Updated spot/margin BNB Burn setting."""
+
+  subAccountId: int
+  """Sub-account identifier."""
+  spotBNBBurn: bool
+  """Whether spot/margin trading fees are now paid in BNB."""
+
+
+class EnableBnbBurnSpotMargin(RpcEndpoint):
+  """Enable Or Disable BNB Burn for Sub Account SPOT and MARGIN"""
+
+  async def enable_bnb_burn_spot_margin(
+    self,
+    *,
+    sub_account_id: str,
+    spot_bnbburn: bool,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountBnbBurnSpot:
+    """Toggle whether a sub-account pays spot and margin trading fees in BNB.
+
+    Args:
+      sub_account_id: Sub-account identifier.
+      spot_bnbburn: Whether spot and margin trading fees should be paid in BNB.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'subAccountId': sub_account_id,
+      'spotBNBBurn': spot_bnbburn,
+    }
+    _Response = BrokerSubAccountBnbBurnSpot
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/broker/subAccount/bnbBurn/spot',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

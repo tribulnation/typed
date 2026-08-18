@@ -1,0 +1,102 @@
+from typing_extensions import AsyncIterator, Literal, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp, timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class BrokerFuturesRebateRecord(TypedDict):
+  """One futures commission rebate."""
+
+  subaccountId: str
+  """Sub-account this rebate accrued from."""
+  income: str
+  """Rebate amount."""
+  asset: str
+  """Asset the rebate was paid in."""
+  symbol: str
+  """Futures symbol the underlying trade was on."""
+  tradeId: int
+  """Trade identifier the rebate accrued from."""
+  time: Timestamp
+  """Time the rebate was recorded."""
+  status: int
+  """Rebate status. Documented example is `1`; the venue does not declare this as a closed enum."""
+
+
+class CommissionRebateRecentRecordFutures(RpcEndpoint):
+  """Query Broker Futures Commission Rebate Record"""
+
+  async def commission_rebate_recent_record_futures(
+    self,
+    *,
+    futures_type: Literal[1, 2],
+    start_time: Timestamp,
+    end_time: Timestamp,
+    page: int | None = None,
+    size: int | None = None,
+    validate: bool | None = None,
+  ) -> list[BrokerFuturesRebateRecord]:
+    """Get recent futures commission rebate records across sub-accounts.
+
+    Args:
+      futures_type: Futures product to filter by.
+      start_time: Start of the query window, UTC ms.
+      end_time: End of the query window, UTC ms.
+      page: Page number, 1-indexed. Default 1.
+      size: Records per page. Default 10, max 100.
+
+    References:
+      - [Official docs](https://binance-docs.github.io/Brokerage-API/Brokerage_Operation_Endpoints/)
+    """
+    params: dict = {
+      'futuresType': futures_type,
+      'startTime': timestamp.dump(start_time),
+      'endTime': timestamp.dump(end_time),
+    }
+    if page is not None:
+      params['page'] = page
+    if size is not None:
+      params['size'] = size
+    _Response = list[BrokerFuturesRebateRecord]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/broker/rebate/futures/recentRecord',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def commission_rebate_recent_record_futures_paged(
+    self,
+    *,
+    futures_type: Literal[1, 2],
+    start_time: Timestamp,
+    end_time: Timestamp,
+    size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[BrokerFuturesRebateRecord]]:
+    """Yield successive pages of `commission_rebate_recent_record_futures`.
+
+    Requests `page` from 1 upwards and stops on the first page shorter than `size`, or
+    after `max_pages` pages when one is given.
+    """
+    page = 1
+    pages = 0
+    while True:
+      response = await self.commission_rebate_recent_record_futures(
+        futures_type=futures_type,
+        start_time=start_time,
+        end_time=end_time,
+        size=size,
+        page=page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response or (size is not None and len(response) < size):
+        break
+      page += 1

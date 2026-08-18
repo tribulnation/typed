@@ -1,0 +1,43 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CancelAllOpenOrdersResult(TypedDict):
+  """Acknowledgement that all open orders on the symbol were canceled."""
+
+  code: int
+  """Result code. 200 on success."""
+  msg: str
+  """Human-readable result message."""
+
+
+class CancelAllOpenOrders(RpcEndpoint):
+  """Cancel all open orders on a symbol."""
+
+  async def cancel_all_open_orders(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> CancelAllOpenOrdersResult:
+    """Cancel all open orders on a symbol.
+
+    Args:
+      symbol: Trading symbol.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#cancel-all-open-orders)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    _Response = CancelAllOpenOrdersResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'DELETE',
+      '/fapi/v1/allOpenOrders',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

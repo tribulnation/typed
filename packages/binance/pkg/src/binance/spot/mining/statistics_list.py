@@ -1,0 +1,70 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MiningStatistics(TypedDict):
+  """This account's current hashrate and profitability statistics."""
+
+  fifteenMinHashRate: NotRequired[str]
+  """Hashrate over the last 15 minutes."""
+  dayHashRate: NotRequired[str]
+  """Hashrate over the last 24 hours."""
+  validNum: NotRequired[int]
+  """Number of valid (currently mining) workers."""
+  invalidNum: NotRequired[int]
+  """Number of invalid (not currently mining) workers."""
+  profitToday: NotRequired[dict[str, str]]
+  """Today's estimated profit, keyed by coin symbol."""
+  profitYesterday: NotRequired[dict[str, str]]
+  """Yesterday's profit, keyed by coin symbol."""
+  userName: NotRequired[str]
+  """Mining account."""
+  unit: NotRequired[str]
+  """Hashrate unit, e.g. h/s."""
+  algo: NotRequired[str]
+  """Mining algorithm."""
+
+
+class MiningStatisticsResponse(TypedDict):
+  """Mining statistics response frame. This product line wraps its business data in {code,msg,data} on the wire, and the core does not strip it -- see spec/core.md's Envelope section."""
+
+  code: NotRequired[int]
+  """Response code. 0 indicates success."""
+  msg: NotRequired[str]
+  """Response message."""
+  data: NotRequired[MiningStatistics]
+
+
+class StatisticsList(RpcEndpoint):
+  """Query this mining account's current hashrate and profitability statistics."""
+
+  async def statistics_list(
+    self,
+    *,
+    algo: str,
+    user_name: str,
+    validate: bool | None = None,
+  ) -> MiningStatisticsResponse:
+    """Query this mining account's current hashrate and profitability statistics.
+
+    Args:
+      algo: Mining algorithm, e.g. sha256.
+      user_name: Mining account.
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/mining/rest-api#statistic-list)
+    """
+    params: dict = {
+      'algo': algo,
+      'userName': user_name,
+    }
+    _Response = MiningStatisticsResponse
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/mining/statistics/user/status',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

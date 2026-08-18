@@ -1,0 +1,47 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .address_verify_list import AddressVerifyList
+from .broker import Broker
+from .country_list import CountryList
+from .deposit import Deposit
+from .questionnaire_requirements import QuestionnaireRequirementsEndpoint
+from .region_list import RegionList
+from .vasp_list import VaspList
+from .withdraw import Withdraw
+
+
+class LocalEntity(RpcEndpoint):
+  """Binance local_entity endpoints."""
+
+  @cached_property
+  def address_verify_list(self) -> AddressVerifyList:
+    return AddressVerifyList(client=self.client)
+
+  @cached_property
+  def broker(self) -> Broker:
+    return Broker(client=self.client)
+
+  @cached_property
+  def country_list(self) -> CountryList:
+    return CountryList(client=self.client)
+
+  @cached_property
+  def deposit(self) -> Deposit:
+    return Deposit(client=self.client)
+
+  @cached_property
+  def questionnaire_requirements(self) -> QuestionnaireRequirementsEndpoint:
+    return QuestionnaireRequirementsEndpoint(client=self.client)
+
+  @cached_property
+  def region_list(self) -> RegionList:
+    return RegionList(client=self.client)
+
+  @cached_property
+  def vasp_list(self) -> VaspList:
+    return VaspList(client=self.client)
+
+  @cached_property
+  def withdraw(self) -> Withdraw:
+    return Withdraw(client=self.client)

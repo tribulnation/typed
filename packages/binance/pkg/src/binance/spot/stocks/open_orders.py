@@ -1,0 +1,64 @@
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core import Timestamp
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class EquityOpenOrder(TypedDict):
+  """One open (unfinished) equity order."""
+
+  orderId: NotRequired[str]
+  """Equity order id."""
+  symbol: NotRequired[str]
+  """US-equity ticker."""
+  quote: NotRequired[str]
+  """Quote asset (e.g. `USDC`)."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Order side."""
+  orderType: NotRequired[Literal['MARKET', 'LIMIT']]
+  """Order type."""
+  limitPrice: NotRequired[str | None]
+  """Limit price (USD). Non-null for `LIMIT` orders, `null` for `MARKET`."""
+  avgFilledPrice: NotRequired[str | None]
+  """Average fill price (USD). `null` until the first fill."""
+  qty: NotRequired[str | None]
+  """Requested quantity. `null` for `BUY MARKET` (use `notional` instead)."""
+  notional: NotRequired[str | None]
+  """Requested notional. Non-null for `BUY MARKET`; `null` otherwise."""
+  filledQty: NotRequired[str]
+  """Cumulative filled quantity."""
+  filledTotal: NotRequired[str | None]
+  """Cumulative filled notional. Populated only for `BUY MARKET`."""
+  fee: NotRequired[str]
+  """Total commission fee (USD)."""
+  session: NotRequired[Literal['RTH', 'EXTENDED', '24H'] | None]
+  """Trading session the order was placed under. `null` for `MARKET` orders."""
+  status: NotRequired[
+    Literal[
+      'NEW', 'ACCEPTED', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'EXPIRED', 'REJECTED'
+    ]
+  ]
+  """Order lifecycle status."""
+  createdAt: NotRequired[Timestamp]
+  """Order creation time."""
+  updatedAt: NotRequired[Timestamp]
+  """Last update time."""
+
+
+class OpenOrders(RpcEndpoint):
+  """Query all unfinished (open) orders for the caller. No business parameters are needed -- user identity is derived from the signature."""
+
+  async def open_orders(self, *, validate: bool | None = None) -> list[EquityOpenOrder]:
+    """Query all unfinished (open) orders for the caller. No business parameters are needed -- user identity is derived from the signature.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-stocks-trading/api/rest-api/trade#current-open-orders)
+    """
+    _Response = list[EquityOpenOrder]
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/equity/order/open-orders',
+      validator=_validator,
+      validate=validate,
+    )

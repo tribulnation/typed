@@ -1,0 +1,12 @@
+from functools import cached_property
+
+from binance.core.endpoint.rpc import RpcEndpoint
+from .futures import Futures
+
+
+class CopyTrading(RpcEndpoint):
+  """Binance copy_trading endpoints."""
+
+  @cached_property
+  def futures(self) -> Futures:
+    return Futures(client=self.client)

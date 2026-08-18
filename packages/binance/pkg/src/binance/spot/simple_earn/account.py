@@ -1,0 +1,36 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class SimpleEarnAccountSummary(TypedDict):
+  """Summary of this account's total Simple Earn holdings across flexible and locked products."""
+
+  totalAmountInBTC: NotRequired[str]
+  """Total value of all Simple Earn holdings, in BTC, as a decimal string."""
+  totalAmountInUSDT: NotRequired[str]
+  """Total value of all Simple Earn holdings, in USDT, as a decimal string."""
+  totalFlexibleAmountInBTC: NotRequired[str]
+  """Total value of flexible product holdings, in BTC, as a decimal string."""
+  totalFlexibleAmountInUSDT: NotRequired[str]
+  """Total value of flexible product holdings, in USDT, as a decimal string."""
+  totalLockedInBTC: NotRequired[str]
+  """Total value of locked product holdings, in BTC, as a decimal string."""
+  totalLockedInUSDT: NotRequired[str]
+  """Total value of locked product holdings, in USDT, as a decimal string."""
+
+
+class Account(RpcEndpoint):
+  """Get a summary of this account's total Simple Earn holdings across flexible and locked products."""
+
+  async def __call__(self, *, validate: bool | None = None) -> SimpleEarnAccountSummary:
+    """Get a summary of this account's total Simple Earn holdings across flexible and locked products.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked#simple-account)
+    """
+    _Response = SimpleEarnAccountSummary
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/sapi/v1/simple-earn/account', validator=_validator, validate=validate
+    )

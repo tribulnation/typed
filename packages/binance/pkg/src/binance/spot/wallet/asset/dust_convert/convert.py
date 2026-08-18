@@ -1,0 +1,84 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class DustConvertTransfer(TypedDict):
+  """Conversion result for a single source asset."""
+
+  tranId: int
+  """Transaction ID."""
+  fromAsset: str
+  """Source asset converted."""
+  amount: str
+  """Amount of `fromAsset` converted."""
+  transferedAmount: str
+  """Amount credited in the target asset."""
+  serviceChargeAmount: str
+  """Service charge, denominated in the target asset."""
+  operateTime: int
+  """Conversion time, as milliseconds since epoch."""
+
+
+class DustConvertResult(TypedDict):
+  """Result of converting one or more dust assets."""
+
+  totalTransfered: str
+  """Total amount credited in the target asset."""
+  totalServiceCharge: str
+  """Total service charge, denominated in the target asset."""
+  transferResult: list[DustConvertTransfer]
+  """One entry per asset converted."""
+
+
+class Convert(RpcEndpoint):
+  """Convert dust (small, hard-to-trade) asset balances into a target asset, defaulting to BNB. Pair with `spot.wallet.asset.dust_convert.convertible_assets` to discover what's convertible and preview the resulting amount first."""
+
+  async def convert(
+    self,
+    *,
+    asset: str,
+    account_type: Literal['SPOT', 'MARGIN'] | None = None,
+    client_id: str | None = None,
+    target_asset: str | None = None,
+    third_party_client_id: str | None = None,
+    dust_quota_asset_to_target_asset_price: float | None = None,
+    validate: bool | None = None,
+  ) -> DustConvertResult:
+    """Convert dust (small, hard-to-trade) asset balances into a target asset, defaulting to BNB. Pair with `spot.wallet.asset.dust_convert.convertible_assets` to discover what's convertible and preview the resulting amount first.
+
+    Args:
+      asset: Asset(s) to convert.
+      account_type: Wallet the assets are converted from.
+      client_id: Caller-supplied idempotency identifier for this request.
+      target_asset: Asset the dust is converted into. Defaults to BNB when omitted.
+      third_party_client_id: Caller-supplied identifier for a third-party-initiated request.
+      dust_quota_asset_to_target_asset_price: Exchange rate from the quota asset to `targetAsset`, as previously returned by `spot.wallet.asset.dust_convert.convertible_assets`.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset#dust-convert)
+    """
+    params: dict = {
+      'asset': asset,
+    }
+    if account_type is not None:
+      params['accountType'] = account_type
+    if client_id is not None:
+      params['clientId'] = client_id
+    if target_asset is not None:
+      params['targetAsset'] = target_asset
+    if third_party_client_id is not None:
+      params['thirdPartyClientId'] = third_party_client_id
+    if dust_quota_asset_to_target_asset_price is not None:
+      params['dustQuotaAssetToTargetAssetPrice'] = (
+        dust_quota_asset_to_target_asset_price
+      )
+    _Response = DustConvertResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/asset/dust-convert/convert',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

@@ -1,0 +1,53 @@
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class MarginBorrowRepayResult(TypedDict):
+  """Result of a margin account borrow/repay request."""
+
+  tranId: int
+  """Transaction id of the borrow/repay operation."""
+
+
+class BorrowRepay(RpcEndpoint):
+  """Margin account borrow/repay"""
+
+  async def borrow_repay(
+    self,
+    *,
+    asset: str,
+    is_isolated: Literal['TRUE', 'FALSE'],
+    symbol: str,
+    amount: float,
+    type: Literal['BORROW', 'REPAY'],
+    validate: bool | None = None,
+  ) -> MarginBorrowRepayResult:
+    """Borrow from, or repay, this margin account's (crossed or a specific isolated symbol's) debt.
+
+    Args:
+      asset: Asset to borrow or repay.
+      is_isolated: Margin account type: isolated or crossed.
+      symbol: Isolated margin symbol. Only meaningful (and only actually needed) when `isIsolated` is `TRUE`.
+      amount: Amount to borrow or repay.
+      type: Whether to borrow or repay.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay#margin-account-borrow-repay)
+    """
+    params: dict = {
+      'asset': asset,
+      'isIsolated': is_isolated,
+      'symbol': symbol,
+      'amount': amount,
+      'type': type,
+    }
+    _Response = MarginBorrowRepayResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/sapi/v1/margin/borrow-repay',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

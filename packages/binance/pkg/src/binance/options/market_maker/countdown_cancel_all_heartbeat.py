@@ -1,0 +1,41 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class HeartbeatResult(TypedDict):
+  """Result of a kill-switch heartbeat call."""
+
+  underlyings: NotRequired[list[str]]
+  """Underlyings whose heartbeat was successfully updated. Only successfully-updated ones are included."""
+
+
+class CountdownCancelAllHeartbeat(RpcEndpoint):
+  """Reset the kill-switch countdown to begin from when this message is received. Call repeatedly as a heartbeat. Multiple underlyings can be updated at once."""
+
+  async def countdown_cancel_all_heartbeat(
+    self,
+    *,
+    underlyings: str,
+    validate: bool | None = None,
+  ) -> HeartbeatResult:
+    """Reset the kill-switch countdown to begin from when this message is received. Call repeatedly as a heartbeat. Multiple underlyings can be updated at once.
+
+    Args:
+      underlyings: Comma-separated list of underlying assets whose heartbeat to reset, e.g. "BTCUSDT,ETHUSDT".
+
+    References:
+      - [Official docs](https://developers.binance.com/docs/derivatives/option/market-maker-endpoints#auto-cancel-all-open-orders)
+    """
+    params: dict = {
+      'underlyings': underlyings,
+    }
+    _Response = HeartbeatResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/eapi/v1/countdownCancelAllHeartBeat',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

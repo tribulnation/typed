@@ -1,0 +1,43 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class ChangePositionModeResult(TypedDict):
+  """Result of changing the account's position mode."""
+
+  code: int
+  """Result code."""
+  msg: NotRequired[str]
+  """Result message."""
+
+
+class ChangePositionMode(RpcEndpoint):
+  """Change user's position mode (Hedge Mode or One-way Mode) on every symbol. After the CM migration, UM and CM share the same dualSidePosition setting — calling this flips both at once. Rejected with -4067 if either side has open orders, or -4068 if either side has an open position."""
+
+  async def change_position_mode(
+    self,
+    *,
+    dual_side_position: bool,
+    validate: bool | None = None,
+  ) -> ChangePositionModeResult:
+    """Change user's position mode (Hedge Mode or One-way Mode) on every symbol. After the CM migration, UM and CM share the same dualSidePosition setting — calling this flips both at once. Rejected with -4067 if either side has open orders, or -4068 if either side has an open position.
+
+    Args:
+      dual_side_position: true: Hedge Mode; false: One-way Mode.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade#change-position-mode)
+    """
+    params: dict = {
+      'dualSidePosition': dual_side_position,
+    }
+    _Response = ChangePositionModeResult
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'POST',
+      '/fapi/v1/positionSide/dual',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

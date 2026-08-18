@@ -1,0 +1,106 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PredictionPortfolioPosition(TypedDict):
+  """One position within this user's prediction portfolio."""
+
+  id: NotRequired[int]
+  """Position ID."""
+  walletAddress: NotRequired[str]
+  """User's prediction wallet address."""
+  marketTopicId: NotRequired[int]
+  """Market topic ID."""
+  marketId: NotRequired[int]
+  """Market ID."""
+  tokenId: NotRequired[str]
+  """Prediction outcome token ID."""
+  vendor: NotRequired[str]
+  """Prediction liquidity vendor backing this position."""
+  currentShares: NotRequired[str]
+  """Current outcome shares held, as a decimal string."""
+  avgPrice: NotRequired[str]
+  """Average entry price, as a decimal string."""
+  currentPrice: NotRequired[str]
+  """Current market price, as a decimal string."""
+  realizedPnl: NotRequired[str]
+  """Realized profit and loss, as a decimal string."""
+  unrealizedPnl: NotRequired[str]
+  """Unrealized profit and loss, as a decimal string."""
+  totalPnl: NotRequired[str]
+  """Realized plus unrealized profit and loss, as a decimal string."""
+  pnlPercentage: NotRequired[str]
+  """Profit and loss as a percentage of cost, as a decimal string."""
+  isResolved: NotRequired[bool]
+  """Whether the underlying market has resolved."""
+
+
+class PredictionPortfolio(TypedDict):
+  """This user's prediction portfolio overview."""
+
+  chainId: NotRequired[str]
+  """Chain ID this portfolio's wallet operates on."""
+  walletAddress: NotRequired[str]
+  """User's prediction wallet address."""
+  activePositionsCount: NotRequired[int]
+  """Number of currently active (unresolved) positions."""
+  totalRealizedPnl: NotRequired[str]
+  """Total realized profit and loss across all positions, as a decimal string."""
+  totalUnrealizedPnl: NotRequired[str]
+  """Total unrealized profit and loss across active positions, as a decimal string."""
+  totalPnl: NotRequired[str]
+  """Total realized plus unrealized profit and loss, as a decimal string."""
+  totalCostBasis: NotRequired[str]
+  """Total cost basis across positions, as a decimal string."""
+  totalCurrentValue: NotRequired[str]
+  """Total current value across positions, as a decimal string."""
+  positions: NotRequired[list[PredictionPortfolioPosition]]
+  """Positions making up this portfolio."""
+
+
+class Portfolio(RpcEndpoint):
+  """Get the authenticated user's prediction portfolio overview including active positions count, aggregated PnL, and full position list."""
+
+  async def portfolio(
+    self,
+    *,
+    wallet_address: str,
+    token_id: str | None = None,
+    market_id: int | None = None,
+    market_topic_id: int | None = None,
+    active_only: bool | None = None,
+    validate: bool | None = None,
+  ) -> PredictionPortfolio:
+    """Get the authenticated user's prediction portfolio overview including active positions count, aggregated PnL, and full position list.
+
+    Args:
+      wallet_address: User's prediction wallet address.
+      token_id: Filter by prediction token ID.
+      market_id: Filter by market ID. Must be > 0.
+      market_topic_id: Filter by market topic ID. Must be > 0.
+      active_only: If `true`, return only active (unresolved) positions.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/web3-wallet-prediction-trading/api/rest-api/wallet#get-portfolio)
+    """
+    params: dict = {
+      'walletAddress': wallet_address,
+    }
+    if token_id is not None:
+      params['tokenId'] = token_id
+    if market_id is not None:
+      params['marketId'] = market_id
+    if market_topic_id is not None:
+      params['marketTopicId'] = market_topic_id
+    if active_only is not None:
+      params['activeOnly'] = active_only
+    _Response = PredictionPortfolio
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/w3w/wallet/prediction/pnl/portfolio',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

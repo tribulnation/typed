@@ -1,0 +1,30 @@
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class PmAutoRepayFuturesStatus(TypedDict):
+  """Query Auto-repay-futures Status."""
+
+  autoRepay: NotRequired[bool]
+  """\"true" for turn on the auto-repay futures; "false" for turn off the auto-repay futures."""
+
+
+class AutoRepayFuturesStatus(RpcEndpoint):
+  """Get Auto-repay-futures Status"""
+
+  async def auto_repay_futures_status(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> PmAutoRepayFuturesStatus:
+    """Query Auto-repay-futures Status.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account#get-auto-repay-futures-status)
+    """
+    _Response = PmAutoRepayFuturesStatus
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET', '/papi/v1/repay-futures-switch', validator=_validator, validate=validate
+    )

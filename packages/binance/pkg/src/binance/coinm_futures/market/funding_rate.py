@@ -1,0 +1,61 @@
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class CoinMFundingRate(TypedDict):
+  """One historical funding rate entry."""
+
+  symbol: str
+  """Trading symbol."""
+  fundingTime: int
+  """Funding time, in milliseconds since epoch."""
+  fundingRate: str
+  """Funding rate."""
+  markPrice: str
+  """Mark price at the funding settlement."""
+  rateType: str
+  """Kind of funding rate entry. Only "Regular" observed live; the venue does not document its full set of values."""
+
+
+class FundingRate(RpcEndpoint):
+  """Funding rate history of a perpetual futures symbol."""
+
+  async def funding_rate(
+    self,
+    *,
+    symbol: str,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> list[CoinMFundingRate]:
+    """Funding rate history of a perpetual futures symbol.
+
+    Args:
+      symbol: Symbol.
+      start_time: Timestamp to get funding rate from, inclusive, in milliseconds since epoch.
+      end_time: Timestamp to get funding rate until, inclusive, in milliseconds since epoch.
+      limit: Number of records to return.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data#get-funding-rate-history-of-perpetual-futures)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    if limit is not None:
+      params['limit'] = limit
+    _Response = list[CoinMFundingRate]
+    _validator = validator[_Response](_Response)
+    return await self.request(
+      'GET',
+      '/dapi/v1/fundingRate',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )

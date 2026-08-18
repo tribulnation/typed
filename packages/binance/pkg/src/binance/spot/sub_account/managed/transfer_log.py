@@ -1,0 +1,129 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from binance.core.endpoint.rpc import RpcEndpoint
+
+
+class ManagedSubAccountTransferLogRecord(TypedDict):
+  """One transfer to/from a Managed Sub-Account."""
+
+  fromEmail: NotRequired[str]
+  """Email of the sending account."""
+  fromAccountType: NotRequired[str]
+  """Account type transferred from."""
+  toEmail: NotRequired[str]
+  """Email of the receiving account."""
+  toAccountType: NotRequired[str]
+  """Account type transferred to."""
+  asset: NotRequired[str]
+  """Asset transferred."""
+  amount: NotRequired[str]
+  """Amount transferred."""
+  scheduledData: NotRequired[int]
+  """Date the transfer is scheduled for, when deferred."""
+  createTime: NotRequired[int]
+  """Time the transfer was created."""
+  status: NotRequired[str]
+  """Transfer status."""
+  tranId: NotRequired[int]
+  """Transfer id."""
+
+
+class ManagedSubAccountTransferLog(TypedDict):
+  """Matching transfer log records."""
+
+  managerSubTransferHistoryVos: NotRequired[list[ManagedSubAccountTransferLogRecord]]
+  """Transfer records on this page."""
+  count: NotRequired[int]
+  """Total number of matching records."""
+
+
+class TransferLog(RpcEndpoint):
+  """Query the calling Managed Sub-Account's own transfer log, for the trading team."""
+
+  async def transfer_log(
+    self,
+    *,
+    start_time: int,
+    end_time: int,
+    page: int,
+    limit: int,
+    transfers: str | None = None,
+    transfer_function_account_type: Literal[
+      'SPOT', 'MARGIN', 'ISOLATED_MARGIN', 'USDT_FUTURE', 'COIN_FUTURE'
+    ]
+    | None = None,
+    validate: bool | None = None,
+  ) -> ManagedSubAccountTransferLog:
+    """Query the calling Managed Sub-Account's own transfer log, for the trading team.
+
+    Args:
+      start_time: Start of the query window.
+      end_time: End of the query window. The window between `startTime` and `endTime` cannot exceed half a year.
+      page: Page number.
+      limit: Page size.
+      transfers: Filter by transfer direction: `FROM` or `TO`.
+      transfer_function_account_type: Filter by account type.
+
+    References:
+      - [Official docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/managed-sub-account#query-managed-sub-account-transfer-log-sub-account-trading)
+    """
+    params: dict = {
+      'startTime': start_time,
+      'endTime': end_time,
+      'page': page,
+      'limit': limit,
+    }
+    if transfers is not None:
+      params['transfers'] = transfers
+    if transfer_function_account_type is not None:
+      params['transferFunctionAccountType'] = transfer_function_account_type
+    _Response = ManagedSubAccountTransferLog
+    _validator = validator[_Response](_Response)
+    return await self.authed_request(
+      'GET',
+      '/sapi/v1/managed-subaccount/query-trans-log',
+      params=params,
+      validator=_validator,
+      validate=validate,
+    )
+
+  async def transfer_log_paged(
+    self,
+    *,
+    start_time: int,
+    end_time: int,
+    limit: int,
+    transfers: str | None = None,
+    transfer_function_account_type: Literal[
+      'SPOT', 'MARGIN', 'ISOLATED_MARGIN', 'USDT_FUTURE', 'COIN_FUTURE'
+    ]
+    | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[ManagedSubAccountTransferLog]:
+    """Yield successive pages of `transfer_log`.
+
+    Requests `page` from 1 upwards and stops once it has covered the `count` items the
+    response reports, or after `max_pages` pages when one is given.
+    """
+    page = 1
+    pages = 0
+    while True:
+      response = await self.transfer_log(
+        start_time=start_time,
+        end_time=end_time,
+        limit=limit,
+        transfers=transfers,
+        transfer_function_account_type=transfer_function_account_type,
+        page=page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('count') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages * limit >= total:
+        break
+      page += 1
