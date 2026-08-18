@@ -1,0 +1,45 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class GossipPriorityAuctionSlotStatus(TypedDict):
+  """One slot's current gossip-priority Dutch auction state."""
+
+  startTimeSeconds: int
+  """Unix timestamp, in seconds, when this slot's current Dutch-auction decay period began."""
+  durationSeconds: int
+  """Total duration of this slot's auction decay period, in seconds."""
+  startGas: str
+  """Starting gas bid price at the beginning of the decay period, as a decimal string of HYPE."""
+  currentGas: str
+  """Current gas bid price at this point in the decay, as a decimal string of HYPE."""
+  endGas: str | None
+  """Final gas price the slot's auction settled at, or `null` while still decaying."""
+
+
+class GossipPriorityAuctionStatusAction(TypedDict):
+  type: Literal['gossipPriorityAuctionStatus']
+
+
+adapter = pydantic.TypeAdapter(
+  tuple[list[str | None], list[GossipPriorityAuctionSlotStatus]]
+)
+
+
+class GossipPriorityAuctionStatus(InfoMixin):
+  async def gossip_priority_auction_status(
+    self,
+  ) -> tuple[list[str | None], list[GossipPriorityAuctionSlotStatus]]:
+    """Retrieve the previous gossip-priority auction winners (the current gossip priority ordering) and the current auction statuses, one entry per independent slot auction.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/priority-fees)
+    """
+    params: GossipPriorityAuctionStatusAction = {
+      'type': 'gossipPriorityAuctionStatus',
+    }
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

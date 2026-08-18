@@ -1,0 +1,148 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+from typed_core.exceptions import LogicError
+
+
+class UserFill(TypedDict):
+  coin: str
+  """Traded asset: a perp coin name, a HIP-3 perp prefixed with its dex name (e.g. `xyz:XYZ100`), or a spot pair (`PURR/USDC`, or `@{index}` for any other spot pair)."""
+  px: str
+  """Fill price, as a decimal string."""
+  sz: str
+  """Fill size, as a decimal string."""
+  side: Literal['A', 'B']
+  """Fill side: `B` (bid, the buyer's side) or `A` (ask, the seller's side)."""
+  time: int
+  """Fill time, in milliseconds since epoch."""
+  startPosition: str
+  """Signed position size immediately before the fill, as a decimal string."""
+  dir: Literal['Open Long', 'Buy', 'Sell']
+  """Human-readable fill direction/effect label."""
+  closedPnl: str
+  """Realized PnL closed by this fill, as a decimal string."""
+  hash: str
+  """L1 transaction hash of the fill."""
+  oid: int
+  """Id of the order that produced this fill."""
+  crossed: bool
+  """Whether this fill was the taker side of the trade (crossed the book)."""
+  fee: str
+  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string."""
+  tid: int
+  """Trade id. Not a unique key: every `Spot Dust Conversion` fill carries the sentinel value `0`."""
+  feeToken: str
+  """Token the fee is denominated in, e.g. `USDC` or `HYPE`."""
+  builderFee: NotRequired[str]
+  """Builder fee portion of `fee`, as a decimal string. Present only when nonzero."""
+  twapId: int | None
+  """Id of the TWAP order this fill was sliced from, or `null` if the fill was not part of a TWAP execution."""
+
+
+class UserFillsByTimeAction(TypedDict):
+  type: Literal['userFillsByTime']
+  user: str
+  startTime: int
+  endTime: NotRequired[int]
+  aggregateByTime: NotRequired[bool]
+
+
+adapter = pydantic.TypeAdapter(list[UserFill])
+
+
+class UserFillsByTime(InfoMixin):
+  async def user_fills_by_time(
+    self,
+    *,
+    user: str,
+    start_time: int,
+    end_time: int | None = None,
+    aggregate_by_time: bool | None = None,
+  ) -> list[UserFill]:
+    """Retrieve a user's fills within a time range. Returns at most 2000 fills per response, and only the 10000 most recent fills are available.
+
+    Args:
+      user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
+      start_time: Start of the time range, in milliseconds since epoch, inclusive.
+      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
+      aggregate_by_time: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders are only aggregated if in the same block.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
+    """
+    params: UserFillsByTimeAction = {
+      'type': 'userFillsByTime',
+      'user': user,
+      'startTime': start_time,
+    }
+    if end_time is not None:
+      params['endTime'] = end_time
+    if aggregate_by_time is not None:
+      params['aggregateByTime'] = aggregate_by_time
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r
+
+  async def user_fills_by_time_paged(
+    self,
+    *,
+    user: str,
+    start_time: int,
+    end_time: int | None = None,
+    aggregate_by_time: bool | None = None,
+    max_pages: int | None = None,
+  ) -> AsyncIterator[list[UserFill]]:
+    """Yield successive pages of `user_fills_by_time`.
+
+    Passes the largest `time` seen so far back as `startTime` and stops on the first
+    empty page, or after `max_pages` pages when one is given.
+
+    Rows already yielded for that `time` value are dropped by position from the next
+    page, so a value shared by more than one row is never duplicated or skipped. Raises
+    `LogicError` if the venue's row order is not stable across requests, or if a full
+    page of `2000` rows shares one `time` value, since the rest of it would then be
+    unreachable.
+    """
+    cursor: int = start_time
+    overlap: list[UserFill] = []
+    pages = 0
+    while True:
+      response = await self.user_fills_by_time(
+        user=user,
+        start_time=cursor,
+        end_time=end_time,
+        aggregate_by_time=aggregate_by_time,
+      )
+      pages += 1
+      if not response:
+        break
+      if response[: len(overlap)] != overlap:
+        raise LogicError(
+          f'`user_fills_by_time_paged` requested from {cursor} and the venue returned a different prefix than the previous page ended with; row order was expected to be stable across requests, so the walk stopped instead of dropping or duplicating rows.'
+        )
+      fresh = response[len(overlap) :]
+      if fresh:
+        yield fresh
+      if max_pages is not None and pages >= max_pages:
+        break
+      values = [
+        value
+        for item in response
+        if (value := (item.get('time') if item is not None else None)) is not None
+      ]
+      last = max(values) if values else None
+      if last is not None and last > cursor:
+        cursor = last
+        overlap = [
+          item
+          for item in response
+          if (item.get('time') if item is not None else None) == last
+        ]
+      elif len(response) >= 2000:
+        raise LogicError(
+          f'`user_fills_by_time_paged` requested from {cursor} and the venue returned a full page of {len(response)} rows, all sharing `time` {cursor}; the rest of that value is unreachable and advancing would drop it.'
+        )
+      else:
+        cursor += 1
+        overlap = []

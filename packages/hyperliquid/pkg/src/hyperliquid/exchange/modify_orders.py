@@ -1,0 +1,236 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class FilledOrderInfo(TypedDict):
+  """The order filled immediately."""
+
+  oid: int
+  """Venue-assigned order id."""
+  avgPx: str
+  """Average fill price, as a decimal string."""
+  totalSz: str
+  """Total filled size, as a decimal string."""
+
+
+class LimitOrderParamsModifyOrdersModifiesItemOrderTAnyOf0Limit(TypedDict):
+  """A resting limit order, governed by a time-in-force."""
+
+  tif: Literal['Alo', 'Ioc', 'Gtc']
+  """Time-in-force: `Alo` (add-liquidity-only / post-only, rejected rather than taking liquidity), `Ioc` (immediate-or-cancel), or `Gtc` (good-til-canceled)."""
+
+
+class LimitOrderParamsParameterModifiesItemOrderTAnyOf0Limit(TypedDict):
+  """A resting limit order, governed by a time-in-force."""
+
+  tif: Literal['Alo', 'Ioc', 'Gtc']
+  """Time-in-force: `Alo` (add-liquidity-only / post-only, rejected rather than taking liquidity), `Ioc` (immediate-or-cancel), or `Gtc` (good-til-canceled)."""
+
+
+class OrderStatusError(TypedDict):
+  """Outcome for an order the venue rejected individually within an otherwise-accepted batch."""
+
+  error: str
+  """Reason this specific order was rejected, e.g. 'Order must have minimum value of $10.'."""
+
+
+class RestingOrderInfo(TypedDict):
+  """The order rested on the book unfilled."""
+
+  oid: int
+  """Venue-assigned order id."""
+  cloid: NotRequired[str]
+  """Caller-chosen client order id echoed back, when the request's order set one."""
+
+
+class TriggerOrderParamsModifyOrdersModifiesItemOrderTAnyOf1Trigger(TypedDict):
+  """A trigger order, guarded by a mark-price condition."""
+
+  isMarket: bool
+  """True if the trigger fires a market order; false if it fires a limit order at the order's own price."""
+  triggerPx: str
+  """Mark price at which the trigger fires, as a decimal string."""
+  tpsl: Literal['tp', 'sl']
+  """Whether this trigger order closes the position as a take-profit (`tp`) or a stop-loss (`sl`)."""
+
+
+class TriggerOrderParamsParameterModifiesItemOrderTAnyOf1Trigger(TypedDict):
+  """A trigger order, guarded by a mark-price condition."""
+
+  isMarket: bool
+  """True if the trigger fires a market order; false if it fires a limit order at the order's own price."""
+  triggerPx: str
+  """Mark price at which the trigger fires, as a decimal string."""
+  tpsl: Literal['tp', 'sl']
+  """Whether this trigger order closes the position as a take-profit (`tp`) or a stop-loss (`sl`)."""
+
+
+class FilledOrderStatus(TypedDict):
+  """Outcome for an order that filled immediately."""
+
+  filled: FilledOrderInfo
+
+
+class LimitOrderTypeModifyOrdersModifiesItemOrderTAnyOf0(TypedDict):
+  """Order type variant for a limit order."""
+
+  limit: LimitOrderParamsModifyOrdersModifiesItemOrderTAnyOf0Limit
+
+
+class LimitOrderTypeParameterModifiesItemOrderTAnyOf0(TypedDict):
+  """Order type variant for a limit order."""
+
+  limit: LimitOrderParamsParameterModifiesItemOrderTAnyOf0Limit
+
+
+class RestingOrderStatus(TypedDict):
+  """Outcome for an order that rested on the book."""
+
+  resting: RestingOrderInfo
+
+
+class TriggerOrderTypeModifyOrdersModifiesItemOrderTAnyOf1(TypedDict):
+  """Order type variant for a trigger (take-profit / stop-loss) order."""
+
+  trigger: TriggerOrderParamsModifyOrdersModifiesItemOrderTAnyOf1Trigger
+
+
+class TriggerOrderTypeParameterModifiesItemOrderTAnyOf1(TypedDict):
+  """Order type variant for a trigger (take-profit / stop-loss) order."""
+
+  trigger: TriggerOrderParamsParameterModifiesItemOrderTAnyOf1Trigger
+
+
+class BatchModifyActionData(TypedDict):
+  """Per-modification outcomes for this action."""
+
+  statuses: list[RestingOrderStatus | FilledOrderStatus | OrderStatusError]
+  """One entry per modification in the request, in the same order: resting, filled, or rejected."""
+
+
+class HyperliquidOrderModifyOrdersModifiesItemOrder(TypedDict):
+  """The order as it should read after the modification."""
+
+  a: int
+  """Asset index this order trades, per `info.meta`'s `universe` ordering."""
+  b: bool
+  """True to buy, false to sell."""
+  p: str
+  """Limit price, as a decimal string."""
+  s: str
+  """Order size, as a decimal string."""
+  r: bool
+  """True to mark this order reduce-only."""
+  t: (
+    LimitOrderTypeModifyOrdersModifiesItemOrderTAnyOf0
+    | TriggerOrderTypeModifyOrdersModifiesItemOrderTAnyOf1
+  )
+  """Order type: a resting limit order with a time-in-force, or a trigger order guarded by a mark-price condition."""
+  c: NotRequired[str]
+  """Caller-chosen client order id: a 128-bit hex string, e.g. `0x1234567890abcdef1234567890abcdef`."""
+
+
+class HyperliquidOrderParameterModifiesItemOrder(TypedDict):
+  """The order as it should read after the modification."""
+
+  a: int
+  """Asset index this order trades, per `info.meta`'s `universe` ordering."""
+  b: bool
+  """True to buy, false to sell."""
+  p: str
+  """Limit price, as a decimal string."""
+  s: str
+  """Order size, as a decimal string."""
+  r: bool
+  """True to mark this order reduce-only."""
+  t: (
+    LimitOrderTypeParameterModifiesItemOrderTAnyOf0
+    | TriggerOrderTypeParameterModifiesItemOrderTAnyOf1
+  )
+  """Order type: a resting limit order with a time-in-force, or a trigger order guarded by a mark-price condition."""
+  c: NotRequired[str]
+  """Caller-chosen client order id: a 128-bit hex string, e.g. `0x1234567890abcdef1234567890abcdef`."""
+
+
+class BatchModifyActionResult(TypedDict):
+  """Result of an accepted batch-modify action."""
+
+  type: Literal['order']
+  """Discriminator confirming this is a batch order-result. The venue answers `batchModify` with the same `order` type the place-order action uses, not a distinct `batchModify` type."""
+  data: BatchModifyActionData
+
+
+class OrderModificationModifyOrdersModifiesItem(TypedDict):
+  """One modification to apply."""
+
+  oid: int | str
+  """Order to modify: its venue-assigned order id (integer), or its client order id (128-bit hex string)."""
+  order: HyperliquidOrderModifyOrdersModifiesItemOrder
+
+
+class OrderModificationParameterModifiesItem(TypedDict):
+  """One modification to apply."""
+
+  oid: int | str
+  """Order to modify: its venue-assigned order id (integer), or its client order id (128-bit hex string)."""
+  order: HyperliquidOrderParameterModifiesItemOrder
+
+
+class ModifyOrdersAction(TypedDict):
+  type: Literal['batchModify']
+  modifies: list[OrderModificationModifyOrdersModifiesItem]
+  a: NotRequired[bool]
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[BatchModifyActionResult])
+
+
+class ModifyOrders(ExchangeMixin):
+  async def modify_orders(
+    self,
+    *,
+    modifies: list[OrderModificationParameterModifiesItem],
+    a: bool | None = None,
+    vault_address: str | None = None,
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[BatchModifyActionResult]:
+    """Modify multiple resting orders through Hyperliquid POST /exchange using action type `batchModify`.
+
+    Args:
+      modifies: Modifications to submit, one entry per order to modify.
+      a: Always-place, applied to every modification in this batch. When true, place each new order regardless of whether the cancel of the old one succeeded. When false (the default), each new order must be a non-trigger order with TIF `Alo`, or a non-executable order with TIF `Gtc` -- in which case its TIF is overridden to `Alo`. Omitted when false.
+      vault_address: Optional vault address for the signed action.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/exchange-endpoint)
+    """
+    ts = timestamp.now()
+    action: ModifyOrdersAction = {
+      'type': 'batchModify',
+      'modifies': modifies,
+    }
+    if a is not None:
+      action['a'] = a
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=vault_address,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': vault_address,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result

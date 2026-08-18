@@ -1,0 +1,62 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class PerpDeployDefaultResponse(TypedDict):
+  """Acknowledgement returned for a perpDeploy action that carries no per-item batch data."""
+
+  type: Literal['default']
+  """Fixed response-kind discriminator for this action."""
+
+
+class SetFundingInterestRatesAction(TypedDict):
+  type: Literal['perpDeploy']
+  setFundingInterestRates: list[tuple[str, str]]
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[PerpDeployDefaultResponse])
+
+
+class SetFundingInterestRates(ExchangeMixin):
+  async def set_funding_interest_rates(
+    self,
+    *,
+    funding_interest_rates: list[tuple[str, str]],
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[PerpDeployDefaultResponse]:
+    """Set per-asset 8-hour funding interest rates on a HIP-3 perp dex through Hyperliquid POST /exchange using perpDeploy sub-action `setFundingInterestRates`.
+
+    Args:
+      funding_interest_rates: A list, sorted by asset, of (asset, 8-hour interest rate) pairs.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/hip-3-deployer-actions)
+    """
+    ts = timestamp.now()
+    action: SetFundingInterestRatesAction = {
+      'type': 'perpDeploy',
+      'setFundingInterestRates': funding_interest_rates,
+    }
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=None,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': None,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result

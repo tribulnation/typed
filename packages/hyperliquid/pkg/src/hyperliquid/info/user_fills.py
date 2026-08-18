@@ -1,0 +1,75 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.info.core import InfoMixin
+
+
+class UserFill(TypedDict):
+  coin: str
+  """Traded asset: a perp coin name, a HIP-3 perp prefixed with its dex name (e.g. `xyz:XYZ100`), or a spot pair (`PURR/USDC`, or `@{index}` for any other spot pair)."""
+  px: str
+  """Fill price, as a decimal string."""
+  sz: str
+  """Fill size, as a decimal string."""
+  side: Literal['A', 'B']
+  """Fill side: `B` (bid, the buyer's side) or `A` (ask, the seller's side)."""
+  time: int
+  """Fill time, in milliseconds since epoch."""
+  startPosition: str
+  """Signed position size immediately before the fill, as a decimal string."""
+  dir: Literal['Open Long', 'Buy', 'Sell']
+  """Human-readable fill direction/effect label."""
+  closedPnl: str
+  """Realized PnL closed by this fill, as a decimal string."""
+  hash: str
+  """L1 transaction hash of the fill."""
+  oid: int
+  """Id of the order that produced this fill."""
+  crossed: bool
+  """Whether this fill was the taker side of the trade (crossed the book)."""
+  fee: str
+  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string."""
+  tid: int
+  """Trade id. Not a unique key: every `Spot Dust Conversion` fill carries the sentinel value `0`."""
+  feeToken: str
+  """Token the fee is denominated in, e.g. `USDC` or `HYPE`."""
+  builderFee: NotRequired[str]
+  """Builder fee portion of `fee`, as a decimal string. Present only when nonzero."""
+  twapId: int | None
+  """Id of the TWAP order this fill was sliced from, or `null` if the fill was not part of a TWAP execution."""
+
+
+class UserFillsAction(TypedDict):
+  type: Literal['userFills']
+  user: str
+  aggregateByTime: NotRequired[bool]
+
+
+adapter = pydantic.TypeAdapter(list[UserFill])
+
+
+class UserFills(InfoMixin):
+  async def user_fills(
+    self,
+    *,
+    user: str,
+    aggregate_by_time: bool | None = None,
+  ) -> list[UserFill]:
+    """Retrieve a user's most recent fills. Returns at most 2000 of the most recent fills.
+
+    Args:
+      user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
+      aggregate_by_time: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders are only aggregated if in the same block.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
+    """
+    params: UserFillsAction = {
+      'type': 'userFills',
+      'user': user,
+    }
+    if aggregate_by_time is not None:
+      params['aggregateByTime'] = aggregate_by_time
+    r = await self.request(params)
+    return adapter.validate_python(r) if self.validate else r

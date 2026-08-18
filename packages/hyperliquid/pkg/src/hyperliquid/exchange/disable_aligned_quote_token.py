@@ -1,0 +1,67 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class Data(TypedDict):
+  """Empty object accompanying `type` on every other captured non-batch exchange action on this venue; whether spotDeploy sub-actions echo it too is unconfirmed."""
+
+
+class DisableAlignedQuoteTokenAction(TypedDict):
+  type: Literal['spotDeploy']
+  disableAlignedQuoteToken: int
+
+
+class DefaultResponse(TypedDict):
+  """Default per-action response payload, echoed on success."""
+
+  type: str
+  """Response discriminator. Every captured non-batch exchange action on this venue returns either the literal 'default' or its own action-type string here; which applies to a spotDeploy sub-action is unconfirmed (see this endpoint's notes)."""
+  data: NotRequired[Data]
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[DefaultResponse])
+
+
+class DisableAlignedQuoteToken(ExchangeMixin):
+  async def disable_aligned_quote_token(
+    self,
+    *,
+    token: int,
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[DefaultResponse]:
+    """Disable a deployed token from being used as an aligned quote asset through Hyperliquid POST /exchange using action type `spotDeploy` with sub-action `disableAlignedQuoteToken`. Optional; per upstream docs this must be sent after `disableQuoteToken`, never before.
+
+    Args:
+      token: Index of the deployed token to enable or disable as a quote asset.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/deploying-hip-1-and-hip-2-assets)
+    """
+    ts = timestamp.now()
+    action: DisableAlignedQuoteTokenAction = {
+      'type': 'spotDeploy',
+      'disableAlignedQuoteToken': token,
+    }
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=None,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': None,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result

@@ -1,0 +1,113 @@
+from typing_extensions import Any, Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class OutcomeSettlementParameterOutcomeSettlementsItem(TypedDict):
+  """One question outcome's settlement within a `settleQuestion2` batch; same shape as exchange.outcome_deployer.settle_outcome's own fields, minus the outer `outcome` wrapper."""
+
+  outcome: int
+  """Numeric index of the question outcome being settled."""
+  settle_fraction: str
+  """Decimal string, exactly `"0"` or `"1"` for a question outcome: `outcomeSettlements` must cover exactly the remaining active question outcomes of the question, with exactly one settling to `"1"` and all others to `"0"`."""
+  details: Literal['']
+  """Must be the empty string."""
+  name_and_description: tuple[str, str]
+  """Two-element `[name, description]` pair identifying the outcome or question being settled; must exactly match the outcome/question's onchain name and description."""
+  side_names: tuple[str, str]
+  """Two-element `[YES side name, NO side name]` pair; must exactly match the outcome's onchain side names."""
+
+
+class OutcomeSettlementSubOutcomeSettlementsItem(TypedDict):
+  """One question outcome's settlement within a `settleQuestion2` batch; same shape as exchange.outcome_deployer.settle_outcome's own fields, minus the outer `outcome` wrapper."""
+
+  outcome: int
+  """Numeric index of the question outcome being settled."""
+  settle_fraction: str
+  """Decimal string, exactly `"0"` or `"1"` for a question outcome: `outcomeSettlements` must cover exactly the remaining active question outcomes of the question, with exactly one settling to `"1"` and all others to `"0"`."""
+  details: Literal['']
+  """Must be the empty string."""
+  name_and_description: tuple[str, str]
+  """Two-element `[name, description]` pair identifying the outcome or question being settled; must exactly match the outcome/question's onchain name and description."""
+  side_names: tuple[str, str]
+  """Two-element `[YES side name, NO side name]` pair; must exactly match the outcome's onchain side names."""
+
+
+class SettleQuestion2response(TypedDict):
+  """Successful response to SettleQuestion2."""
+
+  type: str
+  """Echoes the action type of the request that produced this response. On the wire this action is a variant of the outer `spotDeploy` action -- `{"type": "spotDeploy", "outcome": {"settleQuestion2": {...}}}`, not its own top-level `type` (see `notes`). By analogy with every other captured hyperliquid exchange endpoint (response.type echoes the request's own top-level type), response.type most likely echoes `"spotDeploy"` here, not this action's own variant name -- but this is inferred, not observed, so it is left as a plain string rather than an `enum`."""
+  data: dict[str, Any]
+  """Action-specific result payload. Not documented at all by HIP-4's doc page. Left as an open map rather than asserted empty."""
+
+
+class SettleQuestion2subAction(TypedDict):
+  question: int
+  outcomeSettlements: list[OutcomeSettlementSubOutcomeSettlementsItem]
+  nameAndDescription: tuple[str, str]
+
+
+class SettleQuestion2wrap0(TypedDict):
+  settleQuestion2: SettleQuestion2subAction
+
+
+class SettleQuestion2action(TypedDict):
+  type: Literal['spotDeploy']
+  outcome: SettleQuestion2wrap0
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[SettleQuestion2response])
+
+
+class SettleQuestion2(ExchangeMixin):
+  async def settle_question2(
+    self,
+    *,
+    question: int,
+    outcome_settlements: list[OutcomeSettlementParameterOutcomeSettlementsItem],
+    name_and_description: tuple[str, str],
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[SettleQuestion2response]:
+    """Settle all remaining question outcomes of a question in one action through Hyperliquid POST /exchange using action type `spotDeploy`, `outcome` variant `settleQuestion2`. Supersedes the discontinued `settleQuestion` variant.
+
+    Args:
+      question: Numeric index of the question being settled.
+      outcome_settlements: Settlement for every one of the question's remaining active question outcomes.
+      name_and_description: Two-element `[name, description]` pair identifying the outcome or question being settled; must exactly match the outcome/question's onchain name and description.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/hip-4-deployer-actions)
+    """
+    ts = timestamp.now()
+    sub_action: SettleQuestion2subAction = {
+      'question': question,
+      'outcomeSettlements': outcome_settlements,
+      'nameAndDescription': name_and_description,
+    }
+    action: SettleQuestion2action = {
+      'type': 'spotDeploy',
+      'outcome': {'settleQuestion2': sub_action},
+    }
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=None,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': None,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result

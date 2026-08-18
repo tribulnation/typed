@@ -1,0 +1,65 @@
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.streams.core import StreamsMixin
+from typed_core.util import StreamManager
+
+
+class AllMids(TypedDict):
+  """Pushed snapshot of every coin's current mid price."""
+
+  mids: dict[str, str]
+  """Current mid price for every coin, keyed by coin symbol."""
+
+
+class AllMidsParams(TypedDict):
+  """Subscription parameters for the `allMids` channel."""
+
+  dex: NotRequired[str]
+  """Perp dex to source mids from. Optional; if omitted, the first perp dex is used, and spot mids are only included alongside the first perp dex."""
+
+
+class AllMidsSubscription(TypedDict):
+  """Subscription parameters that were acknowledged."""
+
+  type: Literal['allMids']
+  """Subscription channel identifier."""
+  dex: NotRequired[str]
+  """Perp dex mids were sourced from; absent when the caller didn't specify one."""
+
+
+class SubscribeAck(TypedDict):
+  """Echo of the subscription that was acknowledged."""
+
+  method: Literal['subscribe', 'unsubscribe']
+  """Which operation this acknowledgement answers."""
+  subscription: AllMidsSubscription
+
+
+adapter = pydantic.TypeAdapter(AllMids)
+
+
+class AllMidsEndpoint(StreamsMixin):
+  def all_mids(self, *, dex: str | None = None):
+    """Subscribe to Hyperliquid `allMids` updates: the current mid price of every coin on one perp dex.
+
+    Args:
+      dex: Perp dex to source mids from. Optional; if omitted, the first perp dex is used, and spot mids are only included alongside the first perp dex.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions)
+    """
+    return StreamManager(lambda: self._all_mids_impl(dex=dex))
+
+  async def _all_mids_impl(self, *, dex: str | None = None):
+    params: dict[str, object] | None = None
+    if dex is not None:
+      params = params or {}
+      params['dex'] = dex
+    stream = await self.subscribe('allMids', params)
+
+    def mapper(msg) -> AllMids:
+      return adapter.validate_python(msg) if self.validate else msg
+
+    return stream.map(mapper)

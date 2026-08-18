@@ -1,0 +1,118 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.streams.core import StreamsMixin
+from typed_core.util import StreamManager
+
+
+class OrderUpdateOrder(TypedDict):
+  """Basic order fields as of this status update."""
+
+  coin: str
+  """Asset symbol or spot asset id."""
+  side: Literal['A', 'B']
+  """Order side code: A (ask/sell) or B (bid/buy)."""
+  limitPx: str
+  """Limit price."""
+  sz: str
+  """Remaining unfilled size."""
+  oid: int
+  """Order id."""
+  timestamp: int
+  """Order placement timestamp in epoch milliseconds."""
+  origSz: str
+  """Original order size at placement."""
+  cloid: str | None
+  """Client order id, when the order was placed with one."""
+
+
+class OrderUpdatesSubscription(TypedDict):
+  """Subscription parameters that were acknowledged."""
+
+  type: Literal['orderUpdates']
+  """Subscription channel identifier."""
+  user: str
+  """Address whose order updates are subscribed to."""
+
+
+class OrderUpdatesSubscriptionParams(TypedDict):
+  """Subscription parameters for the `orderUpdates` channel."""
+
+  user: str
+  """Address whose order updates to subscribe to."""
+
+
+class OrderUpdate(TypedDict):
+  """One order's current status."""
+
+  order: OrderUpdateOrder
+  status: Literal[
+    'open',
+    'filled',
+    'canceled',
+    'triggered',
+    'rejected',
+    'marginCanceled',
+    'vaultWithdrawalCanceled',
+    'openInterestCapCanceled',
+    'selfTradeCanceled',
+    'reduceOnlyCanceled',
+    'siblingFilledCanceled',
+    'delistedCanceled',
+    'liquidatedCanceled',
+    'scheduledCancel',
+    'tickRejected',
+    'minTradeNtlRejected',
+    'perpMarginRejected',
+    'reduceOnlyRejected',
+    'badAloPxRejected',
+    'iocCancelRejected',
+    'badTriggerPxRejected',
+    'marketOrderNoLiquidityRejected',
+    'positionIncreaseAtOpenInterestCapRejected',
+    'positionFlipAtOpenInterestCapRejected',
+    'tooAggressiveAtOpenInterestCapRejected',
+    'openInterestIncreaseRejected',
+    'insufficientSpotBalanceRejected',
+    'oracleRejected',
+    'perpMaxPositionRejected',
+  ]
+  """Order lifecycle status, per the venue's documented `orderStatus` vocabulary."""
+  statusTimestamp: int
+  """Timestamp this status was reached, in epoch milliseconds."""
+
+
+class OrderUpdatesSubscribeAck(TypedDict):
+  """Echo of the subscription that was acknowledged."""
+
+  method: Literal['subscribe', 'unsubscribe']
+  """Which operation this acknowledgement answers."""
+  subscription: OrderUpdatesSubscription
+
+
+adapter = pydantic.TypeAdapter(list[OrderUpdate])
+
+
+class OrderUpdates(StreamsMixin):
+  def order_updates(self, user: str):
+    """Subscribe to Hyperliquid `orderUpdates` updates.
+
+    Args:
+      user: Address whose order updates to subscribe to.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions)
+    """
+    return StreamManager(lambda: self._order_updates_impl(user))
+
+  async def _order_updates_impl(self, user: str):
+    params: dict[str, object] = {
+      'user': user,
+    }
+    stream = await self.subscribe('orderUpdates', params)
+
+    def mapper(msg) -> list[OrderUpdate]:
+      return adapter.validate_python(msg) if self.validate else msg
+
+    return stream.map(mapper)

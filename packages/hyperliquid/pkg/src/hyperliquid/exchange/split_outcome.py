@@ -1,0 +1,68 @@
+from typing_extensions import Literal
+from typed_core.validation import TypedDict
+import pydantic
+
+from hyperliquid.core import timestamp
+from hyperliquid.exchange.core import ExchangeMixin, ExchangeResponse, sign_l1_action
+
+
+class SplitOutcomeResult(TypedDict):
+  type: Literal['default']
+  """Response discriminator. Hyperliquid returns the generic `default` marker for this action rather than its own action type name."""
+
+
+class SplitOutcomeSubAction(TypedDict):
+  outcome: int
+  amount: str
+
+
+class SplitOutcomeAction(TypedDict):
+  type: Literal['userOutcome']
+  splitOutcome: SplitOutcomeSubAction
+
+
+adapter = pydantic.TypeAdapter(ExchangeResponse[SplitOutcomeResult])
+
+
+class SplitOutcome(ExchangeMixin):
+  async def split_outcome(
+    self,
+    *,
+    outcome: int,
+    amount: str,
+    expires_after: int | None = None,
+  ) -> ExchangeResponse[SplitOutcomeResult]:
+    """Split X quote tokens into X Yes and X No shares of a HIP-4 outcome, through Hyperliquid POST /exchange using action type `userOutcome`, variant `splitOutcome`.
+
+    Args:
+      outcome: Numeric index of the HIP-4 outcome to split, assigned when it was created.
+      amount: Decimal string amount of quote token to split, e.g. "123.0". Produces an equal amount of Yes and No shares.
+      expires_after: Optional expiration timestamp for the signed action.
+
+    References:
+      - [Official docs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/exchange-endpoint)
+    """
+    ts = timestamp.now()
+    sub_action: SplitOutcomeSubAction = {
+      'outcome': outcome,
+      'amount': amount,
+    }
+    action: SplitOutcomeAction = {'type': 'userOutcome', 'splitOutcome': sub_action}
+    sig = sign_l1_action(
+      action,
+      wallet=self.wallet,
+      nonce=ts,
+      mainnet=self.mainnet,
+      vault_address=None,
+      expires_after=expires_after,
+    )
+    result = await self.client.request(
+      {
+        'action': action,
+        'nonce': ts,
+        'signature': sig,
+        'vaultAddress': None,
+        'expiresAfter': expires_after,
+      }
+    )
+    return adapter.validate_python(result) if self.validate else result
