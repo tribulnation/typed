@@ -10,11 +10,11 @@ Use `l2_book()` for order book updates.
 from hyperliquid import Hyperliquid
 
 async with Hyperliquid.ws(public=True) as client:
-  book = await client.streams.l2_book('BTC')
-  async for update in book:
-    best_bid = update['levels'][0][0]
-    best_ask = update['levels'][1][0]
-    print(best_bid['px'], best_ask['px'])
+  async with client.streams.l2_book('BTC') as book:
+    async for update in book:
+      best_bid = update['levels'][0][0]
+      best_ask = update['levels'][1][0]
+      print(best_bid['px'], best_ask['px'])
 ```
 
 If you need more compact aggregation, use the optional `n_sig_figs` and `mantissa` arguments.
@@ -25,9 +25,9 @@ If you need more compact aggregation, use the optional `n_sig_figs` and `mantiss
 from hyperliquid import Hyperliquid
 
 async with Hyperliquid.ws(public=True) as client:
-  candles = await client.streams.candle('BTC', '1m')
-  async for candle in candles:
-    print(candle['s'], candle['i'], candle['c'])
+  async with client.streams.candle('BTC', '1m') as candles:
+    async for candle in candles:
+      print(candle['s'], candle['i'], candle['c'])
 ```
 
 ## Listen To Market-Wide Mid Prices
@@ -36,9 +36,9 @@ async with Hyperliquid.ws(public=True) as client:
 from hyperliquid import Hyperliquid
 
 async with Hyperliquid.ws(public=True) as client:
-  mids = await client.streams.all_mids()
-  async for update in mids:
-    print(update['mids']['BTC'])
+  async with client.streams.all_mids() as mids:
+    async for update in mids:
+      print(update['mids']['BTC'])
 ```
 
 ## Other Public Streams

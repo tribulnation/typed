@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/hyperliquid">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/hyperliquid/refs/heads/main/media/hyperliquid-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/hyperliquid/refs/heads/main/media/hyperliquid-light.svg">
-      <img alt="Typed Hyperliquid" src="https://raw.githubusercontent.com/tribulnation/hyperliquid/refs/heads/main/media/hyperliquid-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-light.svg">
+      <img alt="Typed Hyperliquid" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -30,7 +30,7 @@
 ---
 
 - **Documentation**: [https://tribulnation.com/typed/hyperliquid](https://tribulnation.com/typed/hyperliquid)
-- **Source Code**: [https://github.com/tribulnation/hyperliquid](https://github.com/tribulnation/hyperliquid)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/hyperliquid](https://github.com/tribulnation/typed/tree/main/packages/hyperliquid)
 
 ---
 
@@ -38,10 +38,10 @@
 from hyperliquid import Hyperliquid
 
 async with Hyperliquid.ws(public=True) as client:
-  stream = await client.streams.trades('BTC')
-  async for msg in stream:
-    for trade in msg:
-      print(trade['px'], trade['sz'], trade['side'])
+  async with client.streams.trades('BTC') as trades:
+    async for msg in trades:
+      for trade in msg:
+        print(trade['px'], trade['sz'], trade['side'])
 ```
 
 ## Why Typed Hyperliquid?
@@ -75,3 +75,13 @@ pip install typed-hyperliquid
 - [Error Handling](https://tribulnation.com/typed/hyperliquid/reference/error-handling)
 - [Environment Variables](https://tribulnation.com/typed/hyperliquid/reference/env-vars)
 - [Timestamps](https://tribulnation.com/typed/hyperliquid/reference/timestamps)
+
+## Design Philosophy
+
+Typed Hyperliquid follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT — see [LICENSE](LICENSE).

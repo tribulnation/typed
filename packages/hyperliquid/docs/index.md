@@ -6,10 +6,10 @@
 from hyperliquid import Hyperliquid
 
 async with Hyperliquid.ws(public=True) as client:
-  stream = await client.streams.trades('BTC')
-  async for msg in stream:
-    for trade in msg:
-      print(trade['px'], trade['sz'], trade['side'])
+  async with client.streams.trades('BTC') as trades:
+    async for msg in trades:
+      for trade in msg:
+        print(trade['px'], trade['sz'], trade['side'])
 ```
 
 ## Why Typed Hyperliquid?
