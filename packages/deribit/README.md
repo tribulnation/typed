@@ -1,6 +1,38 @@
-# Typed Deribit
+<p align="center">
+  <a href="https://tribulnation.com/typed/deribit">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-light.svg">
+      <img alt="Typed Deribit" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> A fully typed, validated async client for the Deribit API.
+<p align="center">
+  <em>A fully typed, validated async client for the Deribit API.</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/typed-deribit/">
+    <img src="https://img.shields.io/pypi/v/typed-deribit.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/typed-deribit/">
+    <img src="https://img.shields.io/pypi/pyversions/typed-deribit.svg" alt="Python versions">
+  </a>
+  <a href="https://tribulnation.com/typed/deribit">
+    <img src="https://img.shields.io/badge/docs-live-black" alt="Docs">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/pypi/l/typed-deribit.svg" alt="License">
+  </a>
+</p>
+
+---
+
+- **Documentation**: [https://tribulnation.com/typed/deribit](https://tribulnation.com/typed/deribit)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/deribit](https://github.com/tribulnation/typed/tree/main/packages/deribit)
+
+---
 
 ```python
 from deribit import Deribit
@@ -30,12 +62,6 @@ async with Deribit.new(testnet=True) as client:
 pip install typed-deribit
 ```
 
-## Documentation
-
-- [API Keys Setup](https://tribulnation.com/typed/deribit/api-keys)
-- [How To](https://tribulnation.com/typed/deribit/how-to)
-- [Reference](https://tribulnation.com/typed/deribit/reference)
-
 ## How To
 
 - [Fetch Market Data](https://tribulnation.com/typed/deribit/how-to/fetch-market-data)
@@ -45,6 +71,20 @@ pip install typed-deribit
 - [Paginate Through Results](https://tribulnation.com/typed/deribit/how-to/paginate-through-results)
 - [Listen To Streams](https://tribulnation.com/typed/deribit/how-to/listen-to-streams)
 
-## Source Code
+## Reference
 
-> [github.com/tribulnation/deribit](https://github.com/tribulnation/deribit)
+- [API Keys Setup](https://tribulnation.com/typed/deribit/api-keys)
+- [Async Usage](https://tribulnation.com/typed/deribit/reference/async-usage)
+- [Error Handling](https://tribulnation.com/typed/deribit/reference/error-handling)
+- [Environment Variables](https://tribulnation.com/typed/deribit/reference/env-vars)
+- [Timestamps](https://tribulnation.com/typed/deribit/reference/timestamps)
+
+## Design Philosophy
+
+Typed Deribit follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT — see [LICENSE](LICENSE).
