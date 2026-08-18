@@ -30,23 +30,6 @@ async with Deribit.new(testnet=True) as client:
 pip install typed-deribit
 ```
 
-## Client Shape
-
-- `client.http` — request/reply over HTTP.
-- `client.ws` — the same methods over WebSocket, plus the handful Deribit only serves this
-  way (`trading.mass_quote`, `session.set_heartbeat`, ...).
-- `client.streams` — channel subscriptions, always WebSocket, on their own connection.
-
-Both `.http` and `.ws` expose the identical surface: `market_data`, `trading`, `account`,
-`auth`, `wallet`, `block_rfq`, `block_trade`, `combo_books`, `matching_engine`, `session`,
-`subscription_management`, `supporting`.
-
-## Documentation
-
-- [API Keys Setup](api-keys.md)
-- [How To](how-to/index.md)
-- [Reference](reference/index.md)
-
 ## How To
 
 - [Fetch Market Data](how-to/fetch-market-data.md)
@@ -55,3 +38,17 @@ Both `.http` and `.ws` expose the identical surface: `market_data`, `trading`, `
 - [Manage Deposits & Withdrawals](how-to/manage-deposits-and-withdrawals.md)
 - [Paginate Through Results](how-to/paginate-through-results.md)
 - [Listen To Streams](how-to/listen-to-streams.md)
+
+## Reference
+
+- [API Keys Setup](api-keys.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
+
+## Design Philosophy
+
+Typed Deribit follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
