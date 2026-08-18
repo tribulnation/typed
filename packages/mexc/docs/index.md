@@ -11,7 +11,7 @@ async with MEXC.public() as client:
   print(candles[-1][4])
 
   async for ticker in stream:
-    print(ticker['lastPrice'])
+    print(ticker.get('lastPrice'))
     break
 ```
 
@@ -39,6 +39,13 @@ pip install typed-mexc
 
 ## Reference
 
+- [Async Usage](reference/async-usage.md)
 - [Error Handling](reference/error-handling.md)
 - [Environment Variables](reference/env-vars.md)
 - [Timestamps](reference/timestamps.md)
+
+## Design Philosophy
+
+Typed MEXC follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*

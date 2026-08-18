@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/mexc">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/mexc/refs/heads/main/media/mexc-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/mexc/refs/heads/main/media/mexc-light.svg">
-      <img alt="Typed MEXC" src="https://raw.githubusercontent.com/tribulnation/mexc/refs/heads/main/media/mexc-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-light.svg">
+      <img alt="Typed MEXC" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -30,7 +30,7 @@
 ---
 
 - **Documentation**: [https://tribulnation.com/typed/mexc](https://tribulnation.com/typed/mexc)
-- **Source Code**: [https://github.com/tribulnation/mexc](https://github.com/tribulnation/mexc)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/mexc](https://github.com/tribulnation/typed/tree/main/packages/mexc)
 
 ---
 
@@ -43,7 +43,7 @@ async with MEXC.public() as client:
   print(candles[-1][4])
 
   async for ticker in stream:
-    print(ticker['lastPrice'])
+    print(ticker.get('lastPrice'))
     break
 ```
 
@@ -72,6 +72,17 @@ pip install typed-mexc
 
 ## Reference
 
+- [Async Usage](https://tribulnation.com/typed/mexc/reference/async-usage)
 - [Error Handling](https://tribulnation.com/typed/mexc/reference/error-handling)
 - [Environment Variables](https://tribulnation.com/typed/mexc/reference/env-vars)
 - [Timestamps](https://tribulnation.com/typed/mexc/reference/timestamps)
+
+## Design Philosophy
+
+Typed MEXC follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT — see [LICENSE](LICENSE).
