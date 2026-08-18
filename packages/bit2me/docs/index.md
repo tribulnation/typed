@@ -1,8 +1,6 @@
 # Typed Bit2Me
 
-> Fully typed, validated async client for the Bit2Me API: REST trading, wallet, and earn, plus both Bit2Me WebSocket surfaces.
-
-**Use autocomplete instead of documentation.**
+> A fully typed, validated async client for the Bit2Me API.
 
 ```python
 from dotenv import load_dotenv
@@ -69,8 +67,25 @@ async with Bit2Me.new() as client:
 
 Response validation is on by default; pass `validate=False` to `Bit2Me.new()`/`.public()`, or per call, to skip it.
 
-## Documentation
+## How To
 
-- [**Getting Started**](getting-started.md): install the package and configure credentials
-- [**How To**](how-to/index.md): task-focused guides for market data, streams, orders, accounts, earn, and funds
-- [**Reference**](reference/index.md): async usage, error handling, and environment variables
+- [Fetch Market Data](how-to/fetch-market-data.md)
+- [Listen To Streams](how-to/listen-to-streams.md)
+- [Place & Manage Orders](how-to/place-and-manage-orders.md)
+- [Fetch Account Data](how-to/fetch-account-data.md)
+- [Query & Manage Earn](how-to/manage-earn.md)
+- [Query & Manage Deposits/Withdrawals](how-to/manage-deposits-and-withdrawals.md)
+
+## Reference
+
+- [Getting Started](getting-started.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
+
+## Design Philosophy
+
+Typed Bit2Me follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*

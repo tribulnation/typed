@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-bit2me"
-version = "0.1.3"
+version = "0.1.4"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -28,6 +28,6 @@ readme = {file="README.md", content-type="text/markdown"}
 bit2me = ["py.typed", "*.pyi", "**/*.pyi"]
 
 [project.urls]
-Repository = "https://github.com/tribulnation/bit2me.git"
-Documentation = "https://bit2me.tribulnation.com"
-Website = "https://tribulnation.com"
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/bit2me"
+Website = "https://tribulnation.com/typed"
