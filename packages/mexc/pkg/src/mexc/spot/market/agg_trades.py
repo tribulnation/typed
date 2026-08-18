@@ -1,0 +1,90 @@
+from datetime import timedelta
+from typing_extensions import AsyncIterator, TypedDict
+from mexc.core import Timestamp, timestamp as ts, validator
+from mexc.spot.core import ErrorResponse, SpotMixin
+
+class AggTradesItem(TypedDict):
+  a: int | str | None
+  """Aggregate trade id; can be null."""
+  f: int | str | None
+  """First trade id; can be null."""
+  l: int | str | None
+  """Last trade id; can be null."""
+  p: str
+  """Price."""
+  q: str
+  """Quantity."""
+  T: Timestamp
+  """Trade timestamp in milliseconds."""
+  m: bool
+  """Whether buyer was maker."""
+  M: bool
+  """Whether this was the best match."""
+
+Response: type[list[AggTradesItem] | ErrorResponse] = list[AggTradesItem] | ErrorResponse # type: ignore
+adapter = validator(Response)
+
+class AggTrades(SpotMixin):
+  async def agg_trades(
+    self, *,
+    symbol: str, limit: int | None = None, start_time: Timestamp | None = None,
+    end_time: Timestamp | None = None, validate: bool | None = None,
+  ) -> list[AggTradesItem]:
+    """Return aggregate public trades for a spot symbol.
+
+    Args:
+      symbol: Spot symbol.
+      limit: Maximum number of aggregate trades.
+      start_time: Start timestamp in milliseconds.
+      end_time: End timestamp in milliseconds.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#compressed-aggregate-trades-list)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if limit is not None:
+      params['limit'] = limit
+    if start_time is not None:
+      params['startTime'] = ts.dump(start_time)
+    if end_time is not None:
+      params['endTime'] = ts.dump(end_time)
+    r = await self.request('GET', '/api/v3/aggTrades', params=params)
+    return self.output(r.text, adapter, validate)
+
+  async def agg_trades_paged(
+    self, *,
+    symbol: str, limit: int | None = None, start_time: Timestamp | None = None,
+    end_time: Timestamp | None = None, max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[AggTradesItem]]:
+    """Yield successive pages of `agg_trades`.
+
+    Moves the `start_time`–`end_time` window backwards by its own width and stops on the
+    first empty window, or after `max_pages` pages when one is given.
+
+    Every request spans the width the caller's own `start_time` and `end_time` state, so
+    choose a window the venue answers in one response: it caps a wider one, and the walk
+    moves past the rows that were left out.
+    """
+    if start_time is None or end_time is None:
+      raise ValueError('`agg_trades_paged` walks a time window: pass both `start_time` and `end_time`')
+    lower = start_time
+    upper = end_time
+    width = upper - lower
+    pages = 0
+    while True:
+      response = await self.agg_trades(symbol=symbol, limit=limit, start_time=lower, end_time=upper, validate=validate)
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response:
+        break
+      upper = lower - timedelta(milliseconds=1)
+      lower = upper - width

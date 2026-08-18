@@ -1,0 +1,42 @@
+from typing_extensions import TypedDict
+from mexc.core import Timestamp, validator
+from mexc.spot.core import ErrorResponse, SpotMixin
+
+class OrderBook(TypedDict):
+  lastUpdateId: int
+  """Last update id."""
+  bids: list[list[str]]
+  """Bid price and quantity levels."""
+  asks: list[list[str]]
+  """Ask price and quantity levels."""
+  timestamp: Timestamp
+  """Snapshot timestamp in milliseconds."""
+
+Response: type[OrderBook | ErrorResponse] = OrderBook | ErrorResponse # type: ignore
+adapter = validator(Response)
+
+class Depth(SpotMixin):
+  async def depth(
+    self, *,
+    symbol: str, limit: int | None = None, validate: bool | None = None,
+  ) -> OrderBook:
+    """Return a spot order book snapshot for a symbol.
+
+    Args:
+      symbol: Spot symbol.
+      limit: Number of bids and asks to return.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#order-book)
+    """
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
+    if limit is not None:
+      params['limit'] = limit
+    r = await self.request('GET', '/api/v3/depth', params=params)
+    return self.output(r.text, adapter, validate)

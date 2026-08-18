@@ -1,0 +1,114 @@
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from mexc.core import Timestamp, validator
+from mexc.futures.core import AuthFuturesMixin
+
+class TransferRecordItem(TypedDict):
+  """transfer record"""
+  id: int | str
+  """Transfer record id."""
+  txid: str
+  """Transfer flow number."""
+  currency: str
+  """Currency code."""
+  amount: float
+  """Transfer amount."""
+  type: Literal['IN', 'OUT']
+  """Transfer direction: IN or OUT."""
+  state: Literal['WAIT', 'SUCCESS', 'FAILED']
+  """Transfer state: WAIT, SUCCESS, or FAILED."""
+  createTime: Timestamp | Timestamp
+  """Creation time."""
+  updateTime: Timestamp | Timestamp
+  """Update time."""
+
+class TransferRecordData(TypedDict):
+  """Transfer record page."""
+  pageSize: int
+  """Number of records requested per page."""
+  totalCount: int
+  """Total number of matching records."""
+  totalPage: int
+  """Total number of available pages."""
+  currentPage: int
+  """Current page number."""
+  resultList: list[TransferRecordItem]
+  """Page of transfer record records."""
+
+class TransferRecordResponse(TypedDict):
+  """Get futures asset transfer records response envelope."""
+  success: bool
+  """Whether the API request succeeded."""
+  code: NotRequired[int]
+  """MEXC response code; zero indicates success when present."""
+  message: NotRequired[str]
+  """Error or status message when present."""
+  data: NotRequired[TransferRecordData]
+
+adapter = validator(TransferRecordResponse)
+
+class TransferRecord(AuthFuturesMixin):
+  async def transfer_record(
+    self, *,
+    currency: str | None = None,
+    state: Literal['WAIT', 'SUCCESS', 'FAILED'] | None = None,
+    type_: Literal['IN', 'OUT'] | None = None, page_num: int, page_size: int,
+    validate: bool | None = None,
+  ) -> TransferRecordResponse:
+    """Returns paginated asset transfer records for the signed futures account.
+
+    Args:
+      currency: Filter by currency code.
+      state: Filter by transfer state: WAIT, SUCCESS, or FAILED.
+      type_: Filter by transfer direction: IN or OUT.
+      page_num: Page number; default is 1.
+      page_size: Page size; default 20, maximum 100.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records)
+    """
+    headers = {}
+    params = {}
+    if currency is not None:
+      params['currency'] = currency
+    if state is not None:
+      params['state'] = state
+    if type_ is not None:
+      params['type'] = type_
+    if page_num is not None:
+      params['page_num'] = page_num
+    if page_size is not None:
+      params['page_size'] = page_size
+    r = await self.signed_request('GET', '/api/v1/private/account/transfer_record', params=params or None, headers=headers)
+    return self.envelope_output(r.text, adapter, validate)
+
+  async def transfer_record_paged(
+    self, *,
+    currency: str | None = None,
+    state: Literal['WAIT', 'SUCCESS', 'FAILED'] | None = None,
+    type_: Literal['IN', 'OUT'] | None = None, page_size: int,
+    max_pages: int | None = None, validate: bool | None = None,
+  ) -> AsyncIterator[TransferRecordResponse]:
+    """Yield successive pages of `transfer_record`.
+
+    Requests `page_num` from 1 upwards and stops once it has covered the
+    `data.totalPage` pages the response reports, or after `max_pages` pages when one is
+    given.
+    """
+    page_num = 1
+    pages = 0
+    while True:
+      response = await self.transfer_record(currency=currency, state=state, type_=type_, page_size=page_size, page_num=page_num, validate=validate)
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total_0 = response.get('data') if response is not None else None
+      total = total_0.get('totalPage') if total_0 is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages >= total:
+        break
+      page_num += 1
