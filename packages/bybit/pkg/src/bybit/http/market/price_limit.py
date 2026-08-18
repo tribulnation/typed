@@ -1,0 +1,49 @@
+"""`GET /v5/market/price-limit` — Get Order Price Limit."""
+
+from typing_extensions import Literal, TypedDict
+from bybit.core import Endpoint, validator
+
+
+class OrderPriceLimit(TypedDict):
+  """Current order price band for one symbol."""
+
+  symbol: str
+  """Symbol name."""
+  buyLmt: str
+  """Highest price a buy order may be placed at."""
+  sellLmt: str
+  """Lowest price a sell order may be placed at."""
+  ts: str
+  """Time the band was computed, as a millisecond timestamp."""
+
+
+adapter = validator[OrderPriceLimit](OrderPriceLimit)
+
+
+class PriceLimit(Endpoint):
+  """`Get Order Price Limit` — mixed into the router that owns `market.price_limit`."""
+
+  async def price_limit(
+    self,
+    *,
+    category: Literal['spot', 'linear', 'inverse'] | None = None,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> OrderPriceLimit:
+    """Get the current price band a resting order must fall inside for one symbol.
+
+    Args:
+      category: Product type. Defaults to `linear` when omitted.
+      symbol: Symbol name in uppercase, for example `BTCUSDT`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Bybit API docs](https://bybit-exchange.github.io/docs/v5/market/order-price-limit)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if category is not None:
+      params['category'] = category
+    r = await self.request('GET', '/v5/market/price-limit', params=params)
+    return self.result(r, adapter, validate)

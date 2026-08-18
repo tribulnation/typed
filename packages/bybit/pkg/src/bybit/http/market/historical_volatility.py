@@ -1,0 +1,111 @@
+"""`GET /v5/market/historical-volatility` — Get Historical Volatility."""
+
+from typing_extensions import AsyncIterator, Literal, TypedDict
+from bybit.core import Endpoint, validator
+
+
+class HistoricalVolatility(TypedDict):
+  """One realised volatility sample."""
+
+  period: Literal[7, 14, 21, 30, 60, 90, 180, 270]
+  """Lookback period of the sample, in days."""
+  value: str
+  """Annualised realised volatility, as a ratio."""
+  time: str
+  """Sample time, as a millisecond timestamp."""
+
+
+adapter = validator[list[HistoricalVolatility]](list[HistoricalVolatility])
+
+
+class HistoricalVolatilityEndpoint(Endpoint):
+  """`Get Historical Volatility` — mixed into the router that owns `market.historical_volatility`."""
+
+  async def historical_volatility(
+    self,
+    *,
+    category: Literal['option'],
+    base_coin: str | None = None,
+    quote_coin: Literal['USD', 'USDT'] | None = None,
+    period: Literal[7, 14, 21, 30, 60, 90, 180, 270] | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    validate: bool | None = None,
+  ) -> list[HistoricalVolatility]:
+    """Get the historical realised volatility of an option underlying, sampled hourly for a fixed lookback period.
+
+    Args:
+      category: Product type.
+      base_coin: Base coin in uppercase. Defaults to `BTC`.
+      quote_coin: Quote coin. Defaults to `USD`.
+      period: Lookback period of the volatility calculation, in days. Defaults to 7.
+      start_time: Start of the queried range, as a millisecond timestamp.
+      end_time: End of the queried range, as a millisecond timestamp.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Bybit API docs](https://bybit-exchange.github.io/docs/v5/market/iv)
+    """
+    params: dict = {
+      'category': category,
+    }
+    if base_coin is not None:
+      params['baseCoin'] = base_coin
+    if quote_coin is not None:
+      params['quoteCoin'] = quote_coin
+    if period is not None:
+      params['period'] = period
+    if start_time is not None:
+      params['startTime'] = start_time
+    if end_time is not None:
+      params['endTime'] = end_time
+    r = await self.request('GET', '/v5/market/historical-volatility', params=params)
+    return self.result(r, adapter, validate)
+
+  async def historical_volatility_paged(
+    self,
+    *,
+    category: Literal['option'],
+    base_coin: str | None = None,
+    quote_coin: Literal['USD', 'USDT'] | None = None,
+    period: Literal[7, 14, 21, 30, 60, 90, 180, 270] | None = None,
+    start_time: int | None = None,
+    end_time: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[HistoricalVolatility]]:
+    """Yield successive pages of `historical_volatility`.
+
+    Moves the `start_time`–`end_time` window forwards by its own width and stops on the
+    first empty window, or after `max_pages` pages when one is given.
+
+    Every request spans the width the caller's own `start_time` and `end_time` state, so
+    choose a window the venue answers in one response: it caps a wider one, and the walk
+    moves past the rows that were left out.
+    """
+    if start_time is None or end_time is None:
+      raise ValueError(
+        '`historical_volatility_paged` walks a time window: pass both `start_time` and `end_time`'
+      )
+    lower = start_time
+    upper = end_time
+    width = upper - lower
+    pages = 0
+    while True:
+      response = await self.historical_volatility(
+        category=category,
+        base_coin=base_coin,
+        quote_coin=quote_coin,
+        period=period,
+        start_time=lower,
+        end_time=upper,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      if not response:
+        break
+      lower = upper + 1
+      upper = lower + width

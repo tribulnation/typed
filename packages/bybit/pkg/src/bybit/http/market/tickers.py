@@ -1,0 +1,228 @@
+"""`GET /v5/market/tickers` — Get Tickers."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from bybit.core import Endpoint, validator
+
+
+class ContractTicker(TypedDict):
+  """Rolling statistics, funding and best quote for a linear or inverse contract."""
+
+  symbol: str
+  """Symbol name."""
+  lastPrice: str
+  """Last traded price."""
+  indexPrice: str
+  """Index price."""
+  markPrice: str
+  """Mark price."""
+  prevPrice24h: str
+  """Traded price 24 hours ago."""
+  price24hPcnt: str
+  """Price change over the last 24 hours, as a ratio."""
+  highPrice24h: str
+  """Highest traded price in the last 24 hours."""
+  lowPrice24h: str
+  """Lowest traded price in the last 24 hours."""
+  prevPrice1h: NotRequired[str]
+  """Traded price one hour ago."""
+  openInterest: str
+  """Open interest, counting both sides."""
+  openInterestValue: str
+  """Value of the open interest, counting both sides."""
+  singleOpenInterest: NotRequired[str]
+  """Open interest, counting one side."""
+  singleOpenInterestValue: NotRequired[str]
+  """Value of the open interest, counting one side."""
+  turnover24h: str
+  """Turnover over the last 24 hours."""
+  volume24h: str
+  """Volume over the last 24 hours."""
+  fundingRate: str
+  """Current funding rate."""
+  nextFundingTime: str
+  """Next funding settlement time, as a millisecond timestamp."""
+  predictedDeliveryPrice: NotRequired[str]
+  """Predicted delivery price; populated 30 minutes before delivery."""
+  basisRate: NotRequired[str]
+  """Basis rate; futures only."""
+  basis: NotRequired[str]
+  """Basis; futures only."""
+  basisRateYear: NotRequired[str]
+  """Annualised basis rate; futures only."""
+  deliveryFeeRate: NotRequired[str]
+  """Delivery fee rate; futures only."""
+  deliveryTime: NotRequired[str]
+  """Delivery time, as a millisecond timestamp; `0` for perpetuals."""
+  bid1Price: str
+  """Best bid price."""
+  bid1Size: str
+  """Size resting at the best bid."""
+  ask1Price: str
+  """Best ask price."""
+  ask1Size: str
+  """Size resting at the best ask."""
+  preOpenPrice: NotRequired[str]
+  """Estimated open price of a pre-market contract."""
+  preQty: NotRequired[str]
+  """Estimated open quantity of a pre-market contract."""
+  curPreListingPhase: NotRequired[str]
+  """Current phase of a pre-market contract; empty otherwise."""
+  fundingIntervalHour: NotRequired[str]
+  """Funding interval in hours."""
+  fundingCap: NotRequired[str]
+  """Absolute bound of the funding rate."""
+
+
+class OptionTicker(TypedDict):
+  """Quote, greeks and rolling statistics for an option contract."""
+
+  symbol: str
+  """Symbol name."""
+  bid1Price: str
+  """Best bid price."""
+  bid1Size: str
+  """Size resting at the best bid."""
+  bid1Iv: str
+  """Implied volatility of the best bid."""
+  ask1Price: str
+  """Best ask price."""
+  ask1Size: str
+  """Size resting at the best ask."""
+  ask1Iv: str
+  """Implied volatility of the best ask."""
+  lastPrice: str
+  """Last traded price."""
+  highPrice24h: str
+  """Highest traded price in the last 24 hours."""
+  lowPrice24h: str
+  """Lowest traded price in the last 24 hours."""
+  markPrice: str
+  """Mark price."""
+  indexPrice: str
+  """Index price."""
+  markIv: str
+  """Implied volatility of the mark price."""
+  underlyingPrice: str
+  """Price of the underlying future."""
+  openInterest: str
+  """Open interest."""
+  turnover24h: str
+  """Turnover over the last 24 hours."""
+  volume24h: str
+  """Volume over the last 24 hours."""
+  totalVolume: str
+  """Lifetime volume."""
+  totalTurnover: str
+  """Lifetime turnover."""
+  delta: str
+  """Option delta."""
+  gamma: str
+  """Option gamma."""
+  vega: str
+  """Option vega."""
+  theta: str
+  """Option theta."""
+  predictedDeliveryPrice: str
+  """Predicted delivery price; populated 30 minutes before delivery."""
+  change24h: str
+  """Price change over the last 24 hours."""
+
+
+class SpotTicker(TypedDict):
+  """Rolling 24-hour statistics and best quote for a spot pair."""
+
+  symbol: str
+  """Symbol name."""
+  bid1Price: str
+  """Best bid price."""
+  bid1Size: str
+  """Size resting at the best bid."""
+  ask1Price: str
+  """Best ask price."""
+  ask1Size: str
+  """Size resting at the best ask."""
+  lastPrice: str
+  """Last traded price."""
+  prevPrice24h: str
+  """Traded price 24 hours ago."""
+  price24hPcnt: str
+  """Price change over the last 24 hours, as a ratio."""
+  highPrice24h: str
+  """Highest traded price in the last 24 hours."""
+  lowPrice24h: str
+  """Lowest traded price in the last 24 hours."""
+  turnover24h: str
+  """Turnover over the last 24 hours, in the quote coin."""
+  volume24h: str
+  """Volume over the last 24 hours, in the base coin."""
+  usdIndexPrice: NotRequired[str]
+  """USD index price used to value unified account balances."""
+
+
+class ContractTickers(TypedDict):
+  """Ticker snapshots for linear or inverse contracts."""
+
+  category: Literal['linear', 'inverse']
+  """Product type."""
+  list: list[ContractTicker]
+  """Contract tickers."""
+
+
+class OptionTickers(TypedDict):
+  """Ticker snapshots for option contracts."""
+
+  category: Literal['option']
+  """Product type."""
+  list: list[OptionTicker]
+  """Option tickers."""
+
+
+class SpotTickers(TypedDict):
+  """Ticker snapshots for spot pairs."""
+
+  category: Literal['spot']
+  """Product type."""
+  list: list[SpotTicker]
+  """Spot tickers."""
+
+
+adapter = validator[SpotTickers | ContractTickers | OptionTickers](
+  SpotTickers | ContractTickers | OptionTickers
+)
+
+
+class Tickers(Endpoint):
+  """`Get Tickers` — mixed into the router that owns `market.tickers`."""
+
+  async def tickers(
+    self,
+    *,
+    category: Literal['spot', 'linear', 'inverse', 'option'],
+    symbol: str | None = None,
+    base_coin: str | None = None,
+    exp_date: str | None = None,
+    validate: bool | None = None,
+  ) -> SpotTickers | ContractTickers | OptionTickers:
+    """Get the latest price snapshot and rolling 24-hour statistics for one symbol or for every symbol in a product category.
+
+    Args:
+      category: Product type.
+      symbol: Symbol name in uppercase, for example `BTCUSDT`. Omit to return every symbol in the category.
+      base_coin: Base coin in uppercase. Applies to option only.
+      exp_date: Option expiry date, for example `25DEC22`. Applies to option only.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Bybit API docs](https://bybit-exchange.github.io/docs/v5/market/tickers)
+    """
+    params: dict = {
+      'category': category,
+    }
+    if symbol is not None:
+      params['symbol'] = symbol
+    if base_coin is not None:
+      params['baseCoin'] = base_coin
+    if exp_date is not None:
+      params['expDate'] = exp_date
+    r = await self.request('GET', '/v5/market/tickers', params=params)
+    return self.result(r, adapter, validate)

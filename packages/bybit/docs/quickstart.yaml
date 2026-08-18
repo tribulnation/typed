@@ -1,0 +1,51 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials — see
+    [API keys setup](/typed/bybit/api-keys) for how to create them. Skip this if you only
+    need public market data: pass `public=True` to the constructor instead.
+  code: |
+    # .env
+    BYBIT_API_KEY="your_api_key"
+    BYBIT_API_SECRET="your_api_secret"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-bybit python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from bybit import Bybit
+
+    load_dotenv()
+
+    async with Bybit.new() as client:  # reads BYBIT_API_KEY / BYBIT_API_SECRET
+      ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+      print(ticker['list'][0]['lastPrice'])
+
+how_tos:
+  - title: Fetch market data
+    body: Candles, order books, tickers, recent trades, and instrument definitions — all public, no credentials needed.
+    code: |
+      candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)  # candles
+      book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)                # order book
+      trades = await client.http.market.recent_trades(category='spot', symbol='BTCUSDT', limit=3)          # recent trades
+      info = await client.http.market.instruments(category='spot', symbol='BTCUSDT')                       # instrument info
+
+  - title: Paginate through results
+    body: Cursor-paginated and time-window-paginated endpoints each carry a generated `_paged` iterator.
+    code: |
+      from bybit import timestamp
+
+      symbols = []
+      async for page in client.http.market.instruments_paged(category='linear', limit=200):
+        symbols += [i['symbol'] for i in page['list']]                     # walk every page by cursor
+      print(len(symbols))
+
+      end = timestamp.now()
+      async for page in client.http.market.kline_paged(
+        category='linear', symbol='BTCUSDT', interval='1',
+        start=end - 4 * 60 * 1000, end=end, limit=200, max_pages=3,
+      ):
+        print(len(page['list']))                                          # walk backwards by time window
