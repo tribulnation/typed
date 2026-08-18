@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-kraken"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -27,6 +27,6 @@ readme = {file="README.md", content-type="text/markdown"}
 "kraken" = ["py.typed", "*.pyi", "**/*.pyi"]
 
 [project.urls]
-Repository = "https://github.com/tribulnation/kraken.git"
-Documentation = "https://kraken.tribulnation.com"
-Website = "https://tribulnation.com"
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/kraken"
+Website = "https://tribulnation.com/typed"
