@@ -24,9 +24,9 @@ Every client builds on [`typed-core`](packages/core).
 | | Repo | Status | PyPI |
 |--|------|--------|-----|
 | <img src="https://catalogue.tribulnation.com/icons/platform/binance.svg" width="20" height="20" /> | [Binance](https://github.com/tribulnation/typed/tree/main/packages/binance) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-binance)](https://pypi.org/project/typed-binance/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/coinbase.svg" width="20" height="20" /> | [Coinbase](https://github.com/tribulnation/typed/tree/main/packages/coinbase) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-coinbase)](https://pypi.org/project/typed-coinbase/) |
 | <img src="https://catalogue.tribulnation.com/icons/platform/kraken.svg" width="20" height="20" /> | [Kraken](https://github.com/tribulnation/typed/tree/main/packages/kraken) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-kraken)](https://pypi.org/project/typed-kraken/) |
 | <img src="https://catalogue.tribulnation.com/icons/platform/kucoin.svg" width="20" height="20" /> | [KuCoin](https://github.com/tribulnation/typed/tree/main/packages/kucoin) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-kucoin)](https://pypi.org/project/typed-kucoin/) |
-| <img src="https://catalogue.tribulnation.com/icons/platform/coinbase.svg" width="20" height="20" /> | [Coinbase](https://github.com/tribulnation/typed/tree/main/packages/coinbase) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-coinbase)](https://pypi.org/project/typed-coinbase/) |
 | <img src="https://catalogue.tribulnation.com/icons/platform/deribit.svg" width="20" height="20" /> | [Deribit](https://github.com/tribulnation/typed/tree/main/packages/deribit) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-deribit)](https://pypi.org/project/typed-deribit/) |
 
 More venues are on the way — see the [full catalog](https://tribulnation.com/typed).
