@@ -18,11 +18,12 @@ async with KuCoin.new(public=True) as client:
   a typed structure, not a bare `dict`.
 - **✅ Runtime Validation**: responses are checked against their schema by default, not just
   typed on paper.
-- **⚡ Async First**: one client shares an HTTP connection pool per KuCoin host and lazily
-  opens spot/margin and futures WebSocket streams only when used.
+- **⚡ Async First**: one client shares an HTTP connection pool per KuCoin host (default,
+  futures, broker) and lazily opens the Spot/Margin WebSocket connection only when a stream
+  is used.
 - **📚 Full Surface**: Account, Spot, Margin, Futures, Earn, VIP Lending, Affiliate, Convert,
-  Copy Trading and Broker each hang off their own attribute on `KuCoin`, alongside both
-  public and private WebSocket feeds.
+  Copy Trading and Broker each hang off their own attribute on `KuCoin`, alongside the
+  Spot/Margin public and private WebSocket feeds.
 
 ## Installation
 
@@ -48,8 +49,9 @@ endpoints — see [API Keys Setup](api-keys.md).
 
 `client.account`, `client.spot`, `client.margin`, `client.earn`, `client.vip_lending`,
 `client.affiliate`, `client.convert`, `client.futures`, `client.copy_trading` and
-`client.broker` cover REST. `client.streams.spot_margin` and `client.streams.futures`
-cover WebSocket — see [Listen To Streams](how-to/listen-to-streams.md).
+`client.broker` cover REST. `client.streams.spot_margin` covers WebSocket (public and
+private topics on one connection) — see [Listen To Streams](how-to/listen-to-streams.md).
+`client.streams.futures` exists but has no channels wired yet.
 
 ## Documentation
 
@@ -66,6 +68,14 @@ cover WebSocket — see [Listen To Streams](how-to/listen-to-streams.md).
 - [Query & Manage Earn Instruments](how-to/manage-earn.md)
 - [Deposits & Withdrawals](how-to/manage-deposits-and-withdrawals.md)
 - [Paginate Through Results](how-to/paginate-through-results.md)
+
+## Reference
+
+- [API Keys Setup](api-keys.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
 
 ## Design Philosophy
 
