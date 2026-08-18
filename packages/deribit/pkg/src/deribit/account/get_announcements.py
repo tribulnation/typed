@@ -1,0 +1,58 @@
+"""`public/get_announcements` — `public/get_announcements`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class Announcement(TypedDict):
+  id: float
+  """A unique identifier for the announcement."""
+  title: str
+  """The title of the announcement."""
+  body: str
+  """The HTML body of the announcement."""
+  important: bool
+  """Whether the announcement is marked as important."""
+  confirmation: NotRequired[bool]
+  """Whether the user confirmation is required for this announcement."""
+  publication_timestamp: int
+  """The timestamp (milliseconds since the Unix epoch) of announcement publication."""
+
+
+validate_get_announcements = validator[list[Announcement]](list[Announcement])
+
+
+class GetAnnouncements(RpcEndpoint):
+  """`public/get_announcements`."""
+
+  async def get_announcements(
+    self,
+    *,
+    start_timestamp: int | None = None,
+    count: int | None = None,
+    validate: bool | None = None,
+  ) -> list[Announcement]:
+    """Retrieves platform announcements and important notices. Announcements include system updates, maintenance schedules, new features, policy changes, and other important information.
+
+    Results are returned in reverse chronological order (newest first).
+
+    Args:
+      start_timestamp: The most recent timestamp to return the results for (milliseconds since the UNIX epoch); defaults to the current time.
+      count: Maximum count of returned announcements, default 5, maximum 50.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/public-get_announcements)
+    """
+    params = {}
+    if start_timestamp is not None:
+      params['start_timestamp'] = start_timestamp
+    if count is not None:
+      params['count'] = count
+    return await self.request(
+      'public/get_announcements',
+      params=params,
+      validator=validate_get_announcements,
+      validate=validate,
+    )

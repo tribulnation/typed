@@ -1,0 +1,143 @@
+"""`private/add_block_rfq_quote` — `private/add_block_rfq_quote`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class AddBlockRfqQuoteLeg(TypedDict):
+  """One leg's price/ratio/direction for this quote."""
+
+  instrument_name: str
+  """Unique instrument identifier."""
+  price: float
+  """Price for this leg."""
+  ratio: int
+  """Ratio of amount between legs."""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+
+
+class BlockRfqQuoteHedge(TypedDict):
+  """The hedge leg of the quote, when one was included."""
+
+  amount: NotRequired[int]
+  """The requested hedge leg size."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for the hedge leg."""
+
+
+class BlockRfqQuoteLeg(TypedDict):
+  """One leg of a (possibly multi-leg) Block RFQ quote."""
+
+  ratio: int
+  """Ratio of amount between legs."""
+  instrument_name: str
+  """Unique instrument identifier."""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+  price: float
+  """Price for this leg."""
+
+
+class BlockRfqQuote(TypedDict):
+  """The quote just added, in its initial `open` state."""
+
+  creation_timestamp: int
+  """When the quote was created (ms since epoch)."""
+  last_update_timestamp: NotRequired[int]
+  """When the quote was last updated (ms since epoch)."""
+  block_rfq_id: int
+  """ID of the Block RFQ."""
+  block_rfq_quote_id: int
+  """ID of the newly created quote."""
+  quote_state: str
+  """State of the quote. No documented enumerated set of values -- left bare per docs/spec/authoring.md rule 2."""
+  execution_instruction: NotRequired[Literal['any_part_of', 'all_or_none']]
+  """Execution instruction of the quote, echoing the request or its default."""
+  price: float
+  """Price of the quote."""
+  amount: float
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  direction: Literal['buy', 'sell']
+  """Direction of trade from the maker's perspective."""
+  filled_amount: NotRequired[float]
+  """Filled amount of the quote, `0` immediately after adding."""
+  legs: list[BlockRfqQuoteLeg]
+  """The instrument legs this quote covers, echoing the request."""
+  hedge: NotRequired[BlockRfqQuoteHedge]
+  replaced: NotRequired[bool]
+  """Whether the quote was edited, `false` immediately after adding."""
+  label: NotRequired[str]
+  """User defined label for the quote, echoing the request."""
+  app_name: NotRequired[str]
+  """The application that placed the quote on behalf of the user."""
+
+
+validate_add_block_rfq_quote = validator[BlockRfqQuote](BlockRfqQuote)
+
+
+class AddBlockRfqQuote(RpcEndpoint):
+  """`private/add_block_rfq_quote`."""
+
+  async def add_block_rfq_quote(
+    self,
+    *,
+    label: str | None = None,
+    block_rfq_id: int,
+    amount: float,
+    direction: Literal['buy', 'sell'],
+    legs: list[AddBlockRfqQuoteLeg],
+    hedge: str | None = None,
+    execution_instruction: Literal['all_or_none', 'any_part_of'] | None = None,
+    price: float | None = None,
+    expires_at: int | None = None,
+    validate: bool | None = None,
+  ) -> BlockRfqQuote:
+    """**Maker method**
+
+    Adds a quote to an existing Block RFQ. Use `combo_books.get_leg_prices` to compute individual leg prices first.
+
+    Scope: `block_rfq:read_write`.
+
+    Args:
+      label: User defined label used to identify this quote.
+      block_rfq_id: ID of the Block RFQ to quote.
+      amount: This value multiplied by the ratio of a leg gives trade size on that leg.
+      direction: Direction of trade from the maker's perspective.
+      legs: List of legs used for the Block RFQ quote.
+      hedge: Hedge leg of the Block RFQ, as a JSON-encoded string.
+      execution_instruction: Execution instruction of the quote.
+      price: Aggregated price used for quoting future spreads.
+      expires_at: When the quote expires.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/block-rfq/private-add_block_rfq_quote)
+    """
+    params: dict = {
+      'block_rfq_id': block_rfq_id,
+      'amount': amount,
+      'direction': direction,
+      'legs': legs,
+    }
+    if label is not None:
+      params['label'] = label
+    if hedge is not None:
+      params['hedge'] = hedge
+    if execution_instruction is not None:
+      params['execution_instruction'] = execution_instruction
+    if price is not None:
+      params['price'] = price
+    if expires_at is not None:
+      params['expires_at'] = expires_at
+    return await self.authed_request(
+      'private/add_block_rfq_quote',
+      params=params,
+      validator=validate_add_block_rfq_quote,
+      validate=validate,
+    )

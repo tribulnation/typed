@@ -1,0 +1,90 @@
+"""`private/update_in_address_book` — `private/update_in_address_book`."""
+
+from typing_extensions import Literal
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+validate_update_in_address_book = validator[Literal['ok']](Literal['ok'])  # pyright: ignore[reportArgumentType]  # fmt: skip
+
+
+class UpdateInAddressBook(RpcEndpoint):
+  """`private/update_in_address_book`."""
+
+  async def update_in_address_book(
+    self,
+    *,
+    currency: Literal[
+      'BTC',
+      'ETH',
+      'STETH',
+      'ETHW',
+      'USDC',
+      'USDT',
+      'EURR',
+      'SOL',
+      'XRP',
+      'USYC',
+      'PAXG',
+      'BNB',
+      'USDE',
+    ],
+    type: Literal['transfer', 'withdrawal', 'deposit_source'],
+    address: str,
+    beneficiary_vasp_name: str,
+    beneficiary_vasp_did: str,
+    beneficiary_vasp_website: str | None = None,
+    beneficiary_first_name: str | None = None,
+    beneficiary_last_name: str | None = None,
+    beneficiary_company_name: str | None = None,
+    beneficiary_address: str,
+    agreed: bool,
+    personal: bool,
+    label: str,
+    validate: bool | None = None,
+  ) -> Literal['ok']:
+    """Updates beneficiary information for an address in the address book. This method allows you to add or modify beneficiary details required for compliance purposes when making withdrawals to certain addresses.
+
+    Args:
+      currency: The currency symbol.
+      type: Address book type.
+      address: Address in currency format; it must already be in the address book.
+      beneficiary_vasp_name: Name of beneficiary VASP.
+      beneficiary_vasp_did: DID of beneficiary VASP.
+      beneficiary_vasp_website: Website of the beneficiary VASP. Required if the address book entry is associated with a VASP that is not on the venue's known list.
+      beneficiary_first_name: First name of beneficiary (if beneficiary is a person).
+      beneficiary_last_name: Last name of beneficiary (if beneficiary is a person).
+      beneficiary_company_name: Beneficiary company name (if beneficiary is a company).
+      beneficiary_address: Geographical address of the beneficiary.
+      agreed: Indicates that the user agreed to share the provided information with 3rd parties.
+      personal: The user confirms that the provided address belongs to them and they have access to it via an un-hosted wallet.
+      label: Label of the address book entry.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/wallet/private-update_in_address_book)
+    """
+    params: dict = {
+      'currency': currency,
+      'type': type,
+      'address': address,
+      'beneficiary_vasp_name': beneficiary_vasp_name,
+      'beneficiary_vasp_did': beneficiary_vasp_did,
+      'beneficiary_address': beneficiary_address,
+      'agreed': agreed,
+      'personal': personal,
+      'label': label,
+    }
+    if beneficiary_vasp_website is not None:
+      params['beneficiary_vasp_website'] = beneficiary_vasp_website
+    if beneficiary_first_name is not None:
+      params['beneficiary_first_name'] = beneficiary_first_name
+    if beneficiary_last_name is not None:
+      params['beneficiary_last_name'] = beneficiary_last_name
+    if beneficiary_company_name is not None:
+      params['beneficiary_company_name'] = beneficiary_company_name
+    return await self.authed_request(
+      'private/update_in_address_book',
+      params=params,
+      validator=validate_update_in_address_book,
+      validate=validate,
+    )

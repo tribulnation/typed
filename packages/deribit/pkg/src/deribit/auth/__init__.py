@@ -1,0 +1,13 @@
+from .auth import Auth
+from .exchange_token import ExchangeToken
+from .fork_token import ForkToken
+from .logout import Logout
+
+
+class AuthRouter(
+  Auth,
+  ExchangeToken,
+  ForkToken,
+  Logout,
+):
+  """AuthRouter endpoints."""

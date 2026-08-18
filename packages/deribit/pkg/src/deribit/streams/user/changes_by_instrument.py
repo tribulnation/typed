@@ -1,0 +1,362 @@
+"""`user.changes.{instrument_name}.{interval}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class ClientInfo(TypedDict):
+  """Optional client allocation info for brokers."""
+
+  client_id: NotRequired[int]
+  """ID of a client; available to broker. Represents a group of users under a common name."""
+  client_link_id: NotRequired[int]
+  """ID assigned to a single user in a client; available to broker."""
+  name: NotRequired[str]
+  """Name of the linked user within the client; available to broker."""
+
+
+class Order(TypedDict):
+  order_id: str
+  """Unique order identifier"""
+  starbase_order_id: NotRequired[int]
+  """Raw Starbase order id, in Starbase's own (non currency-prefixed) id namespace. Only present for orders matched on Starbase."""
+  order_state: Literal[
+    'open', 'filled', 'rejected', 'cancelled', 'untriggered', 'triggered'
+  ]
+  """Order state: `"open"`, `"filled"`, `"rejected"`, `"cancelled"`, `"untriggered"`"""
+  order_type: Literal[
+    'market',
+    'limit',
+    'stop_market',
+    'stop_limit',
+    'take_market',
+    'take_limit',
+    'trailing_stop',
+  ]
+  """Order type: `"limit"`, `"market"`, `"stop_limit"`, `"stop_market"`, `"take_limit"`, `"take_market"`, `"trailing_stop"`"""
+  original_order_type: NotRequired[Literal['market', 'market_limit']]
+  """Original order type. Optional field"""
+  time_in_force: Literal[
+    'good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel'
+  ]
+  """Order time in force: `"good_til_cancelled"`, `"good_til_day"`, `"fill_or_kill"` or `"immediate_or_cancel"`"""
+  is_rebalance: NotRequired[bool]
+  """Optional (only for spot). `true` if order was automatically created during cross-collateral balance restoration"""
+  is_liquidation: NotRequired[bool]
+  """Optional (not added for spot). `true` if order was automatically created during liquidation"""
+  instrument_name: str
+  """Unique instrument identifier"""
+  creation_timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)"""
+  last_update_timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)"""
+  starbase_last_update_timestamp: NotRequired[int]
+  """The Starbase causal timestamp (nanoseconds since the Unix epoch) of the last book update that affected this order. Present only for orders placed in Starbase; not always available for direct access orders"""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`"""
+  price: float | Literal['market_price']
+  """Price in base currency or "market_price" in case of open trigger market orders"""
+  label: str
+  """User defined label (up to 64 characters)"""
+  post_only: bool
+  """`true` for post-only orders only"""
+  reject_post_only: NotRequired[bool]
+  """`true` if order has `reject_post_only` flag (field is present only when `post_only` is `true`)"""
+  reduce_only: NotRequired[bool]
+  """Optional (not added for spot). '`true` for reduce-only orders only'"""
+  api: bool
+  """`true` if created with API"""
+  web: NotRequired[bool]
+  """`true` if created via Deribit frontend (optional)"""
+  mobile: NotRequired[bool]
+  """Optional field with value `true` added only when created with Mobile Application"""
+  refresh_amount: NotRequired[float]
+  """The initial display amount of iceberg order. Iceberg order display amount will be refreshed to that value after match consuming actual display amount. Absent for other types of orders"""
+  display_amount: NotRequired[float]
+  """The actual display amount of iceberg order. Absent for other types of orders."""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  contracts: NotRequired[float]
+  """It represents the order size in contract units. (Optional, may be absent in historical data)."""
+  filled_amount: NotRequired[float]
+  """Filled amount of the order. For perpetual and futures the filled_amount is in USD units, for options - in units or corresponding cryptocurrency contracts, e.g., BTC or ETH."""
+  average_price: NotRequired[float]
+  """Average fill price of the order"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  implv: NotRequired[float]
+  """Implied volatility in percent. (Only if `advanced="implv"`)"""
+  usd: NotRequired[float]
+  """Option price in USD (Only if `advanced="usd"`)"""
+  triggered: NotRequired[bool]
+  """Whether the trigger order has been triggered"""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Trigger type (only for trigger orders). Allowed values: `"index_price"`, `"mark_price"`, `"last_price"`."""
+  trigger_price: NotRequired[float]
+  """Trigger price (Only for future trigger orders)"""
+  trigger_offset: NotRequired[float | None]
+  """The maximum deviation from the price peak beyond which the order will be triggered (Only for trailing trigger orders)"""
+  trigger_reference_price: NotRequired[float]
+  """The price of the given trigger at the time when the order was placed (Only for trailing trigger orders)"""
+  block_trade: NotRequired[bool]
+  """`true` if order made from block_trade trade, added only in that case."""
+  mmp: NotRequired[bool]
+  """`true` if the order is a MMP order, otherwise `false`."""
+  risk_reducing: NotRequired[bool]
+  """`true` if the order is marked by the platform as a risk reducing order (can apply only to orders placed by PM users), otherwise `false`."""
+  replaced: NotRequired[bool]
+  """`true` if the order was edited (by user or - in case of advanced options orders - by pricing engine), otherwise `false`."""
+  auto_replaced: NotRequired[bool]
+  """Options, advanced orders only - `true` if last modification of the order was performed by the pricing engine, otherwise `false`."""
+  quote: NotRequired[bool]
+  """If order is a quote. Present only if true."""
+  mmp_group: NotRequired[str]
+  """Name of the MMP group supplied in the `private/mass_quote` request. Only present for quote orders."""
+  quote_set_id: NotRequired[str]
+  """Identifier of the QuoteSet supplied in the `private/mass_quote` request. Only present for quote orders."""
+  quote_id: NotRequired[str]
+  """The same QuoteID as supplied in the `private/mass_quote` request. Only present for quote orders."""
+  trigger_order_id: NotRequired[str]
+  """Id of the trigger order that created the order (Only for orders that were created by triggered orders)."""
+  combo_order_id: NotRequired[str]
+  """Id of the combo order that created this order (only present for orders that were created as legs of a combo order)."""
+  app_name: NotRequired[str]
+  """The name of the application that placed the order on behalf of the user (optional)."""
+  mmp_cancelled: NotRequired[bool]
+  """`true` if order was cancelled by mmp trigger (optional)"""
+  cancel_reason: NotRequired[
+    Literal[
+      'user_request',
+      'autoliquidation',
+      'cancel_on_disconnect',
+      'risk_mitigation',
+      'pme_risk_reduction',
+      'pme_account_locked',
+      'position_locked',
+      'mmp_trigger',
+      'mmp_config_curtailment',
+      'edit_post_only_reject',
+      'oco_other_closed',
+      'oto_primary_closed',
+      'settlement',
+    ]
+  ]
+  """Enumerated reason behind cancel `"user_request"`, `"autoliquidation"`, `"cancel_on_disconnect"`, `"risk_mitigation"`, `"pme_risk_reduction"` (portfolio margining risk reduction), `"pme_account_locked"` (portfolio margining account locked per currency), `"position_locked"`, `"mmp_trigger"` (market maker protection), `"mmp_config_curtailment"` (market maker configured quantity decreased), `"edit_post_only_reject"` (cancelled on edit because of `reject_post_only` setting), `"oco_other_closed"` (the oco order linked to this order was closed), `"oto_primary_closed"` (the oto primary order that was going to trigger this order was cancelled), `"settlement"` (closed because of a settlement)"""
+  oto_order_ids: NotRequired[list[str]]
+  """The Ids of the orders that will be triggered if the order is filled"""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  oco_ref: NotRequired[str]
+  """Unique reference that identifies a one_cancels_others (OCO) pair."""
+  primary_order_id: NotRequired[str]
+  """Unique order identifier"""
+  is_secondary_oto: NotRequired[bool]
+  """`true` if the order is an order that can be triggered by another order, otherwise not present."""
+  is_primary_otoco: NotRequired[bool]
+  """`true` if the order is an order that can trigger an OCO pair, otherwise not present."""
+  user_id: NotRequired[int]
+  """Id of the account this order/position belongs to."""
+
+
+class Position(TypedDict):
+  """"""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  kind: Literal['future', 'option', 'spot', 'future_combo', 'option_combo']
+  """Instrument kind: `"future"`, `"option"`, `"spot"`, `"future_combo"`, `"option_combo"`"""
+  average_price: float
+  """Average price of trades that built this position"""
+  direction: Literal['buy', 'sell', 'zero']
+  """Direction: `buy`, `sell` or `zero`"""
+  mark_price: float
+  """Current mark price for position's instrument"""
+  delta: float
+  """Delta parameter"""
+  gamma: NotRequired[float]
+  """Only for options, Gamma parameter"""
+  vega: NotRequired[float]
+  """Only for options, Vega parameter"""
+  theta: NotRequired[float]
+  """Only for options, Theta parameter"""
+  index_price: float
+  """Current index price"""
+  initial_margin: float
+  """Initial margin"""
+  maintenance_margin: float
+  """Maintenance margin"""
+  settlement_price: float
+  """Optional (not added for spot). Last settlement price for position's instrument 0 if instrument wasn't settled yet"""
+  total_profit_loss: float
+  """Profit or loss from position"""
+  floating_profit_loss: float
+  """Floating profit or loss"""
+  realized_profit_loss: float
+  """Realized profit or loss"""
+  size: float
+  """Position size for futures size in quote currency (e.g. USD), for options size is in base currency (e.g. BTC)"""
+  size_currency: NotRequired[float]
+  """Only for futures, position size in base currency"""
+  average_price_usd: NotRequired[float]
+  """Only for options, average price in USD"""
+  floating_profit_loss_usd: NotRequired[float]
+  """Only for options, floating profit or loss in USD"""
+  leverage: NotRequired[int]
+  """Current available leverage for future position"""
+  realized_funding: NotRequired[float]
+  """Realized Funding in current session included in session realized profit or loss, only for positions of perpetual instruments"""
+  interest_value: NotRequired[float]
+  """Value used to calculate `realized_funding` (perpetual only)"""
+  user_id: NotRequired[int]
+  """Id of the account this order/position belongs to."""
+
+
+class TradeAllocation(TypedDict):
+  user_id: NotRequired[int]
+  """User ID to which part of the trade is allocated. For brokers the User ID is obstructed."""
+  amount: float
+  """Amount allocated to this user."""
+  fee: float
+  """Fee for the allocated part of the trade."""
+  client_info: NotRequired[ClientInfo]
+
+
+class UserTrade(TypedDict):
+  trade_id: str
+  """Unique (per currency) trade identifier"""
+  trade_seq: int
+  """The sequence number of the trade within instrument"""
+  instrument_name: str
+  """Unique instrument identifier"""
+  timestamp: int
+  """The timestamp of the trade (milliseconds since the UNIX epoch)"""
+  starbase_timestamp: NotRequired[int]
+  """Optional field: timestamp of the match (trade) in [Starbase](https://docs.deribit.com/starbase/overview), in nanoseconds since the UNIX epoch (present only for trades matched in Starbase)"""
+  order_type: NotRequired[Literal['limit', 'market', 'liquidation']]
+  """Order type: `"limit`, `"market"`, or `"liquidation"`"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """Advanced type of user order: `"usd"` or `"implv"` (only for options; omitted if not applicable)"""
+  order_id: str
+  """Id of the user order (maker or taker), i.e. subscriber's order id that took part in the trade"""
+  matching_id: str
+  """Always `null`"""
+  starbase_match_id: NotRequired[int]
+  """Optional field containing the Starbase match identifier (present only for trades matched via Starbase)"""
+  starbase_order_id: NotRequired[int]
+  """Optional field: the id in [Starbase](https://docs.deribit.com/starbase/overview) of the user's own order (maker or taker side) that took part in the trade; for self-trades this is always the taker order's id, and for combo legs it is the parent combo order's id (present only for trades matched in Starbase)"""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`"""
+  tick_direction: Literal[0, 1, 2, 3]
+  """Direction of the "tick" (`0` = Plus Tick, `1` = Zero-Plus Tick, `2` = Minus Tick, `3` = Zero-Minus Tick)."""
+  index_price: float
+  """Index Price at the moment of trade"""
+  price: float
+  """Price in base currency"""
+  amount: float
+  """Trade amount. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  contracts: NotRequired[float]
+  """Trade size in contract units (optional, may be absent in historical trades)"""
+  iv: NotRequired[float]
+  """Option implied volatility for the price (Option only)"""
+  underlying_price: NotRequired[float]
+  """Underlying price for implied volatility calculations (Options only)"""
+  liquidation: NotRequired[Literal['M', 'T', 'MT']]
+  """Optional field (only for trades caused by liquidation): `"M"` when maker side of trade was under liquidation, `"T"` when taker side was under liquidation, `"MT"` when both sides of trade were under liquidation"""
+  liquidity: NotRequired[Literal['M', 'T']]
+  """Describes what was role of users order: `"M"` when it was maker order, `"T"` when it was taker order"""
+  fee: float
+  """User's fee in units of the specified `fee_currency`"""
+  fee_currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR']
+  """Currency, i.e `"BTC"`, `"ETH"`, `"USDC"`"""
+  label: NotRequired[str]
+  """User defined label (presented only when previously set for order by user)"""
+  state: Literal['open', 'filled', 'rejected', 'cancelled', 'untriggered', 'archive']
+  """Order state: `"open"`, `"filled"`, `"rejected"`, `"cancelled"`, `"untriggered"` or `"archive"` (if order was archived)"""
+  block_trade_id: NotRequired[str]
+  """Block trade id - when trade was part of a block trade"""
+  block_rfq_id: NotRequired[int]
+  """ID of the Block RFQ - when trade was part of the Block RFQ"""
+  block_rfq_quote_id: NotRequired[int]
+  """ID of the Block RFQ quote - when trade was part of the Block RFQ"""
+  reduce_only: NotRequired[str]
+  """`true` if user order is reduce-only"""
+  post_only: NotRequired[str]
+  """`true` if user order is post-only"""
+  mmp: NotRequired[bool]
+  """`true` if user order is MMP"""
+  risk_reducing: NotRequired[bool]
+  """`true` if user order is marked by the platform as a risk reducing order (can apply only to orders placed by PM users)"""
+  api: NotRequired[bool]
+  """`true` if user order was created with API"""
+  profit_loss: NotRequired[float]
+  """Profit and loss in base currency."""
+  mark_price: float
+  """Mark Price at the moment of trade"""
+  legs: NotRequired[list[dict[str, Any]]]
+  """Optional field containing leg trades if trade is a combo trade (present when querying for **only** combo trades and in `combo_trades` events)"""
+  combo_id: NotRequired[str]
+  """Optional field containing combo instrument name if the trade is a combo trade"""
+  combo_trade_id: NotRequired[str]
+  """Optional field containing combo trade identifier if the trade is a combo trade"""
+  quote_set_id: NotRequired[str]
+  """QuoteSet of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  quote_id: NotRequired[str]
+  """QuoteID of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  trade_allocations: NotRequired[list[TradeAllocation]]
+  """List of allocations for Block RFQ pre-allocation. Each allocation specifies `user_id`, `amount`, and `fee` for the allocated part of the trade. For broker client allocations, a `client_info` object will be included."""
+
+
+class ChangesByInstrumentUpdate(TypedDict):
+  """Message schema for `user.changes.(instrument_name).(interval)` subscription - contains the data payload"""
+
+  instrument_name: NotRequired[str]
+  """Instrument the change applies to."""
+  trades: NotRequired[list[UserTrade]]
+  """Trades executed as part of this change (often empty -- most changes are order/position updates with no fill)."""
+  orders: NotRequired[list[Order]]
+  """Orders affected by this change (created, amended, filled, or cancelled)."""
+  positions: NotRequired[list[Position]]
+  """Positions affected by this change, if any."""
+
+
+validate_changes_by_instrument = validator[ChangesByInstrumentUpdate](
+  ChangesByInstrumentUpdate
+)
+
+
+class ChangesByInstrument(StreamEndpoint):
+  """`user.changes.{instrument_name}.{interval}` subscription."""
+
+  def changes_by_instrument(
+    self,
+    instrument_name: str,
+    interval: Literal['raw', '100ms', 'agg2'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[ChangesByInstrumentUpdate, Any, Any]:
+    """User change stream (orders, trades, and related updates) for a specific instrument.
+
+    This channel provides a consolidated private update stream for your account for the given instrument. Use it when you want a single feed instead of subscribing to orders and trades separately.
+
+    Args:
+      instrument_name: The name of the instrument
+      interval: Frequency of notifications. Events will be aggregated over this interval. The value `raw` means no aggregation will be applied **(Please note that `raw` interval is only available to authorized users)**
+
+    **Allowed values:** `raw`, `100ms`, `agg2`
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/subscriptions/user-changes-instrument_name-interval)
+    """
+    channel = f'user.changes.{instrument_name}.{interval}'
+    return self.authed_subscribe(
+      channel, validator=validate_changes_by_instrument, validate=validate
+    )

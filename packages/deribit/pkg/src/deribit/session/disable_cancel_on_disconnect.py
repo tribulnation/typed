@@ -1,0 +1,36 @@
+"""`private/disable_cancel_on_disconnect` — `private/disable_cancel_on_disconnect`."""
+
+from typing_extensions import Literal
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+validate_disable_cancel_on_disconnect = validator[Literal['ok']](Literal['ok'])  # pyright: ignore[reportArgumentType]  # fmt: skip
+
+
+class DisableCancelOnDisconnect(RpcEndpoint):
+  """`private/disable_cancel_on_disconnect`."""
+
+  async def disable_cancel_on_disconnect(
+    self,
+    *,
+    scope: Literal['connection', 'account'] | None = None,
+    validate: bool | None = None,
+  ) -> Literal['ok']:
+    """Disable Cancel On Disconnect. With `scope=account`, every newly opened connection starts with Cancel On Disconnect inactive by default. Requires `account:read_write` scope.
+
+    Args:
+      scope: Whether to apply the change to the current connection only, or to the whole account (every future connection). Defaults to `connection`. `connection` scope is accepted over WebSocket only -- confirmed live, an HTTP attempt with `scope=connection` fails with error 10030 (`must_be_websocket_request`); `account` scope works over either transport.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/session-management/private-disable_cancel_on_disconnect)
+    """
+    params = {}
+    if scope is not None:
+      params['scope'] = scope
+    return await self.authed_request(
+      'private/disable_cancel_on_disconnect',
+      params=params,
+      validator=validate_disable_cancel_on_disconnect,
+      validate=validate,
+    )

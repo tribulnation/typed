@@ -1,0 +1,149 @@
+"""`private/get_mmp_status` — `private/get_mmp_status`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class GetMmpStatusResultEntry(TypedDict):
+  index_name: Literal[
+    'btc_usd',
+    'eth_usd',
+    'ada_usdc',
+    'algo_usdc',
+    'avax_usdc',
+    'bch_usdc',
+    'bnb_usdc',
+    'btc_usdc',
+    'btcdvol_usdc',
+    'buidl_usdc',
+    'doge_usdc',
+    'dot_usdc',
+    'eurr_usdc',
+    'eth_usdc',
+    'ethdvol_usdc',
+    'hype_usdc',
+    'link_usdc',
+    'ltc_usdc',
+    'near_usdc',
+    'paxg_usdc',
+    'shib_usdc',
+    'sol_usdc',
+    'steth_usdc',
+    'ton_usdc',
+    'trump_usdc',
+    'trx_usdc',
+    'uni_usdc',
+    'usde_usdc',
+    'usyc_usdc',
+    'xrp_usdc',
+    'btc_usdt',
+    'eth_usdt',
+    'eurr_usdt',
+    'sol_usdt',
+    'steth_usdt',
+    'usdc_usdt',
+    'usde_usdt',
+    'btc_eurr',
+    'btc_usde',
+    'btc_usyc',
+    'eth_btc',
+    'eth_eurr',
+    'eth_usde',
+    'eth_usyc',
+    'steth_eth',
+    'paxg_btc',
+    'drbfix-btc_usdc',
+    'drbfix-eth_usdc',
+  ]
+  """Index identifier, matches (base) cryptocurrency with quote currency"""
+  frozen_until: int
+  """Timestamp (milliseconds since the UNIX epoch) until the user will be frozen - 0 means that the user is frozen until manual reset."""
+  mmp_group: str
+  """Triggered mmp group, this parameter is optional (appears only for Mass Quote orders trigger)"""
+  block_rfq: NotRequired[bool]
+  """If true, indicates that the MMP status is for Block RFQ. Block RFQ MMP status is completely separate from normal order/quote MMP status."""
+
+
+validate_get_mmp_status = validator[list[GetMmpStatusResultEntry]](
+  list[GetMmpStatusResultEntry]
+)
+
+
+class GetMmpStatus(RpcEndpoint):
+  """`private/get_mmp_status`."""
+
+  async def get_mmp_status(
+    self,
+    *,
+    index_name: Literal[
+      'btc_usd',
+      'eth_usd',
+      'btc_usdc',
+      'eth_usdc',
+      'ada_usdc',
+      'algo_usdc',
+      'avax_usdc',
+      'bch_usdc',
+      'bnb_usdc',
+      'doge_usdc',
+      'dot_usdc',
+      'hype_usdc',
+      'link_usdc',
+      'ltc_usdc',
+      'near_usdc',
+      'paxg_usdc',
+      'shib_usdc',
+      'sol_usdc',
+      'ton_usdc',
+      'trx_usdc',
+      'trump_usdc',
+      'uni_usdc',
+      'xrp_usdc',
+      'usde_usdc',
+      'buidl_usdc',
+      'btcdvol_usdc',
+      'ethdvol_usdc',
+      'btc_usdt',
+      'eth_usdt',
+      'all',
+    ]
+    | None = None,
+    mmp_group: str | None = None,
+    block_rfq: bool | None = None,
+    validate: bool | None = None,
+  ) -> list[GetMmpStatusResultEntry]:
+    """Retrieves Market Maker Protection (MMP) status for a triggered index or MMP group. Returns the live MMP state including whether MMP is enabled or triggered, remaining frozen time (if triggered), whether quoting is currently allowed, and any active freeze conditions.
+
+    If the `index_name` parameter is not provided, a list of all triggered MMP statuses is returned. This method lets you track whether protection is active and when quoting will resume.
+
+    For Mass Quotes, specify the `mmp_group` parameter to check status for a specific MMP group. Set `block_rfq` to `true` to retrieve MMP status for Block RFQ (requires `block_rfq:read` scope).
+
+     or `block_rfq:read` (when `block_rfq` = `true`)
+
+    Args:
+      index_name: Index identifier of derivative instrument on the platform; skipping this parameter will return all configurations
+      mmp_group: Specifies the MMP group for which the status is being retrieved. The `index_name` must be specified before using this parameter.
+
+    **Leaving `mmp_group` empty** (passing `""` or omitting it) targets the **orders MMP group** — the default group used for regular orders with the `mmp` flag set. This is not an error or an incomplete request.
+
+    **📖 Related Article:** [Mass Quotes Specifications](https://docs.deribit.com/articles/mass-quotes-specifications)
+      block_rfq: If true, retrieves MMP status for Block RFQ. When set, requires `block_rfq` scope instead of `trade` scope. Block RFQ MMP status is completely separate from normal order/quote MMP status.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/trading/private-get_mmp_status)
+    """
+    params = {}
+    if index_name is not None:
+      params['index_name'] = index_name
+    if mmp_group is not None:
+      params['mmp_group'] = mmp_group
+    if block_rfq is not None:
+      params['block_rfq'] = block_rfq
+    return await self.authed_request(
+      'private/get_mmp_status',
+      params=params,
+      validator=validate_get_mmp_status,
+      validate=validate,
+    )

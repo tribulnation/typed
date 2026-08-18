@@ -1,0 +1,827 @@
+"""`private/sell` — `private/sell`."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class ClientInfo(TypedDict):
+  """Optional client allocation info for brokers."""
+
+  client_id: NotRequired[int]
+  """ID of a client; available to broker. Represents a group of users under a common name."""
+  client_link_id: NotRequired[int]
+  """ID assigned to a single user in a client; available to broker."""
+  name: NotRequired[str]
+  """Name of the linked user within the client; available to broker."""
+
+
+class Order(TypedDict):
+  """The order this call placed, edited, or otherwise affected."""
+
+  order_id: str
+  """Unique order identifier"""
+  starbase_order_id: NotRequired[int]
+  """Raw Starbase order id, in Starbase's own (non currency-prefixed) id namespace. Only present for orders matched on Starbase."""
+  order_state: Literal[
+    'open', 'filled', 'rejected', 'cancelled', 'untriggered', 'triggered'
+  ]
+  """Order state: `"open"`, `"filled"`, `"rejected"`, `"cancelled"`, `"untriggered"`"""
+  order_type: Literal[
+    'market',
+    'limit',
+    'stop_market',
+    'stop_limit',
+    'take_market',
+    'take_limit',
+    'trailing_stop',
+  ]
+  """Order type: `"limit"`, `"market"`, `"stop_limit"`, `"stop_market"`, `"take_limit"`, `"take_market"`, `"trailing_stop"`"""
+  original_order_type: NotRequired[Literal['market', 'market_limit']]
+  """Original order type. Optional field"""
+  time_in_force: Literal[
+    'good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel'
+  ]
+  """Order time in force: `"good_til_cancelled"`, `"good_til_day"`, `"fill_or_kill"` or `"immediate_or_cancel"`"""
+  is_rebalance: NotRequired[bool]
+  """Optional (only for spot). `true` if order was automatically created during cross-collateral balance restoration"""
+  is_liquidation: NotRequired[bool]
+  """Optional (not added for spot). `true` if order was automatically created during liquidation"""
+  instrument_name: str
+  """Unique instrument identifier"""
+  creation_timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)"""
+  last_update_timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)"""
+  starbase_last_update_timestamp: NotRequired[int]
+  """The Starbase causal timestamp (nanoseconds since the Unix epoch) of the last book update that affected this order. Present only for orders placed in Starbase; not always available for direct access orders"""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`"""
+  price: float | Literal['market_price']
+  """Price in base currency or "market_price" in case of open trigger market orders"""
+  label: str
+  """User defined label (up to 64 characters)"""
+  post_only: bool
+  """`true` for post-only orders only"""
+  reject_post_only: NotRequired[bool]
+  """`true` if order has `reject_post_only` flag (field is present only when `post_only` is `true`)"""
+  reduce_only: NotRequired[bool]
+  """Optional (not added for spot). '`true` for reduce-only orders only'"""
+  api: bool
+  """`true` if created with API"""
+  web: NotRequired[bool]
+  """`true` if created via Deribit frontend (optional)"""
+  mobile: NotRequired[bool]
+  """Optional field with value `true` added only when created with Mobile Application"""
+  refresh_amount: NotRequired[float]
+  """The initial display amount of iceberg order. Iceberg order display amount will be refreshed to that value after match consuming actual display amount. Absent for other types of orders"""
+  display_amount: NotRequired[float]
+  """The actual display amount of iceberg order. Absent for other types of orders."""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  contracts: NotRequired[float]
+  """It represents the order size in contract units. (Optional, may be absent in historical data)."""
+  filled_amount: NotRequired[float]
+  """Filled amount of the order. For perpetual and futures the filled_amount is in USD units, for options - in units or corresponding cryptocurrency contracts, e.g., BTC or ETH."""
+  average_price: NotRequired[float]
+  """Average fill price of the order"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  implv: NotRequired[float]
+  """Implied volatility in percent. (Only if `advanced="implv"`)"""
+  usd: NotRequired[float]
+  """Option price in USD (Only if `advanced="usd"`)"""
+  triggered: NotRequired[bool]
+  """Whether the trigger order has been triggered"""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Trigger type (only for trigger orders). Allowed values: `"index_price"`, `"mark_price"`, `"last_price"`."""
+  trigger_price: NotRequired[float]
+  """Trigger price (Only for future trigger orders)"""
+  trigger_offset: NotRequired[float | None]
+  """The maximum deviation from the price peak beyond which the order will be triggered (Only for trailing trigger orders)"""
+  trigger_reference_price: NotRequired[float]
+  """The price of the given trigger at the time when the order was placed (Only for trailing trigger orders)"""
+  block_trade: NotRequired[bool]
+  """`true` if order made from block_trade trade, added only in that case."""
+  mmp: NotRequired[bool]
+  """`true` if the order is a MMP order, otherwise `false`."""
+  risk_reducing: NotRequired[bool]
+  """`true` if the order is marked by the platform as a risk reducing order (can apply only to orders placed by PM users), otherwise `false`."""
+  replaced: NotRequired[bool]
+  """`true` if the order was edited (by user or - in case of advanced options orders - by pricing engine), otherwise `false`."""
+  auto_replaced: NotRequired[bool]
+  """Options, advanced orders only - `true` if last modification of the order was performed by the pricing engine, otherwise `false`."""
+  quote: NotRequired[bool]
+  """If order is a quote. Present only if true."""
+  mmp_group: NotRequired[str]
+  """Name of the MMP group supplied in the `private/mass_quote` request. Only present for quote orders."""
+  quote_set_id: NotRequired[str]
+  """Identifier of the QuoteSet supplied in the `private/mass_quote` request. Only present for quote orders."""
+  quote_id: NotRequired[str]
+  """The same QuoteID as supplied in the `private/mass_quote` request. Only present for quote orders."""
+  trigger_order_id: NotRequired[str]
+  """Id of the trigger order that created the order (Only for orders that were created by triggered orders)."""
+  combo_order_id: NotRequired[str]
+  """Id of the combo order that created this order (only present for orders that were created as legs of a combo order)."""
+  app_name: NotRequired[str]
+  """The name of the application that placed the order on behalf of the user (optional)."""
+  mmp_cancelled: NotRequired[bool]
+  """`true` if order was cancelled by mmp trigger (optional)"""
+  cancel_reason: NotRequired[
+    Literal[
+      'user_request',
+      'autoliquidation',
+      'cancel_on_disconnect',
+      'risk_mitigation',
+      'pme_risk_reduction',
+      'pme_account_locked',
+      'position_locked',
+      'mmp_trigger',
+      'mmp_config_curtailment',
+      'edit_post_only_reject',
+      'oco_other_closed',
+      'oto_primary_closed',
+      'settlement',
+    ]
+  ]
+  """Enumerated reason behind cancel `"user_request"`, `"autoliquidation"`, `"cancel_on_disconnect"`, `"risk_mitigation"`, `"pme_risk_reduction"` (portfolio margining risk reduction), `"pme_account_locked"` (portfolio margining account locked per currency), `"position_locked"`, `"mmp_trigger"` (market maker protection), `"mmp_config_curtailment"` (market maker configured quantity decreased), `"edit_post_only_reject"` (cancelled on edit because of `reject_post_only` setting), `"oco_other_closed"` (the oco order linked to this order was closed), `"oto_primary_closed"` (the oto primary order that was going to trigger this order was cancelled), `"settlement"` (closed because of a settlement)"""
+  oto_order_ids: NotRequired[list[str]]
+  """The Ids of the orders that will be triggered if the order is filled"""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  oco_ref: NotRequired[str]
+  """Unique reference that identifies a one_cancels_others (OCO) pair."""
+  primary_order_id: NotRequired[str]
+  """Unique order identifier"""
+  is_secondary_oto: NotRequired[bool]
+  """`true` if the order is an order that can be triggered by another order, otherwise not present."""
+  is_primary_otoco: NotRequired[bool]
+  """`true` if the order is an order that can trigger an OCO pair, otherwise not present."""
+  user_id: NotRequired[int]
+  """Id of the account this order/position belongs to."""
+
+
+class OtocoConfigEntry0OtocoConfigItem(TypedDict):
+  amount: NotRequired[float]
+  """**Required.** The secondary order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """**Required.** Direction of the secondary order."""
+  type: NotRequired[
+    Literal[
+      'limit',
+      'stop_limit',
+      'take_limit',
+      'market',
+      'stop_market',
+      'take_market',
+      'market_limit',
+      'trailing_stop',
+    ]
+  ]
+  """The order type, default: `"limit"`"""
+  label: NotRequired[str]
+  """User defined label for the order (maximum 64 characters)."""
+  price: NotRequired[float]
+  """The order price in base currency. Required for limit and stop_limit orders."""
+  reduce_only: NotRequired[bool]
+  """If true, the order is considered reduce-only which is intended to only reduce a current position."""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just below or above the spread (according to the direction of the order)."""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected."""
+  trigger_price: NotRequired[float]
+  """Trigger price. Required for trigger orders (stop-loss or take-profit orders)."""
+  trigger_offset: NotRequired[float]
+  """The maximum deviation from the price peak beyond which the order will be triggered. Used for trailing stop orders."""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Defines the trigger type. Required for stop-loss, take-profit, and trailing stop orders."""
+
+
+class OtocoConfigEntry1OtocoConfigItem(TypedDict):
+  amount: NotRequired[float]
+  """**Required.** The secondary order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """**Required.** Direction of the secondary order."""
+  type: NotRequired[
+    Literal[
+      'limit',
+      'stop_limit',
+      'take_limit',
+      'market',
+      'stop_market',
+      'take_market',
+      'market_limit',
+      'trailing_stop',
+    ]
+  ]
+  """The order type, default: `"limit"`"""
+  label: NotRequired[str]
+  """User defined label for the order (maximum 64 characters)."""
+  price: NotRequired[float]
+  """The order price in base currency. Required for limit and stop_limit orders."""
+  reduce_only: NotRequired[bool]
+  """If true, the order is considered reduce-only which is intended to only reduce a current position."""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just below or above the spread (according to the direction of the order)."""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected."""
+  trigger_price: NotRequired[float]
+  """Trigger price. Required for trigger orders (stop-loss or take-profit orders)."""
+  trigger_offset: NotRequired[float]
+  """The maximum deviation from the price peak beyond which the order will be triggered. Used for trailing stop orders."""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Defines the trigger type. Required for stop-loss, take-profit, and trailing stop orders."""
+
+
+class OtocoConfigEntry2OtocoConfigItem(TypedDict):
+  amount: NotRequired[float]
+  """**Required.** The secondary order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """**Required.** Direction of the secondary order."""
+  type: NotRequired[
+    Literal[
+      'limit',
+      'stop_limit',
+      'take_limit',
+      'market',
+      'stop_market',
+      'take_market',
+      'market_limit',
+      'trailing_stop',
+    ]
+  ]
+  """The order type, default: `"limit"`"""
+  label: NotRequired[str]
+  """User defined label for the order (maximum 64 characters)."""
+  price: NotRequired[float]
+  """The order price in base currency. Required for limit and stop_limit orders."""
+  reduce_only: NotRequired[bool]
+  """If true, the order is considered reduce-only which is intended to only reduce a current position."""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just below or above the spread (according to the direction of the order)."""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected."""
+  trigger_price: NotRequired[float]
+  """Trigger price. Required for trigger orders (stop-loss or take-profit orders)."""
+  trigger_offset: NotRequired[float]
+  """The maximum deviation from the price peak beyond which the order will be triggered. Used for trailing stop orders."""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Defines the trigger type. Required for stop-loss, take-profit, and trailing stop orders."""
+
+
+class OtocoConfigEntry3OtocoConfigItem(TypedDict):
+  amount: NotRequired[float]
+  """**Required.** The secondary order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """**Required.** Direction of the secondary order."""
+  type: NotRequired[
+    Literal[
+      'limit',
+      'stop_limit',
+      'take_limit',
+      'market',
+      'stop_market',
+      'take_market',
+      'market_limit',
+      'trailing_stop',
+    ]
+  ]
+  """The order type, default: `"limit"`"""
+  label: NotRequired[str]
+  """User defined label for the order (maximum 64 characters)."""
+  price: NotRequired[float]
+  """The order price in base currency. Required for limit and stop_limit orders."""
+  reduce_only: NotRequired[bool]
+  """If true, the order is considered reduce-only which is intended to only reduce a current position."""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just below or above the spread (according to the direction of the order)."""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected."""
+  trigger_price: NotRequired[float]
+  """Trigger price. Required for trigger orders (stop-loss or take-profit orders)."""
+  trigger_offset: NotRequired[float]
+  """The maximum deviation from the price peak beyond which the order will be triggered. Used for trailing stop orders."""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Defines the trigger type. Required for stop-loss, take-profit, and trailing stop orders."""
+
+
+class OtocoConfigEntry4OtocoConfigItem(TypedDict):
+  amount: NotRequired[float]
+  """**Required.** The secondary order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """**Required.** Direction of the secondary order."""
+  type: NotRequired[
+    Literal[
+      'limit',
+      'stop_limit',
+      'take_limit',
+      'market',
+      'stop_market',
+      'take_market',
+      'market_limit',
+      'trailing_stop',
+    ]
+  ]
+  """The order type, default: `"limit"`"""
+  label: NotRequired[str]
+  """User defined label for the order (maximum 64 characters)."""
+  price: NotRequired[float]
+  """The order price in base currency. Required for limit and stop_limit orders."""
+  reduce_only: NotRequired[bool]
+  """If true, the order is considered reduce-only which is intended to only reduce a current position."""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just below or above the spread (according to the direction of the order)."""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected."""
+  trigger_price: NotRequired[float]
+  """Trigger price. Required for trigger orders (stop-loss or take-profit orders)."""
+  trigger_offset: NotRequired[float]
+  """The maximum deviation from the price peak beyond which the order will be triggered. Used for trailing stop orders."""
+  trigger: NotRequired[Literal['index_price', 'mark_price', 'last_price']]
+  """Defines the trigger type. Required for stop-loss, take-profit, and trailing stop orders."""
+
+
+class SellLimitOrder(TypedDict):
+  """LimitOrder order parameters for `private/sell`."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin. The `amount` is a mandatory parameter if `contracts` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  contracts: NotRequired[float]
+  """It represents the requested order size in contract units and can be passed instead of `amount`. The `contracts` is a mandatory parameter if `amount` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  label: NotRequired[str]
+  """user defined label for the order (maximum 64 characters)"""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`
+
+  - `"good_til_cancelled"` - unfilled order remains in order book until cancelled
+ - `"good_til_day"` - unfilled order remains in order book till the end of the trading session
+ - `"fill_or_kill"` - execute a transaction immediately and completely or not at all
+ - `"immediate_or_cancel"` - execute a transaction immediately, and any portion of the order that cannot be immediately filled is cancelled"""
+  display_amount: NotRequired[float]
+  """Initial display amount for iceberg order. Has to be at least 100 times minimum amount for instrument and ratio of hidden part vs visible part has to be less than 100 as well."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just above the spread.
+
+ Only valid in combination with time_in_force=`"good_til_cancelled"`"""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected.
+
+ Only valid in combination with `"post_only"` set to true"""
+  reduce_only: NotRequired[bool]
+  """If `true`, the order is considered reduce-only which is intended to only reduce a current position"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  mmp: NotRequired[bool]
+  """Order MMP flag, only for order_type 'limit'"""
+  valid_until: NotRequired[int]
+  """Timestamp, when provided server will start processing request in Matching Engine only before given timestamp, in other cases `timed_out` error will be responded. Remember that the given timestamp should be consistent with the server's time, use /public/time (#public-get_time) method to obtain current server time."""
+  linked_order_type: NotRequired[
+    Literal['one_triggers_other', 'one_cancels_other', 'one_triggers_one_cancels_other']
+  ]
+  """The type of the linked order.
+
+  - `"one_triggers_other"` - Execution of primary order triggers the placement of one or more secondary orders.
+ - `"one_cancels_other"` -  The execution of one order in a pair automatically cancels the other, typically used to set a stop-loss and take-profit simultaneously.
+ - `"one_triggers_one_cancels_other"` - The execution of a primary order triggers two secondary orders (a stop-loss and take-profit pair), where the execution of one secondary order cancels the other."""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  otoco_config: NotRequired[list[OtocoConfigEntry0OtocoConfigItem]]
+  """List of secondary orders to place or cancel when the primary order is filled. Each entry in the array defines one secondary order. `amount` and `direction` are required; all other fields are optional."""
+  type: NotRequired[Literal['limit', 'market_limit']]
+  """The order type, default: `"limit"`"""
+  price: float
+  """The order price in base currency (Only for limit and stop_limit orders)
+
+ When adding an order with advanced=usd, the field price should be the option price value in USD.
+
+ When adding an order with advanced=implv, the field price should be a value of implied volatility in percentages. For example,  price=100, means implied volatility of 100%"""
+
+
+class SellMarketOrder(TypedDict):
+  """MarketOrder order parameters for `private/sell`."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin. The `amount` is a mandatory parameter if `contracts` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  contracts: NotRequired[float]
+  """It represents the requested order size in contract units and can be passed instead of `amount`. The `contracts` is a mandatory parameter if `amount` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  label: NotRequired[str]
+  """user defined label for the order (maximum 64 characters)"""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`
+
+  - `"good_til_cancelled"` - unfilled order remains in order book until cancelled
+ - `"good_til_day"` - unfilled order remains in order book till the end of the trading session
+ - `"fill_or_kill"` - execute a transaction immediately and completely or not at all
+ - `"immediate_or_cancel"` - execute a transaction immediately, and any portion of the order that cannot be immediately filled is cancelled"""
+  display_amount: NotRequired[float]
+  """Initial display amount for iceberg order. Has to be at least 100 times minimum amount for instrument and ratio of hidden part vs visible part has to be less than 100 as well."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just above the spread.
+
+ Only valid in combination with time_in_force=`"good_til_cancelled"`"""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected.
+
+ Only valid in combination with `"post_only"` set to true"""
+  reduce_only: NotRequired[bool]
+  """If `true`, the order is considered reduce-only which is intended to only reduce a current position"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  mmp: NotRequired[bool]
+  """Order MMP flag, only for order_type 'limit'"""
+  valid_until: NotRequired[int]
+  """Timestamp, when provided server will start processing request in Matching Engine only before given timestamp, in other cases `timed_out` error will be responded. Remember that the given timestamp should be consistent with the server's time, use /public/time (#public-get_time) method to obtain current server time."""
+  linked_order_type: NotRequired[
+    Literal['one_triggers_other', 'one_cancels_other', 'one_triggers_one_cancels_other']
+  ]
+  """The type of the linked order.
+
+  - `"one_triggers_other"` - Execution of primary order triggers the placement of one or more secondary orders.
+ - `"one_cancels_other"` -  The execution of one order in a pair automatically cancels the other, typically used to set a stop-loss and take-profit simultaneously.
+ - `"one_triggers_one_cancels_other"` - The execution of a primary order triggers two secondary orders (a stop-loss and take-profit pair), where the execution of one secondary order cancels the other."""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  otoco_config: NotRequired[list[OtocoConfigEntry1OtocoConfigItem]]
+  """List of secondary orders to place or cancel when the primary order is filled. Each entry in the array defines one secondary order. `amount` and `direction` are required; all other fields are optional."""
+  type: NotRequired[Literal['market']]
+  """The order type, default: `"limit"`"""
+
+
+class SellStopLimitOrder(TypedDict):
+  """StopLimitOrder order parameters for `private/sell`."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin. The `amount` is a mandatory parameter if `contracts` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  contracts: NotRequired[float]
+  """It represents the requested order size in contract units and can be passed instead of `amount`. The `contracts` is a mandatory parameter if `amount` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  label: NotRequired[str]
+  """user defined label for the order (maximum 64 characters)"""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`
+
+  - `"good_til_cancelled"` - unfilled order remains in order book until cancelled
+ - `"good_til_day"` - unfilled order remains in order book till the end of the trading session
+ - `"fill_or_kill"` - execute a transaction immediately and completely or not at all
+ - `"immediate_or_cancel"` - execute a transaction immediately, and any portion of the order that cannot be immediately filled is cancelled"""
+  display_amount: NotRequired[float]
+  """Initial display amount for iceberg order. Has to be at least 100 times minimum amount for instrument and ratio of hidden part vs visible part has to be less than 100 as well."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just above the spread.
+
+ Only valid in combination with time_in_force=`"good_til_cancelled"`"""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected.
+
+ Only valid in combination with `"post_only"` set to true"""
+  reduce_only: NotRequired[bool]
+  """If `true`, the order is considered reduce-only which is intended to only reduce a current position"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  mmp: NotRequired[bool]
+  """Order MMP flag, only for order_type 'limit'"""
+  valid_until: NotRequired[int]
+  """Timestamp, when provided server will start processing request in Matching Engine only before given timestamp, in other cases `timed_out` error will be responded. Remember that the given timestamp should be consistent with the server's time, use /public/time (#public-get_time) method to obtain current server time."""
+  linked_order_type: NotRequired[
+    Literal['one_triggers_other', 'one_cancels_other', 'one_triggers_one_cancels_other']
+  ]
+  """The type of the linked order.
+
+  - `"one_triggers_other"` - Execution of primary order triggers the placement of one or more secondary orders.
+ - `"one_cancels_other"` -  The execution of one order in a pair automatically cancels the other, typically used to set a stop-loss and take-profit simultaneously.
+ - `"one_triggers_one_cancels_other"` - The execution of a primary order triggers two secondary orders (a stop-loss and take-profit pair), where the execution of one secondary order cancels the other."""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  otoco_config: NotRequired[list[OtocoConfigEntry2OtocoConfigItem]]
+  """List of secondary orders to place or cancel when the primary order is filled. Each entry in the array defines one secondary order. `amount` and `direction` are required; all other fields are optional."""
+  type: NotRequired[Literal['stop_limit', 'take_limit']]
+  """The order type, default: `"limit"`"""
+  price: float
+  """The order price in base currency (Only for limit and stop_limit orders)
+
+ When adding an order with advanced=usd, the field price should be the option price value in USD.
+
+ When adding an order with advanced=implv, the field price should be a value of implied volatility in percentages. For example,  price=100, means implied volatility of 100%"""
+  trigger_price: float
+  """Trigger price, required for trigger orders only (Stop-loss or Take-profit orders)"""
+  trigger: Literal['index_price', 'mark_price', 'last_price']
+  """Trigger type (only for trigger orders). Allowed values: `"index_price"`, `"mark_price"`, `"last_price"`."""
+
+
+class SellStopMarketOrder(TypedDict):
+  """StopMarketOrder order parameters for `private/sell`."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin. The `amount` is a mandatory parameter if `contracts` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  contracts: NotRequired[float]
+  """It represents the requested order size in contract units and can be passed instead of `amount`. The `contracts` is a mandatory parameter if `amount` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  label: NotRequired[str]
+  """user defined label for the order (maximum 64 characters)"""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`
+
+  - `"good_til_cancelled"` - unfilled order remains in order book until cancelled
+ - `"good_til_day"` - unfilled order remains in order book till the end of the trading session
+ - `"fill_or_kill"` - execute a transaction immediately and completely or not at all
+ - `"immediate_or_cancel"` - execute a transaction immediately, and any portion of the order that cannot be immediately filled is cancelled"""
+  display_amount: NotRequired[float]
+  """Initial display amount for iceberg order. Has to be at least 100 times minimum amount for instrument and ratio of hidden part vs visible part has to be less than 100 as well."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just above the spread.
+
+ Only valid in combination with time_in_force=`"good_til_cancelled"`"""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected.
+
+ Only valid in combination with `"post_only"` set to true"""
+  reduce_only: NotRequired[bool]
+  """If `true`, the order is considered reduce-only which is intended to only reduce a current position"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  mmp: NotRequired[bool]
+  """Order MMP flag, only for order_type 'limit'"""
+  valid_until: NotRequired[int]
+  """Timestamp, when provided server will start processing request in Matching Engine only before given timestamp, in other cases `timed_out` error will be responded. Remember that the given timestamp should be consistent with the server's time, use /public/time (#public-get_time) method to obtain current server time."""
+  linked_order_type: NotRequired[
+    Literal['one_triggers_other', 'one_cancels_other', 'one_triggers_one_cancels_other']
+  ]
+  """The type of the linked order.
+
+  - `"one_triggers_other"` - Execution of primary order triggers the placement of one or more secondary orders.
+ - `"one_cancels_other"` -  The execution of one order in a pair automatically cancels the other, typically used to set a stop-loss and take-profit simultaneously.
+ - `"one_triggers_one_cancels_other"` - The execution of a primary order triggers two secondary orders (a stop-loss and take-profit pair), where the execution of one secondary order cancels the other."""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  otoco_config: NotRequired[list[OtocoConfigEntry3OtocoConfigItem]]
+  """List of secondary orders to place or cancel when the primary order is filled. Each entry in the array defines one secondary order. `amount` and `direction` are required; all other fields are optional."""
+  type: NotRequired[Literal['stop_market', 'take_market']]
+  """The order type, default: `"limit"`"""
+  trigger_price: float
+  """Trigger price, required for trigger orders only (Stop-loss or Take-profit orders)"""
+  trigger: Literal['index_price', 'mark_price', 'last_price']
+  """Trigger type (only for trigger orders). Allowed values: `"index_price"`, `"mark_price"`, `"last_price"`."""
+
+
+class SellTrailingStopOrder(TypedDict):
+  """TrailingStopOrder order parameters for `private/sell`."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  amount: NotRequired[float]
+  """It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin. The `amount` is a mandatory parameter if `contracts` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  contracts: NotRequired[float]
+  """It represents the requested order size in contract units and can be passed instead of `amount`. The `contracts` is a mandatory parameter if `amount` parameter is missing. If both `contracts` and `amount` parameter are passed they must match each other otherwise error is returned."""
+  label: NotRequired[str]
+  """user defined label for the order (maximum 64 characters)"""
+  time_in_force: NotRequired[
+    Literal['good_til_cancelled', 'good_til_day', 'fill_or_kill', 'immediate_or_cancel']
+  ]
+  """Specifies how long the order remains in effect. Default `"good_til_cancelled"`
+
+  - `"good_til_cancelled"` - unfilled order remains in order book until cancelled
+ - `"good_til_day"` - unfilled order remains in order book till the end of the trading session
+ - `"fill_or_kill"` - execute a transaction immediately and completely or not at all
+ - `"immediate_or_cancel"` - execute a transaction immediately, and any portion of the order that cannot be immediately filled is cancelled"""
+  display_amount: NotRequired[float]
+  """Initial display amount for iceberg order. Has to be at least 100 times minimum amount for instrument and ratio of hidden part vs visible part has to be less than 100 as well."""
+  post_only: NotRequired[bool]
+  """If true, the order is considered post-only. If the new price would cause the order to be filled immediately (as taker), the price will be changed to be just above the spread.
+
+ Only valid in combination with time_in_force=`"good_til_cancelled"`"""
+  reject_post_only: NotRequired[bool]
+  """If an order is considered post-only and this field is set to true then the order is put to the order book unmodified or the request is rejected.
+
+ Only valid in combination with `"post_only"` set to true"""
+  reduce_only: NotRequired[bool]
+  """If `true`, the order is considered reduce-only which is intended to only reduce a current position"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """advanced type: `"usd"` or `"implv"` (Only for options; field is omitted if not applicable)."""
+  mmp: NotRequired[bool]
+  """Order MMP flag, only for order_type 'limit'"""
+  valid_until: NotRequired[int]
+  """Timestamp, when provided server will start processing request in Matching Engine only before given timestamp, in other cases `timed_out` error will be responded. Remember that the given timestamp should be consistent with the server's time, use /public/time (#public-get_time) method to obtain current server time."""
+  linked_order_type: NotRequired[
+    Literal['one_triggers_other', 'one_cancels_other', 'one_triggers_one_cancels_other']
+  ]
+  """The type of the linked order.
+
+  - `"one_triggers_other"` - Execution of primary order triggers the placement of one or more secondary orders.
+ - `"one_cancels_other"` -  The execution of one order in a pair automatically cancels the other, typically used to set a stop-loss and take-profit simultaneously.
+ - `"one_triggers_one_cancels_other"` - The execution of a primary order triggers two secondary orders (a stop-loss and take-profit pair), where the execution of one secondary order cancels the other."""
+  trigger_fill_condition: NotRequired[
+    Literal['first_hit', 'complete_fill', 'incremental']
+  ]
+  """The fill condition of the linked order (Only for linked order types), default: `first_hit`.
+
+  - `"first_hit"` - any execution of the primary order will fully cancel/place all secondary orders.
+ - `"complete_fill"` - a complete execution (meaning the primary order no longer exists) will cancel/place the secondary orders.
+ - `"incremental"` - any fill of the primary order will cause proportional partial cancellation/placement of the secondary order. The amount that will be subtracted/added to the secondary order will be rounded down to the contract size."""
+  otoco_config: NotRequired[list[OtocoConfigEntry4OtocoConfigItem]]
+  """List of secondary orders to place or cancel when the primary order is filled. Each entry in the array defines one secondary order. `amount` and `direction` are required; all other fields are optional."""
+  type: NotRequired[Literal['trailing_stop']]
+  """The order type, default: `"limit"`"""
+  trigger_offset: float
+  """The maximum deviation from the price peak beyond which the order will be triggered"""
+  trigger: Literal['index_price', 'mark_price', 'last_price']
+  """Trigger type (only for trigger orders). Allowed values: `"index_price"`, `"mark_price"`, `"last_price"`."""
+
+
+class TradeAllocation(TypedDict):
+  user_id: NotRequired[int]
+  """User ID to which part of the trade is allocated. For brokers the User ID is obstructed."""
+  amount: float
+  """Amount allocated to this user."""
+  fee: float
+  """Fee for the allocated part of the trade."""
+  client_info: NotRequired[ClientInfo]
+
+
+class UserTrade(TypedDict):
+  trade_id: str
+  """Unique (per currency) trade identifier"""
+  trade_seq: int
+  """The sequence number of the trade within instrument"""
+  instrument_name: str
+  """Unique instrument identifier"""
+  timestamp: int
+  """The timestamp of the trade (milliseconds since the UNIX epoch)"""
+  starbase_timestamp: NotRequired[int]
+  """Optional field: timestamp of the match (trade) in [Starbase](https://docs.deribit.com/starbase/overview), in nanoseconds since the UNIX epoch (present only for trades matched in Starbase)"""
+  order_type: NotRequired[Literal['limit', 'market', 'liquidation']]
+  """Order type: `"limit`, `"market"`, or `"liquidation"`"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """Advanced type of user order: `"usd"` or `"implv"` (only for options; omitted if not applicable)"""
+  order_id: str
+  """Id of the user order (maker or taker), i.e. subscriber's order id that took part in the trade"""
+  matching_id: str
+  """Always `null`"""
+  starbase_match_id: NotRequired[int]
+  """Optional field containing the Starbase match identifier (present only for trades matched via Starbase)"""
+  starbase_order_id: NotRequired[int]
+  """Optional field: the id in [Starbase](https://docs.deribit.com/starbase/overview) of the user's own order (maker or taker side) that took part in the trade; for self-trades this is always the taker order's id, and for combo legs it is the parent combo order's id (present only for trades matched in Starbase)"""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`"""
+  tick_direction: Literal[0, 1, 2, 3]
+  """Direction of the "tick" (`0` = Plus Tick, `1` = Zero-Plus Tick, `2` = Minus Tick, `3` = Zero-Minus Tick)."""
+  index_price: float
+  """Index Price at the moment of trade"""
+  price: float
+  """Price in base currency"""
+  amount: float
+  """Trade amount. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  contracts: NotRequired[float]
+  """Trade size in contract units (optional, may be absent in historical trades)"""
+  iv: NotRequired[float]
+  """Option implied volatility for the price (Option only)"""
+  underlying_price: NotRequired[float]
+  """Underlying price for implied volatility calculations (Options only)"""
+  liquidation: NotRequired[Literal['M', 'T', 'MT']]
+  """Optional field (only for trades caused by liquidation): `"M"` when maker side of trade was under liquidation, `"T"` when taker side was under liquidation, `"MT"` when both sides of trade were under liquidation"""
+  liquidity: NotRequired[Literal['M', 'T']]
+  """Describes what was role of users order: `"M"` when it was maker order, `"T"` when it was taker order"""
+  fee: float
+  """User's fee in units of the specified `fee_currency`"""
+  fee_currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR']
+  """Currency, i.e `"BTC"`, `"ETH"`, `"USDC"`"""
+  label: NotRequired[str]
+  """User defined label (presented only when previously set for order by user)"""
+  state: Literal['open', 'filled', 'rejected', 'cancelled', 'untriggered', 'archive']
+  """Order state: `"open"`, `"filled"`, `"rejected"`, `"cancelled"`, `"untriggered"` or `"archive"` (if order was archived)"""
+  block_trade_id: NotRequired[str]
+  """Block trade id - when trade was part of a block trade"""
+  block_rfq_id: NotRequired[int]
+  """ID of the Block RFQ - when trade was part of the Block RFQ"""
+  block_rfq_quote_id: NotRequired[int]
+  """ID of the Block RFQ quote - when trade was part of the Block RFQ"""
+  reduce_only: NotRequired[str]
+  """`true` if user order is reduce-only"""
+  post_only: NotRequired[str]
+  """`true` if user order is post-only"""
+  mmp: NotRequired[bool]
+  """`true` if user order is MMP"""
+  risk_reducing: NotRequired[bool]
+  """`true` if user order is marked by the platform as a risk reducing order (can apply only to orders placed by PM users)"""
+  api: NotRequired[bool]
+  """`true` if user order was created with API"""
+  profit_loss: NotRequired[float]
+  """Profit and loss in base currency."""
+  mark_price: float
+  """Mark Price at the moment of trade"""
+  legs: NotRequired[list[dict[str, Any]]]
+  """Optional field containing leg trades if trade is a combo trade (present when querying for **only** combo trades and in `combo_trades` events)"""
+  combo_id: NotRequired[str]
+  """Optional field containing combo instrument name if the trade is a combo trade"""
+  combo_trade_id: NotRequired[str]
+  """Optional field containing combo trade identifier if the trade is a combo trade"""
+  quote_set_id: NotRequired[str]
+  """QuoteSet of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  quote_id: NotRequired[str]
+  """QuoteID of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  trade_allocations: NotRequired[list[TradeAllocation]]
+  """List of allocations for Block RFQ pre-allocation. Each allocation specifies `user_id`, `amount`, and `fee` for the allocated part of the trade. For broker client allocations, a `client_info` object will be included."""
+
+
+class SellResult(TypedDict):
+  order: Order
+  trades: list[UserTrade]
+  """Trades generated immediately by this call (empty if nothing filled yet)."""
+
+
+validate_sell = validator[SellResult](SellResult)
+
+
+class Sell(RpcEndpoint):
+  """`private/sell`."""
+
+  async def sell(
+    self,
+    sell_order_params: SellLimitOrder
+    | SellMarketOrder
+    | SellStopLimitOrder
+    | SellStopMarketOrder
+    | SellTrailingStopOrder,
+    *,
+    validate: bool | None = None,
+  ) -> SellResult:
+    """Places a sell order for an instrument. Supports various order types including limit, market, stop, and advanced order types (stop-limit, take-profit, take-profit-limit, trailing-stop, etc.).
+
+    You can specify order parameters such as price, quantity, time-in-force, post-only, reduce-only, and trigger conditions. Orders can be labeled for easier management and tracking. Market Maker Protection (MMP) can be enabled to prevent excessive quoting.
+
+    Args:
+      sell_order_params: Order parameters for `private/sell`, keyed by JSON-RPC param name.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/trading/private-sell)
+    """
+    return await self.authed_request(
+      'private/sell',
+      params=sell_order_params,
+      validator=validate_sell,
+      validate=validate,
+    )

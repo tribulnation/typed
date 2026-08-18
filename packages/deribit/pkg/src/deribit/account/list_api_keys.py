@@ -1,0 +1,50 @@
+"""`private/list_api_keys` — `private/list_api_keys`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class ApiKey(TypedDict):
+  id: int
+  """Key identifier."""
+  timestamp: int
+  """The timestamp (milliseconds since the Unix epoch) the key was created."""
+  client_id: str
+  """Client identifier used for authentication."""
+  client_secret: str
+  """Client secret, or the MD5 fingerprint of the public key, used for authentication."""
+  public_key: NotRequired[str]
+  """PEM-encoded public key (Ed25519/RSA) used for asymmetric signatures, when configured."""
+  max_scope: str
+  """Space-separated maximal access scope for tokens generated with this key."""
+  enabled: NotRequired[bool]
+  """Whether the key is enabled and can be used for authentication."""
+  default: bool
+  """Whether this is the account default API key (deprecated field, kept for compatibility)."""
+  name: NotRequired[str]
+  """API key name that can be displayed in the transaction log."""
+  enabled_features: NotRequired[list[str]]
+  """Enabled advanced on-key features, e.g. `restricted_block_trades`, `block_trade_approval`."""
+  ip_whitelist: NotRequired[list[str]]
+  """IP addresses whitelisted for this key."""
+
+
+validate_list_api_keys = validator[list[ApiKey]](list[ApiKey])
+
+
+class ListApiKeys(RpcEndpoint):
+  """`private/list_api_keys`."""
+
+  async def list_api_keys(self, *, validate: bool | None = None) -> list[ApiKey]:
+    """Retrieves a list of all API keys associated with the authenticated account, including scope, status, and metadata. Takes no parameters. The venue documents this as requiring two-factor authentication on the calling session.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/private-list_api_keys)
+    """
+    return await self.authed_request(
+      'private/list_api_keys', validator=validate_list_api_keys, validate=validate
+    )

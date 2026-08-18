@@ -1,0 +1,65 @@
+"""`private/change_api_key_name` — `private/change_api_key_name`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class ApiKey(TypedDict):
+  id: int
+  """Key identifier."""
+  timestamp: int
+  """The timestamp (milliseconds since the Unix epoch) the key was created."""
+  client_id: str
+  """Client identifier used for authentication."""
+  client_secret: str
+  """Client secret, or the MD5 fingerprint of the public key, used for authentication."""
+  public_key: NotRequired[str]
+  """PEM-encoded public key (Ed25519/RSA) used for asymmetric signatures, when configured."""
+  max_scope: str
+  """Space-separated maximal access scope for tokens generated with this key."""
+  enabled: NotRequired[bool]
+  """Whether the key is enabled and can be used for authentication."""
+  default: bool
+  """Whether this is the account default API key (deprecated field, kept for compatibility)."""
+  name: NotRequired[str]
+  """API key name that can be displayed in the transaction log."""
+  enabled_features: NotRequired[list[str]]
+  """Enabled advanced on-key features."""
+  ip_whitelist: NotRequired[list[str]]
+  """IP addresses whitelisted for this key."""
+
+
+validate_change_api_key_name = validator[ApiKey](ApiKey)
+
+
+class ChangeApiKeyName(RpcEndpoint):
+  """`private/change_api_key_name`."""
+
+  async def change_api_key_name(
+    self,
+    *,
+    id: int,
+    name: str,
+    validate: bool | None = None,
+  ) -> ApiKey:
+    """Updates the display name for an API key. The name is used for identification purposes (e.g. in the transaction log) and does not affect the key's functionality or permissions.
+
+    Args:
+      id: API key id.
+      name: New display name for the key. Letters, numbers and underscores only; maximum length 16 characters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/private-change_api_key_name)
+    """
+    params: dict = {
+      'id': id,
+      'name': name,
+    }
+    return await self.authed_request(
+      'private/change_api_key_name',
+      params=params,
+      validator=validate_change_api_key_name,
+      validate=validate,
+    )

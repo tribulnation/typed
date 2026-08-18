@@ -1,0 +1,42 @@
+"""`private/get_reward_eligibility` — `private/get_reward_eligibility`."""
+
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class RewardEligibility(TypedDict):
+  """Reward eligibility and 7-day APR for one currency."""
+
+  eligibility_status: Literal['eligible', 'partially_eligible', 'non_eligible']
+  """`eligible`: full equity earns rewards. `partially_eligible`: custody balance is excluded from rewards. `non_eligible`: no reward for this currency."""
+  apr_sma7: float
+  """Simple moving average of the last 7 days of rewards for the currency, as an APR percentage."""
+
+
+validate_get_reward_eligibility = validator[dict[str, RewardEligibility]](
+  dict[str, RewardEligibility]
+)
+
+
+class GetRewardEligibility(RpcEndpoint):
+  """`private/get_reward_eligibility`."""
+
+  async def get_reward_eligibility(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> dict[str, RewardEligibility]:
+    """Returns reward eligibility status and APR data for all supported currencies. This method takes no parameters.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/wallet/private-get_reward_eligibility)
+    """
+    return await self.authed_request(
+      'private/get_reward_eligibility',
+      validator=validate_get_reward_eligibility,
+      validate=validate,
+    )

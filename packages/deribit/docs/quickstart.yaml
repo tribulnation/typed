@@ -1,0 +1,105 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014, schema extended for markdown `body` + links ADR
+# 0015). Mirrors docs/index.md and docs/how-to/*.md — kept in sync by hand
+# until those pages generate from this file instead, not yet decided. Every
+# snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset — links, code spans, emphasis;
+# no block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths
+# (`/typed/deribit/...`), not relative doc-tree paths — this file is authored
+# for exactly one rendering location, unlike docs/*.md's portable relative
+# links (see ADR 0015).
+
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials — see
+    [API keys setup](/typed/deribit/api-keys) for how to create them.
+  code: |
+    # .env
+    TEST_DERIBIT_CLIENT_ID="your_testnet_client_id"
+    TEST_DERIBIT_CLIENT_SECRET="your_testnet_client_secret"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-deribit python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    from deribit import Deribit
+
+    async with Deribit.new(testnet=True) as client:
+      instruments = await client.http.market_data.get_instruments(
+        currency='BTC', kind='future'
+      )
+      print(instruments)
+
+how_tos:
+  - title: Fetch Market Data
+    body: Instruments, tickers, order books, recent trades, candles — all public, no credentials needed.
+    code: |
+      instruments = await client.http.market_data.get_instruments(currency='BTC', kind='future')  # tradeable instruments
+      ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')  # ticker
+      book = await client.http.market_data.get_order_book(instrument_name='BTC-PERPETUAL', depth=20)  # order book
+      trades = await client.http.market_data.get_last_trades_by_currency(currency='BTC', kind='future', count=10)  # recent trades
+      candles = await client.http.market_data.get_tradingview_chart_data(
+        instrument_name='BTC-PERPETUAL', start_timestamp=1700000000000, end_timestamp=1700003600000, resolution='60',
+      )  # candles
+
+  - title: Place & Manage Orders
+    body: Submit, inspect, query, and cancel orders. Needs credentials.
+    code: |
+      order = await client.http.trading.buy({
+        'instrument_name': 'BTC-PERPETUAL', 'amount': 10, 'type': 'limit', 'price': 32503.0,
+      })  # place a limit order
+      open = await client.http.trading.get_open_orders_by_instrument(instrument_name='BTC-PERPETUAL')  # list open orders
+      state = await client.http.trading.get_order_state(order_id=order['order']['order_id'])  # query one order
+      await client.http.trading.cancel(order_id=order['order']['order_id'])  # cancel one order
+      await client.http.trading.cancel_all()  # cancel every open order
+
+  - title: Fetch Account Data
+    body: Balances, positions, and transaction history. Needs credentials.
+    code: |
+      summary = await client.http.account.get_account_summary(currency='BTC')  # account balance/equity
+      positions = await client.http.account.get_positions(currency='BTC', kind='future')  # open positions
+      log = await client.http.account.get_transaction_log(
+        currency='BTC', start_timestamp=1700000000000, end_timestamp=1700086400000,
+      )  # transaction history
+
+  - title: Manage Deposits & Withdrawals
+    body: Deposit addresses, deposit/withdrawal history, and submitting a withdrawal. Needs credentials.
+    code: |
+      address = await client.http.wallet.address_book.get_current_deposit_address(currency='BTC')  # current deposit address
+      deposits = await client.http.wallet.deposits.get_deposits(currency='BTC', count=10)  # deposit history
+      withdrawal = await client.http.wallet.withdrawals.withdraw(
+        currency='BTC', address='some-address-book-address', amount=0.001,
+      )  # submit a withdrawal
+      withdrawals = await client.http.wallet.withdrawals.get_withdrawals(currency='BTC', count=10)  # withdrawal history
+
+  - title: Paginate Through Results
+    body: Endpoints the venue paginates get a `<method>_paged` async-iterator sibling.
+    code: |
+      async for page in client.http.market_data.get_mark_price_history_paged(
+        instrument_name='BTC-PERPETUAL', start_timestamp=1700000000000, end_timestamp=1700003600000, max_pages=5,
+      ):  # window-paginated mark price history
+        for mark_price, timestamp in page:
+          print(timestamp, mark_price)
+      async for page in client.http.wallet.deposits.get_deposits_paged(currency='BTC', count=10):  # offset-paginated deposit history
+        for deposit in page['data']:
+          print(deposit['transaction_id'])
+
+  - title: Listen To Streams
+    body: Subscribe to a public channel and a private (authenticated) channel over `client.streams`'s own connection.
+    code: |
+      async with client.streams.market_data.ticker('BTC-PERPETUAL', '100ms') as stream:  # public ticker channel
+        async for tick in stream:
+          print(tick['instrument_name'], tick['last_price'])
+      async with client.streams.user.orders_by_instrument('BTC-PERPETUAL', 'raw') as stream:  # private order-update channel
+        async for orders in stream:
+          for order in orders:
+            print(order['order_id'], order['order_state'])
+      time = await client.streams.rpc.request('public/get_time')  # untyped JSON-RPC escape hatch

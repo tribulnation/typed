@@ -1,0 +1,100 @@
+"""`estimated_expiration_price.{index_name}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class EstimatedExpirationPriceUpdate(TypedDict):
+  """Estimated expiration (delivery) price for the nearest expiring instrument on the given index."""
+
+  seconds: int
+  """Number of seconds remaining until the expiration of the nearest expiring instrument."""
+  price: float
+  """The current index price, or the estimated expiration price when `is_estimated` is `true`."""
+  is_estimated: bool
+  """Whether `price` is a calculated estimated ending price (`true`) or the current index price (`false`)."""
+  left_ticks: NotRequired[float]
+  """Number of time ticks remaining until expiration. Only present when `is_estimated` is `true`."""
+  total_ticks: NotRequired[float]
+  """Total number of time ticks for the expiration period. Only present when `is_estimated` is `true`."""
+  timestamp: NotRequired[int]
+  """The timestamp (milliseconds since the Unix epoch). Observed on every live push; not documented in the venue AsyncAPI spec."""
+
+
+validate_estimated_expiration_price = validator[EstimatedExpirationPriceUpdate](
+  EstimatedExpirationPriceUpdate
+)
+
+
+class EstimatedExpirationPrice(StreamEndpoint):
+  """`estimated_expiration_price.{index_name}` subscription."""
+
+  def estimated_expiration_price(
+    self,
+    index_name: Literal[
+      'btc_usd',
+      'eth_usd',
+      'ada_usdc',
+      'algo_usdc',
+      'avax_usdc',
+      'bch_usdc',
+      'bnb_usdc',
+      'btc_usdc',
+      'btcdvol_usdc',
+      'buidl_usdc',
+      'doge_usdc',
+      'dot_usdc',
+      'eurr_usdc',
+      'eth_usdc',
+      'ethdvol_usdc',
+      'link_usdc',
+      'ltc_usdc',
+      'near_usdc',
+      'paxg_usdc',
+      'shib_usdc',
+      'sol_usdc',
+      'steth_usdc',
+      'ton_usdc',
+      'trump_usdc',
+      'trx_usdc',
+      'uni_usdc',
+      'usde_usdc',
+      'usyc_usdc',
+      'xrp_usdc',
+      'btc_usdt',
+      'eth_usdt',
+      'eurr_usdt',
+      'sol_usdt',
+      'steth_usdt',
+      'usdc_usdt',
+      'usde_usdt',
+      'btc_eurr',
+      'btc_usde',
+      'btc_usyc',
+      'eth_btc',
+      'eth_eurr',
+      'eth_usde',
+      'eth_usyc',
+      'steth_eth',
+      'paxg_btc',
+      'drbfix-btc_usdc',
+      'drbfix-eth_usdc',
+    ],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[EstimatedExpirationPriceUpdate, Any, Any]:
+    """Estimated expiration (delivery) price updates for the given `index_name` -- calculated estimates of the ending price used around expirations/settlement.
+
+    Args:
+      index_name: Index identifier, matching a (base) cryptocurrency to a quote currency.
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/market-data/estimated_expiration_priceindex_name)
+    """
+    channel = f'estimated_expiration_price.{index_name}'
+    return self.subscribe(
+      channel, validator=validate_estimated_expiration_price, validate=validate
+    )

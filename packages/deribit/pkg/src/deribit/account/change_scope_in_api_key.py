@@ -1,0 +1,65 @@
+"""`private/change_scope_in_api_key` — `private/change_scope_in_api_key`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class ApiKey(TypedDict):
+  id: int
+  """Key identifier."""
+  timestamp: int
+  """The timestamp (milliseconds since the Unix epoch) the key was created."""
+  client_id: str
+  """Client identifier used for authentication."""
+  client_secret: str
+  """Client secret, or the MD5 fingerprint of the public key, used for authentication."""
+  public_key: NotRequired[str]
+  """PEM-encoded public key (Ed25519/RSA) used for asymmetric signatures, when configured."""
+  max_scope: str
+  """Space-separated maximal access scope for tokens generated with this key."""
+  enabled: NotRequired[bool]
+  """Whether the key is enabled and can be used for authentication."""
+  default: bool
+  """Whether this is the account default API key (deprecated field, kept for compatibility)."""
+  name: NotRequired[str]
+  """API key name that can be displayed in the transaction log."""
+  enabled_features: NotRequired[list[str]]
+  """Enabled advanced on-key features."""
+  ip_whitelist: NotRequired[list[str]]
+  """IP addresses whitelisted for this key."""
+
+
+validate_change_scope_in_api_key = validator[ApiKey](ApiKey)
+
+
+class ChangeScopeInApiKey(RpcEndpoint):
+  """`private/change_scope_in_api_key`."""
+
+  async def change_scope_in_api_key(
+    self,
+    *,
+    max_scope: str,
+    id: int,
+    validate: bool | None = None,
+  ) -> ApiKey:
+    """Updates the scope (permissions) of an existing API key. The key immediately loses access to any operation outside the new scope. Requires two-factor authentication on the calling session.
+
+    Args:
+      max_scope: New maximal access scope for tokens generated with this key, as a space-separated string of `resource:permission` pairs. See `account.create_api_key`'s parameter of the same name for the string-vs-array discrepancy.
+      id: API key id.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/private-change_scope_in_api_key)
+    """
+    params: dict = {
+      'max_scope': max_scope,
+      'id': id,
+    }
+    return await self.authed_request(
+      'private/change_scope_in_api_key',
+      params=params,
+      validator=validate_change_scope_in_api_key,
+      validate=validate,
+    )

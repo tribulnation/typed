@@ -1,0 +1,97 @@
+"""`public/auth` — `public/auth`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class AuthResult(TypedDict):
+  """Result of a successful public/auth call."""
+
+  access_token: str
+  """OAuth access token, used to authenticate private requests."""
+  token_type: Literal['bearer']
+  """Authorization type; always `bearer`."""
+  expires_in: int
+  """Token lifetime, in seconds."""
+  refresh_token: str
+  """Exchange for a new token pair via grant_type=refresh_token."""
+  scope: str
+  """Access scope actually granted to this token."""
+  state: NotRequired[str]
+  """Echoed back from the request's `state` parameter, when it was sent."""
+  sid: NotRequired[str]
+  """Session id."""
+  enabled_features: NotRequired[
+    list[Literal['restricted_block_trades', 'block_trade_approval']]
+  ]
+  """Advanced on-key features enabled for this token."""
+  mandatory_tfa_status: NotRequired[str]
+  """Whether 2FA is required for privileged methods on this account. Upstream documents only an example value, not an enumerated set -- left as a bare string, see notes."""
+  google_login: NotRequired[bool]
+  """Whether this access token was acquired by logging in through Google."""
+
+
+validate_auth = validator[AuthResult](AuthResult)
+
+
+class Auth(RpcEndpoint):
+  """`public/auth`."""
+
+  async def auth(
+    self,
+    *,
+    grant_type: Literal['client_credentials', 'client_signature', 'refresh_token'],
+    client_id: str | None = None,
+    client_secret: str | None = None,
+    refresh_token: str | None = None,
+    timestamp: str | None = None,
+    signature: str | None = None,
+    nonce: str | None = None,
+    data: str | None = None,
+    state: str | None = None,
+    scope: str | None = None,
+    validate: bool | None = None,
+  ) -> AuthResult:
+    """Retrieve an OAuth access token, used to authenticate 'private' requests. Three grant types: client_credentials (client_id+client_secret), client_signature (client_id+timestamp+nonce+signature, an HMAC-SHA256 over timestamp+nonce+data keyed by the client secret, never transmitting the secret itself), and refresh_token (exchanges a prior refresh_token for a new pair without resupplying credentials).
+
+    Args:
+      grant_type: Which authentication method this call uses.
+      client_id: API client id. Required for grant_type=client_credentials and grant_type=client_signature.
+      client_secret: API client secret. Required for grant_type=client_credentials only -- client_signature proves possession of the secret via an HMAC instead of sending it.
+      refresh_token: A refresh token returned by an earlier public/auth call. Required for grant_type=refresh_token.
+      timestamp: Current time, milliseconds since the UNIX epoch, as a string -- folded verbatim into the signed string ahead of `nonce`/`data`. Required for grant_type=client_signature. Typed `string`, not `integer`: this endpoint's own live-captured `examples/02_client_signature.request.json` sent it as `"1700000002000"`, confirming the wire value is a string despite representing an epoch.
+      signature: Hex-encoded HMAC-SHA256 of `timestamp + "\n" + nonce + "\n" + data`, keyed by the client secret. Required for grant_type=client_signature.
+      nonce: Caller-generated initialization vector, folded into the client_signature signed string. Optional even for grant_type=client_signature.
+      data: Arbitrary caller value, folded into the client_signature signed string. Optional even for grant_type=client_signature.
+      state: Opaque caller value, echoed back verbatim as `state` in the response when set.
+      scope: Requested access scope for the issued token (e.g. `connection`, `session:name`, `trade:read_write`, `expires:NUMBER`). Cannot exceed the API key's own scope ceiling. See https://docs.deribit.com/articles/access-scope.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/authentication/public-auth)
+    """
+    params: dict = {
+      'grant_type': grant_type,
+    }
+    if client_id is not None:
+      params['client_id'] = client_id
+    if client_secret is not None:
+      params['client_secret'] = client_secret
+    if refresh_token is not None:
+      params['refresh_token'] = refresh_token
+    if timestamp is not None:
+      params['timestamp'] = timestamp
+    if signature is not None:
+      params['signature'] = signature
+    if nonce is not None:
+      params['nonce'] = nonce
+    if data is not None:
+      params['data'] = data
+    if state is not None:
+      params['state'] = state
+    if scope is not None:
+      params['scope'] = scope
+    return await self.request(
+      'public/auth', params=params, validator=validate_auth, validate=validate
+    )

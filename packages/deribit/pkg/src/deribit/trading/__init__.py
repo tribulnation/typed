@@ -1,0 +1,79 @@
+from .buy import Buy
+from .cancel import Cancel
+from .cancel_all import CancelAll
+from .cancel_all_by_currency import CancelAllByCurrency
+from .cancel_all_by_currency_pair import CancelAllByCurrencyPair
+from .cancel_all_by_instrument import CancelAllByInstrument
+from .cancel_all_by_kind_or_type import CancelAllByKindOrType
+from .cancel_by_label import CancelByLabel
+from .cancel_quotes import CancelQuotes
+from .close_position import ClosePosition
+from .edit import Edit
+from .edit_by_label import EditByLabel
+from .get_margins import GetMargins
+from .get_mmp_config import GetMmpConfig
+from .get_mmp_status import GetMmpStatus
+from .get_open_orders import GetOpenOrders
+from .get_open_orders_by_currency import GetOpenOrdersByCurrency
+from .get_open_orders_by_instrument import GetOpenOrdersByInstrument
+from .get_open_orders_by_label import GetOpenOrdersByLabel
+from .get_order_history_by_currency import GetOrderHistoryByCurrency
+from .get_order_history_by_instrument import GetOrderHistoryByInstrument
+from .get_order_margin_by_ids import GetOrderMarginByIds
+from .get_order_state import GetOrderState
+from .get_order_state_by_label import GetOrderStateByLabel
+from .get_settlement_history_by_currency import GetSettlementHistoryByCurrency
+from .get_settlement_history_by_instrument import GetSettlementHistoryByInstrument
+from .get_trigger_order_history import GetTriggerOrderHistory
+from .get_user_trades_by_currency import GetUserTradesByCurrency
+from .get_user_trades_by_currency_and_time import GetUserTradesByCurrencyAndTime
+from .get_user_trades_by_instrument import GetUserTradesByInstrument
+from .get_user_trades_by_instrument_and_time import GetUserTradesByInstrumentAndTime
+from .get_user_trades_by_order import GetUserTradesByOrder
+from .mass_quote import MassQuote
+from .move_positions import MovePositions
+from .reset_mmp import ResetMmp
+from .sell import Sell
+from .set_mmp_config import SetMmpConfig
+
+
+class Trading(
+  Buy,
+  Cancel,
+  CancelAll,
+  CancelAllByCurrency,
+  CancelAllByCurrencyPair,
+  CancelAllByInstrument,
+  CancelAllByKindOrType,
+  CancelByLabel,
+  CancelQuotes,
+  ClosePosition,
+  Edit,
+  EditByLabel,
+  GetMargins,
+  GetMmpConfig,
+  GetMmpStatus,
+  GetOpenOrders,
+  GetOpenOrdersByCurrency,
+  GetOpenOrdersByInstrument,
+  GetOpenOrdersByLabel,
+  GetOrderHistoryByCurrency,
+  GetOrderHistoryByInstrument,
+  GetOrderMarginByIds,
+  GetOrderState,
+  GetOrderStateByLabel,
+  GetSettlementHistoryByCurrency,
+  GetSettlementHistoryByInstrument,
+  GetTriggerOrderHistory,
+  GetUserTradesByCurrency,
+  GetUserTradesByCurrencyAndTime,
+  GetUserTradesByInstrument,
+  GetUserTradesByInstrumentAndTime,
+  GetUserTradesByOrder,
+  MassQuote,
+  MovePositions,
+  ResetMmp,
+  Sell,
+  SetMmpConfig,
+):
+  """Trading endpoints."""
