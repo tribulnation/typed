@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-core"
+version = "0.2.1"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "Shared core types and utilities for typed crypto clients"
+dependencies = [
+  "typing-extensions", "httpx", "websockets", "orjson", "pydantic",
+  "lazy-loader",
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[project.urls]
+Repository = "https://github.com/tribulnation/typed.git"
