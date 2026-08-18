@@ -1,0 +1,168 @@
+"""`spot.account.closed_orders` -- private Spot endpoint."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class OrderDescription(TypedDict):
+  """Order description info."""
+
+  pair: NotRequired[str]
+  """Asset pair."""
+  type: NotRequired[Literal['buy', 'sell']]
+  """Type of order."""
+  ordertype: NotRequired[
+    Literal[
+      'market',
+      'limit',
+      'iceberg',
+      'stop-loss',
+      'take-profit',
+      'trailing-stop',
+      'stop-loss-limit',
+      'take-profit-limit',
+      'trailing-stop-limit',
+      'settle-position',
+    ]
+  ]
+  """Order type."""
+  price: NotRequired[str]
+  """Primary price."""
+  price2: NotRequired[str]
+  """Secondary price."""
+  leverage: NotRequired[str]
+  """Amount of leverage."""
+  order: NotRequired[str]
+  """Order description, as human-readable text."""
+  close: NotRequired[str]
+  """Conditional close order description (if conditional close set)."""
+  aclass: NotRequired[str]
+  """Asset class of the pair."""
+
+
+class ClosedOrder(TypedDict):
+  """One closed order."""
+
+  refid: NotRequired[str | None]
+  """Referral order transaction ID that created this order."""
+  userref: NotRequired[int | None]
+  """Optional numeric client identifier associated with one or more orders."""
+  cl_ord_id: NotRequired[str | None]
+  """Optional alphanumeric client identifier associated with the order."""
+  status: NotRequired[Literal['pending', 'open', 'closed', 'canceled', 'expired']]
+  """Status of the order: `pending` (pending book entry), `open`, `closed`, `canceled`, or `expired`."""
+  opentm: NotRequired[float]
+  """Unix timestamp of when the order was placed."""
+  starttm: NotRequired[float]
+  """Unix timestamp of order start time (or 0 if not set)."""
+  expiretm: NotRequired[float]
+  """Unix timestamp of order end time (or 0 if not set)."""
+  descr: NotRequired[OrderDescription]
+  time_in_force: NotRequired[Literal['gtc', 'ioc', 'gtd', 'fok']]
+  """Time-in-force of the order: `gtc` (good till cancelled), `ioc` (immediate or cancel), `gtd` (good till date), or `fok` (fill or kill)."""
+  vol: NotRequired[str]
+  """Volume of order (base currency)."""
+  vol_exec: NotRequired[str]
+  """Volume executed (base currency)."""
+  cost: NotRequired[str]
+  """Total cost (quote currency)."""
+  fee: NotRequired[str]
+  """Total fee (quote currency)."""
+  price: NotRequired[str]
+  """Average price (quote currency)."""
+  stopprice: NotRequired[str]
+  """Stop price (quote currency)."""
+  limitprice: NotRequired[str]
+  """Triggered limit price (quote currency, when limit-based order type triggered)."""
+  trigger: NotRequired[Literal['last', 'index']]
+  """Price signal used to trigger `stop-loss`/`take-profit`/`stop-loss-limit`/`take-profit-limit` orders. `last` is the implied trigger if this field is not set."""
+  margin: NotRequired[bool]
+  """Indicates if the order is funded on margin."""
+  misc: NotRequired[str]
+  """Comma-delimited list of miscellaneous info: `stopped` (triggered by stop price), `touched` (triggered by touch price), `liquidated`, `partial` (partial fill), `amended` (order parameters modified)."""
+  oflags: NotRequired[str]
+  """Comma-delimited list of order flags: `post` (post-only, available when ordertype = limit), `fcib` (prefer fee in base currency, default if selling), `fciq` (prefer fee in quote currency, default if buying, mutually exclusive with `fcib`), `nompp` (disable Market Price Protection for market orders), `viqc` (order volumes expressed in quote currency)."""
+  trades: NotRequired[list[str]]
+  """List of trade IDs related to the order (if trades info requested and data available)."""
+  sender_sub_id: NotRequired[str | None]
+  """For institutional accounts, identifies the underlying sub-account/trader for Self Trade Prevention (STP)."""
+  closetm: NotRequired[float]
+  """Unix timestamp of when the order was closed."""
+  reason: NotRequired[str]
+  """Additional info on status (if any)."""
+
+
+class ClosedOrders(TypedDict):
+  """Closed (filled or cancelled) orders."""
+
+  closed: NotRequired[dict[str, ClosedOrder]]
+  """Closed orders, keyed by transaction ID."""
+  count: NotRequired[int]
+  """Amount of available order info matching criteria. Omitted from the response when `without_count` is `true`."""
+
+
+validate_closed_orders = validator(ClosedOrders)
+
+
+class ClosedOrdersEndpoint(RpcEndpoint):
+  """`spot.account.closed_orders`."""
+
+  async def closed_orders(
+    self,
+    *,
+    trades: bool | None = None,
+    userref: int | None = None,
+    cl_ord_id: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    ofs: int | None = None,
+    closetime: Literal['open', 'close', 'both'] | None = None,
+    consolidate_taker: bool | None = None,
+    without_count: bool | None = None,
+    rebase_multiplier: Literal['rebased', 'base'] | None = None,
+  ) -> ClosedOrders:
+    """Retrieve information about orders that have been closed (filled or cancelled). 50 results are returned at a time, the most recent by default. If an order's tx ID is given for `start` or `end`, the order's opening time (`opentm`) is used.
+
+    **API Key Permissions Required:** `Orders and trades - Query closed orders & trades`
+
+    Args:
+      trades: Whether or not to include trades related to position in output.
+      userref: Restrict results to the given user reference id.
+      cl_ord_id: Restrict results to the given client order id.
+      start: Starting unix timestamp or order tx ID of results (exclusive).
+      end: Ending unix timestamp or order tx ID of results (inclusive).
+      ofs: Result offset for pagination.
+      closetime: Which time to use to search.
+      consolidate_taker: Whether or not to consolidate trades by individual taker trades.
+      without_count: Whether or not to include the page count in the result (`true` is much faster for users with many closed orders).
+      rebase_multiplier: Optional parameter for viewing xstocks data. `rebased` displays in terms of underlying equity, `base` displays in terms of SPV tokens.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/account-data/get-closed-orders)
+    """
+    data = {}
+    if trades is not None:
+      data['trades'] = trades
+    if userref is not None:
+      data['userref'] = userref
+    if cl_ord_id is not None:
+      data['cl_ord_id'] = cl_ord_id
+    if start is not None:
+      data['start'] = start
+    if end is not None:
+      data['end'] = end
+    if ofs is not None:
+      data['ofs'] = ofs
+    if closetime is not None:
+      data['closetime'] = closetime
+    if consolidate_taker is not None:
+      data['consolidate_taker'] = consolidate_taker
+    if without_count is not None:
+      data['without_count'] = without_count
+    if rebase_multiplier is not None:
+      data['rebase_multiplier'] = rebase_multiplier
+
+    return await self.authed_request(
+      '/0/private/ClosedOrders', data, validator=validate_closed_orders
+    )

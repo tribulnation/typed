@@ -1,0 +1,50 @@
+"""`streams.trading.cancel_order` -- WebSocket trading method."""
+
+from typing_extensions import NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.ws_rpc import WsRpcEndpoint
+
+
+class CancelOrderResult(TypedDict):
+  """Result describing one cancelled order."""
+
+  order_id: NotRequired[str]
+  """Kraken identifier of the cancelled order."""
+  cl_ord_id: NotRequired[str]
+  """Client identifier of the cancelled order, if any."""
+  warnings: NotRequired[list[str]]
+  """Non-fatal warnings about the cancellation, if any."""
+
+
+validate_cancel_order = validator(CancelOrderResult)
+
+
+class CancelOrder(WsRpcEndpoint):
+  """`streams.trading.cancel_order`."""
+
+  async def cancel_order(
+    self,
+    *,
+    order_id: list[str] | None = None,
+    cl_ord_id: list[str] | None = None,
+    order_userref: list[int] | None = None,
+  ) -> CancelOrderResult:
+    """Cancels one or more open orders in a single request, identified by a range of client or Kraken identifiers. The details of each cancelled order are also streamed on the `executions` channel.
+
+    Args:
+      order_id: Kraken `order_id` identifiers to cancel. Cannot be combined with `cl_ord_id` or `order_userref` in the same request.
+      cl_ord_id: Client `cl_ord_id` identifiers to cancel. Cannot be combined with `order_id` or `order_userref` in the same request.
+      order_userref: Client `order_userref` identifiers to cancel. Cannot be combined with `order_id` or `cl_ord_id` in the same request.
+
+    References:
+      - [Official docs](https://docs.kraken.com/exchange/api-reference/spot-websocket-v2/cancel_order)
+    """
+    params = {}
+    if order_id is not None:
+      params['order_id'] = order_id
+    if cl_ord_id is not None:
+      params['cl_ord_id'] = cl_ord_id
+    if order_userref is not None:
+      params['order_userref'] = order_userref
+
+    return await self.request('cancel_order', params, validator=validate_cancel_order)

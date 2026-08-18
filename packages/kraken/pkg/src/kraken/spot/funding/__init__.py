@@ -1,0 +1,27 @@
+"""`funding` endpoints."""
+
+from .deposit_addresses import DepositAddresses
+from .deposit_methods import DepositMethods
+from .deposit_status import DepositStatus
+from .wallet_transfer import WalletTransfer
+from .withdraw import Withdraw
+from .withdraw_addresses import WithdrawAddresses
+from .withdraw_cancel import WithdrawCancel
+from .withdraw_info import WithdrawInfo
+from .withdraw_methods import WithdrawMethods
+from .withdraw_status import WithdrawStatus
+
+
+class Funding(
+  DepositAddresses,
+  DepositMethods,
+  DepositStatus,
+  WalletTransfer,
+  Withdraw,
+  WithdrawAddresses,
+  WithdrawCancel,
+  WithdrawInfo,
+  WithdrawMethods,
+  WithdrawStatus,
+):
+  """`funding` endpoints."""

@@ -1,0 +1,73 @@
+"""`spot.account.order_amends` -- private Spot endpoint."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class OrderAmend(TypedDict):
+  """One amend transaction."""
+
+  amend_id: NotRequired[str]
+  """Kraken amend identifier."""
+  amend_type: NotRequired[Literal['original', 'user', 'restated']]
+  """The type of amend transaction: `original` (original order values on order entry), `user` (user-requested amendment), or `restated` (engine order maintenance amendment)."""
+  order_qty: NotRequired[str]
+  """Order quantity in terms of the base asset."""
+  display_qty: NotRequired[str]
+  """The quantity shown in the book for iceberg orders."""
+  remaining_qty: NotRequired[str]
+  """Remaining un-traded quantity on the order."""
+  limit_price: NotRequired[str]
+  """The limit price restriction on the order."""
+  trigger_price: NotRequired[str]
+  """The trigger price on trigger order types."""
+  reason: NotRequired[str]
+  """Description of the reason for this amend."""
+  post_only: NotRequired[bool]
+  """Indicates if the transaction was restricted from taking liquidity."""
+  timestamp: NotRequired[int]
+  """The UNIX timestamp for the amend transaction, in nanosecond precision."""
+
+
+class OrderAmends(TypedDict):
+  """The amend transaction history for one order."""
+
+  count: NotRequired[int]
+  """Total count of new and amend transactions (including the original order)."""
+  amends: NotRequired[list[OrderAmend]]
+  """Amend transactions, ordered by ascending amend timestamp."""
+
+
+validate_order_amends = validator(OrderAmends)
+
+
+class OrderAmendsEndpoint(RpcEndpoint):
+  """`spot.account.order_amends`."""
+
+  async def order_amends(
+    self,
+    *,
+    order_id: str,
+    rebase_multiplier: Literal['rebased', 'base'] | None = None,
+  ) -> OrderAmends:
+    """Retrieve an audit trail of amend transactions on the specified order. The list is ordered by ascending amend timestamp; the first entry contains the original order parameters and has `amend_type` of `original`.
+
+    **API Key Permissions Required:** `Orders and trades - Query open orders & trades` or `Orders and trades - Query closed orders & trades`, depending on the status of the order.
+
+    Args:
+      order_id: The Kraken order identifier for the amended order.
+      rebase_multiplier: Optional parameter for viewing xstocks data. `rebased` displays in terms of underlying equity, `base` displays in terms of SPV tokens.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/account-data/get-order-amends)
+    """
+    data: dict = {
+      'order_id': order_id,
+    }
+    if rebase_multiplier is not None:
+      data['rebase_multiplier'] = rebase_multiplier
+
+    return await self.authed_request(
+      '/0/private/OrderAmends', data, validator=validate_order_amends
+    )
