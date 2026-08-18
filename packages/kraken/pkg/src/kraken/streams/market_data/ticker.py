@@ -1,0 +1,84 @@
+"""`streams.market_data.ticker` -- WebSocket channel subscription."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from typed_core.util import StreamManager
+from ...core.endpoint.stream import StreamEndpoint
+
+
+class TickerData(TypedDict):
+  """One pair's level 1 market data."""
+
+  symbol: str
+  """The symbol of the currency pair, e.g. `"BTC/USD"`."""
+  bid: float
+  """Best bid price."""
+  bid_qty: float
+  """Best bid quantity."""
+  ask: float
+  """Best ask price."""
+  ask_qty: float
+  """Best ask quantity."""
+  last: float
+  """Last traded price (only guaranteed accurate if traded within the past 24 hours)."""
+  volume: float
+  """24-hour traded volume, in base currency terms."""
+  vwap: float
+  """24-hour volume weighted average price."""
+  low: float
+  """24-hour lowest trade price."""
+  high: float
+  """24-hour highest trade price."""
+  change: float
+  """24-hour price change, in quote currency."""
+  change_pct: float
+  """24-hour price change, in percentage points."""
+  trades: NotRequired[int]
+  """24-hour trade count. Confirmed present on every live push, not in upstream's own published field list."""
+  timestamp: str
+  """RFC3339 timestamp of this ticker data."""
+
+
+class TickerMessage(TypedDict):
+  """A `ticker` channel push."""
+
+  channel: Literal['ticker']
+  """The channel this push belongs to."""
+  type: Literal['snapshot', 'update']
+  """Whether this push is the initial snapshot or an incremental update."""
+  data: list[TickerData]
+  """One entry per subscribed symbol touched by this push."""
+
+
+validate_ticker = validator(TickerMessage)
+
+
+class Ticker(StreamEndpoint):
+  """`streams.market_data.ticker`."""
+
+  def ticker(
+    self,
+    *,
+    symbol: list[str],
+    event_trigger: Literal['bbo', 'trades'] | None = None,
+    snapshot: bool | None = None,
+  ) -> StreamManager[TickerMessage, object, object]:
+    """Subscribe to level 1 market data (top of book best bid/offer, and recent trade data) for one or more currency pairs. Updates are generated on trade events by default, or on best-bid-offer changes when `event_trigger` is `bbo`.
+
+    Args:
+      symbol: Currency pairs to subscribe to, e.g. `["BTC/USD", "MATIC/GBP"]`.
+      event_trigger: The book event that causes a new ticker update to be published: `bbo` on a change in the best-bid-offer price levels, `trades` on every trade.
+      snapshot: Request a snapshot after subscribing.
+
+    References:
+      - [Official docs](https://docs.kraken.com/exchange/api-reference/spot-websocket-v2/ticker)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    if event_trigger is not None:
+      params['event_trigger'] = event_trigger
+    if snapshot is not None:
+      params['snapshot'] = snapshot
+
+    return self.subscribe('ticker', params, validator=validate_ticker)

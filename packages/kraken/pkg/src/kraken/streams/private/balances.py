@@ -1,0 +1,168 @@
+"""`streams.private.balances` -- WebSocket channel subscription."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from typed_core.util import StreamManager
+from ...core.endpoint.stream import StreamEndpoint
+
+
+class BalanceLedgerEntry(TypedDict):
+  """One account ledger transaction affecting a single asset."""
+
+  asset: str
+  """The asset symbol code."""
+  asset_class: Literal['currency']
+  """The asset class -- a placeholder for future expansion."""
+  amount: float
+  """The amount of asset change in this event."""
+  balance: float
+  """The total amount of this asset held in the account after this event."""
+  fee: float
+  """The fee paid on the transaction."""
+  ledger_id: str
+  """The identifier for this account ledger entry."""
+  ref_id: str
+  """A reference identifier in the context of this balance event, e.g. the trade_id for a trade event."""
+  timestamp: str
+  """The time of the balance change. RFC3339, e.g. `2022-12-25T09:30:59.123456Z`."""
+  type: Literal[
+    'deposit',
+    'withdrawal',
+    'trade',
+    'margin',
+    'adjustment',
+    'rollover',
+    'credit',
+    'transfer',
+    'settled',
+    'staking',
+    'sale',
+    'reserve',
+    'conversion',
+    'dividend',
+    'reward',
+    'creator_fee',
+  ]
+  """The broad type of the balance event."""
+  subtype: NotRequired[
+    Literal[
+      'spotfromfutures',
+      'spottofutures',
+      'stakingfromspot',
+      'spotfromstaking',
+      'stakingtospot',
+      'spottostaking',
+    ]
+  ]
+  """The specific subtype of the balance event, when applicable."""
+  category: Literal[
+    'deposit',
+    'withdrawal',
+    'trade',
+    'margin-trade',
+    'margin-settle',
+    'margin-conversion',
+    'conversion',
+    'credit',
+    'marginrollover',
+    'staking-rewards',
+    'instant',
+    'equity-trade',
+    'airdrop',
+    'equity-dividend',
+    'reward-bonus',
+    'nft',
+    'block-trade',
+  ]
+  """The categorization of the balance event."""
+  wallet_type: Literal['spot', 'earn']
+  """Wallet type."""
+  wallet_id: Literal['main', 'bonded', 'flexible', 'liquid', 'locked']
+  """Wallet identifier."""
+  user: NotRequired[str]
+  """The Kraken-generated identifier for a user / sub-account. Only published when the subscription requested `users: "all"`."""
+
+
+class BalanceWallet(TypedDict):
+  """One wallet holding part of an asset's total balance."""
+
+  balance: float
+  """Balance of the asset in this wallet."""
+  type: Literal['spot', 'earn']
+  """Wallet type."""
+  id: Literal['main', 'flex', 'bonded', 'flexible', 'liquid', 'locked', 'closed']
+  """Wallet identifier."""
+
+
+class BalanceSnapshotEntry(TypedDict):
+  """An asset's total balance and its per-wallet breakdown, as of the subscription snapshot."""
+
+  asset: str
+  """The asset symbol code."""
+  asset_class: Literal['currency']
+  """The asset class -- a placeholder for future expansion."""
+  balance: float
+  """The total amount of asset held across all wallet types."""
+  wallets: list[BalanceWallet]
+  """The per-wallet breakdown of this asset's balance."""
+
+
+class BalancesUpdateMessage(TypedDict):
+  """One or more account ledger transactions, pushed as each completes."""
+
+  channel: Literal['balances']
+  """Channel name."""
+  type: Literal['update']
+  """Message kind."""
+  data: list[BalanceLedgerEntry]
+  """One entry per ledger transaction affecting an asset."""
+  sequence: NotRequired[int]
+  """The subscription message sequence number."""
+
+
+class BalancesSnapshotMessage(TypedDict):
+  """Full snapshot of every asset held in the account, sent once right after subscribing."""
+
+  channel: Literal['balances']
+  """Channel name."""
+  type: Literal['snapshot']
+  """Message kind."""
+  data: list[BalanceSnapshotEntry]
+  """One entry per asset held in the account."""
+  sequence: NotRequired[int]
+  """The subscription message sequence number."""
+
+
+_balances_type = BalancesSnapshotMessage | BalancesUpdateMessage
+validate_balances = validator[_balances_type](_balances_type)  # type: ignore
+
+
+class Balances(StreamEndpoint):
+  """`streams.private.balances`."""
+
+  def balances(
+    self,
+    *,
+    snapshot: bool | None = None,
+    users: Literal['all'] | None = None,
+    rebased: bool | None = None,
+  ) -> StreamManager[BalancesSnapshotMessage | BalancesUpdateMessage, object, object]:
+    """Subscribe to client asset balances and account ledger transactions for this account.
+
+    Args:
+      snapshot: Request a snapshot after subscribing.
+      users: Available on master accounts only. If `all`, events for master and subaccounts are streamed and no snapshot is provided; otherwise only master account events are published.
+      rebased: Effective for viewing xstocks only. If true, display in terms of underlying equity, otherwise in terms of SPV tokens.
+
+    References:
+      - [Official docs](https://docs.kraken.com/exchange/api-reference/spot-websocket-v2/balances)
+    """
+    params = {}
+    if snapshot is not None:
+      params['snapshot'] = snapshot
+    if users is not None:
+      params['users'] = users
+    if rebased is not None:
+      params['rebased'] = rebased
+
+    return self.subscribe('balances', params, validator=validate_balances)

@@ -1,0 +1,204 @@
+"""`spot.earn.strategies` -- private Spot endpoint."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class EarnStrategyAprEstimate(TypedDict):
+  low: NotRequired[str]
+  """Minimal yield percentage for one year."""
+  high: NotRequired[str]
+  """Maximal yield percentage for one year."""
+
+
+class EarnStrategyAutoCompoundDisabled(TypedDict):
+  """Auto-compound is not possible for any allocation."""
+
+  type: NotRequired[Literal['disabled']]
+  """Discriminator identifying this auto-compound variant."""
+
+
+class EarnStrategyAutoCompoundEnabled(TypedDict):
+  """Auto-compound is forced for all allocations."""
+
+  type: NotRequired[Literal['enabled']]
+  """Discriminator identifying this auto-compound variant."""
+
+
+class EarnStrategyAutoCompoundOptional(TypedDict):
+  """Auto-compound depends on the user's preference, and comes with a default value."""
+
+  type: NotRequired[Literal['optional']]
+  """Discriminator identifying this auto-compound variant."""
+  default: NotRequired[bool]
+  """Default auto-compound preference for this strategy."""
+
+
+class EarnStrategyLockTypeBonded(TypedDict):
+  """Explicit allocate and deallocate actions are required and bonding/unbonding parameters apply."""
+
+  type: NotRequired[Literal['bonded']]
+  """Discriminator identifying this lock-type variant."""
+  bonding_period: NotRequired[int]
+  """Duration of the bonding period, in seconds."""
+  bonding_period_variable: NotRequired[bool]
+  """Whether the bonding period length is variable (`true`) or static (`false`)."""
+  bonding_rewards: NotRequired[bool]
+  """Whether rewards are earned during the bonding period (payouts occur after bonding completes)."""
+  exit_queue_period: NotRequired[int]
+  """Seconds funds must wait in an exit queue before the `unbonding_period` starts, once deallocation is requested. `0` skips the exit queue entirely. Rewards are always paid out for the exit queue."""
+  payout_frequency: NotRequired[int]
+  """Interval, in seconds, at which rewards are distributed and credited to the user's ledger."""
+  unbonding_period: NotRequired[int]
+  """Duration of the unbonding period, in seconds, after requesting removal before funds return to the spot wallet."""
+  unbonding_period_variable: NotRequired[bool]
+  """Whether the unbonding period length is variable (`true`) or static (`false`)."""
+  unbonding_rewards: NotRequired[bool]
+  """Whether rewards are earned and paid out during the unbonding period."""
+
+
+class EarnStrategyLockTypeFlex(TypedDict):
+  """Either the whole asset balance or part of it is allocated to the earn strategy and users are free to deallocate it anytime -- deallocation can even be implicit, triggered by a trade, a withdrawal, etc."""
+
+  type: NotRequired[Literal['flex']]
+  """Discriminator identifying this lock-type variant."""
+
+
+class EarnStrategyLockTypeInstant(TypedDict):
+  """A special case of `bonded` with no bonding/unbonding period -- equivalent to what the legacy staking system called "flex" (not to be confused with the `flex` lock type above). Explicit allocate/deallocate actions are required."""
+
+  type: NotRequired[Literal['instant']]
+  """Discriminator identifying this lock-type variant."""
+  payout_frequency: NotRequired[int]
+  """Interval, in seconds, at which rewards are distributed and credited to the user's ledger."""
+
+
+class EarnStrategyYieldSourceOffChain(TypedDict):
+  """Funds are put to work in another, off-chain yield-generation mechanism."""
+
+  type: NotRequired[Literal['off_chain']]
+  """Discriminator identifying this yield-source variant."""
+
+
+class EarnStrategyYieldSourceOptInRewards(TypedDict):
+  """Yield comes from an opt-in rewards program rather than staking or an off-chain mechanism. Found live (not in upstream's published docs) -- confirmed by real capture."""
+
+  type: NotRequired[Literal['opt_in_rewards']]
+  """Discriminator identifying this yield-source variant."""
+
+
+class EarnStrategyYieldSourceStaking(TypedDict):
+  """Funds are staked on-chain; proof-of-stake is the source of yield."""
+
+  type: NotRequired[Literal['staking']]
+  """Discriminator identifying this yield-source variant."""
+
+
+class EarnStrategy(TypedDict):
+  """Parameters for a single Earn strategy."""
+
+  asset_class: NotRequired[str]
+  """Asset class of `asset`, e.g. `currency`. Confirmed present live, not in upstream's own published field list."""
+  id: NotRequired[str]
+  """The unique identifier for this strategy."""
+  asset: NotRequired[str]
+  """The asset this strategy allocates."""
+  lock_type: NotRequired[
+    EarnStrategyLockTypeFlex | EarnStrategyLockTypeBonded | EarnStrategyLockTypeInstant
+  ]
+  """How this strategy locks allocated funds."""
+  apr_estimate: NotRequired[EarnStrategyAprEstimate | None]
+  """Estimated annual yield range, based on the strategy's previous revenues. An optional hint, not always present."""
+  auto_compound: NotRequired[
+    EarnStrategyAutoCompoundDisabled
+    | EarnStrategyAutoCompoundEnabled
+    | EarnStrategyAutoCompoundOptional
+  ]
+  """Auto-compound choices for the strategy."""
+  can_allocate: NotRequired[bool]
+  """Whether allocation is currently available for this strategy."""
+  can_deallocate: NotRequired[bool]
+  """Whether deallocation is currently available for this strategy."""
+  allocation_fee: NotRequired[str | int | float]
+  """Fee applied when allocating to this strategy."""
+  deallocation_fee: NotRequired[str | int | float]
+  """Fee applied when deallocating from this strategy."""
+  allocation_restriction_info: NotRequired[list[Literal['tier']]]
+  """Reasons the user is not eligible to allocate to this strategy, if any."""
+  user_cap: NotRequired[str | None]
+  """Maximum amount of funds any given user may allocate to this strategy. Absent means no limit; `0` means all new allocations will error (auto-compound is unaffected)."""
+  user_min_allocation: NotRequired[str | None]
+  """Minimum amount (in USD) for an allocation or deallocation. Absent means no minimum."""
+  yield_source: NotRequired[
+    EarnStrategyYieldSourceStaking
+    | EarnStrategyYieldSourceOffChain
+    | EarnStrategyYieldSourceOptInRewards
+  ]
+  """Yield generation mechanism of this strategy."""
+
+
+class EarnStrategiesResult(TypedDict):
+  """One page of Earn strategies available to the account."""
+
+  items: NotRequired[list[EarnStrategy]]
+  """Strategies on this page."""
+  next_cursor: NotRequired[str | None]
+  """ID of the next page, for the `cursor` request field. Absent once the end is reached. See `notes` -- paging is not yet functional."""
+
+
+validate_strategies = validator(EarnStrategiesResult)
+
+
+class Strategies(RpcEndpoint):
+  """`spot.earn.strategies`."""
+
+  async def strategies(
+    self,
+    *,
+    ascending: bool | None = None,
+    asset: str | None = None,
+    cursor: str | None = None,
+    limit: int | None = None,
+    lock_type: list[Literal['flex', 'bonded', 'timed', 'instant']] | None = None,
+  ) -> EarnStrategiesResult:
+    """List earn strategies along with their parameters.
+
+    Requires a valid API key but no specific permission is required.
+
+    Returns only strategies that are available to the user based on geographic region.
+
+    When the user does not meet the tier restriction, `can_allocate` will be false and `allocation_restriction_info` indicates `Tier` as the restriction reason. Earn products generally require Intermediate tier.
+
+    A note about `lock_type`:
+    - `instant`: can be deallocated without an unbonding period. Called flexible in the UI.
+    - `bonded`: has an unbonding period. Deallocation will not happen until this period has passed.
+    - `flex`: "Kraken rewards" -- earning on spot balances where eligible. It's turned on account-wide from the UI and cannot be manually allocated to.
+
+    Paging isn't yet implemented, so the endpoint always returns all data in the first page.
+
+    Args:
+      ascending: `true` to sort ascending, `false` (the default) for descending.
+      asset: Filter strategies by asset name.
+      cursor: `null` to start at the beginning, otherwise the next page ID from a previous response's `next_cursor`.
+      limit: How many items to return per page. May be capped to a lower value server-side.
+      lock_type: Filter strategies by lock type.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/earn/list-earn-strategies)
+    """
+    data = {}
+    if ascending is not None:
+      data['ascending'] = ascending
+    if asset is not None:
+      data['asset'] = asset
+    if cursor is not None:
+      data['cursor'] = cursor
+    if limit is not None:
+      data['limit'] = limit
+    if lock_type is not None:
+      data['lock_type'] = lock_type
+
+    return await self.authed_request(
+      '/0/private/Earn/Strategies', data, validator=validate_strategies
+    )

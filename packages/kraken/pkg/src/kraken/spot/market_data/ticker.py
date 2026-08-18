@@ -1,0 +1,62 @@
+"""`spot.market_data.ticker` -- public Spot market data."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class AssetTicker(TypedDict):
+  """One pair's ticker snapshot. Field names follow Kraken's own wire shortcuts."""
+
+  a: NotRequired[tuple[str, str, str]]
+  """Ask `[price, whole lot volume, lot volume]`."""
+  b: NotRequired[tuple[str, str, str]]
+  """Bid `[price, whole lot volume, lot volume]`."""
+  c: NotRequired[tuple[str, str]]
+  """Last trade closed `[price, lot volume]`."""
+  v: NotRequired[tuple[str, str]]
+  """Volume `[today, last 24 hours]`."""
+  p: NotRequired[tuple[str, str]]
+  """Volume weighted average price `[today, last 24 hours]`."""
+  t: NotRequired[tuple[int, int]]
+  """Number of trades `[today, last 24 hours]`."""
+  l: NotRequired[tuple[str, str]]
+  """Low `[today, last 24 hours]`."""
+  h: NotRequired[tuple[str, str]]
+  """High `[today, last 24 hours]`."""
+  o: NotRequired[str]
+  """Today's opening price."""
+
+
+validate_ticker = validator(dict[str, AssetTicker])
+
+
+class Ticker(RpcEndpoint):
+  """`spot.market_data.ticker`."""
+
+  async def ticker(
+    self,
+    *,
+    pair: str | None = None,
+    asset_version: Literal[1] | None = None,
+    asset_class: Literal['tokenized_asset', 'forex'] | None = None,
+  ) -> dict[str, AssetTicker]:
+    """Get ticker information for all or requested markets. Today's prices start at midnight UTC. Leaving the `pair` parameter blank returns tickers for all tradeable assets on Kraken.
+
+    Args:
+      pair: Asset pair to get data for (optional, default: all tradeable exchange pairs).
+      asset_version: Controls whether response keys and asset identifier fields use Kraken's internal names or display names. Omitted (default): internal names are used. `assetVersion=1`: display names are used. Only `assetVersion=1` is currently supported.
+      asset_class: This parameter is required on requests for tokenized pairs, i.e. xstocks. If `asset_class` is provided without the `pair` parameter, all pairs for that asset class will be returned.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/market-data/get-ticker-information)
+    """
+    params = {}
+    if pair is not None:
+      params['pair'] = pair
+    if asset_version is not None:
+      params['assetVersion'] = asset_version
+    if asset_class is not None:
+      params['asset_class'] = asset_class
+
+    return await self.request('/0/public/Ticker', params, validator=validate_ticker)

@@ -1,0 +1,46 @@
+"""`spot.funding.withdraw_info` -- private Spot endpoint."""
+
+from typing_extensions import NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class WithdrawalInfo(TypedDict):
+  """Fee and limit information for a potential withdrawal."""
+
+  method: NotRequired[str]
+  """Name of the withdrawal method that will be used."""
+  limit: NotRequired[str]
+  """Maximum net amount that can be withdrawn right now."""
+  amount: NotRequired[str]
+  """Net amount that will be sent, after fees."""
+  fee: NotRequired[str]
+  """Amount of fees that will be paid."""
+
+
+validate_withdraw_info = validator(WithdrawalInfo)
+
+
+class WithdrawInfo(RpcEndpoint):
+  """`spot.funding.withdraw_info`."""
+
+  async def withdraw_info(self, *, asset: str, key: str, amount: str) -> WithdrawalInfo:
+    """Retrieve fee information about a potential withdrawal for a particular asset, key, and amount. Requires the `Funds permissions - Query` and `Funds permissions - Withdraw` API key permissions.
+
+    Args:
+      asset: Asset being withdrawn.
+      key: Withdrawal key name, as set up on the account.
+      amount: Amount to be withdrawn.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/funding/get-withdrawal-information)
+    """
+    data: dict = {
+      'asset': asset,
+      'key': key,
+      'amount': amount,
+    }
+
+    return await self.authed_request(
+      '/0/private/WithdrawInfo', data, validator=validate_withdraw_info
+    )

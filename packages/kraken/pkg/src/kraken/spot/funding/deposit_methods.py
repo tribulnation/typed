@@ -1,0 +1,54 @@
+"""`spot.funding.deposit_methods` -- private Spot endpoint."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class DepositMethod(TypedDict):
+  """One method available for depositing a particular asset."""
+
+  method: str
+  """Name of the deposit method, e.g. `Bitcoin`."""
+  limit: str | bool
+  """Maximum net amount that can be deposited right now, or `false` if there is no limit."""
+  fee: NotRequired[str]
+  """Amount of fees that will be paid (flat fee)."""
+  minimum: NotRequired[str]
+  """Minimum net amount that can be deposited right now."""
+
+
+validate_deposit_methods = validator(list[DepositMethod])
+
+
+class DepositMethods(RpcEndpoint):
+  """`spot.funding.deposit_methods`."""
+
+  async def deposit_methods(
+    self,
+    *,
+    asset: str,
+    aclass: Literal['currency', 'tokenized_asset'] | None = None,
+    rebase_multiplier: Literal['rebased', 'base'] | None = None,
+  ) -> list[DepositMethod]:
+    """Retrieve methods available for depositing a particular asset. Requires the `Funds permissions - Query` and `Funds permissions - Deposit` API key permissions.
+
+    Args:
+      asset: Asset being deposited, e.g. `XBT`.
+      aclass: Asset class (optional). Only `currency` is broadly used today; `tokenized_asset` covers xstocks-style tokenized equities.
+      rebase_multiplier: Optional parameter for viewing xstocks data. `rebased` displays in terms of underlying equity; `base` displays in terms of SPV tokens.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/funding/get-deposit-methods)
+    """
+    data: dict = {
+      'asset': asset,
+    }
+    if aclass is not None:
+      data['aclass'] = aclass
+    if rebase_multiplier is not None:
+      data['rebase_multiplier'] = rebase_multiplier
+
+    return await self.authed_request(
+      '/0/private/DepositMethods', data, validator=validate_deposit_methods
+    )

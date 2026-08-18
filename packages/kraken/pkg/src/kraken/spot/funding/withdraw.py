@@ -1,0 +1,62 @@
+"""`spot.funding.withdraw` -- private Spot endpoint."""
+
+from typing_extensions import Literal
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class WithdrawReceipt(TypedDict):
+  """Reference to the created withdrawal."""
+
+  refid: str
+  """Reference ID."""
+
+
+validate_withdraw = validator(WithdrawReceipt)
+
+
+class Withdraw(RpcEndpoint):
+  """`spot.funding.withdraw`."""
+
+  async def withdraw(
+    self,
+    *,
+    asset: str,
+    key: str,
+    amount: str,
+    aclass: Literal['currency', 'tokenized_asset'] | None = None,
+    address: str | None = None,
+    max_fee: str | None = None,
+    rebase_multiplier: Literal['rebased', 'base'] | None = None,
+  ) -> WithdrawReceipt:
+    """Make a withdrawal request. Requires the `Funds permissions - Withdraw` API key permission.
+
+    Args:
+      asset: Asset being withdrawn.
+      key: Withdrawal key name, as set up on the account.
+      amount: Amount to be withdrawn.
+      aclass: Asset class of the asset being withdrawn.
+      address: Optional crypto address, used to confirm the address matches `key` (returns an `Invalid withdrawal address` error if different).
+      max_fee: Optional fee ceiling; if the processed withdrawal fee is higher than `max_fee`, the withdrawal fails with `EFunding:Max fee exceeded`.
+      rebase_multiplier: Optional parameter for viewing xstocks data. `rebased` displays in terms of underlying equity; `base` displays in terms of SPV tokens.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/funding/withdraw-funds)
+    """
+    data: dict = {
+      'asset': asset,
+      'key': key,
+      'amount': amount,
+    }
+    if aclass is not None:
+      data['aclass'] = aclass
+    if address is not None:
+      data['address'] = address
+    if max_fee is not None:
+      data['max_fee'] = max_fee
+    if rebase_multiplier is not None:
+      data['rebase_multiplier'] = rebase_multiplier
+
+    return await self.authed_request(
+      '/0/private/Withdraw', data, validator=validate_withdraw
+    )

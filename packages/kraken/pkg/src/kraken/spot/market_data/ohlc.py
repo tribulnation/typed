@@ -1,0 +1,54 @@
+"""`spot.market_data.ohlc` -- public Spot market data."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from ...core.endpoint.rpc import RpcEndpoint
+
+
+class OhlcResult(TypedDict):
+  """OHLC candles, keyed by pair, plus the polling cursor."""
+
+  last: NotRequired[int]
+  """ID to be used as `since` when polling for new, committed OHLC data."""
+
+
+validate_ohlc = validator(OhlcResult)
+
+
+class Ohlc(RpcEndpoint):
+  """`spot.market_data.ohlc`."""
+
+  async def ohlc(
+    self,
+    *,
+    pair: str,
+    asset_version: Literal[1] | None = None,
+    interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600] | None = None,
+    since: int | None = None,
+    asset_class: Literal['tokenized_asset'] | None = None,
+  ) -> OhlcResult:
+    """Retrieve OHLC market data. The last entry in the OHLC array is for the current, not-yet-committed timeframe, and will always be present, regardless of the value of `since`. Returns up to 720 of the most recent entries (older data cannot be retrieved, regardless of the value of `since`).
+
+    Args:
+      pair: Asset pair to get data for.
+      asset_version: Controls whether response keys use Kraken's internal names or display names. Omitted (default): internal names are used. `assetVersion=1`: display names are used. Only `assetVersion=1` is currently supported.
+      interval: Time frame interval in minutes.
+      since: Return OHLC entries since the given timestamp (intended for incremental updates).
+      asset_class: This parameter is required on requests for non-crypto pairs, i.e. use `tokenized_asset` for xstocks.
+
+    References:
+      - [Official docs](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
+    """
+    params: dict = {
+      'pair': pair,
+    }
+    if asset_version is not None:
+      params['assetVersion'] = asset_version
+    if interval is not None:
+      params['interval'] = interval
+    if since is not None:
+      params['since'] = since
+    if asset_class is not None:
+      params['asset_class'] = asset_class
+
+    return await self.request('/0/public/OHLC', params, validator=validate_ohlc)

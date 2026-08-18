@@ -1,0 +1,94 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014, schema extended for markdown `body` + links ADR
+# 0015). Mirrors docs/index.md and docs/how-to/*.md — kept in sync by hand
+# until those pages generate from this file instead, not yet decided. Every
+# snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset — links, code spans, emphasis;
+# no block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths
+# (`/typed/kraken/...`), not relative doc-tree paths — this file is authored
+# for exactly one rendering location, unlike docs/*.md's portable relative
+# links (see ADR 0015).
+
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials — see
+    [API keys setup](/typed/kraken/api-keys) for how to create them.
+  code: |
+    # .env
+    KRAKEN_API_KEY="your_api_key"
+    KRAKEN_PRIVATE_KEY="your_private_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-kraken python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    from kraken import Kraken
+
+    async with Kraken.new() as client:
+      balances = await client.spot.account.balance()
+      print(balances)
+
+how_tos:
+  - title: Fetch market data
+    body: Order books, candles, tickers, trades, and the tradable pair list -- all public, no credentials needed.
+    code: |
+      ticker = await client.spot.market_data.ticker(pair='XBTUSD')       # last price
+      book = await client.spot.market_data.depth(pair='XBTUSD', count=10)  # order book
+      candles = await client.spot.market_data.ohlc(pair='XBTUSD', interval=60)  # candles
+      trades = await client.spot.market_data.trades(pair='XBTUSD')       # recent trades
+      pairs = await client.spot.market_data.asset_pairs()                # tradable pairs
+
+  - title: Listen to streams
+    body: Subscribe to public channels (ticker, book, trades) or the private `balances`/`executions` feed over WebSocket v2.
+    code: |
+      async with client.streams.market_data.ticker(symbol=['BTC/USD']) as stream:  # public ticker updates
+        async for message in stream:
+          print(message['data'])
+      async with client.streams.private.executions() as stream:  # your own order/fill updates
+        async for message in stream:
+          print(message['data'])
+
+  - title: Place & manage orders
+    body: Submit, query, and cancel orders, over REST or the authenticated WebSocket connection.
+    code: |
+      order = await client.spot.trading.add_order(         # place an order
+        pair='XBTUSD', type='buy', ordertype='limit', volume='0.0001', price='10000',
+      )
+      one = await client.spot.account.query_orders(txid='O-ABC12-34567')  # check its status
+      open_orders = await client.spot.account.open_orders()  # list open orders
+      await client.spot.trading.cancel_order(txid='O-ABC12-34567')  # cancel it
+      await client.spot.trading.cancel_all()  # cancel everything
+
+  - title: Fetch account data
+    body: Balances, margin positions, and trade/ledger history.
+    code: |
+      balances = await client.spot.account.balance()          # per-asset balances
+      positions = await client.spot.account.open_positions()  # open margin positions
+      trades = await client.spot.account.trades_history()     # trade history
+      ledgers = await client.spot.account.ledgers()            # ledger entries
+
+  - title: Query & manage earn instruments
+    body: List Earn strategies and your subscriptions, then allocate or redeem.
+    code: |
+      strategies = await client.spot.earn.strategies()    # available strategies
+      allocations = await client.spot.earn.allocations()  # your current allocations
+      await client.spot.earn.allocate(strategy_id='...', amount='5')    # subscribe funds
+      await client.spot.earn.deallocate(strategy_id='...', amount='5')  # redeem funds
+
+  - title: Deposits & withdrawals
+    body: Look up deposit/withdrawal methods and addresses, then submit a withdrawal.
+    code: |
+      methods = await client.spot.funding.deposit_methods(asset='XBT')  # deposit methods
+      addresses = await client.spot.funding.deposit_addresses(          # deposit address
+        asset='XBT', method=methods[0]['method'],
+      )
+      w_methods = await client.spot.funding.withdraw_methods(asset='XBT')  # withdrawal methods
+      await client.spot.funding.withdraw(asset='XBT', key='my-saved-address', amount='0.001')  # submit a withdrawal

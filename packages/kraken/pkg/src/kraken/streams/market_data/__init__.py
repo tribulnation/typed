@@ -1,0 +1,16 @@
+"""`market_data` endpoints."""
+
+from .book import Book
+from .instrument import Instrument
+from .ohlc import Ohlc
+from .ping import Ping
+from .status import Status
+from .ticker import Ticker
+from .trade import Trade
+from ...core.transport.ws import KrakenSocketClient
+
+
+class MarketData(Book, Instrument, Ohlc, Ping, Status, Ticker, Trade):
+  """`market_data` endpoints."""
+
+  client: KrakenSocketClient

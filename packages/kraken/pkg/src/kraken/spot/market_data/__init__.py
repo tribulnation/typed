@@ -1,0 +1,31 @@
+"""`market_data` endpoints."""
+
+from .asset_pairs import AssetPairs
+from .assets import Assets
+from .depth import Depth
+from .grouped_book import GroupedBook
+from .ohlc import Ohlc
+from .post_trade import PostTrade
+from .pre_trade import PreTrade
+from .spread import Spread
+from .system_status import SystemStatusEndpoint
+from .ticker import Ticker
+from .time import Time
+from .trades import Trades
+
+
+class MarketData(
+  AssetPairs,
+  Assets,
+  Depth,
+  GroupedBook,
+  Ohlc,
+  PostTrade,
+  PreTrade,
+  Spread,
+  SystemStatusEndpoint,
+  Ticker,
+  Time,
+  Trades,
+):
+  """`market_data` endpoints."""
