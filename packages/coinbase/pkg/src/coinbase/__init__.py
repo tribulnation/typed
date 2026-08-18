@@ -4,9 +4,9 @@ Examples:
   ```python
   from coinbase import Coinbase
 
-  async with Coinbase.new() as client:
-    result = await client.data.ticker(...)
-    print(result)
+  async with Coinbase.new(public=True) as client:
+    product = await client.advanced_trade.products.public.get('BTC-USD')
+    print(product['price'])
   ```
 """
 

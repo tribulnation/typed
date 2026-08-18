@@ -1,6 +1,6 @@
 # Typed Coinbase
 
-> A fully typed, validated async client for the Coinbase API — Coinbase App (v2) and Advanced Trade (v3), REST and WebSocket, one CDP API Key.
+> A fully typed, validated async client for the Coinbase API.
 
 ```python
 from coinbase import Coinbase
@@ -23,19 +23,6 @@ async with Coinbase.new(public=True) as client:
 pip install typed-coinbase
 ```
 
-## Surface
-
-- `accounts` — Coinbase App v2: wallets, transaction history, sends, fiat deposits/withdrawals, receive addresses.
-- `advanced_trade` — Advanced Trade v3: products, orders, portfolios, fees, convert, payment methods.
-- `market_data` — public WebSocket channels: ticker, candles, order book, trades, status.
-- `user` — private WebSocket channels: order and futures/position updates.
-
-## Documentation
-
-- [API Keys Setup](api-keys.md)
-- [How To](how-to/index.md)
-- [Reference](reference/index.md)
-
 ## How To
 
 - [Fetch Market Data](how-to/fetch-market-data.md)
@@ -44,6 +31,14 @@ pip install typed-coinbase
 - [Place & Manage Orders](how-to/place-and-manage-orders.md)
 - [Listen To Streams](how-to/listen-to-streams.md)
 - [Paginate Through Results](how-to/paginate-through-results.md)
+
+## Reference
+
+- [API Keys Setup](api-keys.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
 
 ## Design Philosophy
 
