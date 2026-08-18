@@ -1,8 +1,38 @@
-# Typed Bit2Me
+<p align="center">
+  <a href="https://tribulnation.com/typed/bit2me">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-light.svg">
+      <img alt="Typed Bit2Me" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> Fully typed, validated async client for the Bit2Me API: REST trading, wallet, and earn, plus both Bit2Me WebSocket surfaces.
+<p align="center">
+  <em>A fully typed, validated async client for the Bit2Me API.</em>
+</p>
 
-**Use autocomplete instead of documentation.**
+<p align="center">
+  <a href="https://pypi.org/project/typed-bit2me/">
+    <img src="https://img.shields.io/pypi/v/typed-bit2me.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/typed-bit2me/">
+    <img src="https://img.shields.io/pypi/pyversions/typed-bit2me.svg" alt="Python versions">
+  </a>
+  <a href="https://tribulnation.com/typed/bit2me">
+    <img src="https://img.shields.io/badge/docs-live-black" alt="Docs">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/pypi/l/typed-bit2me.svg" alt="License">
+  </a>
+</p>
+
+---
+
+- **Documentation**: [https://tribulnation.com/typed/bit2me](https://tribulnation.com/typed/bit2me)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/bit2me](https://github.com/tribulnation/typed/tree/main/packages/bit2me)
+
+---
 
 ```python
 from dotenv import load_dotenv
@@ -28,8 +58,29 @@ async with Bit2Me.new() as client:
 pip install typed-bit2me
 ```
 
-## Documentation
+## How To
 
-- [**Getting Started**](https://tribulnation.com/typed/bit2me/getting-started): install the package and configure credentials
-- [**How To**](https://tribulnation.com/typed/bit2me/how-to): task-focused guides for market data, streams, orders, accounts, earn, and funds
-- [**Reference**](https://tribulnation.com/typed/bit2me/reference): async usage, error handling, and environment variables
+- [Fetch Market Data](https://tribulnation.com/typed/bit2me/how-to/fetch-market-data)
+- [Listen To Streams](https://tribulnation.com/typed/bit2me/how-to/listen-to-streams)
+- [Place & Manage Orders](https://tribulnation.com/typed/bit2me/how-to/place-and-manage-orders)
+- [Fetch Account Data](https://tribulnation.com/typed/bit2me/how-to/fetch-account-data)
+- [Query & Manage Earn](https://tribulnation.com/typed/bit2me/how-to/manage-earn)
+- [Query & Manage Deposits/Withdrawals](https://tribulnation.com/typed/bit2me/how-to/manage-deposits-and-withdrawals)
+
+## Reference
+
+- [Getting Started](https://tribulnation.com/typed/bit2me/getting-started)
+- [Async Usage](https://tribulnation.com/typed/bit2me/reference/async-usage)
+- [Error Handling](https://tribulnation.com/typed/bit2me/reference/error-handling)
+- [Environment Variables](https://tribulnation.com/typed/bit2me/reference/env-vars)
+- [Timestamps](https://tribulnation.com/typed/bit2me/reference/timestamps)
+
+## Design Philosophy
+
+Typed Bit2Me follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
+
+*Details matter. Developer experience matters.*
+
+## License
+
+MIT — see [LICENSE](LICENSE).
