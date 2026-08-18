@@ -19,10 +19,11 @@ async with Binance.new(public=True) as client:
 
 ## Packages
 
-| package | description |
-| --- | --- |
-| [`typed-core`](packages/core) | shared types & utilities every client core builds on |
-| [`typed-binance`](packages/binance) | spot, USD-M futures, COIN-M futures, options, and portfolio margin |
+Every client builds on [`typed-core`](packages/core).
+
+| | Repo | Status | PyPI |
+|--|------|--------|-----|
+| <img src="https://catalogue.tribulnation.com/icons/platform/binance.svg" width="20" height="20" /> | [Binance](https://github.com/tribulnation/typed/tree/main/packages/binance) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-binance)](https://pypi.org/project/typed-binance/) |
 
 More venues are on the way — see the [full catalog](https://tribulnation.com/typed).
 
