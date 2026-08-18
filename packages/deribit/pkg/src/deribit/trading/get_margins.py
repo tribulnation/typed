@@ -1,0 +1,64 @@
+"""`private/get_margins` — `private/get_margins`."""
+
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class GetMarginsResult(TypedDict):
+  buy: float
+  """Margin when buying"""
+  sell: float
+  """Margin when selling"""
+  buy_taker_fee: float
+  """Estimated fee when buying as a taker"""
+  buy_maker_fee: float
+  """Estimated fee when buying as a maker"""
+  sell_taker_fee: float
+  """Estimated fee when selling as a taker"""
+  sell_maker_fee: float
+  """Estimated fee when selling as a maker"""
+  min_price: float
+  """The minimum price for the future. Any sell orders you submit lower than this price will be clamped to this minimum."""
+  max_price: float
+  """The maximum price for the future. Any buy orders you submit higher than this price, will be clamped to this maximum."""
+
+
+validate_get_margins = validator[GetMarginsResult](GetMarginsResult)
+
+
+class GetMargins(RpcEndpoint):
+  """`private/get_margins`."""
+
+  async def get_margins(
+    self,
+    *,
+    instrument_name: str,
+    amount: float,
+    price: float,
+    validate: bool | None = None,
+  ) -> GetMarginsResult:
+    """Calculates margin requirements for a hypothetical order on a given instrument. Returns initial margin and maintenance margin for the specified instrument, quantity, and price.
+
+    This method is useful for estimating margin requirements before placing an order, helping to ensure sufficient funds are available and understanding the margin impact of potential trades.
+
+    Args:
+      instrument_name: Instrument name
+      amount: It represents the requested order size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin.
+      price: Price
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/trading/private-get_margins)
+    """
+    params: dict = {
+      'instrument_name': instrument_name,
+      'amount': amount,
+      'price': price,
+    }
+    return await self.authed_request(
+      'private/get_margins',
+      params=params,
+      validator=validate_get_margins,
+      validate=validate,
+    )

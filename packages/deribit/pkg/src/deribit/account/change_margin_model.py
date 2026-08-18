@@ -1,0 +1,76 @@
+"""`private/change_margin_model` — `private/change_margin_model`."""
+
+from typing_extensions import Literal, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class MarginModelStateNewState(TypedDict):
+  """Margin state after the change (or that would result, when `dry_run` is `true`)."""
+
+  maintenance_margin_rate: float
+  """Maintenance margin rate."""
+  initial_margin_rate: float
+  """Initial margin rate."""
+  available_balance: float
+  """Available balance."""
+
+
+class MarginModelStateOldState(TypedDict):
+  """Margin state before the change."""
+
+  maintenance_margin_rate: float
+  """Maintenance margin rate."""
+  initial_margin_rate: float
+  """Initial margin rate."""
+  available_balance: float
+  """Available balance."""
+
+
+class CurrencyMarginModelChange(TypedDict):
+  currency: str
+  """Currency this margin state is for, lower-case (e.g. `"btc"`). Not declared `enum`: observed live with 23 distinct values well beyond the venue's documented 5-value `currency` enum -- see this endpoint's notes."""
+  old_state: MarginModelStateOldState
+  new_state: MarginModelStateNewState
+
+
+validate_change_margin_model = validator[list[CurrencyMarginModelChange]](
+  list[CurrencyMarginModelChange]
+)
+
+
+class ChangeMarginModel(RpcEndpoint):
+  """`private/change_margin_model`."""
+
+  async def change_margin_model(
+    self,
+    *,
+    user_id: int | None = None,
+    margin_model: Literal['cross_pm', 'cross_sm', 'segregated_pm', 'segregated_sm'],
+    dry_run: bool | None = None,
+    validate: bool | None = None,
+  ) -> list[CurrencyMarginModelChange]:
+    """Changes the margin model for the account or a specified subaccount, which determines how margin requirements are calculated (e.g. Standard Margin vs. Portfolio Margin). Use `dry_run` to preview the effect on margin requirements and available funds before applying it.
+
+    Args:
+      user_id: Id of a (sub)account to change. Defaults to the calling account's own id.
+      margin_model: Margin model to switch to.
+      dry_run: If `true`, returns the result without actually switching the margin model.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/private-change_margin_model)
+    """
+    params: dict = {
+      'margin_model': margin_model,
+    }
+    if user_id is not None:
+      params['user_id'] = user_id
+    if dry_run is not None:
+      params['dry_run'] = dry_run
+    return await self.authed_request(
+      'private/change_margin_model',
+      params=params,
+      validator=validate_change_margin_model,
+      validate=validate,
+    )

@@ -1,0 +1,92 @@
+"""`block_rfq.trades.{currency}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class BlockRfqHedgeLeg(TypedDict):
+  """Hedge leg of the trade, if the Block RFQ carried one."""
+
+  amount: NotRequired[int]
+  """It represents the requested hedge leg size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for a hedge leg."""
+
+
+class BlockRfqTradeFill(TypedDict):
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price in base currency."""
+  amount: NotRequired[float]
+  """Trade amount. For options, linear futures, linear perpetuals and spots the amount is denominated in the underlying base currency coin. The inverse perpetuals and inverse futures are denominated in USD units."""
+  hedge_amount: NotRequired[float]
+  """Amount of the hedge leg. For linear futures, linear perpetuals and spots the amount is denominated in the underlying base currency coin. The inverse perpetuals and inverse futures are denominated in USD units."""
+
+
+class BlockRfqTradeLeg(TypedDict):
+  ratio: NotRequired[int]
+  """Ratio of amount between legs."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for a leg."""
+
+
+class BlockRfqTradeUpdate(TypedDict):
+  """One completed Block RFQ trade."""
+
+  id: NotRequired[int]
+  """ID of the Block RFQ."""
+  timestamp: NotRequired[int]
+  """The timestamp of the trade (milliseconds since the UNIX epoch)."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Trade direction of the taker."""
+  amount: NotRequired[float]
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  mark_price: NotRequired[float]
+  """Mark price at the moment of trade."""
+  combo_id: NotRequired[str]
+  """Unique combo identifier."""
+  legs: NotRequired[list[BlockRfqTradeLeg]]
+  """Multi-leg structure of the traded Block RFQ."""
+  hedge: NotRequired[BlockRfqHedgeLeg]
+  trades: NotRequired[list[BlockRfqTradeFill]]
+  """Individual fills making up this Block RFQ trade."""
+
+
+validate_trades = validator[BlockRfqTradeUpdate](BlockRfqTradeUpdate)
+
+
+class Trades(StreamEndpoint):
+  """`block_rfq.trades.{currency}` subscription."""
+
+  def trades(
+    self,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR', 'any'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[BlockRfqTradeUpdate, Any, Any]:
+    """Public market data for recently completed Block RFQ trades.
+
+    Use this channel to observe Block RFQ execution activity (price, size, and leg structure) across the venue, without needing to be a party to any given trade.
+
+    Args:
+      currency: Currency code or `any` for all
+
+    **Allowed values:** `BTC`, `ETH`, `USDC`, `USDT`, `EURR`, `any`
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/block-rfq/block_rfqtradescurrency)
+    """
+    channel = f'block_rfq.trades.{currency}'
+    return self.subscribe(channel, validator=validate_trades, validate=validate)

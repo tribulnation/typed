@@ -1,0 +1,50 @@
+"""`public/get_index_price_names` — `public/get_index_price_names`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class IndexName(TypedDict):
+  """One index name, with combo-creation flags."""
+
+  name: str
+  """Index name"""
+  future_combo_creation_enabled: NotRequired[bool]
+  """Whether future combo creation is enabled for this index (only present when `extended`=`true`)"""
+  option_combo_creation_enabled: NotRequired[bool]
+  """Whether option combo creation is enabled for this index (only present when `extended`=`true`)"""
+
+
+validate_get_index_price_names = validator[list[str] | list[IndexName]](list[str] | list[IndexName])  # pyright: ignore[reportArgumentType]  # fmt: skip
+
+
+class GetIndexPriceNames(RpcEndpoint):
+  """`public/get_index_price_names`."""
+
+  async def get_index_price_names(
+    self,
+    *,
+    extended: bool | None = None,
+    validate: bool | None = None,
+  ) -> list[str] | list[IndexName]:
+    """Retrieves the identifiers (names) of all supported price indexes. Price indexes are reference prices used for mark price calculations, settlement, and other market operations.
+
+    When the `extended` parameter is set to `true`, the response includes additional information such as whether future combo creation and option combo creation are enabled for each index.
+
+    Args:
+      extended: When set to `true`, returns additional information including `future_combo_creation_enabled` and `option_combo_creation_enabled` for each index
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/market-data/public-get_index_price_names)
+    """
+    params = {}
+    if extended is not None:
+      params['extended'] = extended
+    return await self.request(
+      'public/get_index_price_names',
+      params=params,
+      validator=validate_get_index_price_names,
+      validate=validate,
+    )

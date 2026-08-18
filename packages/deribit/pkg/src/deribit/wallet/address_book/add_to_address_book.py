@@ -1,0 +1,126 @@
+"""`private/add_to_address_book` — `private/add_to_address_book`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class AddressBookEntry(TypedDict):
+  """The newly added address book entry."""
+
+  currency: str
+  """The currency symbol."""
+  address: str
+  """Address in currency format."""
+  creation_timestamp: int
+  """Time the entry was created (milliseconds since the Unix epoch)."""
+  type: NotRequired[Literal['transfer', 'withdrawal', 'deposit_source']]
+  """Address book type."""
+  label: NotRequired[str]
+  """Label of the address book entry."""
+  beneficiary_vasp_name: NotRequired[str]
+  """Name of beneficiary VASP."""
+  beneficiary_vasp_did: NotRequired[str]
+  """DID of beneficiary VASP."""
+  beneficiary_first_name: NotRequired[str]
+  """First name of the beneficiary (if beneficiary is a person)."""
+  beneficiary_last_name: NotRequired[str]
+  """Last name of the beneficiary (if beneficiary is a person)."""
+  beneficiary_address: NotRequired[str]
+  """Geographical address of the beneficiary."""
+  agreed: NotRequired[bool]
+  """Whether the user agreed to share the provided information with 3rd parties."""
+  personal: NotRequired[bool]
+  """Whether the user confirmed the address belongs to them and is accessible via an un-hosted wallet."""
+  info_required: NotRequired[bool]
+  """Whether additional beneficiary information is still required for this entry."""
+
+
+validate_add_to_address_book = validator[AddressBookEntry](AddressBookEntry)
+
+
+class AddToAddressBook(RpcEndpoint):
+  """`private/add_to_address_book`."""
+
+  async def add_to_address_book(
+    self,
+    *,
+    currency: Literal[
+      'BTC',
+      'ETH',
+      'STETH',
+      'ETHW',
+      'USDC',
+      'USDT',
+      'EURR',
+      'SOL',
+      'XRP',
+      'USYC',
+      'PAXG',
+      'BNB',
+      'USDE',
+    ],
+    type: Literal['transfer', 'withdrawal', 'deposit_source'],
+    address: str,
+    label: str,
+    beneficiary_vasp_name: str,
+    beneficiary_vasp_did: str,
+    beneficiary_vasp_website: str | None = None,
+    beneficiary_first_name: str | None = None,
+    beneficiary_last_name: str | None = None,
+    beneficiary_company_name: str | None = None,
+    beneficiary_address: str,
+    agreed: bool,
+    personal: bool,
+    extra_currencies: list[str] | None = None,
+    validate: bool | None = None,
+  ) -> AddressBookEntry:
+    """Adds a new address to the address book. The address book allows you to store addresses for withdrawals, along with beneficiary information for compliance purposes.
+
+    Args:
+      currency: The currency symbol.
+      type: Address book type.
+      address: Address in currency format.
+      label: Label of the address book entry.
+      beneficiary_vasp_name: Name of beneficiary VASP.
+      beneficiary_vasp_did: DID of beneficiary VASP.
+      beneficiary_vasp_website: Website of the beneficiary VASP. Required if the address book entry is associated with a VASP that is not on the venue's list of known VASPs.
+      beneficiary_first_name: First name of beneficiary (if beneficiary is a person).
+      beneficiary_last_name: Last name of beneficiary (if beneficiary is a person).
+      beneficiary_company_name: Beneficiary company name (if beneficiary is a company).
+      beneficiary_address: Geographical address of the beneficiary.
+      agreed: Indicates that the user agreed to share the provided information with 3rd parties.
+      personal: The user confirms that the provided address belongs to them and they have access to it via an un-hosted wallet.
+      extra_currencies: Currencies to add this address for, in addition to `currency`. Available only for ERC20 currencies -- without this, an ERC20 address is added for every ERC20-hosted asset.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/wallet/private-add_to_address_book)
+    """
+    params: dict = {
+      'currency': currency,
+      'type': type,
+      'address': address,
+      'label': label,
+      'beneficiary_vasp_name': beneficiary_vasp_name,
+      'beneficiary_vasp_did': beneficiary_vasp_did,
+      'beneficiary_address': beneficiary_address,
+      'agreed': agreed,
+      'personal': personal,
+    }
+    if beneficiary_vasp_website is not None:
+      params['beneficiary_vasp_website'] = beneficiary_vasp_website
+    if beneficiary_first_name is not None:
+      params['beneficiary_first_name'] = beneficiary_first_name
+    if beneficiary_last_name is not None:
+      params['beneficiary_last_name'] = beneficiary_last_name
+    if beneficiary_company_name is not None:
+      params['beneficiary_company_name'] = beneficiary_company_name
+    if extra_currencies is not None:
+      params['extra_currencies'] = extra_currencies
+    return await self.authed_request(
+      'private/add_to_address_book',
+      params=params,
+      validator=validate_add_to_address_book,
+      validate=validate,
+    )

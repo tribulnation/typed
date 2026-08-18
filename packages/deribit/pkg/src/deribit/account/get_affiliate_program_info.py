@@ -1,0 +1,44 @@
+"""`private/get_affiliate_program_info` — `private/get_affiliate_program_info`."""
+
+from typing_extensions import TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class AffiliateProgramInfo(TypedDict):
+  program_state: str
+  """State of the account's affiliate program enrollment, e.g. `"active"`."""
+  links_enabled: bool
+  """Whether affiliate referral links are enabled for this account."""
+  payment_share_enabled: bool
+  """Whether affiliate payment sharing is enabled for this account."""
+  previously_enabled: bool
+  """Whether the affiliate program was enabled for this account at some point in the past."""
+
+
+validate_get_affiliate_program_info = validator[AffiliateProgramInfo](
+  AffiliateProgramInfo
+)
+
+
+class GetAffiliateProgramInfo(RpcEndpoint):
+  """`private/get_affiliate_program_info`."""
+
+  async def get_affiliate_program_info(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> AffiliateProgramInfo:
+    """Retrieves the affiliate program status for the authenticated account. Takes no parameters.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/account-management/private-get_affiliate_program_info)
+    """
+    return await self.authed_request(
+      'private/get_affiliate_program_info',
+      validator=validate_get_affiliate_program_info,
+      validate=validate,
+    )

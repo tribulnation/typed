@@ -1,0 +1,54 @@
+"""`chart.trades.{instrument_name}.{resolution}` — subscription."""
+
+from typing_extensions import Any, Literal, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class TradingViewCandle(TypedDict):
+  """One TradingView trade-candle sample for the subscribed `resolution`."""
+
+  tick: int
+  """The timestamp (milliseconds since the Unix epoch) of the candle."""
+  volume: float
+  """Volume traded during the candle."""
+  cost: float
+  """Cost traded during the candle."""
+  open: float
+  """The open price for the candle."""
+  close: float
+  """The close price for the candle."""
+  high: float
+  """The highest price level for the candle."""
+  low: float
+  """The lowest price level for the candle."""
+
+
+validate_chart_trades = validator[TradingViewCandle](TradingViewCandle)
+
+
+class ChartTrades(StreamEndpoint):
+  """`chart.trades.{instrument_name}.{resolution}` subscription."""
+
+  def chart_trades(
+    self,
+    instrument_name: str,
+    resolution: Literal[
+      '1', '3', '5', '10', '15', '30', '60', '120', '180', '360', '720', '1D'
+    ],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[TradingViewCandle, Any, Any]:
+    """Publicly available market data used to generate a TradingView trade candle chart. During a single resolution period many events can be sent, each with updated values for the recent, still-forming candle. When there is no trade during the requested resolution period, a filling sample is generated using the last available candle's open/close values.
+
+    Args:
+      instrument_name: The name of the instrument.
+      resolution: Chart bar resolution, given in full minutes or the keyword `1D`.
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/market-data/charttradesinstrument_nameresolution)
+    """
+    channel = f'chart.trades.{instrument_name}.{resolution}'
+    return self.subscribe(channel, validator=validate_chart_trades, validate=validate)

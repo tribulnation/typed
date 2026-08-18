@@ -1,0 +1,98 @@
+"""`block_rfq.maker.quotes.{currency}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class BlockRfqHedgeLeg(TypedDict):
+  """Hedge leg of the quote, if any."""
+
+  amount: NotRequired[int]
+  """It represents the requested hedge leg size. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for a hedge leg."""
+
+
+class BlockRfqMakerQuoteLeg(TypedDict):
+  ratio: NotRequired[int]
+  """Ratio of amount between legs."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for a leg."""
+
+
+class BlockRfqMakerQuote(TypedDict):
+  creation_timestamp: NotRequired[int]
+  """The timestamp when the quote was created (milliseconds since the Unix epoch)."""
+  last_update_timestamp: NotRequired[int]
+  """Timestamp of the last update of the quote (milliseconds since the UNIX epoch)."""
+  block_rfq_id: NotRequired[int]
+  """ID of the Block RFQ."""
+  block_rfq_quote_id: NotRequired[int]
+  """ID of the Block RFQ quote."""
+  quote_state: NotRequired[str]
+  """State of the quote. The venue documents no closed set of values for this field."""
+  execution_instruction: NotRequired[Literal['any_part_of', 'all_or_none']]
+  """Execution instruction of the quote. Default `any_part_of`.
+
+- `all_or_none` (AON) - the quote can only be filled entirely or not at all, and has priority over `any_part_of` quotes at the same price level.
+- `any_part_of` (APO) - the quote can be filled partially or fully."""
+  price: NotRequired[float]
+  """Price of the quote."""
+  amount: NotRequired[float]
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction of trade from the maker's perspective."""
+  filled_amount: NotRequired[float]
+  """Filled amount of the quote. For perpetual and futures the filled_amount is in USD units, for options it is in units of the corresponding cryptocurrency contract (e.g. BTC or ETH)."""
+  legs: NotRequired[list[BlockRfqMakerQuoteLeg]]
+  """Multi-leg structure of the quote."""
+  hedge: NotRequired[BlockRfqHedgeLeg]
+  replaced: NotRequired[bool]
+  """`true` if the quote was edited, otherwise `false`."""
+  label: NotRequired[str]
+  """User defined label for the quote (maximum 64 characters)."""
+  app_name: NotRequired[str]
+  """The name of the application that placed the quote on behalf of the user (optional)."""
+  quote_state_reason: NotRequired[str]
+  """Reason for quote cancellation."""
+
+
+validate_maker_quotes = validator[list[BlockRfqMakerQuote]](list[BlockRfqMakerQuote])
+
+
+class MakerQuotes(StreamEndpoint):
+  """`block_rfq.maker.quotes.{currency}` subscription."""
+
+  def maker_quotes(
+    self,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR', 'any'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[BlockRfqMakerQuote], Any, Any]:
+    """Real-time notifications about the state of this maker's own Block RFQ quotes: added, edited, cancelled, or accepted by a taker.
+
+    Requires Block RFQ maker enrollment for the account -- see `unverified`.
+
+    Args:
+      currency: Currency code or `any` for all
+
+    **Allowed values:** `BTC`, `ETH`, `USDC`, `USDT`, `EURR`, `any`
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/block-rfq/block_rfqmakerquotescurrency)
+    """
+    channel = f'block_rfq.maker.quotes.{currency}'
+    return self.authed_subscribe(
+      channel, validator=validate_maker_quotes, validate=validate
+    )

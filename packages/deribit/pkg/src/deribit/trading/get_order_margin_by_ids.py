@@ -1,0 +1,50 @@
+"""`private/get_order_margin_by_ids` — `private/get_order_margin_by_ids`."""
+
+from typing_extensions import NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class OrderIdInitialMarginPair(TypedDict):
+  order_id: str
+  """Unique order identifier"""
+  initial_margin: float
+  """Initial margin of order"""
+  initial_margin_currency: NotRequired[str]
+  """Currency of initial margin"""
+
+
+validate_get_order_margin_by_ids = validator[list[OrderIdInitialMarginPair]](
+  list[OrderIdInitialMarginPair]
+)
+
+
+class GetOrderMarginByIds(RpcEndpoint):
+  """`private/get_order_margin_by_ids`."""
+
+  async def get_order_margin_by_ids(
+    self,
+    *,
+    ids: list[str],
+    validate: bool | None = None,
+  ) -> list[OrderIdInitialMarginPair]:
+    """Retrieves the initial margin requirements for one or more orders identified by their order IDs. Initial margin is the amount of funds required to open a position with these orders.
+
+    This method is useful for calculating margin requirements before placing orders, helping to ensure sufficient funds are available.
+
+    Args:
+      ids: Ids of orders
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/trading/private-get_order_margin_by_ids)
+    """
+    params: dict = {
+      'ids': ids,
+    }
+    return await self.authed_request(
+      'private/get_order_margin_by_ids',
+      params=params,
+      validator=validate_get_order_margin_by_ids,
+      validate=validate,
+    )

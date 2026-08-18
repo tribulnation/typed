@@ -1,0 +1,229 @@
+"""`private/get_block_rfqs` — `private/get_block_rfqs`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class BlockRfqClientInfo(TypedDict):
+  """Broker client allocation info, when this allocation targets a broker client rather than a direct user id."""
+
+  client_id: NotRequired[int]
+  """ID of a client group; available to brokers."""
+  client_link_id: NotRequired[int]
+  """ID of a single user within a client group; available to brokers."""
+  name: NotRequired[str]
+  """Name of the linked user within the client group; available to brokers."""
+
+
+class BlockRfqHedge(TypedDict):
+  """The hedge leg of the Block RFQ, when one was included."""
+
+  amount: NotRequired[int]
+  """The requested hedge leg size. USD units for perpetual/inverse futures, underlying base currency coin for options/linear futures."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for the hedge leg."""
+
+
+class BlockRfqLeg(TypedDict):
+  """One leg of a (possibly multi-leg) Block RFQ."""
+
+  ratio: int
+  """Ratio of amount between legs."""
+  instrument_name: str
+  """Unique instrument identifier."""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+
+
+class BlockRfqQuoteSummaryAsksItem(TypedDict):
+  """One side (bid or ask) of the current Block RFQ order book."""
+
+  makers: NotRequired[list[str]]
+  """Aliases of the makers backing this quote level."""
+  price: NotRequired[float]
+  """Price of a quote."""
+  last_update_timestamp: NotRequired[int]
+  """When this quote was last updated (ms since epoch)."""
+  execution_instruction: NotRequired[Literal['any_part_of', 'all_or_none']]
+  """Execution instruction of the quote. Default `any_part_of`. `all_or_none` fills entirely or not at all and has priority over `any_part_of` at the same price level; `any_part_of` may fill partially."""
+  amount: NotRequired[float]
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  expires_at: NotRequired[int]
+  """When the quote expires (ms since epoch), equal to the earliest expiry of the placed quotes."""
+
+
+class BlockRfqQuoteSummaryBidsItem(TypedDict):
+  """One side (bid or ask) of the current Block RFQ order book."""
+
+  makers: NotRequired[list[str]]
+  """Aliases of the makers backing this quote level."""
+  price: NotRequired[float]
+  """Price of a quote."""
+  last_update_timestamp: NotRequired[int]
+  """When this quote was last updated (ms since epoch)."""
+  execution_instruction: NotRequired[Literal['any_part_of', 'all_or_none']]
+  """Execution instruction of the quote. Default `any_part_of`."""
+  amount: NotRequired[float]
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  expires_at: NotRequired[int]
+  """When the quote expires (ms since epoch)."""
+
+
+class BlockRfqTradeFill(TypedDict):
+  """One fill within this Block RFQ."""
+
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+  price: float
+  """Price in base currency."""
+  amount: float
+  """Trade amount, in underlying base currency coin for options/linear futures/linear perpetuals/spots, USD units for inverse perpetuals/futures."""
+  maker: NotRequired[str]
+  """Alias of the maker (present when called by the maker)."""
+  hedge_amount: NotRequired[float]
+  """Amount of the hedge leg, when present."""
+
+
+class BlockRfqTradeTrigger(TypedDict):
+  """State of a conditional trade trigger attached to this Block RFQ, when one exists."""
+
+  state: Literal['triggered', 'untriggered', 'cancelled']
+  """Trade trigger state."""
+  price: float
+  """Price of the trade trigger."""
+  direction: Literal['buy', 'sell']
+  """Direction of the trade trigger."""
+  cancel_reason: NotRequired[str]
+  """Reason for cancellation, present only when `state` is `cancelled`."""
+
+
+class BlockRfqTradeAllocation(TypedDict):
+  """One allocation of the Block RFQ's pre-allocated amount."""
+
+  user_id: NotRequired[int]
+  """User ID to allocate part of the RFQ amount. Obstructed for brokers."""
+  client_info: NotRequired[BlockRfqClientInfo]
+  amount: float
+  """Amount allocated to this user or client."""
+
+
+class BlockRfq(TypedDict):
+  """One Block RFQ the user created (as taker) or was targeted on (as maker)."""
+
+  creation_timestamp: int
+  """When the Block RFQ was created (ms since epoch)."""
+  expiration_timestamp: NotRequired[int]
+  """When the Block RFQ will expire (ms since epoch)."""
+  timestamp: NotRequired[int]
+  """Timestamp of the returned state's transition (e.g. cancellation time) -- observed live, not in the venue's own OpenAPI schema."""
+  block_rfq_id: int
+  """ID of the Block RFQ."""
+  role: Literal['taker', 'maker']
+  """Role of the user in this Block RFQ."""
+  state: Literal['open', 'filled', 'cancelled', 'expired']
+  """State of the Block RFQ."""
+  taker_rating: NotRequired[str | None]
+  """Rating of the taker; `null` when not yet available."""
+  makers: NotRequired[list[str]]
+  """Targeted Block RFQ makers (present when called by the taker)."""
+  amount: float
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  min_trade_amount: NotRequired[float]
+  """Minimum amount for trading."""
+  asks: NotRequired[list[BlockRfqQuoteSummaryAsksItem]]
+  """Open ask quotes on this Block RFQ."""
+  bids: NotRequired[list[BlockRfqQuoteSummaryBidsItem]]
+  """Open bid quotes on this Block RFQ."""
+  legs: list[BlockRfqLeg]
+  """The instrument legs making up this Block RFQ."""
+  hedge: NotRequired[BlockRfqHedge]
+  combo_id: NotRequired[str]
+  """Unique combo identifier (equals the sole leg's `instrument_name` for a single-leg RFQ)."""
+  label: NotRequired[str]
+  """User defined label for the Block RFQ (maximum 64 characters)."""
+  app_name: NotRequired[str]
+  """The application that created the Block RFQ on behalf of the user (visible only to the taker)."""
+  mark_price: NotRequired[float]
+  """The mark price for the instrument, present once the Block RFQ has filled."""
+  disclosed: NotRequired[bool]
+  """Whether the RFQ was created non-anonymous (taker/maker aliases visible to counterparties)."""
+  taker: NotRequired[str]
+  """Taker alias, present only when `disclosed` is `true`."""
+  index_prices: NotRequired[dict[str, float]]
+  """A map of index prices for the underlying instrument(s), keyed by price index name. Documented as an array of numbers in the venue's OpenAPI spec; a live capture (examples/02) shows an object map matching `get_block_rfq_trades`' shape instead -- modeled on the confirmed live shape."""
+  included_in_taker_rating: NotRequired[bool]
+  """Whether the RFQ counts toward the taker's rating. Documented as present only for closed RFQs created by the requesting taker, but confirmed live present on a still-`open` RFQ too (examples/02)."""
+  trades: NotRequired[list[BlockRfqTradeFill]]
+  """The individual fill(s), present once the Block RFQ has (partially) filled."""
+  trade_trigger: NotRequired[BlockRfqTradeTrigger]
+  trade_allocations: NotRequired[list[BlockRfqTradeAllocation]]
+  """Pre-allocation of the Block RFQ amount across (sub)accounts or broker clients, visible only to the taker."""
+
+
+class GetBlockRfqsResult(TypedDict):
+  """A page of the user's Block RFQs."""
+
+  block_rfqs: list[BlockRfq]
+  """The user's Block RFQs, newest first."""
+  continuation: NotRequired[str | None]
+  """Continuation token for pagination, per the response schema's own declared type -- contradicts the request `continuation` parameter's declared `integer` type, see notes."""
+
+
+validate_get_block_rfqs = validator[GetBlockRfqsResult](GetBlockRfqsResult)
+
+
+class GetBlockRfqs(RpcEndpoint):
+  """`private/get_block_rfqs`."""
+
+  async def get_block_rfqs(
+    self,
+    *,
+    count: int | None = None,
+    state: Literal['open', 'filled', 'traded', 'cancelled', 'expired', 'closed']
+    | None = None,
+    role: Literal['any', 'taker', 'maker'] | None = None,
+    continuation: int | None = None,
+    block_rfq_id: int | None = None,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'any'] | None = None,
+    validate: bool | None = None,
+  ) -> GetBlockRfqsResult:
+    """Returns a list of Block RFQs that were either created by the user (as taker) or assigned to them (as maker), sorted descending. `trades`/`mark_price` are only present for a filled Block RFQ. When `block_rfq_id` is given, only that one is returned. As `taker`, the response additionally includes `makers` and `label` (if previously set). As `maker`, `trades` includes only the fills this maker participated in. Optionally filtered by currency.
+
+    Scope: `block_rfq:read`.
+
+    Args:
+      count: Count of Block RFQs returned, maximum `1000`.
+      state: Filter by state. This enum is broader than the `state` field's own enum on a returned Block RFQ -- see notes.
+      role: Role of the user in Block RFQ. `any` returns Block RFQs where the user participated as either taker or maker.
+      continuation: The Block RFQ id to walk backward from (results include RFQs older than this id). Documented `integer`, but the response's own `continuation` field is documented `string` -- see notes.
+      block_rfq_id: Return only this Block RFQ.
+      currency: The currency symbol.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/block-rfq/private-get_block_rfqs)
+    """
+    params = {}
+    if count is not None:
+      params['count'] = count
+    if state is not None:
+      params['state'] = state
+    if role is not None:
+      params['role'] = role
+    if continuation is not None:
+      params['continuation'] = continuation
+    if block_rfq_id is not None:
+      params['block_rfq_id'] = block_rfq_id
+    if currency is not None:
+      params['currency'] = currency
+    return await self.authed_request(
+      'private/get_block_rfqs',
+      params=params,
+      validator=validate_get_block_rfqs,
+      validate=validate,
+    )

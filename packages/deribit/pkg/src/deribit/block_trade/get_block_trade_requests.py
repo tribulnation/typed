@@ -1,0 +1,103 @@
+"""`private/get_block_trade_requests` — `private/get_block_trade_requests`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class PendingBlockTradeLeg(TypedDict):
+  """One leg of a pending block trade awaiting approval."""
+
+  amount: float
+  """Trade amount. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  direction: Literal['buy', 'sell']
+  """Trade direction"""
+  price: float
+  """The price of the trade"""
+  instrument_name: str
+  """Unique instrument identifier"""
+
+
+class PendingBlockTradeStateCounterpartyState(TypedDict):
+  """State of the pending block trade for the other party (optional)."""
+
+  value: Literal['initial', 'accepted', 'rejected', 'executed', 'approved']
+  """State value."""
+  timestamp: int
+  """State timestamp."""
+
+
+class PendingBlockTradeStateState(TypedDict):
+  """State of the pending block trade for current user."""
+
+  value: Literal['initial', 'accepted', 'rejected', 'executed', 'approved']
+  """State value."""
+  timestamp: int
+  """State timestamp."""
+
+
+class PendingBlockTradeRequestItem(TypedDict):
+  """One block trade request awaiting (or having received) approval."""
+
+  nonce: str
+  """Nonce that can be used to approve or reject pending block trade."""
+  timestamp: int
+  """Timestamp that can be used to approve or reject pending block trade."""
+  trades: list[PendingBlockTradeLeg]
+  """The legs of the pending block trade."""
+  app_name: str
+  """The name of the application that executed the block trade on behalf of the user (optional)."""
+  username: NotRequired[str]
+  """Username of the user who initiated the block trade."""
+  role: Literal['maker', 'taker']
+  """Trade role of the user: `maker` or `taker`"""
+  user_id: int
+  """Unique user identifier"""
+  broker_code: NotRequired[str]
+  """Broker code associated with the broker block trade."""
+  broker_name: NotRequired[str]
+  """Name of the broker associated with the block trade."""
+  state: PendingBlockTradeStateState
+  counterparty_state: NotRequired[PendingBlockTradeStateCounterpartyState]
+  combo_id: NotRequired[str]
+  """Combo instrument identifier"""
+
+
+validate_get_block_trade_requests = validator[list[PendingBlockTradeRequestItem]](
+  list[PendingBlockTradeRequestItem]
+)
+
+
+class GetBlockTradeRequests(RpcEndpoint):
+  """`private/get_block_trade_requests`."""
+
+  async def get_block_trade_requests(
+    self,
+    *,
+    broker_code: str | None = None,
+    validate: bool | None = None,
+  ) -> list[PendingBlockTradeRequestItem]:
+    """Provides a list of block trade requests including pending approvals, declined trades, and expired trades. `timestamp` and `nonce` received in response can be used with `private/approve_block_trade` or `private/reject_block_trade` to approve or reject the pending block trade.
+
+    To use the block trade approval feature, an additional API key setting feature called `enabled_features: block_trade_approval` is required. This key has to be given to the broker/registered partner who performs the trades on behalf of the user for the feature to be active. If the user wants to approve the trade, they must approve it from a different API key that doesn't have this feature enabled.
+
+    Only broker clients can use `broker_code` to query for their broker block trade requests.
+
+    Scope: `block_trade:read`.
+
+    Args:
+      broker_code: Broker code to filter block trade requests. Only broker clients can use `broker_code` to query for their executed broker block trades.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/block-trade/private-get_block_trade_requests)
+    """
+    params = {}
+    if broker_code is not None:
+      params['broker_code'] = broker_code
+    return await self.authed_request(
+      'private/get_block_trade_requests',
+      params=params,
+      validator=validate_get_block_trade_requests,
+      validate=validate,
+    )

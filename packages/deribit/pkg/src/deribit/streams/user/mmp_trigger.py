@@ -1,0 +1,107 @@
+"""`user.mmp_trigger.{index_name}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class MmpTriggerUpdate(TypedDict):
+  """Message schema for `user.mmp_trigger.(index_name)` subscription - contains the data payload"""
+
+  frozen_until: int
+  """Timestamp (milliseconds since the UNIX epoch) until the user will be frozen - 0 means that the user is frozen until manual reset."""
+  index_name: NotRequired[str]
+  """Index identifier of derivative instrument on the platform. For Block RFQ MMP, this will be "all" when triggered by trade count limit."""
+  mmp_group: NotRequired[str]
+  """Triggered mmp group, this parameter is optional (appears only for Mass Quote orders trigger)"""
+  block_rfq: NotRequired[bool]
+  """If true, indicates that the MMP trigger is for Block RFQ. Block RFQ MMP triggers are completely separate from normal order/quote MMP triggers."""
+
+
+validate_mmp_trigger = validator[MmpTriggerUpdate](MmpTriggerUpdate)
+
+
+class MmpTrigger(StreamEndpoint):
+  """`user.mmp_trigger.{index_name}` subscription."""
+
+  def mmp_trigger(
+    self,
+    index_name: Literal[
+      'btc_usd',
+      'eth_usd',
+      'ada_usdc',
+      'algo_usdc',
+      'avax_usdc',
+      'bch_usdc',
+      'bnb_usdc',
+      'btc_usdc',
+      'btcdvol_usdc',
+      'buidl_usdc',
+      'doge_usdc',
+      'dot_usdc',
+      'eurr_usdc',
+      'eth_usdc',
+      'ethdvol_usdc',
+      'link_usdc',
+      'ltc_usdc',
+      'near_usdc',
+      'paxg_usdc',
+      'shib_usdc',
+      'sol_usdc',
+      'steth_usdc',
+      'ton_usdc',
+      'trump_usdc',
+      'trx_usdc',
+      'uni_usdc',
+      'usde_usdc',
+      'usyc_usdc',
+      'xrp_usdc',
+      'btc_usdt',
+      'eth_usdt',
+      'eurr_usdt',
+      'sol_usdt',
+      'steth_usdt',
+      'usdc_usdt',
+      'usde_usdt',
+      'btc_eurr',
+      'btc_usde',
+      'btc_usyc',
+      'eth_btc',
+      'eth_eurr',
+      'eth_usde',
+      'eth_usyc',
+      'steth_eth',
+      'paxg_btc',
+      'drbfix-btc_usdc',
+      'drbfix-eth_usdc',
+    ],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[MmpTriggerUpdate, Any, Any]:
+    """Real-time notifications for Market Maker Protection (MMP) triggers. This subscription provides feedback when MMP protection is activated for a given index, enabling clients to react promptly when protection is triggered.
+
+    Upon MMP being triggered for a given index, the client will receive a trigger notification containing:
+
+    - **frozen_until**: Unix timestamp in milliseconds indicating until when the MMP is active (orders remain blocked). If `frozen_until: 0`, it means MMP will remain active until manually reset using the `private/reset_mmp` method.
+    - **index_name**: Index identifier of derivative instrument on the platform. For Block RFQ MMP, this will be "all" when triggered by trade count limit.
+    - **mmp_group**: Triggered MMP group (optional, appears only for Mass Quote orders trigger)
+    - **block_rfq**: If true, indicates that the MMP trigger is for Block RFQ. Block RFQ MMP triggers are completely separate from normal order/quote MMP triggers.
+
+    This notification allows the client to track MMP state per index and avoid submitting new orders that would be rejected due to ongoing MMP freeze.
+
+    **📖 Related Article:** [Market Maker Protection API Configuration](https://docs.deribit.com/articles/market-maker-protection)
+
+    Args:
+      index_name: Index identifier, matches (base) cryptocurrency with quote currency
+
+    **Allowed values:** `btc_usd`, `eth_usd`, `ada_usdc`, `algo_usdc`, `avax_usdc`, ... (total 47 values)
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/subscriptions/user-mmp_trigger-index_name)
+    """
+    channel = f'user.mmp_trigger.{index_name}'
+    return self.authed_subscribe(
+      channel, validator=validate_mmp_trigger, validate=validate
+    )

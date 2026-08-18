@@ -1,0 +1,146 @@
+"""`public/get_block_rfq_trades` — `public/get_block_rfq_trades`."""
+
+from typing_extensions import AsyncIterator, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class BlockRfqTradeFill(TypedDict):
+  """One fill within a Block RFQ trade."""
+
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+  price: float
+  """Price in base currency."""
+  amount: float
+  """Trade amount. Denominated in underlying base currency coin for options/linear futures/linear perpetuals/spots, in USD units for inverse perpetuals/futures."""
+  hedge_amount: NotRequired[float]
+  """Amount of the hedge leg, when present. Same currency convention as `amount`."""
+
+
+class BlockRfqTradeHedge(TypedDict):
+  """The hedge leg of the Block RFQ, when one was included."""
+
+  amount: NotRequired[int]
+  """The requested hedge leg size. USD units for perpetual/inverse futures, underlying base currency coin for options/linear futures."""
+  instrument_name: NotRequired[str]
+  """Unique instrument identifier."""
+  direction: NotRequired[Literal['buy', 'sell']]
+  """Direction: `buy`, or `sell`."""
+  price: NotRequired[float]
+  """Price for the hedge leg."""
+
+
+class BlockRfqTradeLeg(TypedDict):
+  """One leg of a (possibly multi-leg) Block RFQ trade."""
+
+  ratio: int
+  """Ratio of amount between legs."""
+  instrument_name: str
+  """Unique instrument identifier."""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+  price: float
+  """Price for this leg."""
+
+
+class BlockRfqTrade(TypedDict):
+  """One executed Block RFQ trade."""
+
+  id: int
+  """ID of the Block RFQ."""
+  timestamp: int
+  """The timestamp of the trade (milliseconds since the UNIX epoch)."""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`."""
+  amount: float
+  """This value multiplied by the ratio of a leg gives trade size on that leg."""
+  mark_price: float
+  """Mark price at the moment of trade."""
+  legs: list[BlockRfqTradeLeg]
+  """The instrument legs making up this Block RFQ."""
+  combo_id: NotRequired[str]
+  """Unique combo identifier (equals the sole leg's `instrument_name` for a single-leg RFQ)."""
+  hedge: NotRequired[BlockRfqTradeHedge]
+  index_prices: NotRequired[dict[str, float]]
+  """A map of index prices for the underlying instrument(s) at the time of trade execution, keyed by price index name."""
+  trades: list[BlockRfqTradeFill]
+  """The individual fill(s) that make up this Block RFQ trade."""
+
+
+class GetBlockRfqTradesResult(TypedDict):
+  """A page of recent Block RFQ trades."""
+
+  block_rfqs: list[BlockRfqTrade]
+  """Recent Block RFQ trades, newest first."""
+  continuation: NotRequired[str | None]
+  """Continuation token for the next page; `null` when there is no further page."""
+
+
+validate_get_block_rfq_trades = validator[GetBlockRfqTradesResult](
+  GetBlockRfqTradesResult
+)
+
+
+class GetBlockRfqTrades(RpcEndpoint):
+  """`public/get_block_rfq_trades`."""
+
+  async def get_block_rfq_trades(
+    self,
+    *,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR', 'any'],
+    continuation: str | None = None,
+    count: int | None = None,
+    validate: bool | None = None,
+  ) -> GetBlockRfqTradesResult:
+    """Returns a list of recent Block RFQ trades across the venue, optionally filtered by currency. Public market data about completed Block RFQ trades; for the caller's own (including unfilled) Block RFQs, use `private/get_block_rfqs`.
+
+    Args:
+      currency: The currency symbol or "any" for all
+      continuation: Continuation token for pagination, as returned by a previous call's `continuation`.
+      count: Count of Block RFQ trades to return.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/block-rfq/public-get_block_rfq_trades)
+    """
+    params: dict = {
+      'currency': currency,
+    }
+    if continuation is not None:
+      params['continuation'] = continuation
+    if count is not None:
+      params['count'] = count
+    return await self.request(
+      'public/get_block_rfq_trades',
+      params=params,
+      validator=validate_get_block_rfq_trades,
+      validate=validate,
+    )
+
+  async def get_block_rfq_trades_paged(
+    self,
+    *,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR', 'any'],
+    count: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[GetBlockRfqTradesResult]:
+    """Yield successive pages of `get_block_rfq_trades`.
+
+    Passes each page's token back as `continuation` and stops when a response carries no
+    `continuation`, or after `max_pages` pages when one is given.
+    """
+    continuation: str | None = None
+    pages = 0
+    while True:
+      response = await self.get_block_rfq_trades(
+        currency=currency, count=count, continuation=continuation, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      continuation = response.get('continuation') if response is not None else None
+      if not continuation:
+        break

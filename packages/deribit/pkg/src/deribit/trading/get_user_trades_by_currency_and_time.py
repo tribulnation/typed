@@ -1,0 +1,190 @@
+"""`private/get_user_trades_by_currency_and_time` — `private/get_user_trades_by_currency_and_time`."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class ClientInfo(TypedDict):
+  """Optional client allocation info for brokers."""
+
+  client_id: NotRequired[int]
+  """ID of a client; available to broker. Represents a group of users under a common name."""
+  client_link_id: NotRequired[int]
+  """ID assigned to a single user in a client; available to broker."""
+  name: NotRequired[str]
+  """Name of the linked user within the client; available to broker."""
+
+
+class TradeAllocation(TypedDict):
+  user_id: NotRequired[int]
+  """User ID to which part of the trade is allocated. For brokers the User ID is obstructed."""
+  amount: float
+  """Amount allocated to this user."""
+  fee: float
+  """Fee for the allocated part of the trade."""
+  client_info: NotRequired[ClientInfo]
+
+
+class UserTrade(TypedDict):
+  trade_id: str
+  """Unique (per currency) trade identifier"""
+  trade_seq: int
+  """The sequence number of the trade within instrument"""
+  instrument_name: str
+  """Unique instrument identifier"""
+  timestamp: int
+  """The timestamp of the trade (milliseconds since the UNIX epoch)"""
+  starbase_timestamp: NotRequired[int]
+  """Optional field: timestamp of the match (trade) in [Starbase](https://docs.deribit.com/starbase/overview), in nanoseconds since the UNIX epoch (present only for trades matched in Starbase)"""
+  order_type: NotRequired[Literal['limit', 'market', 'liquidation']]
+  """Order type: `"limit`, `"market"`, or `"liquidation"`"""
+  advanced: NotRequired[Literal['usd', 'implv']]
+  """Advanced type of user order: `"usd"` or `"implv"` (only for options; omitted if not applicable)"""
+  order_id: str
+  """Id of the user order (maker or taker), i.e. subscriber's order id that took part in the trade"""
+  matching_id: str
+  """Always `null`"""
+  starbase_match_id: NotRequired[int]
+  """Optional field containing the Starbase match identifier (present only for trades matched via Starbase)"""
+  starbase_order_id: NotRequired[int]
+  """Optional field: the id in [Starbase](https://docs.deribit.com/starbase/overview) of the user's own order (maker or taker side) that took part in the trade; for self-trades this is always the taker order's id, and for combo legs it is the parent combo order's id (present only for trades matched in Starbase)"""
+  direction: Literal['buy', 'sell']
+  """Direction: `buy`, or `sell`"""
+  tick_direction: Literal[0, 1, 2, 3]
+  """Direction of the "tick" (`0` = Plus Tick, `1` = Zero-Plus Tick, `2` = Minus Tick, `3` = Zero-Minus Tick)."""
+  index_price: float
+  """Index Price at the moment of trade"""
+  price: float
+  """Price in base currency"""
+  amount: float
+  """Trade amount. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  contracts: NotRequired[float]
+  """Trade size in contract units (optional, may be absent in historical trades)"""
+  iv: NotRequired[float]
+  """Option implied volatility for the price (Option only)"""
+  underlying_price: NotRequired[float]
+  """Underlying price for implied volatility calculations (Options only)"""
+  liquidation: NotRequired[Literal['M', 'T', 'MT']]
+  """Optional field (only for trades caused by liquidation): `"M"` when maker side of trade was under liquidation, `"T"` when taker side was under liquidation, `"MT"` when both sides of trade were under liquidation"""
+  liquidity: NotRequired[Literal['M', 'T']]
+  """Describes what was role of users order: `"M"` when it was maker order, `"T"` when it was taker order"""
+  fee: float
+  """User's fee in units of the specified `fee_currency`"""
+  fee_currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR']
+  """Currency, i.e `"BTC"`, `"ETH"`, `"USDC"`"""
+  label: NotRequired[str]
+  """User defined label (presented only when previously set for order by user)"""
+  state: Literal['open', 'filled', 'rejected', 'cancelled', 'untriggered', 'archive']
+  """Order state: `"open"`, `"filled"`, `"rejected"`, `"cancelled"`, `"untriggered"` or `"archive"` (if order was archived)"""
+  block_trade_id: NotRequired[str]
+  """Block trade id - when trade was part of a block trade"""
+  block_rfq_id: NotRequired[int]
+  """ID of the Block RFQ - when trade was part of the Block RFQ"""
+  block_rfq_quote_id: NotRequired[int]
+  """ID of the Block RFQ quote - when trade was part of the Block RFQ"""
+  reduce_only: NotRequired[str]
+  """`true` if user order is reduce-only"""
+  post_only: NotRequired[str]
+  """`true` if user order is post-only"""
+  mmp: NotRequired[bool]
+  """`true` if user order is MMP"""
+  risk_reducing: NotRequired[bool]
+  """`true` if user order is marked by the platform as a risk reducing order (can apply only to orders placed by PM users)"""
+  api: NotRequired[bool]
+  """`true` if user order was created with API"""
+  profit_loss: NotRequired[float]
+  """Profit and loss in base currency."""
+  mark_price: float
+  """Mark Price at the moment of trade"""
+  legs: NotRequired[list[dict[str, Any]]]
+  """Optional field containing leg trades if trade is a combo trade (present when querying for **only** combo trades and in `combo_trades` events)"""
+  combo_id: NotRequired[str]
+  """Optional field containing combo instrument name if the trade is a combo trade"""
+  combo_trade_id: NotRequired[str]
+  """Optional field containing combo trade identifier if the trade is a combo trade"""
+  quote_set_id: NotRequired[str]
+  """QuoteSet of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  quote_id: NotRequired[str]
+  """QuoteID of the user order (optional, present only for orders placed with `private/mass_quote`)"""
+  trade_allocations: NotRequired[list[TradeAllocation]]
+  """List of allocations for Block RFQ pre-allocation. Each allocation specifies `user_id`, `amount`, and `fee` for the allocated part of the trade. For broker client allocations, a `client_info` object will be included."""
+
+
+class GetUserTradesByCurrencyAndTimeResult(TypedDict):
+  trades: list[UserTrade]
+  """Trades generated immediately by this call (empty if nothing filled yet)."""
+  has_more: bool
+  """Whether more matching trades exist beyond this page."""
+
+
+validate_get_user_trades_by_currency_and_time = validator[
+  GetUserTradesByCurrencyAndTimeResult
+](GetUserTradesByCurrencyAndTimeResult)
+
+
+class GetUserTradesByCurrencyAndTime(RpcEndpoint):
+  """`private/get_user_trades_by_currency_and_time`."""
+
+  async def get_user_trades_by_currency_and_time(
+    self,
+    *,
+    currency: Literal['BTC', 'ETH', 'USDC', 'USDT', 'EURR'],
+    kind: Literal[
+      'future', 'option', 'spot', 'future_combo', 'option_combo', 'combo', 'any'
+    ]
+    | None = None,
+    start_timestamp: int,
+    end_timestamp: int,
+    count: int | None = None,
+    sorting: Literal['asc', 'desc', 'default'] | None = None,
+    historical: bool | None = None,
+    subaccount_id: int | None = None,
+    validate: bool | None = None,
+  ) -> GetUserTradesByCurrencyAndTimeResult:
+    """Retrieves the latest user trades that have occurred for instruments in a specific currency within a specified time range. Returns trade details including price, amount, direction, timestamp, trade ID, and order ID for all instruments in the currency.
+
+    Results can be filtered by instrument kind. Use the `count` parameter to limit the number of trades returned, and `sorting` to control the order. Use `historical` to retrieve historical trade data. This method is useful for analyzing trading activity across a currency over specific time periods.
+
+    Main accounts may use the `subaccount_id` parameter to retrieve trade data for a specific subaccount (requires `mainaccount` scope).
+
+    Args:
+      currency: The currency symbol
+      kind: Instrument kind, `"combo"` for any combo or `"any"` for all. If not provided instruments of all kinds are considered
+      start_timestamp: The earliest timestamp to return result from (milliseconds since the UNIX epoch). When param is provided trades are returned from the earliest
+      end_timestamp: The most recent timestamp to return result from (milliseconds since the UNIX epoch). Only one of params: start_timestamp, end_timestamp is truly required
+      count: Number of requested items, default - `10`, maximum - `1000`
+      sorting: Direction of results sorting (`default` value means no sorting, results will be returned in order in which they left the database)
+      historical: Determines whether historical trade and order records should be retrieved.
+
+    - `false` (default): Returns recent records: orders for 30 min, trades for 24h.
+    - `true`: Fetches historical records, available after a short delay due to indexing. Recent data is not included.
+
+    **📖 Related Article:** [Accessing Historical Trades and Orders Using API](https://docs.deribit.com/articles/accessing-historical-trades-orders)
+      subaccount_id: Id of a subaccount
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/trading/private-get_user_trades_by_currency_and_time)
+    """
+    params: dict = {
+      'currency': currency,
+      'start_timestamp': start_timestamp,
+      'end_timestamp': end_timestamp,
+    }
+    if kind is not None:
+      params['kind'] = kind
+    if count is not None:
+      params['count'] = count
+    if sorting is not None:
+      params['sorting'] = sorting
+    if historical is not None:
+      params['historical'] = historical
+    if subaccount_id is not None:
+      params['subaccount_id'] = subaccount_id
+    return await self.authed_request(
+      'private/get_user_trades_by_currency_and_time',
+      params=params,
+      validator=validate_get_user_trades_by_currency_and_time,
+      validate=validate,
+    )

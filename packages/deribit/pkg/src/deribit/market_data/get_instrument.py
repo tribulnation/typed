@@ -1,0 +1,154 @@
+"""`public/get_instrument` — `public/get_instrument`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class TickSizeStep(TypedDict):
+  """One tiered tick-size step."""
+
+  above_price: NotRequired[float]
+  """The price from which the increased tick size applies."""
+  tick_size: NotRequired[float]
+  """Tick size to use above that price; must be a multiple of the minimum tick size."""
+
+
+class Instrument(TypedDict):
+  """One tradable instrument."""
+
+  kind: Literal['future', 'option', 'spot', 'future_combo', 'option_combo']
+  """Instrument kind: `"future"`, `"option"`, `"spot"`, `"future_combo"`, `"option_combo"`"""
+  settlement_currency: NotRequired[str]
+  """Optional (not added for spot). Settlement currency for the instrument."""
+  counter_currency: NotRequired[Literal['USD', 'USDC']]
+  """Counter currency for the instrument."""
+  base_currency: str
+  """The underlying currency being traded."""
+  quote_currency: str
+  """The currency in which the instrument prices are quoted."""
+  min_trade_amount: float
+  """Minimum amount for trading. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  instrument_name: str
+  """Unique instrument identifier"""
+  instrument_id: NotRequired[int]
+  """Instrument ID"""
+  is_active: bool
+  """Indicates if the instrument can currently be traded."""
+  settlement_period: Literal['month', 'week', 'day', 'perpetual']
+  """Optional (not added for spot). The settlement period."""
+  creation_timestamp: int
+  """The time when the instrument was first created (milliseconds since the UNIX epoch)."""
+  tick_size: float
+  """Specifies minimal price change and, as follows, the number of decimal places for instrument prices."""
+  tick_size_steps: NotRequired[list[TickSizeStep]]
+  """Tiered tick-size steps above the base `tick_size`, if any."""
+  expiration_timestamp: int
+  """The time when the instrument will expire (milliseconds since the UNIX epoch)."""
+  strike: NotRequired[float]
+  """The strike value (only for options)."""
+  option_type: NotRequired[Literal['call', 'put']]
+  """The option type (only for options)."""
+  future_type: NotRequired[Literal['linear', 'reversed']]
+  """Future type (only for futures)(field is deprecated and will be removed in the future, `instrument_type` should be used instead)."""
+  instrument_type: NotRequired[str]
+  """Type of the instrument. `linear` or `reversed`"""
+  contract_size: float
+  """Contract size for instrument."""
+  lot_size: NotRequired[float]
+  """Lot size for instrument, used as the unit for fee lot counting. Defaults to `contract_size` when not configured."""
+  maker_commission: NotRequired[float]
+  """Maker commission for instrument."""
+  taker_commission: NotRequired[float]
+  """Taker commission for instrument."""
+  max_liquidation_commission: NotRequired[float]
+  """Maximal liquidation trade commission for instrument (only for futures)."""
+  block_trade_commission: NotRequired[float]
+  """Block Trade commission for instrument."""
+  block_trade_tick_size: NotRequired[float]
+  """Specifies minimal price change for block trading."""
+  block_trade_min_trade_amount: NotRequired[float]
+  """Minimum amount for block trading."""
+  max_leverage: NotRequired[int]
+  """Maximal leverage for instrument (only for futures)."""
+  price_index: str
+  """Name of price index that is used for this instrument"""
+  underlying_type: Literal[
+    'crypto',
+    'equity',
+    'commodity',
+    'preipo',
+    'equity_etf',
+    'crypto_index',
+    'adr',
+    'foreign_equity',
+    'equity_index',
+    'commodity_index',
+    'commodity_etf',
+    'otc',
+  ]
+  """The type of the underlying asset."""
+  state: NotRequired[
+    Literal[
+      'open', 'settlement', 'delivered', 'inactive', 'locked', 'halted', 'archivized'
+    ]
+  ]
+  """The state of the order book. Represents the current lifecycle stage of the instrument.
+
+**State Lifecycle and Meanings:**
+
+- `open`: Default state for running books. In this state book is accepting new orders, edits, cancels; prices should be updated, trading is live.
+- `settlement`: Books enters to this state during settlement/delivery. New orders, edits, cancels are not accepted. After this state normally next state should be `open` if it was settlement, or `delivered` if it was delivery. On enter to this state good till day orders in book are canceled.
+- `delivered`: Final state of book that has been delivered. New orders, edits, cancels are not accepted. After some time book process will be terminated and, instrument moved to `expired_instruments` and its `instrument_state` will become archivized. On enter to this all open orders in book are canceled.
+- `inactive`: After a book is deactivated, this state is set on book. New orders, edits, cancels are not accepted. On enter to this all open orders in book are canceled. Book in this state is not considered as open. This can be also final state for book.
+- `locked`: New orders, edits, are not accepted, only cancels ARE accepted. In some cases when configured books can start as locked or it may become locked on admin request. Settlement is possible on locked books.
+- `halted`: The state that books enter as a result of an error. Settlement is not possible when there is at least one book in this state.
+- `archivized`: Set when instrument is moved to `expired_instruments` table, final state."""
+  base_currency_uuid: NotRequired[str]
+  """Internal identifier for the base currency. Absent if the base currency does not have an assigned identifier."""
+  quote_currency_uuid: NotRequired[str]
+  """Internal identifier for the quote currency. Absent if the quote currency does not have an assigned identifier."""
+  qty_tick_size: NotRequired[float]
+  """Minimum quantity change (step size) for order amounts on this instrument."""
+  index_id: NotRequired[int]
+  """Internal numeric identifier for the price index associated with this instrument."""
+  product_group: NotRequired[str]
+  """Product group classification for the instrument's base currency (e.g. BTC, ETH, TIER_2)."""
+  is_csr: NotRequired[bool]
+  """Optional (only for spot). When `true`, orders on this instrument are routed to Coinbase Exchange (CBE) for matching instead of the native Deribit matching engine."""
+  max_non_default_leverage: NotRequired[int]
+  """Maximum leverage available outside the default margin tier (only for futures). Observed live; not documented in the OpenAPI schema."""
+
+
+validate_get_instrument = validator[Instrument](Instrument)
+
+
+class GetInstrument(RpcEndpoint):
+  """`public/get_instrument`."""
+
+  async def get_instrument(
+    self,
+    *,
+    instrument_name: str,
+    validate: bool | None = None,
+  ) -> Instrument:
+    """Retrieves detailed information about a specific instrument, including instrument specifications, contract details, tick size, settlement currency, expiration date (for futures and options), strike price (for options), underlying type, and other instrument parameters.
+
+    This method is useful for obtaining instrument metadata needed for trading operations and calculations.
+
+    Args:
+      instrument_name: Instrument name
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/market-data/public-get_instrument)
+    """
+    params: dict = {
+      'instrument_name': instrument_name,
+    }
+    return await self.request(
+      'public/get_instrument',
+      params=params,
+      validator=validate_get_instrument,
+      validate=validate,
+    )

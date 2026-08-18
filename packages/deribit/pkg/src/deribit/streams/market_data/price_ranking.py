@@ -1,0 +1,96 @@
+"""`deribit_price_ranking.{index_name}` — subscription."""
+
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class PriceRankingEntry(TypedDict):
+  """One component exchange's contribution to a Deribit index."""
+
+  identifier: NotRequired[str]
+  """Stock exchange identifier."""
+  enabled: NotRequired[bool]
+  """The exchange's enabled status."""
+  original_price: NotRequired[float]
+  """Index price retrieved from the exchange's data."""
+  price: NotRequired[float]
+  """Adjusted exchange price, used for Deribit price index calculations."""
+  timestamp: NotRequired[int]
+  """The timestamp of the last update from this exchange (milliseconds since the Unix epoch)."""
+  weight: NotRequired[float]
+  """The weight of this exchange in the ranking, given in percent."""
+
+
+validate_price_ranking = validator[list[PriceRankingEntry]](list[PriceRankingEntry])
+
+
+class PriceRanking(StreamEndpoint):
+  """`deribit_price_ranking.{index_name}` subscription."""
+
+  def price_ranking(
+    self,
+    index_name: Literal[
+      'btc_usd',
+      'eth_usd',
+      'ada_usdc',
+      'algo_usdc',
+      'avax_usdc',
+      'bch_usdc',
+      'bnb_usdc',
+      'btc_usdc',
+      'btcdvol_usdc',
+      'buidl_usdc',
+      'doge_usdc',
+      'dot_usdc',
+      'eurr_usdc',
+      'eth_usdc',
+      'ethdvol_usdc',
+      'link_usdc',
+      'ltc_usdc',
+      'near_usdc',
+      'paxg_usdc',
+      'shib_usdc',
+      'sol_usdc',
+      'steth_usdc',
+      'ton_usdc',
+      'trump_usdc',
+      'trx_usdc',
+      'uni_usdc',
+      'usde_usdc',
+      'usyc_usdc',
+      'xrp_usdc',
+      'btc_usdt',
+      'eth_usdt',
+      'eurr_usdt',
+      'sol_usdt',
+      'steth_usdt',
+      'usdc_usdt',
+      'usde_usdt',
+      'btc_eurr',
+      'btc_usde',
+      'btc_usyc',
+      'eth_btc',
+      'eth_eurr',
+      'eth_usde',
+      'eth_usyc',
+      'steth_eth',
+      'paxg_btc',
+      'drbfix-btc_usdc',
+      'drbfix-eth_usdc',
+    ],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[list[PriceRankingEntry], Any, Any]:
+    """Price ranking updates for the component exchanges used to calculate the Deribit index for the given `index_name`.
+
+    Args:
+      index_name: Index identifier, matching a (base) cryptocurrency to a quote currency.
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/market-data/deribit_price_rankingindex_name)
+    """
+    channel = f'deribit_price_ranking.{index_name}'
+    return self.subscribe(channel, validator=validate_price_ranking, validate=validate)

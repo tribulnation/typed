@@ -1,0 +1,197 @@
+"""`public/get_order_book_by_instrument_id` — `public/get_order_book_by_instrument_id`."""
+
+from typing_extensions import Literal, NotRequired, TypedDict
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+
+class BookStats(TypedDict):
+  """24h trading statistics."""
+
+  volume: float
+  """Volume during last 24h in base currency"""
+  low: float
+  """Lowest price during 24h"""
+  high: float
+  """Highest price during 24h"""
+  price_change: NotRequired[float]
+  """24-hour price change expressed as a percentage, `null` if there weren't any trades"""
+  volume_usd: NotRequired[float]
+  """Volume in usd (futures only)"""
+  volume_notional: NotRequired[float]
+  """Volume in quote currency (futures and spots only). Observed live; not documented in the live OpenAPI schema."""
+
+
+class Greeks(TypedDict):
+  """Only for options. Greeks are risk measures that describe how the option's price changes with respect to various factors.
+
+  **Delta (Δ)**
+
+  Deribit uses two different Deltas:
+  - **DeltaTotal** in the account summary uses the **Net Transaction Delta (NTD)**
+  - **Delta** for individual option expiries is the **Black Scholes Delta**
+
+  In the settings section you can toggle Net Transaction Delta instead.
+
+  **What is DeltaTotal in the account summary?**
+  `DeltaTotal = Net Transaction Delta of options + BTC Position of Futures`
+
+  **What is Net Transaction Delta?**
+  `Net Transaction Delta = Black Scholes Delta - Mark Price of Options`
+
+  **Why do we use a Net Transaction Delta?**
+  The Delta Total uses the Net Transaction Delta (or price adjusted Delta) of the options. This is because, from a risk perspective, we are interested in the change in Bitcoin price as the underlying changes.
+
+  You should actually treat your delta as **Equity + Delta Total** if you want to have less risk for your USD PnL.
+
+  **Example:** Consider a call option with strike 0, which has a Black Scholes Delta of 1 and Net Transaction Delta = 0.
+
+  Imagine you have 2 BTC equity and no positions and BTC price is at USD 60k. In that case you would short 2 Futures contracts to hedge your USD exposure to BTC.
+
+  Now let's say you buy one call with strike 0. The question is if you should sell another future?
+
+  The call will always have a price of 1 BTC. So you buy it at 1 BTC which equates to USD 60k. Let's say the price increases to USD 70k. The value of the call is still 1 BTC. At settlement you receive 1 BTC for the call. So you paid 1 BTC and then receive 1 BTC which means your USD PnL on buying the call is 0. If you sold a future on it, then you would actually lose on the future.
+
+  ⚠️ **During the 30 minute settlement period we decay your Delta.** See [Delta decay during settlement](https://support.deribit.com/hc/en-us/articles/25944751433757-Delta-decay-during-settlement) for more details.
+
+  **Theta (Θ)**
+
+  The Theta that Deribit uses is the **minimum of (1 day Theta, lifetime theta of the option)**. So if you take an option with 1 hour to expire for example, generally Black Scholes Theta will give you the equivalent 1 day Theta. Whereas we show the 1 hour Theta, so our Theta would differ from Black Scholes Theta when time to expiry is less than 1 day.
+
+  **Vega, Gamma, and Rho**
+
+  Vega (not actually a Greek symbol), Gamma, Theta and Rho values shown on Deribit are calculated using **standard Black Scholes without adjustments**."""
+
+  delta: float
+  """(Only for option) The delta value for the option. This is the **Black Scholes Delta** for individual option expiries. 
+
+Note that DeltaTotal in account summary uses Net Transaction Delta instead. See the greeks object description for more details."""
+  gamma: float
+  """(Only for option) The gamma value for the option. Calculated using standard Black Scholes without adjustments.
+
+Gamma measures the rate of change of delta with respect to changes in the underlying asset price."""
+  rho: float
+  """(Only for option) The rho value for the option. Calculated using standard Black Scholes without adjustments.
+
+Rho measures the sensitivity of the option price to changes in the risk-free interest rate."""
+  theta: float
+  """(Only for option) The theta value for the option. Deribit uses the **minimum of (1 day Theta, lifetime theta of the option)**.
+
+So if you take an option with 1 hour to expire for example, generally Black Scholes Theta will give you the equivalent 1 day Theta. Whereas we show the 1 hour Theta, so our Theta would differ from Black Scholes Theta when time to expiry is less than 1 day.
+
+Theta measures the rate of change of the option price with respect to time decay."""
+  vega: float
+  """(Only for option) The vega value for the option. Calculated using standard Black Scholes without adjustments.
+
+Vega (not actually a Greek symbol) measures the sensitivity of the option price to changes in implied volatility."""
+
+
+class OrderBookSnapshot(TypedDict):
+  """A snapshot of one instrument's order book and market statistics."""
+
+  instrument_name: str
+  """Unique instrument identifier"""
+  timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)"""
+  state: Literal[
+    'open', 'settlement', 'delivered', 'inactive', 'locked', 'halted', 'archivized'
+  ]
+  """The state of the order book. Represents the current lifecycle stage of the instrument.
+
+**State Lifecycle and Meanings:**
+
+- `open`: Default state for running books. In this state book is accepting new orders, edits, cancels; prices should be updated, trading is live.
+- `settlement`: Books enters to this state during settlement/delivery. New orders, edits, cancels are not accepted. After this state normally next state should be `open` if it was settlement, or `delivered` if it was delivery. On enter to this state good till day orders in book are canceled.
+- `delivered`: Final state of book that has been delivered. New orders, edits, cancels are not accepted. After some time book process will be terminated and, instrument moved to `expired_instruments` and its `instrument_state` will become archivized. On enter to this all open orders in book are canceled.
+- `inactive`: After a book is deactivated, this state is set on book. New orders, edits, cancels are not accepted. On enter to this all open orders in book are canceled. Book in this state is not considered as open. This can be also final state for book.
+- `locked`: New orders, edits, are not accepted, only cancels ARE accepted. In some cases when configured books can start as locked or it may become locked on admin request. Settlement is possible on locked books.
+- `halted`: The state that books enter as a result of an error. Settlement is not possible when there is at least one book in this state.
+- `archivized`: Set when instrument is moved to `expired_instruments` table, final state."""
+  stats: BookStats
+  open_interest: float
+  """The total amount of outstanding contracts in the corresponding amount units. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
+  best_bid_price: float | None
+  """The current best bid price, `null` if there aren't any bids"""
+  best_bid_amount: float | None
+  """It represents the requested order size of all best bids"""
+  best_ask_price: float | None
+  """The current best ask price, `null` if there aren't any asks"""
+  best_ask_amount: float | None
+  """It represents the requested order size of all best asks"""
+  index_price: float
+  """Current index price"""
+  min_price: float
+  """The minimum price for the future. Any sell orders you submit lower than this price will be clamped to this minimum."""
+  max_price: float
+  """The maximum price for the future. Any buy orders you submit higher than this price, will be clamped to this maximum."""
+  mark_price: float
+  """The mark price for the instrument"""
+  last_price: float | None
+  """The price for the last trade"""
+  underlying_price: NotRequired[float]
+  """Underlying price for implied volatility calculations (options only)"""
+  underlying_index: NotRequired[float]
+  """Name of the underlying future, or `index_price` (options only)"""
+  interest_rate: NotRequired[float]
+  """Interest rate used in implied volatility calculations (options only)"""
+  bid_iv: NotRequired[float]
+  """(Only for option) implied volatility for best bid"""
+  ask_iv: NotRequired[float]
+  """(Only for option) implied volatility for best ask"""
+  mark_iv: NotRequired[float]
+  """(Only for option) implied volatility for mark price"""
+  greeks: NotRequired[Greeks]
+  funding_8h: NotRequired[float]
+  """Funding 8h (perpetual only)"""
+  current_funding: NotRequired[float]
+  """Current funding (perpetual only)"""
+  delivery_price: NotRequired[float]
+  """The settlement price for the instrument. Only when `state = closed`"""
+  settlement_price: NotRequired[float]
+  """Optional (not added for spot). The settlement price for the instrument. Only when `state = open`"""
+  bids: list[tuple[float, float]]
+  """Bids, best price first."""
+  asks: list[tuple[float, float]]
+  """Asks, best price first."""
+  change_id: NotRequired[int]
+  """Monotonically increasing identifier of the order book update that produced this snapshot. Observed live; not documented in the live OpenAPI schema."""
+
+
+validate_get_order_book_by_instrument_id = validator[OrderBookSnapshot](
+  OrderBookSnapshot
+)
+
+
+class GetOrderBookByInstrumentId(RpcEndpoint):
+  """`public/get_order_book_by_instrument_id`."""
+
+  async def get_order_book_by_instrument_id(
+    self,
+    *,
+    instrument_id: int,
+    depth: Literal[1, 5, 10, 20, 50, 100, 1000, 10000] | None = None,
+    validate: bool | None = None,
+  ) -> OrderBookSnapshot:
+    """Retrieves the order book (bids and asks) for a given instrument ID, along with other market values such as best bid/ask prices, last trade price, mark price, and index price.
+
+    This method is similar to `get_order_book` but uses instrument ID instead of instrument name. The order book depth can be controlled using the `depth` parameter, which accepts values from 1 to 10000.
+
+    Args:
+      instrument_id: The instrument ID for which to retrieve the order book, see [`public/get_instruments`](#public-get_instruments) to obtain instrument IDs.
+      depth: The number of entries to return for bids and asks, maximum - `10000`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/market-data/public-get_order_book_by_instrument_id)
+    """
+    params: dict = {
+      'instrument_id': instrument_id,
+    }
+    if depth is not None:
+      params['depth'] = depth
+    return await self.request(
+      'public/get_order_book_by_instrument_id',
+      params=params,
+      validator=validate_get_order_book_by_instrument_id,
+      validate=validate,
+    )

@@ -1,0 +1,24 @@
+"""`public/unsubscribe_all` — `public/unsubscribe_all`."""
+
+from typing_extensions import Literal
+from typed_core.validation import validator
+from deribit.core import RpcEndpoint
+
+validate_unsubscribe_all = validator[Literal['ok']](Literal['ok'])  # pyright: ignore[reportArgumentType]  # fmt: skip
+
+
+class UnsubscribeAll(RpcEndpoint):
+  """`public/unsubscribe_all`."""
+
+  async def unsubscribe_all(self, *, validate: bool | None = None) -> Literal['ok']:
+    """Unsubscribe from all the channels subscribed so far on this connection. This method takes no parameters.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/api-reference/subscription-management/public-unsubscribe_all)
+    """
+    return await self.request(
+      'public/unsubscribe_all', validator=validate_unsubscribe_all, validate=validate
+    )

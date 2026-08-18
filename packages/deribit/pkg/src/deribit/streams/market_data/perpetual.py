@@ -1,0 +1,44 @@
+"""`perpetual.{instrument_name}.{interval}` — subscription."""
+
+from typing_extensions import Any, Literal, TypedDict
+from deribit.core import StreamEndpoint
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+
+
+class PerpetualInterestUpdate(TypedDict):
+  """Current interest rate for a perpetual instrument."""
+
+  interest: float
+  """Current interest."""
+  timestamp: int
+  """The timestamp (milliseconds since the Unix epoch)."""
+  index_price: float
+  """Current index price."""
+
+
+validate_perpetual = validator[PerpetualInterestUpdate](PerpetualInterestUpdate)
+
+
+class Perpetual(StreamEndpoint):
+  """`perpetual.{instrument_name}.{interval}` subscription."""
+
+  def perpetual(
+    self,
+    instrument_name: str,
+    interval: Literal['raw', '100ms', 'agg2'],
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[PerpetualInterestUpdate, Any, Any]:
+    """Current interest rate, but only for perpetual instruments -- other kinds generate no notification on this channel.
+
+    Args:
+      instrument_name: The name of the instrument.
+      interval: Frequency of notifications; events are aggregated over this interval. `raw` means no aggregation and is only available to authorized users.
+      validate: Validate pushed payloads against the expected schema.
+
+    References:
+      - [Deribit API docs](https://docs.deribit.com/subscriptions/market-data/perpetualinstrument_nameinterval)
+    """
+    channel = f'perpetual.{instrument_name}.{interval}'
+    return self.subscribe(channel, validator=validate_perpetual, validate=validate)
