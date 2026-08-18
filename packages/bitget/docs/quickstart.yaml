@@ -1,0 +1,89 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials, see
+    [API keys setup](/typed/bitget/api-keys) for how to create them.
+  code: |
+    # .env
+    BITGET_ACCESS_KEY="your_access_key"
+    BITGET_SECRET_KEY="your_secret_key"
+    BITGET_PASSPHRASE="your_passphrase"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-bitget python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call. Examples below use UTA v3, Bitget's recommended surface for new integrations.
+  code: |
+    from dotenv import load_dotenv
+    from bitget import Bitget
+
+    load_dotenv()
+
+    async with Bitget.new() as client:
+      tickers = await client.uta.market.tickers(category='SPOT', symbol='BTCUSDT')
+      print(tickers)
+
+how_tos:
+  - title: Fetch market data
+    body: Instruments, order book, candles, tickers, recent trades, all public, no credentials needed.
+    code: |
+      instruments = await client.uta.market.instruments(category='SPOT', symbol='BTCUSDT')  # trading rules
+      book = await client.uta.market.orderbook(category='SPOT', symbol='BTCUSDT')            # order book
+      candles = await client.uta.market.candles(category='SPOT', symbol='BTCUSDT', interval='1m')  # candles
+      trades = await client.uta.market.fills(category='SPOT', symbol='BTCUSDT')              # recent trades
+
+  - title: Listen to streams
+    body: A public channel and the private order/fill feed, over independent WebSocket connections.
+    code: |
+      async with client.uta_streams.ticker(inst_type='spot', symbol='BTCUSDT') as stream:  # public ticker
+        async for push in stream:
+          print(push['data'])
+      async with client.uta_streams.orders(inst_type='UTA') as stream:  # private order updates
+        async for push in stream:
+          print(push['data'])
+
+  - title: Place & manage orders
+    body: Submit, inspect, list, and cancel orders. Needs credentials.
+    code: |
+      order = await client.uta.trade.place_order({                    # place an order
+        'category': 'SPOT', 'symbol': 'BTCUSDT', 'side': 'buy',
+        'orderType': 'limit', 'qty': '0.001', 'price': '20000', 'timeInForce': 'gtc',
+      })
+      info = await client.uta.trade.order_info(order_id=order['orderId'])  # check its status
+      open_orders = await client.uta.trade.unfilled_orders(category='SPOT')  # list open orders
+      await client.uta.trade.cancel_order({'orderId': order['orderId'], 'category': 'SPOT'})  # cancel it
+
+  - title: Fetch account data
+    body: Balances, positions, and financial records. Needs credentials.
+    code: |
+      assets = await client.uta.account.assets()                                 # balances
+      positions = await client.uta.position.current_positions(category='USDT-FUTURES')  # open futures positions
+      records = await client.uta.account.financial_records(category='SPOT')      # financial records
+
+  - title: Query & manage earn instruments
+    body: List, subscribe to, and redeem Elite structured products. Needs credentials.
+    code: |
+      products = await client.uta.earn.elite_products()                          # list products
+      holdings = await client.uta.earn.elite_assets()                            # current holdings
+      sub_info = await client.uta.earn.elite_subscribe_info(product_id=products[0]['productId'])  # subscription terms
+      result = await client.uta.earn.elite_subscribe({                          # subscribe
+        'productSubId': sub_info['productSubId'], 'amount': 10.0, 'paymentAccount': 'unified',
+      })
+
+  - title: Query & manage deposits/withdrawals
+    body: Deposit addresses and history, withdrawals, and internal transfers. Needs credentials.
+    code: |
+      address = await client.uta.transfers.deposit_address(coin='USDT', chain='TRC20')  # deposit address
+      deposits = await client.uta.transfers.deposit_records(start_time=1700000000000, end_time=1700086400000)  # deposit history
+      await client.uta.transfers.withdraw({                                      # withdraw
+        'coin': 'USDT', 'chain': 'TRC20', 'transferType': 'on_chain',
+        'address': 'your_destination_address', 'size': '10',
+      })
+
+  - title: Paginate through results
+    body: Automatic cursor- and window-paged iteration over multi-page results.
+    code: |
+      async for page in client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT'):  # walk every page
+        for order in page['list']:
+          print(order['orderId'])
