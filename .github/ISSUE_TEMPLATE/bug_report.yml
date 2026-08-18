@@ -1,0 +1,33 @@
+name: Bug Report
+description: Report a bug in a typed package
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Filing a bug in generated code (`packages/<slug>/pkg/src/<slug>/`, outside that
+        package's `core/`)? This is still the right place — file it here, not a PR against
+        the generated file, since the next generation run would just overwrite a
+        hand-applied fix. See CONTRIBUTING.md for what's generated vs. hand-written.
+  - type: input
+    id: package-version
+    attributes:
+      label: Package & version
+      placeholder: typed-binance==0.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The failing call, the response that didn't validate, the type that didn't match.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      render: python
