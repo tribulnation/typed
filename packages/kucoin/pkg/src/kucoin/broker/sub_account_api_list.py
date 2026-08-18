@@ -1,0 +1,62 @@
+"""`GET /api/v1/broker/nd/account/apikey` — Get sub-account API."""
+
+from typing_extensions import Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class BrokerSubAccountApiKey(TypedDict):
+  """One broker sub-account API key."""
+
+  uid: str
+  """Sub-account UID."""
+  label: str
+  """API key remarks."""
+  apiKey: str
+  """The API key."""
+  apiVersion: int
+  """API key version."""
+  permissions: list[Literal['General', 'Spot', 'Futures']]
+  """Permission group list."""
+  ipWhitelist: list[str]
+  """IP whitelist assigned to the key."""
+  createdAt: int
+  """Creation time, Unix milliseconds."""
+
+
+_Type = list[BrokerSubAccountApiKey]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class SubAccountApiList(RpcEndpoint):
+  """`Get sub-account API` — mixed into `Broker`, the product exposing `broker.sub_account_api_list`."""
+
+  async def sub_account_api_list(
+    self,
+    *,
+    uid: str,
+    api_key: str | None = None,
+    validate: bool | None = None,
+  ) -> list[BrokerSubAccountApiKey]:
+    """List API keys belonging to one Exchange (ND) Broker sub-account, optionally filtered to one key.
+
+    Args:
+      uid: Sub-account UID.
+      api_key: Restrict the response to one API key. Omit for every key belonging to `uid`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'uid': uid,
+    }
+    if api_key is not None:
+      params['apiKey'] = api_key
+    return await self.authed_request(
+      'GET',
+      '/api/v1/broker/nd/account/apikey',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

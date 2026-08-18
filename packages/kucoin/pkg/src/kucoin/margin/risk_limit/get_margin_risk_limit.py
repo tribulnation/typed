@@ -1,0 +1,118 @@
+"""`GET /api/v3/margin/currencies` — Get Margin Risk Limit."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class CrossMarginRiskLimit(TypedDict):
+  """Cross-margin risk-limit configuration for one currency."""
+
+  timestamp: int
+  """Server timestamp, Unix milliseconds."""
+  currency: str
+  """Currency code."""
+  borrowMaxAmount: str
+  """Maximum amount of this currency that may be borrowed, account-wide."""
+  buyMaxAmount: str
+  """Maximum amount of this currency that may be bought to (borrow + hold), account-wide."""
+  holdMaxAmount: str
+  """Maximum amount of this currency the account may hold."""
+  borrowCoefficient: str
+  """Coefficient used in the borrow risk-limit calculation."""
+  marginCoefficient: str
+  """Coefficient used in the margin risk-limit calculation."""
+  precision: int
+  """Currency precision (decimal places)."""
+  borrowMinAmount: str | None
+  """Minimum amount that may be borrowed per loan. `null` when `borrowEnabled` is `false` (confirmed live, e.g. `KCS`)."""
+  borrowMinUnit: str | None
+  """Minimum borrow increment. `null` when `borrowEnabled` is `false` (confirmed live, e.g. `KCS`)."""
+  borrowEnabled: bool
+  """Whether borrowing this currency is currently enabled."""
+
+
+class IsolatedMarginRiskLimit(TypedDict):
+  """Isolated-margin risk-limit configuration for one symbol, base/quote pair of each cross-margin field."""
+
+  timestamp: int
+  """Server timestamp, Unix milliseconds."""
+  symbol: str
+  """Isolated margin trading pair."""
+  baseMaxBorrowAmount: str
+  """Maximum amount of the base currency that may be borrowed."""
+  quoteMaxBorrowAmount: str
+  """Maximum amount of the quote currency that may be borrowed."""
+  baseMaxBuyAmount: str
+  """Maximum amount of the base currency that may be bought to."""
+  quoteMaxBuyAmount: str
+  """Maximum amount of the quote currency that may be bought to."""
+  baseMaxHoldAmount: str
+  """Maximum amount of the base currency the account may hold."""
+  quoteMaxHoldAmount: str
+  """Maximum amount of the quote currency the account may hold."""
+  basePrecision: int
+  """Base currency precision (decimal places)."""
+  quotePrecision: int
+  """Quote currency precision (decimal places)."""
+  baseBorrowCoefficient: str
+  """Coefficient used in the base-currency borrow risk-limit calculation."""
+  quoteBorrowCoefficient: str
+  """Coefficient used in the quote-currency borrow risk-limit calculation."""
+  baseMarginCoefficient: str
+  """Coefficient used in the base-currency margin risk-limit calculation."""
+  quoteMarginCoefficient: str
+  """Coefficient used in the quote-currency margin risk-limit calculation."""
+  baseBorrowMinAmount: str | None
+  """Minimum amount of the base currency that may be borrowed per loan. `null` when `baseBorrowEnabled` is `false` (confirmed live, e.g. `KCS-USDT`)."""
+  baseBorrowMinUnit: str | None
+  """Minimum base-currency borrow increment. `null` when `baseBorrowEnabled` is `false` (confirmed live, e.g. `KCS-USDT`)."""
+  quoteBorrowMinAmount: str | None
+  """Minimum amount of the quote currency that may be borrowed per loan. `null` when `quoteBorrowEnabled` is `false`, by the same pattern as `baseBorrowMinAmount` (not independently observed live -- every captured entry with a disabled quote leg still had one of size, unit present; see notes)."""
+  quoteBorrowMinUnit: str | None
+  """Minimum quote-currency borrow increment. `null` when `quoteBorrowEnabled` is `false`, by the same pattern as `baseBorrowMinUnit` (not independently observed live -- see notes)."""
+  baseBorrowEnabled: bool
+  """Whether borrowing the base currency is currently enabled."""
+  quoteBorrowEnabled: bool
+  """Whether borrowing the quote currency is currently enabled."""
+
+
+_Type = list[CrossMarginRiskLimit | IsolatedMarginRiskLimit]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class GetMarginRiskLimit(RpcEndpoint):
+  """`Get Margin Risk Limit` — mixed into `RiskLimit`, the product exposing `margin.risk_limit.get_margin_risk_limit`."""
+
+  async def get_margin_risk_limit(
+    self,
+    *,
+    is_isolated: bool | None = None,
+    currency: str | None = None,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> list[CrossMarginRiskLimit | IsolatedMarginRiskLimit]:
+    """Get per-currency (cross margin) or per-symbol (isolated margin) risk-limit configuration: maximum borrow/buy/hold amounts, the coefficients used to compute them, precision, and whether borrowing is currently enabled. Which item shape comes back is chosen by `isIsolated`.
+
+    Args:
+      is_isolated: `false` for cross margin, `true` for isolated margin. Selects which of the two response item shapes comes back.
+      currency: Currency code to filter by, e.g. `BTC`. Applies to the cross-margin (`isIsolated=false`) shape.
+      symbol: Trading pair to filter by, e.g. `BTC-USDT`. Applies to the isolated-margin (`isIsolated=true`) shape.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if is_isolated is not None:
+      params['isIsolated'] = is_isolated
+    if currency is not None:
+      params['currency'] = currency
+    if symbol is not None:
+      params['symbol'] = symbol
+    return await self.authed_request(
+      'GET',
+      '/api/v3/margin/currencies',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

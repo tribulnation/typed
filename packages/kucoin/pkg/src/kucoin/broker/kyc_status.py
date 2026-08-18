@@ -1,0 +1,50 @@
+"""`GET /api/kyc/ndBroker/proxyClient/status/list` — Get KYC Status."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class KycStatusEntry(TypedDict):
+  """KYC status of one sub-account."""
+
+  clientUid: int
+  """Sub-account (client) UID."""
+  status: Literal['NONE', 'PROCESS', 'PASS', 'REJECT']
+  """KYC status."""
+  rejectReason: NotRequired[str | None]
+  """Reason for rejection, when `status` is `REJECT`; `null` otherwise."""
+
+
+_Type = list[KycStatusEntry]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class KycStatus(RpcEndpoint):
+  """`Get KYC Status` — mixed into `Broker`, the product exposing `broker.kyc_status`."""
+
+  async def kyc_status(
+    self,
+    *,
+    client_uids: str,
+    validate: bool | None = None,
+  ) -> list[KycStatusEntry]:
+    """Get the KYC (identity-verification) status of one or more Exchange (ND) Broker sub-accounts, by UID.
+
+    Args:
+      client_uids: One or more sub-account (client) UIDs, comma-separated for multiple.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'clientUids': client_uids,
+    }
+    return await self.authed_request(
+      'GET',
+      '/api/kyc/ndBroker/proxyClient/status/list',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

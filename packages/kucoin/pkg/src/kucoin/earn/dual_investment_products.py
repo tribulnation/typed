@@ -1,0 +1,96 @@
+"""`GET /api/v1/struct-earn/dual/products` — Get Dual Investment Products."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class DualInvestmentProductItem(TypedDict):
+  productId: str
+  """Product id."""
+  seriesNames: str
+  """Product series name, e.g. `"BTC-U"` -- undocumented (absent from KuCoin's own response schema table, present on every live product; see `notes`)."""
+  productName: str
+  """Product display name -- undocumented, observed identical to `seriesNames` on every live product; see `notes`."""
+  category: Literal['DUAL_CLASSIC', 'DUAL_BOOSTER', 'DUAL_EXTRA']
+  """Product category."""
+  targetCurrency: str
+  """Underlying currency of the product, e.g. `BTC`."""
+  quoteCurrency: str
+  """Currency used for pricing/quoting the product."""
+  investCurrency: str
+  """Currency used for investment."""
+  strikeCurrency: str
+  """Currency used for settlement if the strike price is met."""
+  strikePrice: str
+  """Linked (strike) price for settlement determination."""
+  protectPrice: NotRequired[str]
+  """Protection price for risk management, when the product carries one. Documented, but never observed live -- absent (not even `null`) from all 1780+ `DUAL_CLASSIC` products captured; see `notes`."""
+  annualRate: str
+  """Annualized rate of return, e.g. `"0.05"` for 5%."""
+  expirationTime: int
+  """Product maturity time, Unix milliseconds."""
+  side: Literal['CALL', 'PUT']
+  """Direction of the product: `CALL` (bullish) or `PUT` (bearish)."""
+  expectSettleTime: int
+  """Expected settlement time, Unix milliseconds."""
+  duration: str
+  """Product duration, in days."""
+  lowerLimit: str
+  """Minimum investment amount per order."""
+  upperLimit: str
+  """Maximum investment amount per order."""
+  availableScale: str
+  """Total available subscription amount for the product."""
+  userAvailableBalance: str
+  """This account's balance available to invest in this product -- undocumented (absent from KuCoin's own response schema table, present on every live product; see `notes`)."""
+  soldStatus: Literal['SOLD_OUT', 'AVAILABLE']
+  """Product availability status."""
+  increment: str
+  """Investment step size -- the invested amount must be a multiple of this value, within `lowerLimit` and `upperLimit`."""
+
+
+_Type = list[DualInvestmentProductItem]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class DualInvestmentProducts(RpcEndpoint):
+  """`Get Dual Investment Products` — mixed into `Earn`, the product exposing `earn.dual_investment_products`."""
+
+  async def dual_investment_products(
+    self,
+    *,
+    category: Literal['DUAL_CLASSIC', 'DUAL_BOOSTER', 'DUAL_EXTRA'],
+    strike_currency: str | None = None,
+    invest_currency: str | None = None,
+    side: Literal['CALL', 'PUT'] | None = None,
+    validate: bool | None = None,
+  ) -> list[DualInvestmentProductItem]:
+    """List the dual-investment products currently on offer under Structured Earn - Dual. Returns an empty list if none are available for the given category. Despite KuCoin's docs labeling this endpoint's api-channel `Public`, a live unauthenticated call fails with `400001` (missing signing headers) -- confirmed authenticated instead; see `notes`.
+
+    Args:
+      category: Product category -- confirmed live as required: a call omitting it fails with `400100 Invalid parameters`.
+      strike_currency: Restrict the response to one strike (settlement) currency, e.g. `USDT`.
+      invest_currency: Restrict the response to one investment currency, e.g. `BTC`.
+      side: Restrict the response to one direction: `CALL` (bullish) or `PUT` (bearish).
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'category': category,
+    }
+    if strike_currency is not None:
+      params['strikeCurrency'] = strike_currency
+    if invest_currency is not None:
+      params['investCurrency'] = invest_currency
+    if side is not None:
+      params['side'] = side
+    return await self.authed_request(
+      'GET',
+      '/api/v1/struct-earn/dual/products',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

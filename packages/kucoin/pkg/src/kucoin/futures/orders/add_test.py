@@ -1,0 +1,40 @@
+"""`POST /api/v1/orders/test` — Add Order Test."""
+
+from typed_core.validation import validator
+from kucoin.types import (
+  FuturesAddOrderLimit,
+  FuturesAddOrderMarket,
+  FuturesAddOrderResult,
+)
+from kucoin.core import RpcEndpoint
+
+
+_Type = FuturesAddOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class AddTest(RpcEndpoint):
+  """`Add Order Test` — mixed into `Orders`, the product exposing `futures.orders.add_test`."""
+
+  async def add_test(
+    self,
+    body: FuturesAddOrderLimit | FuturesAddOrderMarket,
+    *,
+    validate: bool | None = None,
+  ) -> FuturesAddOrderResult:
+    """Validate a futures order placement request -- parameters, signature -- without ever entering the matching engine. An order placed through this endpoint cannot be queried afterwards by any other endpoint.
+
+    Args:
+      body: Order placement parameters, identical to Add.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/orders/test',
+      json=body,
+      validator=adapter,
+      validate=validate,
+    )

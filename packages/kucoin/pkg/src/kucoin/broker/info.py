@@ -1,0 +1,39 @@
+"""`GET /api/v1/broker/nd/info` — Get Broker Info."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class BrokerInfo(TypedDict):
+  """Basic information about the authenticated broker account."""
+
+  accountSize: int
+  """Number of sub-accounts created."""
+  maxAccountSize: int | None
+  """Maximum number of sub-accounts allowed; `null` means no limit."""
+  level: int
+  """Broker level."""
+
+
+_Type = BrokerInfo
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Info(RpcEndpoint):
+  """`Get Broker Info` — mixed into `Broker`, the product exposing `broker.info`."""
+
+  async def info(self, *, validate: bool | None = None) -> BrokerInfo:
+    """Get basic information about the authenticated Exchange (ND) Broker account: how many sub-accounts it has created, the maximum it may create, and its broker tier.
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'GET',
+      '/api/v1/broker/nd/info',
+      validator=adapter,
+      validate=validate,
+    )

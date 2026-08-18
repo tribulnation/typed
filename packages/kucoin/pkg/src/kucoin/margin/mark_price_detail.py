@@ -1,0 +1,45 @@
+"""`GET /api/v1/mark-price/{symbol}/current` — Get Mark Price Detail."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class MarkPrice(TypedDict):
+  """Current mark price for one symbol."""
+
+  symbol: str
+  """Symbol."""
+  timePoint: int
+  """Timestamp this mark price was computed at, Unix milliseconds."""
+  value: float
+  """Mark price."""
+
+
+_Type = MarkPrice
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class MarkPriceDetail(RpcEndpoint):
+  """`Get Mark Price Detail` — mixed into `Margin`, the product exposing `margin.mark_price_detail`."""
+
+  async def mark_price_detail(
+    self,
+    symbol: str,
+    *,
+    validate: bool | None = None,
+  ) -> MarkPrice:
+    """Get the current mark price for one margin trading pair. Mark price values cross/isolated margin positions and drives liquidation checks, distinct from the symbol's last-traded price.
+
+    Args:
+      symbol: Margin symbol.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.request(
+      'GET',
+      f'/api/v1/mark-price/{symbol}/current',
+      validator=adapter,
+      validate=validate,
+    )

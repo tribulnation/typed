@@ -1,0 +1,62 @@
+"""`POST /api/v3/oco/order` — spot.oco_orders.add."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class AddOcoOrderRequest(TypedDict):
+  clientOid: str
+  """Client-generated unique order id (a UUID is recommended): letters, digits, underscores and hyphens only, max 40 characters. Echoed back on lookups; do not reuse a `clientOid` across requests."""
+  symbol: str
+  """Trading pair, e.g. `BTC-USDT`."""
+  side: Literal['buy', 'sell']
+  """Order direction, shared by both legs."""
+  price: str
+  """Price for the upper leg (a plain limit order at this price)."""
+  size: str
+  """Order quantity, shared by both legs."""
+  stopPrice: str
+  """Trigger price for the lower leg."""
+  limitPrice: str
+  """Limit price the lower leg executes at once `stopPrice` triggers."""
+  remark: NotRequired[str]
+  """Order placement remark, max 20 ASCII characters."""
+  tradeType: NotRequired[Literal['TRADE']]
+  """Transaction type. Only spot trading is currently supported."""
+
+
+class AddOcoOrderResult(TypedDict):
+  orderId: str
+  """System-generated id for the OCO order group, used for later lookup/cancellation."""
+
+
+_Type = AddOcoOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Add(RpcEndpoint):
+  """`spot.oco_orders.add` — mixed into `OcoOrders`, the product exposing `spot.oco_orders.add`."""
+
+  async def add(
+    self,
+    add_oco_order_request: AddOcoOrderRequest,
+    *,
+    validate: bool | None = None,
+  ) -> AddOcoOrderResult:
+    """Place an OCO (One-Cancels-the-Other) order to the Spot trading engine: two linked leg orders -- an upper limit leg priced at `price`, and a lower leg that triggers at `stopPrice` and executes as a limit order at `limitPrice` -- where a fill or cancellation of either leg cancels the other. Maximum 20 untriggered OCO/stop orders per symbol per account.
+
+    Args:
+      add_oco_order_request: OCO order placement parameters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v3/oco/order',
+      json=add_oco_order_request,
+      validator=adapter,
+      validate=validate,
+    )

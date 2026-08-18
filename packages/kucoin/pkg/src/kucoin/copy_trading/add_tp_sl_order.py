@@ -1,0 +1,105 @@
+"""`POST /api/v1/copy-trade/futures/st-orders` — Add Take Profit And Stop Loss Order."""
+
+from typing_extensions import Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.types import CopyTradeAddOrderResult
+from kucoin.core import RpcEndpoint
+
+
+class CopyTradeAddTpSlOrderLimit(TypedDict):
+  """Request to place a limit copy-trading futures order carrying take-profit/stop-loss triggers. Docs do not state whether at least one of `triggerStopUpPrice`/`triggerStopDownPrice` is required -- both are left optional here rather than guessed at."""
+
+  clientOid: str
+  """Client-chosen order id, unique per account."""
+  symbol: str
+  """Contract symbol, e.g. `XBTUSDTM`."""
+  marginMode: Literal['CROSS', 'ISOLATED']
+  """Margin mode."""
+  leverage: int
+  """Leverage multiplier for the position."""
+  positionSide: Literal['LONG', 'SHORT']
+  """Direction of the position."""
+  side: Literal['buy', 'sell']
+  """Order side."""
+  type: Literal['limit']
+  """Order type."""
+  size: int
+  """Order quantity, in lots."""
+  price: str
+  """Limit price. Not confirmed live whether the venue requires this only for a limit order, but modeled that way for the same reason as `copy_trading.add_order`'s `price`."""
+  stopPriceType: Literal['TP', 'MP']
+  """Trigger price reference used by both `triggerStopUpPrice`/`triggerStopDownPrice`. The rendered docs page's own example shows only `"TP"` with no parameter table; this two-value enum (`TP`/`MP`, no `IP`) comes from the official SDK's `openapi-copytrading.json`, cross-checked live 2026-08-08 -- narrower than the three-value `TP`/`MP`/`IP` the analogous `futures.orders.add_tpsl` documents, so not assumed identical across the two products. Flagged in `notes`."""
+  triggerStopUpPrice: NotRequired[str]
+  """Take-profit trigger price."""
+  triggerStopDownPrice: NotRequired[str]
+  """Stop-loss trigger price."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'PostOnly']]
+  """Order timing strategy."""
+  reduceOnly: NotRequired[bool]
+  """Only reduce an existing position."""
+  remark: NotRequired[str]
+  """Order comment/notes."""
+
+
+class CopyTradeAddTpSlOrderMarket(TypedDict):
+  """Request to place a market copy-trading futures order carrying take-profit/stop-loss triggers. Docs do not state whether at least one of `triggerStopUpPrice`/`triggerStopDownPrice` is required -- both are left optional here rather than guessed at."""
+
+  clientOid: str
+  """Client-chosen order id, unique per account."""
+  symbol: str
+  """Contract symbol, e.g. `XBTUSDTM`."""
+  marginMode: Literal['CROSS', 'ISOLATED']
+  """Margin mode."""
+  leverage: int
+  """Leverage multiplier for the position."""
+  positionSide: Literal['LONG', 'SHORT']
+  """Direction of the position."""
+  side: Literal['buy', 'sell']
+  """Order side."""
+  type: Literal['market']
+  """Order type."""
+  size: int
+  """Order quantity, in lots."""
+  stopPriceType: Literal['TP', 'MP', 'IP']
+  """Trigger price reference used by both `triggerStopUpPrice`/`triggerStopDownPrice`. See the limit variant's note on this field's provenance."""
+  triggerStopUpPrice: NotRequired[str]
+  """Take-profit trigger price."""
+  triggerStopDownPrice: NotRequired[str]
+  """Stop-loss trigger price."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK', 'PostOnly']]
+  """Order timing strategy."""
+  reduceOnly: NotRequired[bool]
+  """Only reduce an existing position."""
+  remark: NotRequired[str]
+  """Order comment/notes."""
+
+
+_Type = CopyTradeAddOrderResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class AddTpSlOrder(RpcEndpoint):
+  """`Add Take Profit And Stop Loss Order` — mixed into `CopyTrading`, the product exposing `copy_trading.add_tp_sl_order`."""
+
+  async def add_tp_sl_order(
+    self,
+    body: CopyTradeAddTpSlOrderLimit | CopyTradeAddTpSlOrderMarket,
+    *,
+    validate: bool | None = None,
+  ) -> CopyTradeAddOrderResult:
+    """Place a limit or market copy-trading futures order carrying take-profit and/or stop-loss trigger prices. Otherwise identical to Add Order: funds are held for the duration of the order once placed, and fees are pre-deducted from orders entered into the orderbook. Requires the API key's `LeadtradeFutures` permission.
+
+    Args:
+      body: Order placement parameters, with take-profit/stop-loss triggers.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/copy-trade/futures/st-orders',
+      json=body,
+      validator=adapter,
+      validate=validate,
+    )

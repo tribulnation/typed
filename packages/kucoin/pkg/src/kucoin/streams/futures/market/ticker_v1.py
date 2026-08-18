@@ -1,0 +1,66 @@
+"""`/contractMarket/ticker:{symbol}` — Legacy best-bid/offer (BBO) push channel for one futures contract, pushed on every match. Superseded by Ticker V2 (`streams.futures.ticker_v2`) -- KuCoin's own docs page still publishes this channel (`deprecated: false` in the venue's machine-readable spec as of 2026-08-08) but recommends subscribing to `/contractMarket/tickerV2:{symbol}` instead for new integrations."""
+
+from typing_extensions import Any, Literal
+from typed_core.util import StreamManager
+from typed_core.validation import TypedDict, validator
+from kucoin.types import WsSubscriptionAck
+from kucoin.core import StreamEndpoint
+
+
+class FuturesTickerV1update(TypedDict):
+  """One best-bid/offer snapshot plus the triggering match, for a futures contract -- the unwrapped `data` field of the raw WebSocket frame (`SocketStreamClient.subscribe` extracts `data` before handing the stream to the caller; see `spec/core.md`'s WebSocket section)."""
+
+  symbol: str
+  """Contract symbol, for example `XBTUSDTM`."""
+  sequence: int
+  """Sequence number, shared with the Orderbook Increment topic."""
+  side: Literal['buy', 'sell']
+  """Taker side of the triggering match."""
+  size: int
+  """Quantity (in contracts) of the triggering match."""
+  price: str
+  """Price of the triggering match."""
+  bestBidSize: int
+  """Quantity (in contracts) at the best bid price."""
+  bestBidPrice: str
+  """Best bid price."""
+  bestAskPrice: str
+  """Best ask price."""
+  bestAskSize: int
+  """Quantity (in contracts) at the best ask price."""
+  tradeId: str
+  """Identifier of the triggering match."""
+  ts: int
+  """Timestamp of this push, in nanoseconds."""
+
+
+_Type = FuturesTickerV1update
+validate_update = validator[_Type](_Type)  # type: ignore
+
+
+class TickerV1(StreamEndpoint):
+  """Subscribe to `/contractMarket/ticker:{symbol}` — mixed into `Market`, the product exposing `streams.futures.ticker_v1`."""
+
+  def ticker_v1(
+    self,
+    symbol: str,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[FuturesTickerV1update, Any, Any]:
+    """Legacy best-bid/offer (BBO) push channel for one futures contract, pushed on every match. Superseded by Ticker V2 (`streams.futures.ticker_v2`) -- KuCoin's own docs page still publishes this channel (`deprecated: false` in the venue's machine-readable spec as of 2026-08-08) but recommends subscribing to `/contractMarket/tickerV2:{symbol}` instead for new integrations.
+
+    Args:
+      symbol: Contract symbol to watch, for example `XBTUSDTM`.
+      validate: Whether to validate pushed payloads against the expected schema.
+
+    Returns:
+      A manager for the subscription stream.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return self.subscribe(
+      f'/contractMarket/ticker:{symbol}',
+      validator=validate_update,
+      validate=validate,
+    )

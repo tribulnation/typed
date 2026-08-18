@@ -1,0 +1,47 @@
+"""`GET /api/v3/margin/available-inventory` — Get Market Available Inventory."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class MarginAvailableInventory(TypedDict):
+  """Currently available borrowable amount for one currency."""
+
+  currency: str
+  """Currency code."""
+  borrowableAmount: str
+  """Amount of this currency currently available to borrow platform-wide."""
+
+
+_Type = list[MarginAvailableInventory]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class AvailableInventory(RpcEndpoint):
+  """`Get Market Available Inventory` — mixed into `Market`, the product exposing `margin.market.available_inventory`."""
+
+  async def available_inventory(
+    self,
+    *,
+    currency: str | None = None,
+    validate: bool | None = None,
+  ) -> list[MarginAvailableInventory]:
+    """Get the platform's currently available borrowable inventory, per currency. Public -- no authentication required.
+
+    Args:
+      currency: Single currency code to filter by, e.g. `USDC`. Omitted returns every currency's inventory.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if currency is not None:
+      params['currency'] = currency
+    return await self.request(
+      'GET',
+      '/api/v3/margin/available-inventory',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

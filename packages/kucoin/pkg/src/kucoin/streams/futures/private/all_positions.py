@@ -1,0 +1,55 @@
+"""`/contract/positionAll` — Subscribe to the authenticated account's futures position pushes across every contract symbol -- the all-symbol counterpart of `streams.futures.position`, fires on a position change (margin adjustment, size change, liquidation, auto-deposit status change, ADL), a funding-fee settlement, or the outcome of a risk-limit-level adjustment, on any symbol."""
+
+from typing_extensions import Any
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from kucoin.types import (
+  FuturesPositionAdjustRiskLimitEvent,
+  FuturesPositionChangeEvent,
+  FuturesPositionSettlementEvent,
+  WsSubscriptionAck,
+)
+from kucoin.core import StreamEndpoint
+
+
+_Type = (
+  FuturesPositionChangeEvent
+  | FuturesPositionSettlementEvent
+  | FuturesPositionAdjustRiskLimitEvent
+)
+validate_update = validator[_Type](_Type)  # type: ignore
+
+
+class AllPositions(StreamEndpoint):
+  """Subscribe to `/contract/positionAll` — mixed into `Private`, the product exposing `streams.futures.all_positions`."""
+
+  def all_positions(
+    self,
+    *,
+    validate: bool | None = None,
+  ) -> StreamManager[
+    FuturesPositionChangeEvent
+    | FuturesPositionSettlementEvent
+    | FuturesPositionAdjustRiskLimitEvent,
+    Any,
+    Any,
+  ]:
+    """Subscribe to the authenticated account's futures position pushes across every contract symbol -- the all-symbol counterpart of `streams.futures.position`, fires on a position change (margin adjustment, size change, liquidation, auto-deposit status change, ADL), a funding-fee settlement, or the outcome of a risk-limit-level adjustment, on any symbol.
+
+    Args:
+      validate: Whether to validate pushed payloads against the expected schema.
+
+    Returns:
+      A manager for the subscription stream.
+
+    Raises:
+      AuthError: This connection has no credentials — this is a private channel, unreachable from a `public=True` client.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return self.authed_subscribe(
+      '/contract/positionAll',
+      validator=validate_update,
+      validate=validate,
+    )

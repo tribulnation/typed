@@ -1,0 +1,97 @@
+"""`GET /api/kyc/ndBroker/proxyClient/status/page` — Get KYC Status List."""
+
+from typing_extensions import AsyncIterator, Literal, NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class KycStatusEntry(TypedDict):
+  """KYC status of one sub-account."""
+
+  clientUid: int
+  """Sub-account (client) UID."""
+  status: Literal['NONE', 'PROCESS', 'PASS', 'REJECT']
+  """KYC status."""
+  rejectReason: NotRequired[str | None]
+  """Reason for rejection, when `status` is `REJECT`; `null` otherwise."""
+
+
+class KycStatusPage(TypedDict):
+  """One page of sub-account KYC statuses."""
+
+  currentPage: int
+  """Current page number."""
+  pageSize: int
+  """Page size used."""
+  totalNum: int
+  """Total number of sub-accounts."""
+  totalPage: int
+  """Total number of pages."""
+  items: list[KycStatusEntry]
+  """Sub-account KYC statuses on this page."""
+
+
+_Type = KycStatusPage
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class KycStatusList(RpcEndpoint):
+  """`Get KYC Status List` — mixed into `Broker`, the product exposing `broker.kyc_status_list`."""
+
+  async def kyc_status_list(
+    self,
+    *,
+    page_number: int | None = None,
+    page_size: int | None = None,
+    validate: bool | None = None,
+  ) -> KycStatusPage:
+    """List the KYC (identity-verification) status of every Exchange (ND) Broker sub-account, paginated.
+
+    Args:
+      page_number: Page number.
+      page_size: Results per page.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params = {}
+    if page_number is not None:
+      params['pageNumber'] = page_number
+    if page_size is not None:
+      params['pageSize'] = page_size
+    return await self.authed_request(
+      'GET',
+      '/api/kyc/ndBroker/proxyClient/status/page',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def kyc_status_list_paged(
+    self,
+    *,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[KycStatusPage]:
+    """Yield successive pages of `kyc_status_list`.
+
+    Requests `pageNumber` from 1 upwards and stops once it has covered the `totalPage`
+    pages the response reports, or after `max_pages` pages when one is given.
+    """
+    page_number = 1
+    pages = 0
+    while True:
+      response = await self.kyc_status_list(
+        page_size=page_size, page_number=page_number, validate=validate
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('totalPage') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages >= total:
+        break
+      page_number += 1

@@ -1,0 +1,31 @@
+"""KuCoin Earn endpoints."""
+
+from .account_holding import AccountHolding
+from .dual_investment_products import DualInvestmentProducts
+from .eth_staking_products import EthStakingProducts
+from .kcs_staking_products import KcsStakingProducts
+from .promotion_products import PromotionProducts
+from .purchase import Purchase
+from .redeem import Redeem
+from .redeem_preview import RedeemPreviewEndpoint
+from .savings_products import SavingsProducts
+from .staking_products import StakingProducts
+from .structured_product_orders import StructuredProductOrders
+from .structured_product_purchase import StructuredProductPurchase
+
+
+class Earn(
+  AccountHolding,
+  DualInvestmentProducts,
+  EthStakingProducts,
+  KcsStakingProducts,
+  PromotionProducts,
+  Purchase,
+  Redeem,
+  RedeemPreviewEndpoint,
+  SavingsProducts,
+  StakingProducts,
+  StructuredProductOrders,
+  StructuredProductPurchase,
+):
+  """KuCoin Earn endpoints."""

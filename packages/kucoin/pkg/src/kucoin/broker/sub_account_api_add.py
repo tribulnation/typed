@@ -1,0 +1,70 @@
+"""`POST /api/v1/broker/nd/account/apikey` — Add sub-account API."""
+
+from typing_extensions import Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class AddSubAccountApiRequest(TypedDict):
+  uid: str
+  """Sub-account UID to create the API key for."""
+  passphrase: str
+  """API passphrase for the new key."""
+  ipWhitelist: list[str]
+  """IP whitelist, up to 20 entries."""
+  permissions: list[Literal['general', 'spot', 'futures']]
+  """Permission group list -- only `general`, `spot` and `futures` may be set here."""
+  label: str
+  """API key remarks, 4-32 characters."""
+
+
+class BrokerSubAccountApiKeyCreated(TypedDict):
+  """A newly created broker sub-account API key."""
+
+  uid: str
+  """Sub-account UID."""
+  label: str
+  """API key remarks."""
+  apiKey: str
+  """The new API key."""
+  secretKey: str
+  """The new API secret. Shown only on creation; not retrievable afterward."""
+  apiVersion: int
+  """API key version."""
+  permissions: list[str]
+  """Permission group list assigned to the key."""
+  ipWhitelist: list[str]
+  """IP whitelist assigned to the key."""
+  createdAt: int
+  """Creation time, Unix milliseconds."""
+
+
+_Type = BrokerSubAccountApiKeyCreated
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class SubAccountApiAdd(RpcEndpoint):
+  """`Add sub-account API` — mixed into `Broker`, the product exposing `broker.sub_account_api_add`."""
+
+  async def sub_account_api_add(
+    self,
+    add_sub_account_api_request: AddSubAccountApiRequest,
+    *,
+    validate: bool | None = None,
+  ) -> BrokerSubAccountApiKeyCreated:
+    """Create a new API key for an Exchange (ND) Broker sub-account.
+
+    Args:
+      add_sub_account_api_request: New API key's owning sub-account, passphrase, IP whitelist and permission set.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/broker/nd/account/apikey',
+      json=add_sub_account_api_request,
+      validator=adapter,
+      validate=validate,
+    )

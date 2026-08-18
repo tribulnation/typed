@@ -1,0 +1,66 @@
+"""`GET /api/v1/sub/api-key` — account.sub_account_api.list."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint, Timestamp
+
+
+class SubAccountApiKey(TypedDict):
+  subName: str
+  """Sub-account name."""
+  remark: str
+  """Remark/label set when the key was created."""
+  apiKey: str
+  """API key identifier."""
+  apiVersion: int
+  """API key version."""
+  permission: str
+  """Permission(s) granted to the key, comma-joined (e.g. `General,Spot,Futures,Unified`) -- see notes."""
+  ipWhitelist: str
+  """Comma-separated IP whitelist configured for the key, or empty when none is set."""
+  createdAt: Timestamp
+  """Time the API key was created."""
+  uid: int
+  """Sub-account's numeric UID."""
+  isMaster: bool
+  """Whether this key belongs to the master account rather than a sub-account."""
+
+
+ListResponse = list[SubAccountApiKey] | None
+
+
+_Type = ListResponse
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class List(RpcEndpoint):
+  """`account.sub_account_api.list` — mixed into `SubAccountApi`, the product exposing `account.sub_account_api.list`."""
+
+  async def list(
+    self,
+    *,
+    sub_name: str,
+    api_key: str | None = None,
+    validate: bool | None = None,
+  ) -> ListResponse:
+    """Get the API keys created for one sub-account (excluding ND broker sub-accounts), optionally filtered down to one specific key. Signed with the master account's credentials.
+
+    Args:
+      sub_name: Sub-account name to list API keys for.
+      api_key: Narrow the result to this specific API key, when set.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'subName': sub_name,
+    }
+    if api_key is not None:
+      params['apiKey'] = api_key
+    return await self.authed_request(
+      'GET',
+      '/api/v1/sub/api-key',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

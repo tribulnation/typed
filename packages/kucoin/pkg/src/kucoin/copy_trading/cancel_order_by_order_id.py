@@ -1,0 +1,45 @@
+"""`DELETE /api/v1/copy-trade/futures/orders` — Cancel Order By OrderId."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class CopyTradeCancelResult(TypedDict):
+  """Order ids accepted for cancellation."""
+
+  cancelledOrderIds: list[str]
+  """Ids of the orders accepted for cancellation. The matching engine processes cancellations asynchronously -- appearing here does not yet guarantee the order is off the book."""
+
+
+_Type = CopyTradeCancelResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class CancelOrderByOrderId(RpcEndpoint):
+  """`Cancel Order By OrderId` — mixed into `CopyTrading`, the product exposing `copy_trading.cancel_order_by_order_id`."""
+
+  async def cancel_order_by_order_id(
+    self,
+    *,
+    order_id: str,
+    validate: bool | None = None,
+  ) -> CopyTradeCancelResult:
+    """Cancel a copy-trading order (including a stop order) by its system-generated order id. The request is acknowledged immediately; the matching engine processes the cancellation asynchronously. Fails if the order is already filled or previously cancelled. Requires the API key's `LeadtradeFutures` permission.
+
+    Args:
+      order_id: System-generated id of the order to cancel.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'orderId': order_id,
+    }
+    return await self.authed_request(
+      'DELETE',
+      '/api/v1/copy-trade/futures/orders',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

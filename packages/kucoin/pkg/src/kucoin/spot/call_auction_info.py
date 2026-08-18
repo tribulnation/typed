@@ -1,0 +1,59 @@
+"""`GET /api/v1/market/callauctionData` — Get Call Auction Info."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class CallAuctionInfo(TypedDict):
+  """Call-auction opening-phase data for one symbol."""
+
+  symbol: str | None
+  """Trading pair symbol. `null` outside a call-auction phase, even though it was supplied as a request parameter — see `notes`."""
+  estimatedPrice: str | None
+  """Estimated transaction price for the auction."""
+  estimatedSize: str | None
+  """Estimated transaction quantity for the auction."""
+  sellOrderRangeLowPrice: str | None
+  """Lower bound of the current ask price range."""
+  sellOrderRangeHighPrice: str | None
+  """Upper bound of the current ask price range."""
+  buyOrderRangeLowPrice: str | None
+  """Lower bound of the current bid price range."""
+  buyOrderRangeHighPrice: str | None
+  """Upper bound of the current bid price range."""
+  time: int | None
+  """Snapshot timestamp, Unix ms."""
+
+
+_Type = CallAuctionInfo
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class CallAuctionInfoEndpoint(RpcEndpoint):
+  """`Get Call Auction Info` — mixed into `Spot`, the product exposing `spot.call_auction_info`."""
+
+  async def call_auction_info(
+    self,
+    *,
+    symbol: str,
+    validate: bool | None = None,
+  ) -> CallAuctionInfo:
+    """Get a symbol's call-auction opening-phase data: estimated transaction price/quantity and the current bid/ask price ranges. Every field, including `symbol`, comes back `null` when the symbol isn't currently in a call-auction phase.
+
+    Args:
+      symbol: Trading pair symbol, e.g. `BTC-USDT`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbol': symbol,
+    }
+    return await self.request(
+      'GET',
+      '/api/v1/market/callauctionData',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

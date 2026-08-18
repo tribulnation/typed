@@ -1,0 +1,49 @@
+"""`GET /api/v1/mark-price/{symbol}/current` — Get Mark Price."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class FuturesMarkPrice(TypedDict):
+  """Current mark price snapshot for one contract."""
+
+  symbol: str
+  """Contract symbol."""
+  granularity: int
+  """Snapshot update interval, milliseconds (observed `1000` = 1 second). A raw interval value, not a documented closed set of categories -- left bare rather than an enum."""
+  timePoint: int
+  """Snapshot timestamp, Unix ms."""
+  value: float
+  """Current mark price."""
+  indexPrice: float
+  """Current spot index price backing this mark price."""
+
+
+_Type = FuturesMarkPrice
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class MarkPrice(RpcEndpoint):
+  """`Get Mark Price` — mixed into `Futures`, the product exposing `futures.mark_price`."""
+
+  async def mark_price(
+    self,
+    symbol: str,
+    *,
+    validate: bool | None = None,
+  ) -> FuturesMarkPrice:
+    """Get the current mark price for one futures contract. Snapshots update once per second.
+
+    Args:
+      symbol: Contract symbol, e.g. `XBTUSDTM`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.request(
+      'GET',
+      f'/api/v1/mark-price/{symbol}/current',
+      validator=adapter,
+      validate=validate,
+    )

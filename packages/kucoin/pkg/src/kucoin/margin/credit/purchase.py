@@ -1,0 +1,49 @@
+"""`POST /api/v3/purchase` — Purchase."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class PurchaseRequest(TypedDict):
+  currency: str
+  """Currency to lend, e.g. `BTC`, `ETH`, `USDT`."""
+  size: str
+  """Amount to lend."""
+  interestRate: str
+  """Interest rate to offer this lend at."""
+
+
+class PurchaseResult(TypedDict):
+  orderNo: str
+  """Unique id assigned to the new purchase order."""
+
+
+_Type = PurchaseResult
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Purchase(RpcEndpoint):
+  """`Purchase` — mixed into `Credit`, the product exposing `margin.credit.purchase`."""
+
+  async def purchase(
+    self,
+    purchase_request: PurchaseRequest,
+    *,
+    validate: bool | None = None,
+  ) -> PurchaseResult:
+    """Lend funds into the margin credit market at a chosen interest rate, earning interest as other margin traders borrow them. Funds must already be in the main (funding) account.
+
+    Args:
+      purchase_request: Purchase parameters.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v3/purchase',
+      json=purchase_request,
+      validator=adapter,
+      validate=validate,
+    )

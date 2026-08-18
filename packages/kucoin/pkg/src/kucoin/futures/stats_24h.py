@@ -1,0 +1,35 @@
+"""`GET /api/v1/trade-statistics` — Get 24hr Stats."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class FuturesStats24h(TypedDict):
+  """Platform-wide 24h futures trading statistics."""
+
+  turnoverOf24h: float
+  """Total platform-wide futures trading turnover in the last 24 hours, quote currency."""
+
+
+_Type = FuturesStats24h
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class Stats24h(RpcEndpoint):
+  """`Get 24hr Stats` — mixed into `Futures`, the product exposing `futures.stats_24h`."""
+
+  async def stats_24h(self, *, validate: bool | None = None) -> FuturesStats24h:
+    """Get platform-wide futures trading turnover for the previous 24 hours (not per-contract -- contrast `futures.ticker`/`futures.symbol`, which carry per-contract 24h stats).
+
+    Args:
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'GET',
+      '/api/v1/trade-statistics',
+      validator=adapter,
+      validate=validate,
+    )

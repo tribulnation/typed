@@ -1,0 +1,137 @@
+"""`GET /api/v1/struct-earn/orders` — Get Structured Product Orders."""
+
+from typing_extensions import AsyncIterator, Literal
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class StructuredProductOrder(TypedDict):
+  orderId: str
+  """Order id."""
+  category: Literal['DUAL_CLASSIC', 'DUAL_BOOSTER', 'DUAL_EXTRA']
+  """Product category, e.g. `DUAL_CLASSIC`."""
+  side: Literal['CALL', 'PUT']
+  """Direction of the product: `CALL` (bullish) or `PUT` (bearish)."""
+  duration: str
+  """Product duration, in days."""
+  apr: str
+  """Annualized rate of return."""
+  investCurrency: str
+  """Investment currency."""
+  strikeCurrency: str
+  """Strike (settlement) currency."""
+  investAmount: str
+  """Amount invested."""
+  settleAmount: str
+  """Amount settled -- empty string before settlement."""
+  settleCurrency: str | None
+  """Currency the order settled in, or `null` before settlement."""
+  targetPrice: str
+  """Strike (target) price for settlement determination."""
+  settlePrice: str
+  """Price the order settled at -- empty string before settlement."""
+  expirationTime: int
+  """Product maturity time, Unix milliseconds."""
+  status: str
+  """Order status, e.g. `ONGOING` per KuCoin's own docs example. Not formally enumerated by KuCoin's docs -- left bare per rule 2 rather than guessing the full closed set from one observed value."""
+
+
+class StructuredProductOrdersPage(TypedDict):
+  """One page of Structured Earn - Dual orders."""
+
+  currentPage: int
+  """Current page number."""
+  pageSize: int
+  """Results per page, as applied."""
+  totalNum: int
+  """Total matching orders."""
+  totalPage: int
+  """Total number of pages."""
+  items: list[StructuredProductOrder]
+  """Orders on this page."""
+
+
+_Type = StructuredProductOrdersPage
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class StructuredProductOrders(RpcEndpoint):
+  """`Get Structured Product Orders` — mixed into `Earn`, the product exposing `earn.structured_product_orders`."""
+
+  async def structured_product_orders(
+    self,
+    *,
+    categories: str,
+    order_id: str | None = None,
+    invest_currency: str | None = None,
+    current_page: int | None = None,
+    page_size: int | None = None,
+    validate: bool | None = None,
+  ) -> StructuredProductOrdersPage:
+    """Page through this account's Structured Earn - Dual orders (past and current dual-investment subscriptions). Returns an empty list if none exist.
+
+    Args:
+      categories: Comma-separated product categories to restrict the response to, e.g. `DUAL_CLASSIC,DUAL_BOOSTER,DUAL_EXTRA`. Confirmed live as required: a call omitting it fails with `400100 Invalid parameters`.
+      order_id: Restrict the response to one order id.
+      invest_currency: Restrict the response to one investment currency, e.g. `BTC`.
+      current_page: Page number.
+      page_size: Results per page.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'categories': categories,
+    }
+    if order_id is not None:
+      params['orderId'] = order_id
+    if invest_currency is not None:
+      params['investCurrency'] = invest_currency
+    if current_page is not None:
+      params['currentPage'] = current_page
+    if page_size is not None:
+      params['pageSize'] = page_size
+    return await self.authed_request(
+      'GET',
+      '/api/v1/struct-earn/orders',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )
+
+  async def structured_product_orders_paged(
+    self,
+    *,
+    categories: str,
+    order_id: str | None = None,
+    invest_currency: str | None = None,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[StructuredProductOrdersPage]:
+    """Yield successive pages of `structured_product_orders`.
+
+    Requests `currentPage` from 1 upwards and stops once it has covered the `totalPage`
+    pages the response reports, or after `max_pages` pages when one is given.
+    """
+    current_page = 1
+    pages = 0
+    while True:
+      response = await self.structured_product_orders(
+        categories=categories,
+        order_id=order_id,
+        invest_currency=invest_currency,
+        page_size=page_size,
+        current_page=current_page,
+        validate=validate,
+      )
+      yield response
+      pages += 1
+      if max_pages is not None and pages >= max_pages:
+        break
+      total = response.get('totalPage') if response is not None else None
+      total = int(total) if total is not None else None
+      if total is None or pages >= total:
+        break
+      current_page += 1

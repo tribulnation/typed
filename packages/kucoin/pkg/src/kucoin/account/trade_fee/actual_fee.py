@@ -1,0 +1,52 @@
+"""`GET /api/v1/trade-fees` — Get Actual Fee - Spot/Margin."""
+
+from typing_extensions import NotRequired
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class ActualFee(TypedDict):
+  symbol: str
+  """The trading pair, echoed back; stable even if the pair is renamed."""
+  takerFeeRate: str
+  """Actual taker fee rate for this symbol, decimal string."""
+  makerFeeRate: str
+  """Actual maker fee rate for this symbol, decimal string."""
+  sellTaxRate: NotRequired[str]
+  """Tax rate, only visible to users in certain countries."""
+  buyTaxRate: NotRequired[str]
+  """Tax rate, only visible to users in certain countries."""
+
+
+_Type = list[ActualFee]
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class ActualFeeEndpoint(RpcEndpoint):
+  """`Get Actual Fee - Spot/Margin` — mixed into `TradeFee`, the product exposing `account.trade_fee.actual_fee`."""
+
+  async def actual_fee(
+    self,
+    *,
+    symbols: str,
+    validate: bool | None = None,
+  ) -> list[ActualFee]:
+    """Get the actual (symbol-specific, VIP-tier-adjusted) spot/margin taker/maker fee rate for up to 10 trading pairs. A sub-account's fee rate matches its master account's.
+
+    Args:
+      symbols: Comma-separated trading pair symbols to query, up to 10 per request, e.g. `BTC-USDT,ETH-USDT`.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    params: dict = {
+      'symbols': symbols,
+    }
+    return await self.authed_request(
+      'GET',
+      '/api/v1/trade-fees',
+      params=params,
+      validator=adapter,
+      validate=validate,
+    )

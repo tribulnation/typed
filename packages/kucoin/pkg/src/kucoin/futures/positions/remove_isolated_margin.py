@@ -1,0 +1,44 @@
+"""`POST /api/v1/margin/withdrawMargin` — Remove Isolated Margin."""
+
+from typed_core.validation import TypedDict, validator
+from kucoin.core import RpcEndpoint
+
+
+class RemoveIsolatedMarginParams(TypedDict):
+  """Symbol and amount for an isolated-margin withdrawal."""
+
+  symbol: str
+  """Symbol of the contract, e.g. `XBTUSDTM`."""
+  withdrawAmount: str
+  """Margin amount to withdraw. If USDT-margined, denominated in USDT; if coin-margined, denominated in the settlement coin."""
+
+
+_Type = str
+adapter = validator[_Type](_Type)  # type: ignore
+
+
+class RemoveIsolatedMargin(RpcEndpoint):
+  """`Remove Isolated Margin` — mixed into `Positions`, the product exposing `futures.positions.remove_isolated_margin`."""
+
+  async def remove_isolated_margin(
+    self,
+    remove_isolated_margin_params: RemoveIsolatedMarginParams,
+    *,
+    validate: bool | None = None,
+  ) -> str:
+    """Remove isolated margin manually from an existing isolated position.
+
+    Args:
+      remove_isolated_margin_params: Symbol and amount for the isolated-margin withdrawal.
+      validate: Validate the response against the generated schema.
+
+    References:
+      - [KuCoin API docs](https://www.kucoin.com/docs-new)
+    """
+    return await self.authed_request(
+      'POST',
+      '/api/v1/margin/withdrawMargin',
+      json=remove_isolated_margin_params,
+      validator=adapter,
+      validate=validate,
+    )
