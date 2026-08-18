@@ -1,0 +1,40 @@
+from typing_extensions import TypedDict
+from bit2me.types import WalletResponse
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class TradingWalletDepositRequest(TypedDict):
+  fromPocketId: str
+  """Bit2Me pocket identifier"""
+  amount: str
+  currency: str
+  """Valid currency symbol"""
+
+
+validate_response = validator(WalletResponse)
+
+
+class RequestDeposit(RpcEndpoint):
+  async def request_deposit(
+    self,
+    trading_wallet_deposit_request: TradingWalletDepositRequest,
+    *,
+    validate: bool | None = None,
+  ) -> WalletResponse:
+    """Request deposit funds into your Pro account from a Bit2Me Wallet.
+
+    Args:
+      trading_wallet_deposit_request: Amount, currency, and source Bit2Me pocket for a deposit into the Pro account.
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/trading-spot-rest#tag/funding/POST/v1/trading/wallet/deposit)
+    """
+    return await self.authed_request(
+      'POST',
+      '/v1/trading/wallet/deposit',
+      json=trading_wallet_deposit_request,
+      validator=validate_response,
+      validate=validate,
+    )

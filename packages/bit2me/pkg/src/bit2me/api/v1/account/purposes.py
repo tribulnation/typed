@@ -1,0 +1,50 @@
+from typing_extensions import TypedDict
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class PurposeTranslation(TypedDict):
+  id: str
+  """Unique identifier of this purpose."""
+  name: str
+  """Machine-readable purpose value, e.g. `savings` or `trading`."""
+  description: str
+  """Human-readable label for this purpose, in `langCode`'s language."""
+  langCode: str
+  """ISO 639-1 language code of this translation, e.g. `en`."""
+
+
+class ListPurposesResponse(TypedDict):
+  total: int
+  """Total number of purpose translations returned."""
+  data: list[PurposeTranslation]
+  """Purpose translations, one entry per account-usage purpose value."""
+
+
+validate_response = validator(ListPurposesResponse)
+
+
+class Purposes(RpcEndpoint):
+  async def __call__(
+    self,
+    *,
+    lang_code: str | None = None,
+    validate: bool | None = None,
+  ) -> ListPurposesResponse:
+    """Return all purposes. Values are lowercase.
+
+    Args:
+      lang_code: Lang code
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/account/GET/v1/account/purposes)
+    """
+    params = {'langCode': lang_code} if lang_code is not None else None
+    return await self.authed_request(
+      'GET',
+      '/v1/account/purposes',
+      params=params,
+      validator=validate_response,
+      validate=validate,
+    )

@@ -1,0 +1,88 @@
+from decimal import Decimal
+from typing_extensions import Any, Literal, NotRequired, TypedDict
+from bit2me.types import TransactionSubsFeeTypeParam
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class Benefit(TypedDict):
+  """Discount benefit applied to the order from the user's fee tier, if any."""
+
+  amount: Decimal
+  """Amount of the benefit discount."""
+  currency: str
+  """Currency of the benefit amount."""
+  percentage: Decimal
+  """Percentage discount rate of the benefit."""
+  tier: float
+  """Fee tier level that granted the benefit."""
+  levelId: NotRequired[str]
+  """Identifier of the fee tier level that granted the benefit."""
+
+
+class Destination(TypedDict):
+  type: Literal['pocket']
+  value: str
+
+
+class Method(TypedDict):
+  type: Literal['creditcard', 'google-pay', 'apple-pay', 'hub-latam']
+  params: NotRequired[dict[str, Any]]
+
+
+class TellerCreateOrderProformaRequest(TypedDict):
+  amount: str
+  description: NotRequired[str]
+  currency: str
+  feeType: NotRequired[TransactionSubsFeeTypeParam]
+  orderType: Literal['deposit', 'purchase']
+  destination: NotRequired[Destination]
+  method: Method
+
+
+class TellerCreateOrderProformaResponse(TypedDict):
+  orderId: str
+  """Identifier of the created proforma order; pass it to `POST /v1/teller/order` to execute it."""
+  denomination: dict[str, Any]
+  """Amount and conversion rate this order is denominated in."""
+  currency: str
+  """Currency code of the amounts in this response."""
+  amountBeforeFee: str
+  """Order amount before fees are applied."""
+  amountAfterFee: str
+  """Order amount after fees are applied."""
+  fixedFee: str
+  """Fixed fee charged for the order."""
+  variableFee: str
+  """Variable fee charged for the order, computed from `variableFeePercentage`."""
+  variableFeePercentage: str
+  """Percentage rate used to compute `variableFee`."""
+  benefit: NotRequired[Benefit]
+
+
+validate_response = validator(TellerCreateOrderProformaResponse)
+
+
+class Preview(RpcEndpoint):
+  async def preview(
+    self,
+    teller_create_order_proforma_request: TellerCreateOrderProformaRequest,
+    *,
+    validate: bool | None = None,
+  ) -> TellerCreateOrderProformaResponse:
+    """Create a deposit proforma. To execute the resulting order, confirm it with `POST /v1/teller/order`.
+
+    Args:
+      teller_create_order_proforma_request: Deposit amount, currency, order type, destination pocket, and payment method to preview. Execute the returned `orderId` with `POST /v1/teller/order`.
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/funding/POST/v1/teller/order/proforma)
+    """
+    return await self.authed_request(
+      'POST',
+      '/v1/teller/order/proforma',
+      json=teller_create_order_proforma_request,
+      validator=validate_response,
+      validate=validate,
+    )

@@ -1,0 +1,23 @@
+from bit2me.types import BooleanResultResponse
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+validate_response = validator(BooleanResultResponse)
+
+
+class Submit(RpcEndpoint):
+  async def submit(self, *, validate: bool | None = None) -> BooleanResultResponse:
+    """Send the data to be verified (change the status to pending)
+
+    Args:
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/account/POST/v1/account/verify/identity)
+    """
+    return await self.authed_request(
+      'POST',
+      '/v1/account/verify/identity',
+      validator=validate_response,
+      validate=validate,
+    )

@@ -1,0 +1,280 @@
+from datetime import datetime
+from decimal import Decimal
+from typing_extensions import Literal, NotRequired, TypedDict
+from bit2me.types import DepositEstimation, FundsOrigin, Phone, UserType
+from bit2me.core.endpoint import RpcEndpoint
+from typed_core.validation import validator
+
+
+class AttorneyInFact(TypedDict):
+  """Attorney-in-fact (authorized representative) acting on behalf of the company."""
+
+  name: NotRequired[str]
+  """Attorney-in-fact's first name."""
+  surname: NotRequired[str]
+  """Attorney-in-fact's surname."""
+  typeOfDocument: NotRequired[
+    Literal['none', 'idcard', 'foreign-id-card', 'passport', 'drivinglicense', 'visa']
+  ]
+  """Type of identity document held by the attorney-in-fact."""
+  numberOfDocument: NotRequired[str]
+  """Attorney-in-fact's identity document number."""
+
+
+class Avatar(TypedDict):
+  """Avatar image URLs at different sizes."""
+
+  sm: NotRequired[str]
+  """Small avatar image URL."""
+  md: NotRequired[str]
+  """Medium avatar image URL."""
+  lg: NotRequired[str]
+  """Large avatar image URL."""
+
+
+class Contact(TypedDict):
+  """Primary contact person for the company account."""
+
+  name: NotRequired[str]
+  """Contact's first name."""
+  surname: NotRequired[str]
+  """Contact's surname."""
+  typeOfDocument: NotRequired[
+    Literal['none', 'idcard', 'foreign-id-card', 'passport', 'drivinglicense', 'visa']
+  ]
+  """Type of identity document held by the contact."""
+  numberOfDocument: NotRequired[str]
+  """Contact's identity document number."""
+
+
+class Identity(TypedDict):
+  """Identity document details of the company's legal representative."""
+
+  type: NotRequired[
+    Literal['none', 'idcard', 'passport', 'drivinglicense', 'visa', 'cif']
+  ]
+  """Type of identity document."""
+  number: NotRequired[str]
+  """Identity document number."""
+  countryCode: NotRequired[str]
+  """Country that issued the identity document, as an ISO 3166-1 alpha-2 code."""
+  updatedAt: NotRequired[datetime]
+  """Timestamp the identity document details were last updated."""
+
+
+class PartnersItem(TypedDict):
+  """A partner or shareholder of the company."""
+
+  nationalityCountryCode: NotRequired[str]
+  """Partner's nationality, as an ISO 3166-1 alpha-2 country code."""
+  companyPartnerId: str
+  """Unique identifier of the partner record."""
+  documentType: NotRequired[
+    Literal['none', 'idcard', 'foreign-id-card', 'passport', 'drivinglicense', 'visa']
+  ]
+  """Type of identity document held by the partner."""
+  documentNumber: NotRequired[str]
+  """Partner's identity document number."""
+  documentCountryCode: NotRequired[str]
+  """Country that issued the partner's identity document, as an ISO 3166-1 alpha-2 code."""
+  birthdate: NotRequired[datetime]
+  """Partner's date of birth."""
+  sharePercentage: NotRequired[Decimal]
+  """Percentage of company shares held by the partner."""
+  fullName: NotRequired[str]
+  """Partner's full name."""
+  isPoliticallyExposed: NotRequired[bool]
+  """Whether the partner is a politically exposed person."""
+  deletedAt: NotRequired[datetime]
+  """Timestamp the partner record was removed, when it has been."""
+
+
+class Person(TypedDict):
+  """Personal identity details for an individual account holder."""
+
+  name: NotRequired[str]
+  """Person's first name."""
+  surname: NotRequired[str]
+  """Person's surname."""
+  gender: NotRequired[Literal['male', 'female', 'N/D']]
+  """Person's declared gender."""
+  birthDate: NotRequired[str]
+  """Person's date of birth (YYYY-MM-DD)."""
+  nationalityCountryCode: NotRequired[str]
+  """Person's nationality, as an ISO 3166-1 alpha-2 country code."""
+  employmentStatus: NotRequired[
+    Literal['employed', 'student', 'selfEmployed', 'retired', 'unemployed']
+  ]
+  """Person's current employment status."""
+  profession: NotRequired[str]
+  """Profession code selected during onboarding, matching an entry returned by `GET /v1/account/professions`."""
+  politicallyExposedPerson: NotRequired[str]
+  """Whether the person is a politically exposed person, as reported by the venue (observed values: `"yes"`, `"no"`). Left a bare string; upstream never publishes the closed set."""
+
+
+class PoliticalPartnersItem(TypedDict):
+  """A politically exposed partner of the company."""
+
+  name: NotRequired[str]
+  """Partner's full name."""
+  position: NotRequired[str]
+  """Partner's political position or role."""
+
+
+class SecondFactorAuth(TypedDict):
+  """Two-factor authentication configuration for the account."""
+
+  enabled: NotRequired[bool]
+  """Whether two-factor authentication is currently enabled for the account."""
+  alwaysRequired: NotRequired[bool]
+  """Whether two-factor authentication is required on every sign-in and action, rather than only on sensitive ones."""
+
+
+class Company(TypedDict):
+  """Company identity details for a business account."""
+
+  businessName: NotRequired[str]
+  """Registered legal name of the company."""
+  kindOfSociety: NotRequired[str]
+  """Legal form of the company (e.g. limited liability company)."""
+  constitutionDate: NotRequired[datetime]
+  """Date the company was legally constituted."""
+  constitutionCountryCode: NotRequired[str]
+  """Country where the company was constituted, as an ISO 3166-1 alpha-2 code."""
+  registeredOffice: NotRequired[str]
+  """Company's registered office address."""
+  sector: NotRequired[str]
+  """Industry sector the company operates in."""
+  autonomus: NotRequired[bool]
+  """Whether the company is registered as a self-employed/sole-trader entity (Spanish `autónomo`)."""
+  obligedSubject: NotRequired[bool]
+  """Whether the company is an obliged subject under anti-money-laundering regulation."""
+  overTheCounter: NotRequired[bool]
+  """Whether the company operates over-the-counter (OTC) trading."""
+  politicallyExposedPersonPartners: NotRequired[bool]
+  """Whether any of the company's partners are politically exposed persons."""
+  politicalPartners: NotRequired[list[PoliticalPartnersItem]]
+  """Politically exposed partners of the company."""
+  firstTradeEstimatedValue: NotRequired[int]
+  """Estimated value of the company's first trade on Bit2Me."""
+  annualTradeEstimatedValue: NotRequired[int]
+  """Estimated annual trading value the company declared."""
+  billingVolume: NotRequired[int]
+  """Company's declared billing volume."""
+  numberOfPartners: NotRequired[int]
+  """Number of partners/shareholders in the company."""
+  reasonForTheOperation: NotRequired[list[str]]
+  """Declared reasons for operating on Bit2Me."""
+  typeOfOperationsToPerform: NotRequired[list[str]]
+  """Declared types of operations the company intends to perform on Bit2Me."""
+  identity: NotRequired[Identity]
+  taxId: NotRequired[str]
+  """Company's tax identification number."""
+  legalEntityId: NotRequired[str]
+  """Company's legal entity identifier."""
+  contact: NotRequired[Contact]
+  attorneyInFact: NotRequired[AttorneyInFact]
+  legalTerms: NotRequired[bool]
+  """Whether the company has accepted Bit2Me's legal terms."""
+  service: NotRequired[str]
+  """Bit2Me service the company signed up for (e.g. crypto API access)."""
+  webUrl: NotRequired[str | None]
+  """Company's website URL, when provided."""
+  shareholdingStructure: NotRequired[str | None]
+  """Description of, or reference to, the company's shareholding structure documentation, when provided."""
+  services: NotRequired[
+    list[
+      Literal[
+        'crypto_investment',
+        'send_crypto',
+        'liquidity',
+        'earn_loan',
+        'api',
+        'consulting',
+        'other',
+      ]
+    ]
+  ]
+  """Bit2Me services the company uses."""
+  otherServices: NotRequired[str | None]
+  """Free-text description of other services the company uses, typically set when `services` includes `other`."""
+  partners: NotRequired[list[PartnersItem]]
+  """Company partners/shareholders."""
+  economicCapacityModel: NotRequired[Literal['model_200', 'model_390', 'model_303']]
+  """Spanish tax model used to assess the company's economic capacity."""
+
+
+class Profile(TypedDict):
+  """Regional display preferences for the account."""
+
+  langCode: NotRequired[str]
+  """Preferred UI language, as an ISO 639-1 code, optionally region-suffixed (e.g. `en` or `en-US`)."""
+  currencyCode: NotRequired[str]
+  """Preferred display currency, as an ISO 4217 code."""
+  timeZone: NotRequired[str]
+  """Preferred IANA time zone identifier, e.g. `Europe/Madrid`."""
+  avatar: NotRequired[Avatar]
+
+
+class AccountDetailsV3response(TypedDict):
+  id: str
+  """Unique identifier of the account."""
+  email: str
+  """Email address the account signs in with and receives notifications at."""
+  realEmail: NotRequired[str]
+  """Underlying, unmasked email address behind the account, when `email` has been replaced by an alias."""
+  phone: NotRequired[Phone]
+  alias: NotRequired[str]
+  """Public, user-chosen handle for the account that can be shared in place of the account id."""
+  person: NotRequired[Person]
+  profile: NotRequired[Profile]
+  selfInvoiceIdentityNumber: NotRequired[str]
+  """Masked tax/identity number used when the account self-issues invoices."""
+  registrationDate: NotRequired[datetime]
+  """Timestamp when the account was registered."""
+  type: NotRequired[UserType]
+  depositEstimation: NotRequired[DepositEstimation]
+  fundsOrigin: NotRequired[FundsOrigin]
+  accountPurpose: NotRequired[
+    Literal[
+      'savings', 'currencyExchange', 'investment', 'trading', 'cryptocurrencyPayments'
+    ]
+  ]
+  """Primary purpose the account holder declared for using Bit2Me."""
+  secondFactorAuth: NotRequired[SecondFactorAuth]
+  documentValidity: NotRequired[
+    Literal['valid', 'almostExpired', 'expired', 'updateRequired']
+  ]
+  """Validity status of the identity document on file."""
+  company: NotRequired[Company]
+  accountCompleted: NotRequired[bool]
+  """Whether the account has completed all required onboarding steps."""
+  knowledgeLevel: NotRequired[float]
+  """Self-assessed crypto knowledge level, from 1 (lowest) to 4 (highest)."""
+  registrationReason: NotRequired[
+    Literal['investing', 'diversification', 'savings', 'curiosity', 'blockchain']
+  ]
+  """Reason the account holder declared for registering with Bit2Me."""
+  knowledgeQuestionsStatus: NotRequired[Literal['completed', 'uncompleted', 'omitted']]
+  """Completion status of the crypto knowledge questionnaire."""
+
+
+validate_response = validator(AccountDetailsV3response)
+
+
+class Get(RpcEndpoint):
+  async def get(self, *, validate: bool | None = None) -> AccountDetailsV3response:
+    """Get account details, personal data is returned masked
+
+    Args:
+      validate: Whether to validate the response against the expected schema.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/doc#tag/account/GET/v3/account)
+    """
+    return await self.authed_request(
+      'GET',
+      '/v3/account',
+      validator=validate_response,
+      validate=validate,
+    )

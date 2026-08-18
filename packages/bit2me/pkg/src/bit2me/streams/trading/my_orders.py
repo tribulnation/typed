@@ -1,0 +1,74 @@
+from datetime import datetime
+from decimal import Decimal
+from bit2me.core.endpoint import StreamEndpoint
+from bit2me.core.transport.ws.trading import Reply
+from typed_core.util import StreamManager
+from typed_core.validation import validator
+from typing_extensions import NotRequired, TypedDict
+from bit2me.types import MillisTimestamp, OrderSide, OrderStatus, OrderType
+
+
+class MyOrderUpdate(TypedDict):
+  """State of one of the authenticated user's orders after a change."""
+
+  id: str
+  """Order identifier."""
+  userId: NotRequired[str]
+  """Owner of the order."""
+  symbol: str
+  """Market symbol the order trades."""
+  side: OrderSide
+  type: OrderType
+  status: OrderStatus
+  timestamp: NotRequired[MillisTimestamp]
+  datetime: NotRequired[datetime]
+  """When the order reached this state, in ISO 8601."""
+  price: NotRequired[Decimal]
+  """Limit price, or 0 for market orders."""
+  stopPrice: NotRequired[Decimal]
+  """Trigger price, or 0 when the order has no trigger."""
+  amount: NotRequired[Decimal]
+  """Ordered volume, in base currency."""
+  filled: NotRequired[Decimal]
+  """Volume filled so far, in base currency."""
+  remainingAmount: NotRequired[Decimal]
+  """Volume still resting, in base currency."""
+  dustAmount: NotRequired[Decimal]
+  """Residual volume left unfillable once the order is filled."""
+  cost: NotRequired[Decimal]
+  """Total cost of the fills so far, in quote currency."""
+  feeAmount: NotRequired[Decimal]
+  """Fee charged so far."""
+  feeCurrency: NotRequired[str | None]
+  """Currency of `feeAmount`, or null before any fee is charged."""
+  cancelationReason: NotRequired[str]
+  """Why Bit2Me cancelled the order, when it did."""
+  clientOrderId: NotRequired[str | None]
+  """Client-supplied identifier, or null when none was set."""
+
+
+validate_message = validator(MyOrderUpdate)
+
+
+class MyOrders(StreamEndpoint):
+  def my_orders(
+    self,
+    *,
+    symbol: str | None = None,
+    validate: bool | None = None,
+  ) -> StreamManager[MyOrderUpdate, Reply, Reply]:
+    """Stream state changes of the authenticated user's orders.
+
+    Args:
+      symbol: Market symbol to filter on; omit to receive every symbol.
+      validate: Whether to validate pushed payloads against the expected schema.
+
+    Returns:
+      A manager for the subscription stream.
+
+    References:
+      - [Bit2Me API docs](https://api.bit2me.com/trading-spot-websockets)
+    """
+    return self.authed_subscribe(
+      'my-orders', {'symbol': symbol}, validator=validate_message, validate=validate
+    )
