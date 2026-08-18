@@ -34,12 +34,6 @@ covers both, plus their independent WebSocket feeds (`client.classic_streams` /
 pip install typed-bitget
 ```
 
-## Documentation
-
-- [API Keys Setup](api-keys.md)
-- [How To](how-to/index.md)
-- [Reference](reference/index.md)
-
 ## How To
 
 - [Fetch Market Data](how-to/fetch-market-data.md)
@@ -49,6 +43,14 @@ pip install typed-bitget
 - [Manage Earn Instruments](how-to/manage-earn-instruments.md)
 - [Manage Deposits & Withdrawals](how-to/manage-deposits-and-withdrawals.md)
 - [Paginate Through Results](how-to/paginate-through-results.md)
+
+## Reference
+
+- [API Keys Setup](api-keys.md)
+- [Async Usage](reference/async-usage.md)
+- [Error Handling](reference/error-handling.md)
+- [Environment Variables](reference/env-vars.md)
+- [Timestamps](reference/timestamps.md)
 
 ## Design Philosophy
 

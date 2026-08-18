@@ -1,6 +1,38 @@
-# Typed Bitget
+<p align="center">
+  <a href="https://tribulnation.com/typed/bitget">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-light.svg">
+      <img alt="Typed Bitget" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> A fully typed, validated async client for the Bitget API.
+<p align="center">
+  <em>A fully typed, validated async client for the Bitget API.</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/typed-bitget/">
+    <img src="https://img.shields.io/pypi/v/typed-bitget.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/typed-bitget/">
+    <img src="https://img.shields.io/pypi/pyversions/typed-bitget.svg" alt="Python versions">
+  </a>
+  <a href="https://tribulnation.com/typed/bitget">
+    <img src="https://img.shields.io/badge/docs-live-black" alt="Docs">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/pypi/l/typed-bitget.svg" alt="License">
+  </a>
+</p>
+
+---
+
+- **Documentation**: [https://tribulnation.com/typed/bitget](https://tribulnation.com/typed/bitget)
+- **Source Code**: [https://github.com/tribulnation/typed/tree/main/packages/bitget](https://github.com/tribulnation/typed/tree/main/packages/bitget)
+
+---
 
 ```python
 from bitget import Bitget
@@ -34,12 +66,6 @@ covers both, plus their independent WebSocket feeds (`client.classic_streams` /
 pip install typed-bitget
 ```
 
-## Documentation
-
-- [API Keys Setup](https://tribulnation.com/typed/bitget/api-keys)
-- [How To](https://tribulnation.com/typed/bitget/how-to)
-- [Reference](https://tribulnation.com/typed/bitget/reference)
-
 ## How To
 
 - [Fetch Market Data](https://tribulnation.com/typed/bitget/how-to/fetch-market-data)
@@ -50,12 +76,20 @@ pip install typed-bitget
 - [Manage Deposits & Withdrawals](https://tribulnation.com/typed/bitget/how-to/manage-deposits-and-withdrawals)
 - [Paginate Through Results](https://tribulnation.com/typed/bitget/how-to/paginate-through-results)
 
+## Reference
+
+- [API Keys Setup](https://tribulnation.com/typed/bitget/api-keys)
+- [Async Usage](https://tribulnation.com/typed/bitget/reference/async-usage)
+- [Error Handling](https://tribulnation.com/typed/bitget/reference/error-handling)
+- [Environment Variables](https://tribulnation.com/typed/bitget/reference/env-vars)
+- [Timestamps](https://tribulnation.com/typed/bitget/reference/timestamps)
+
 ## Design Philosophy
 
 Typed Bitget follows the principles outlined in [this blog post](https://tribulnation.com/blog/clients).
 
 *Details matter. Developer experience matters.*
 
-## Source Code
+## License
 
-> [github.com/tribulnation/typed](https://github.com/tribulnation/typed/tree/main/packages/bitget)
+MIT — see [LICENSE](LICENSE).
