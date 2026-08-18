@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-mexc"
+version = "1.2.3"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the MEXC APIs."
+license = "MIT"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core>=0.2.0",
+  "betterproto2==0.9.*",
+  "httpx",
+  "lazy-loader",
+  "orjson",
+  "pydantic",
+  "typing-extensions",
+  "websockets",
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[project.urls]
+Repository = "https://github.com/tribulnation/mexc.git"
+Documentation = "https://mexc.tribulnation.com"
+Website = "https://tribulnation.com"
+
+[tool.setuptools.package-data]
+mexc = ["py.typed", "*.pyi", "**/*.pyi"]

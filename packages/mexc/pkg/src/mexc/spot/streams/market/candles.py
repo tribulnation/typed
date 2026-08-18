@@ -1,0 +1,40 @@
+from dataclasses import dataclass
+from typed_core.util import StreamManager
+from typed_core.ws.streams import Stream
+from mexc.spot.streams.core import Reply, StreamsMixin
+from mexc.spot.streams.core.proto import PublicSpotKlineV3Api
+from typing_extensions import Literal
+
+def channel_name(
+  symbol: str,
+  interval: Literal['Min1', 'Min5', 'Min15', 'Min30', 'Min60', 'Hour4', 'Hour8', 'Day1', 'Week1', 'Month1'],
+):
+  return f'spot@public.kline.v3.api.pb@{symbol}@{interval}'
+
+@dataclass
+class Candles(StreamsMixin):
+  def candles(
+    self, symbol: str,
+    interval: Literal['Min1', 'Min5', 'Min15', 'Min30', 'Min60', 'Hour4', 'Hour8', 'Day1', 'Week1', 'Month1'],
+  ) -> StreamManager[PublicSpotKlineV3Api, Reply, Reply]:
+    """Subscribes to one spot candlestick stream for an uppercase trading pair and documented interval. Messages are protobuf-encoded PushDataV3ApiWrapper payloads whose publicSpotKline body contains the current candlestick update.
+
+    Args:
+      symbol: Uppercase spot trading pair, for example `BTCUSDT`.
+      interval: Kline interval. MEXC documents minute, hour, day, week, and month intervals.
+
+    References:
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#k-line-streams)
+    """
+    return StreamManager(lambda: self._candles_impl(symbol, interval))
+
+  async def _candles_impl(
+    self, symbol: str,
+    interval: Literal['Min1', 'Min5', 'Min15', 'Min30', 'Min60', 'Hour4', 'Hour8', 'Day1', 'Week1', 'Month1'],
+  ) -> Stream[PublicSpotKlineV3Api, Reply, Reply]:
+    stream = await self.subscribe(channel_name(symbol, interval))
+    async def parsed_stream():
+      async for proto in stream:
+        if proto.public_spot_kline is not None:
+          yield proto.public_spot_kline
+    return Stream(reply=stream.reply, stream=parsed_stream(), unsubscribe=stream.unsubscribe)
