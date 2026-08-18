@@ -24,6 +24,7 @@ Every client builds on [`typed-core`](packages/core).
 | | Repo | Status | PyPI |
 |--|------|--------|-----|
 | <img src="https://catalogue.tribulnation.com/icons/platform/binance.svg" width="20" height="20" /> | [Binance](https://github.com/tribulnation/typed/tree/main/packages/binance) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-binance)](https://pypi.org/project/typed-binance/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/deribit.svg" width="20" height="20" /> | [Deribit](https://github.com/tribulnation/typed/tree/main/packages/deribit) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-deribit)](https://pypi.org/project/typed-deribit/) |
 
 More venues are on the way — see the [full catalog](https://tribulnation.com/typed).
 
