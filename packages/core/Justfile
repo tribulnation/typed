@@ -1,0 +1,9 @@
+help:
+  @just --list
+
+# Build the package (into `dist/`)
+build:
+  rm -drf dist && \
+  pyright . && \
+  python -m build && \
+  rm -drf build
