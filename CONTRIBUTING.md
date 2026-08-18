@@ -16,9 +16,10 @@ Hand-written, and taking PRs directly:
 
 ## Filing a bug
 
-Open an issue against the package it's in, with the smallest reproduction you can manage —
-the failing call, the response that didn't validate, the type that didn't match. Include
-the package name and version.
+Open an issue against the package it's in, using the issue template — the smallest
+reproduction you can manage (the failing call, the response that didn't validate, the type
+that didn't match), plus the package name and version. This still applies to generated
+code: file the issue, don't PR the generated file.
 
 ## Proposing a change to hand-written code
 
