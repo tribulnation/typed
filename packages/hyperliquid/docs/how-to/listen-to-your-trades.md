@@ -12,10 +12,10 @@ from hyperliquid import Hyperliquid
 user = '0xYourAccountAddress'
 
 async with Hyperliquid.ws(public=True) as client:
-  fills = await client.streams.user_fills(user)
-  async for update in fills:
-    for fill in update['fills']:
-      print(fill['coin'], fill['side'], fill['px'], fill['sz'])
+  async with client.streams.user_fills(user) as fills:
+    async for update in fills:
+      for fill in update['fills']:
+        print(fill['coin'], fill['side'], fill['px'], fill['sz'])
 ```
 
 If you want partial fills aggregated within the same block, pass `aggregate_by_time=True`.
@@ -26,9 +26,9 @@ from hyperliquid import Hyperliquid
 user = '0xYourAccountAddress'
 
 async with Hyperliquid.ws(public=True) as client:
-  fills = await client.streams.user_fills(user, aggregate_by_time=True)
-  async for update in fills:
-    print(update['fills'])
+  async with client.streams.user_fills(user, aggregate_by_time=True) as fills:
+    async for update in fills:
+      print(update['fills'])
 ```
 
 ## Related User Streams

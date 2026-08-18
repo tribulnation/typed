@@ -52,9 +52,20 @@ This is the recommended style for:
 
 ## Streams
 
-For `client.streams`, prefer `async with` almost always.
+Each `client.streams` method returns a subscription manager, not a stream directly. Use
+`async with` on it so the subscription is unsubscribed automatically when the block exits:
 
-Subscriptions keep a WebSocket connection open until the client is closed.
+```python
+from hyperliquid import Hyperliquid
+
+async with Hyperliquid.ws(public=True) as client:
+  async with client.streams.trades('BTC') as trades:
+    async for batch in trades:
+      print(batch[0]['px'])
+```
+
+`await`ing the manager directly also works, but leaves the subscription open until you call
+`unsubscribe()` yourself:
 
 ```python
 from hyperliquid import Hyperliquid
@@ -63,6 +74,8 @@ async with Hyperliquid.ws(public=True) as client:
   trades = await client.streams.trades('BTC')
   async for batch in trades:
     print(batch[0]['px'])
+    break
+  await trades.unsubscribe()
 ```
 
 ## Composite Client

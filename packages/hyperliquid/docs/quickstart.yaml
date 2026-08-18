@@ -84,19 +84,19 @@ how_tos:
   - title: Listen to public data
     body: Public order book and trade subscriptions -- no credentials needed.
     code: |
-      book = await client.streams.l2_book('BTC')  # order book updates
-      async for update in book:
-        print(update['coin'])
+      async with client.streams.l2_book('BTC') as book:  # order book updates
+        async for update in book:
+          print(update['coin'])
 
-      trades = await client.streams.trades('BTC')  # public trade prints
-      async for batch in trades:
-        print(batch)
+      async with client.streams.trades('BTC') as trades:  # public trade prints
+        async for batch in trades:
+          print(batch)
 
   - title: Listen to your trades
     body: Stream your own fills as they happen.
     code: |
       user = client.exchange.wallet.address
 
-      fills = await client.streams.user_fills(user)  # your fills, as they happen
-      async for update in fills:
-        print(update['fills'])
+      async with client.streams.user_fills(user) as fills:  # your fills, as they happen
+        async for update in fills:
+          print(update['fills'])
