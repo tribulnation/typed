@@ -11,7 +11,7 @@ only `__aenter__` needed to change.
 open a real HTTP connection.
 """
 from dataclasses import dataclass, field
-from typing_extensions import Any
+from typing_extensions import Any, ClassVar
 import pytest
 import httpx
 
@@ -21,6 +21,8 @@ from typed_core.http import HttpClient
 @dataclass
 class FakeHttpxClient:
   """Stand-in for `httpx.AsyncClient`: records construction and lifecycle calls instead of opening a socket."""
+  instances: ClassVar[list['FakeHttpxClient']] = []
+  """Every `FakeHttpxClient` constructed by the current test, class-level so the fixture can reset it."""
   entered: bool = field(default=False, init=False)
   exit_calls: list[tuple] = field(default_factory=list, init=False)
   request_calls: list[tuple] = field(default_factory=list, init=False)
@@ -38,9 +40,6 @@ class FakeHttpxClient:
   async def request(self, method: str, url: str, **kwargs: Any):
     self.request_calls.append((method, url))
     return httpx.Response(200, request=httpx.Request(method, url))
-
-FakeHttpxClient.instances = []
-"""Every `FakeHttpxClient` constructed by the current test, class-level so the fixture can reset it."""
 
 @pytest.fixture(autouse=True)
 def fake_httpx_client(monkeypatch: pytest.MonkeyPatch):
