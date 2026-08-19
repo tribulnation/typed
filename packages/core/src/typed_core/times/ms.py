@@ -22,6 +22,11 @@ class EpochConverter(TimeConverter[int]):
     """Create a converter for second epoch timestamps."""
     return cls(unit=1, tz=tz)
 
+  @classmethod
+  def microseconds(cls, tz: timezone | None = None):
+    """Create a converter for microsecond epoch timestamps."""
+    return cls(unit=1e6, tz=tz)
+
   def parse(self, value: int | str) -> datetime:
     """Parse an epoch timestamp into a `datetime`.
 
