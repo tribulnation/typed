@@ -15,6 +15,7 @@ real `websockets.connect`. The regression test for the finding above uses a subc
 opening a socket.
 """
 from dataclasses import dataclass, field
+from typing_extensions import cast
 import asyncio
 import pytest
 import websockets
@@ -48,7 +49,7 @@ class RecordingSocket(Socket):
     self.open_calls += 1
     self.last_connection = FakeConnection()
     return Context(
-      ws=self.last_connection,
+      ws=cast(websockets.ClientConnection, self.last_connection),
       listener=asyncio.create_task(_hang()),
       pinger=asyncio.create_task(_hang()),
     )

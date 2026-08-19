@@ -4,11 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-core"
-version = "0.2.1"
+version = "0.3.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
 description = "Shared core types and utilities for typed crypto clients"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
 dependencies = [
   "typing-extensions", "httpx", "websockets", "orjson", "pydantic",
   "lazy-loader",
