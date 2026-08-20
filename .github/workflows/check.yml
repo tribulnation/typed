@@ -14,8 +14,23 @@ jobs:
         id: filter
         with:
           filters: |
+            alchemy: 'packages/alchemy/**'
             binance: 'packages/binance/**'
+            bit2me: 'packages/bit2me/**'
+            bitget: 'packages/bitget/**'
+            bybit: 'packages/bybit/**'
+            coinbase: 'packages/coinbase/**'
             core: 'packages/core/**'
+            cosmos: 'packages/cosmos/**'
+            deribit: 'packages/deribit/**'
+            dydx: 'packages/dydx/**'
+            ethereum: 'packages/ethereum/**'
+            etherscan: 'packages/etherscan/**'
+            hyperliquid: 'packages/hyperliquid/**'
+            kraken: 'packages/kraken/**'
+            kucoin: 'packages/kucoin/**'
+            mexc: 'packages/mexc/**'
+            moralis: 'packages/moralis/**'
   check:
     needs: changes
     if: needs.changes.outputs.packages != '[]'
