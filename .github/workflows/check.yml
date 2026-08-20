@@ -15,22 +15,7 @@ jobs:
         with:
           filters: |
             alchemy: 'packages/alchemy/**'
-            binance: 'packages/binance/**'
-            bit2me: 'packages/bit2me/**'
-            bitget: 'packages/bitget/**'
-            bybit: 'packages/bybit/**'
-            coinbase: 'packages/coinbase/**'
             core: 'packages/core/**'
-            cosmos: 'packages/cosmos/**'
-            deribit: 'packages/deribit/**'
-            dydx: 'packages/dydx/**'
-            ethereum: 'packages/ethereum/**'
-            etherscan: 'packages/etherscan/**'
-            hyperliquid: 'packages/hyperliquid/**'
-            kraken: 'packages/kraken/**'
-            kucoin: 'packages/kucoin/**'
-            mexc: 'packages/mexc/**'
-            moralis: 'packages/moralis/**'
   check:
     needs: changes
     if: needs.changes.outputs.packages != '[]'
@@ -52,6 +37,6 @@ jobs:
           fi
       - run: pip install -e packages/core
       - run: pip install -e ${{ steps.dir.outputs.path }}
-      - run: pip install ruff pyright pytest
+      - run: pip install ruff pyright
       - run: ruff check --select TID251 ${{ steps.dir.outputs.path }}
       - run: pyright ${{ steps.dir.outputs.path }}
