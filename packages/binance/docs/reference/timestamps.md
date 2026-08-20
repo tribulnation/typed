@@ -11,7 +11,7 @@ Pass a `datetime` directly when filtering a time window.
 
 ```python
 from datetime import datetime, timedelta
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   candles = await client.spot.market.klines(
@@ -25,8 +25,8 @@ async with Binance.new(public=True) as client:
 Validated response timestamp fields — like `E`/`T` on stream events, `SpotTrade.time`, or the
 open/close-time entries of a `SpotCandle` row — come back as `datetime` objects too. A
 handful of order-book-depth response fields (e.g. `usdm_futures.market.depth`'s `E`/`T`) are
-typed as raw millisecond `int` instead, not `Timestamp` — convert those manually with
-`timestamp.parse()` if you need a `datetime`.
+typed as raw millisecond `int` instead, not `TimestampMillis` — convert those manually with
+`timestamp_millis.parse()` if you need a `datetime`.
 
 ## Raw Helpers
 
@@ -35,9 +35,9 @@ need one.
 
 ```python
 from datetime import datetime
-from binance.core import timestamp
+from typed_binance.core import timestamp_millis
 
-timestamp_ms = timestamp.dump(datetime.now())
-current_ms = timestamp.now()
-parsed = timestamp.parse(1715200000000)
+timestamp_ms = timestamp_millis.dump(datetime.now())
+current_ms = timestamp_millis.now()
+parsed = timestamp_millis.parse(1715200000000)
 ```

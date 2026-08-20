@@ -7,7 +7,7 @@ with a fixed subscription duration.
 ## List Available Products
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
   products = await client.spot.simple_earn.flexible.list(asset='USDT')
@@ -18,7 +18,7 @@ async with Binance.new() as client:
 ## Subscribe
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
   subscription = await client.spot.simple_earn.flexible.subscribe(
@@ -30,7 +30,7 @@ async with Binance.new() as client:
 ## View Your Positions
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
   positions = await client.spot.simple_earn.flexible.position(asset='USDT')
@@ -41,7 +41,7 @@ async with Binance.new() as client:
 ## Redeem
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
   redemption = await client.spot.simple_earn.flexible.redeem(

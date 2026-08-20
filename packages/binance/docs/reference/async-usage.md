@@ -10,7 +10,7 @@ Binance clients are async-first and support two usage styles:
 For short request-response flows, plain construction is fine.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 client = Binance.new(public=True)
 price = await client.spot.market.ticker_price(symbol='BTCUSDT')
@@ -32,7 +32,7 @@ opens all 13 sub-surfaces concurrently (via `asyncio.gather`), and you never ent
 sub-surface yourself.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   price = await client.spot.market.ticker_price(symbol='BTCUSDT')
@@ -49,7 +49,7 @@ subscription manager, not a stream directly. Use `async with` on it so the subsc
 unsubscribed automatically when the block exits:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   async with client.streams.trade('BTCUSDT') as trades:
@@ -62,7 +62,7 @@ async with Binance.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   trades = await client.streams.trade('BTCUSDT')

@@ -30,7 +30,7 @@ first_call:
     from dotenv import load_dotenv
     load_dotenv()
 
-    from binance import Binance
+    from typed_binance import Binance
 
     async with Binance.new() as client:
       account = await client.spot.account.info()
@@ -59,10 +59,10 @@ how_tos:
   - title: Place & manage orders
     body: Submit, query, cancel, and list spot orders. Needs credentials.
     code: |
-      order = await client.spot.trading.order(
-        symbol='BTCUSDT', side='BUY', type='LIMIT',
-        time_in_force='GTC', quantity='0.0001', price='20000',
-      )  # place a limit order
+      order = await client.spot.trading.order({
+        'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT',
+        'timeInForce': 'GTC', 'quantity': '0.0001', 'price': '20000',
+      })  # place a limit order
       status = await client.spot.account.order(symbol='BTCUSDT', order_id=order['orderId'])  # check its status
       open_orders = await client.spot.account.open_orders(symbol='BTCUSDT')  # list open orders
       await client.spot.trading.cancel_order(symbol='BTCUSDT', order_id=order['orderId'])  # cancel it
