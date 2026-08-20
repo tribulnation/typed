@@ -30,66 +30,66 @@ first_call:
     from dotenv import load_dotenv
     load_dotenv()
 
-    from binance import Binance
+    from typed_binance import Binance
 
     async with Binance.new() as client:
-      account = await client.spot.account.info()
+      account = await client.spot.http.account.info()
       print(account['balances'])
 
 how_tos:
   - title: Fetch market data
     body: Order books, candles, recent trades, and the tradeable symbol list — all public.
     code: |
-      book = await client.spot.market.order_book(symbol='BTCUSDT', limit=20)  # order book
-      candles = await client.spot.market.klines(symbol='BTCUSDT', interval='1h', limit=10)  # candles
-      trades = await client.spot.market.recent_trades(symbol='BTCUSDT', limit=20)  # recent trades
-      info = await client.spot.market.exchange_info(symbol='BTCUSDT')  # tradeable symbols
+      book = await client.spot.http.market.order_book(symbol='BTCUSDT', limit=20)  # order book
+      candles = await client.spot.http.market.klines(symbol='BTCUSDT', interval='1h', limit=10)  # candles
+      trades = await client.spot.http.market.recent_trades(symbol='BTCUSDT', limit=20)  # recent trades
+      info = await client.spot.http.market.exchange_info(symbol='BTCUSDT')  # tradeable symbols
 
   - title: Listen to streams
     body: A public market-data channel, and your own account's order/balance events.
     code: |
-      async with client.streams.ticker('BTCUSDT') as stream:  # public ticker updates
+      async with client.spot.streams.ticker('BTCUSDT') as stream:  # public ticker updates
         async for update in stream:
           print(update)
 
-      async with client.ws_api.subscribe_user_data() as events:  # this account's order/balance events
+      async with client.spot.ws.subscribe_user_data() as events:  # this account's order/balance events
         async for event in events:
           print(event)
 
   - title: Place & manage orders
     body: Submit, query, cancel, and list spot orders. Needs credentials.
     code: |
-      order = await client.spot.trading.order(
-        symbol='BTCUSDT', side='BUY', type='LIMIT',
-        time_in_force='GTC', quantity='0.0001', price='20000',
-      )  # place a limit order
-      status = await client.spot.account.order(symbol='BTCUSDT', order_id=order['orderId'])  # check its status
-      open_orders = await client.spot.account.open_orders(symbol='BTCUSDT')  # list open orders
-      await client.spot.trading.cancel_order(symbol='BTCUSDT', order_id=order['orderId'])  # cancel it
+      order = await client.spot.http.trading.order({
+        'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT',
+        'timeInForce': 'GTC', 'quantity': '0.0001', 'price': '20000',
+      })  # place a limit order
+      status = await client.spot.http.account.order(symbol='BTCUSDT', order_id=order['orderId'])  # check its status
+      open_orders = await client.spot.http.account.open_orders(symbol='BTCUSDT')  # list open orders
+      await client.spot.http.trading.cancel_order(symbol='BTCUSDT', order_id=order['orderId'])  # cancel it
 
   - title: Fetch account data
     body: Balances, futures positions, and trade history. Needs credentials.
     code: |
-      account = await client.spot.account.info()  # spot balances
-      trades = await client.spot.account.my_trades(symbol='BTCUSDT', limit=50)  # trade history
-      positions = await client.usdm_futures.trading.position_risk_v3(symbol='BTCUSDT')  # futures positions
+      account = await client.spot.http.account.info()  # spot balances
+      trades = await client.spot.http.account.my_trades(symbol='BTCUSDT', limit=50)  # trade history
+      positions = await client.usdm_futures.http.trading.position_risk_v3(symbol='BTCUSDT')  # futures positions
 
   - title: Query & manage earn instruments
     body: List Simple Earn products, subscribe, check your positions, and redeem.
     code: |
-      products = await client.spot.simple_earn.flexible.list(asset='USDT')  # available products
-      subscription = await client.spot.simple_earn.flexible.subscribe(
+      products = await client.spot.http.simple_earn.flexible.list(asset='USDT')  # available products
+      subscription = await client.spot.http.simple_earn.flexible.subscribe(
         product_id='USDT001', amount='10',
       )  # subscribe
-      positions = await client.spot.simple_earn.flexible.position(asset='USDT')  # your positions
-      await client.spot.simple_earn.flexible.redeem(product_id='USDT001', redeem_all=True)  # redeem
+      positions = await client.spot.http.simple_earn.flexible.position(asset='USDT')  # your positions
+      await client.spot.http.simple_earn.flexible.redeem(product_id='USDT001', redeem_all=True)  # redeem
 
   - title: Manage deposits & withdrawals
     body: Deposit addresses/history, and submitting or listing withdrawals.
     code: |
-      deposit = await client.spot.wallet.capital.deposit.address(coin='USDT', network='TRX')  # deposit address
-      deposits = await client.spot.wallet.capital.deposit.history(coin='USDT')  # deposit history
-      withdrawal = await client.spot.wallet.capital.withdraw.apply(
+      deposit = await client.spot.http.wallet.capital.deposit.address(coin='USDT', network='TRX')  # deposit address
+      deposits = await client.spot.http.wallet.capital.deposit.history(coin='USDT')  # deposit history
+      withdrawal = await client.spot.http.wallet.capital.withdraw.apply(
         coin='USDT', network='TRX', address='...', amount=10,
       )  # submit a withdrawal
-      withdrawals = await client.spot.wallet.capital.withdraw.history(coin='USDT')  # withdrawal history
+      withdrawals = await client.spot.http.wallet.capital.withdraw.history(coin='USDT')  # withdrawal history

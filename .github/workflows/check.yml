@@ -14,7 +14,7 @@ jobs:
         id: filter
         with:
           filters: |
-            alchemy: 'packages/alchemy/**'
+            binance: 'packages/binance/**'
             core: 'packages/core/**'
   check:
     needs: changes
