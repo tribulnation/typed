@@ -1,0 +1,96 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API credentials — see
+    [API keys setup](/typed/bybit/api-keys) for how to create them. Skip this if you only
+    need public market data: pass `public=True` to the constructor instead.
+  code: |
+    # .env
+    BYBIT_API_KEY="your_api_key"
+    BYBIT_API_SECRET="your_api_secret"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-bybit python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_bybit import Bybit
+
+    load_dotenv()
+
+    async with Bybit.new() as client:  # reads BYBIT_API_KEY / BYBIT_API_SECRET
+      ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+      print(ticker['list'][0]['lastPrice'])
+
+how_tos:
+  - title: Fetch market data
+    body: Candles, order books, tickers, recent trades, and instrument definitions — all public, no credentials needed.
+    code: |
+      candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)  # candles
+      book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)                # order book
+      trades = await client.http.market.recent_trades(category='spot', symbol='BTCUSDT', limit=3)          # recent trades
+      info = await client.http.market.instruments(category='spot', symbol='BTCUSDT')                       # instrument info
+
+  - title: Listen to streams
+    body: Public order book, ticker, and trade channels, plus the authenticated wallet feed.
+    code: |
+      async with client.ws.spot.orderbook(50, 'BTCUSDT') as book:
+        async for update in book:
+          print(update['s'], update['u'])   # order book delta
+          break
+
+      async with client.ws.private.wallet() as updates:
+        async for update in updates:
+          print(update)                     # wallet balance change
+          break
+
+  - title: Place & manage orders
+    body: Submit, amend, cancel, and list orders. Needs credentials.
+    code: |
+      order = await client.http.trade.create_order({                     # place an order
+        'category': 'spot', 'symbol': 'BTCUSDT',
+        'side': 'Buy', 'orderType': 'Limit', 'qty': '0.001', 'price': '20000',
+      })
+      open = await client.http.trade.open_orders(category='spot')        # list open orders
+      await client.http.trade.cancel_order({                             # cancel it
+        'category': 'spot', 'symbol': 'BTCUSDT', 'orderId': order['orderId'],
+      })
+
+  - title: Fetch account data
+    body: Wallet balance, positions, and trade history. Needs credentials.
+    code: |
+      balance = await client.http.account.wallet_balance(account_type='UNIFIED')  # wallet balance
+      positions = await client.http.position.list(category='linear', settle_coin='USDT')  # positions
+      fills = await client.http.trade.trade_history(category='spot', limit=10)    # trade history
+
+  - title: Manage deposits & withdrawals
+    body: Deposit addresses, deposit/withdrawal records, and submitting a withdrawal. Needs credentials.
+    code: |
+      address = await client.http.asset.deposit.master_address(coin='USDT')  # deposit address
+      deposits = await client.http.asset.deposit.record(coin='USDT', limit=10)  # deposit history
+      withdrawals = await client.http.asset.withdraw.record(coin='USDT', limit=10)  # withdrawal history
+
+  - title: Query & manage earn instruments
+    body: List fixed-term saving products, your positions, subscribe, and redeem. Needs credentials except for listing products.
+    code: |
+      products = await client.http.finance.fixed_saving.product(coin='USDT')     # available products
+      positions = await client.http.finance.fixed_saving.position(category='FundPool')  # your positions
+
+  - title: Paginate through results
+    body: Cursor-paginated and time-window-paginated endpoints each carry a generated `_paged` iterator.
+    code: |
+      from datetime import datetime, timedelta, timezone
+
+      symbols = []
+      async for page in client.http.market.instruments_paged(category='linear', limit=200):
+        symbols += [i['symbol'] for i in page['list']]                     # walk every page by cursor
+      print(len(symbols))
+
+      end = datetime.now(timezone.utc)
+      async for page in client.http.market.kline_paged(
+        category='linear', symbol='BTCUSDT', interval='1',
+        start=end - timedelta(minutes=4), end=end, limit=200, max_pages=3,
+      ):
+        print(len(page['list']))                                          # walk backwards by time window
