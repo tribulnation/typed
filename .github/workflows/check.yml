@@ -7,23 +7,30 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      packages: ${{ steps.diff.outputs.packages }}
+      packages: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          fetch-depth: 0
-      - id: diff
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base="${{ github.event.pull_request.base.sha }}"
-          else
-            base="${{ github.event.before }}"
-          fi
-          if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then
-            base="$(git hash-object -t tree /dev/null)"
-          fi
-          packages=$(git diff --name-only "$base" HEAD -- packages/ | cut -d/ -f2 | sort -u | jq -R -s -c 'split("\n")[:-1]')
-          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          filters: |
+            alchemy: 'packages/alchemy/**'
+            binance: 'packages/binance/**'
+            bit2me: 'packages/bit2me/**'
+            bitget: 'packages/bitget/**'
+            bybit: 'packages/bybit/**'
+            coinbase: 'packages/coinbase/**'
+            core: 'packages/core/**'
+            cosmos: 'packages/cosmos/**'
+            deribit: 'packages/deribit/**'
+            dydx: 'packages/dydx/**'
+            ethereum: 'packages/ethereum/**'
+            etherscan: 'packages/etherscan/**'
+            hyperliquid: 'packages/hyperliquid/**'
+            kraken: 'packages/kraken/**'
+            kucoin: 'packages/kucoin/**'
+            mexc: 'packages/mexc/**'
+            moralis: 'packages/moralis/**'
   check:
     needs: changes
     if: needs.changes.outputs.packages != '[]'
