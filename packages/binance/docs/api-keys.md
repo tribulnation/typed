@@ -15,21 +15,18 @@ export BINANCE_API_KEY="your_api_key"
 export BINANCE_SECRET_KEY="your_api_secret"
 ```
 
-sB8TT5op
-j10ASBtw
-
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
-  account = await client.spot.account.info()
+  account = await client.spot.http.account.info()
   print(account['balances'])
 ```
 
 ## Passing Credentials Directly
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(api_key='your_api_key', secret='your_api_secret') as client:
   ...
@@ -40,10 +37,10 @@ async with Binance.new(api_key='your_api_key', secret='your_api_secret') as clie
 Market data and other public endpoints need no credentials:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
-  price = await client.spot.market.ticker_price(symbol='BTCUSDT')
+  price = await client.spot.http.market.ticker_price(symbol='BTCUSDT')
 ```
 
 ## Notes

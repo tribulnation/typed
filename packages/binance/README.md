@@ -35,10 +35,10 @@
 ---
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
-  price = await client.spot.market.ticker_price(symbol='BTCUSDT')
+  price = await client.spot.http.market.ticker_price(symbol='BTCUSDT')
   print(price)
 ```
 

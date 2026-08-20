@@ -10,33 +10,32 @@ Binance clients are async-first and support two usage styles:
 For short request-response flows, plain construction is fine.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 client = Binance.new(public=True)
-price = await client.spot.market.ticker_price(symbol='BTCUSDT')
+price = await client.spot.http.market.ticker_price(symbol='BTCUSDT')
 print(price)
 ```
 
-That works because each of Binance's 13 top-level surfaces (`spot`, `usdm_futures`,
-`coinm_futures`, `options`, `portfolio_margin`, `streams`, `usdm_futures_streams`,
-`usdm_futures_public_streams`, `coinm_futures_streams`, `options_streams`, `ws_api`,
-`usdm_futures_ws_api`, `coinm_futures_ws_api`) owns its own HTTP or WebSocket transport, and
-every one of those transports opens lazily on first use — nothing needs to be entered up
-front.
+That works because each of Binance's five products (`spot`, `usdm_futures`, `coinm_futures`,
+`options`, `portfolio_margin`) groups its own transports (`http`, and a product-specific
+subset of `streams`/`public_streams`/`private_streams`/`ws`, 16 transports in total) as
+sibling fields, and every one of those transports opens lazily on first use — nothing needs
+to be entered up front.
 
 ## Context Manager Usage
 
 Use `async with` when you want the client to open up front and close cleanly at the end of
 the block. Entering the top-level client is the only thing the caller does — `Binance.__aenter__`
-opens all 13 sub-surfaces concurrently (via `asyncio.gather`), and you never enter a
-sub-surface yourself.
+opens all five products concurrently (via `asyncio.gather`), each of which in turn opens its
+own transports concurrently, and you never enter a product or transport yourself.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
-  price = await client.spot.market.ticker_price(symbol='BTCUSDT')
-  book = await client.usdm_futures.market.depth(symbol='BTCUSDT')
+  price = await client.spot.http.market.ticker_price(symbol='BTCUSDT')
+  book = await client.usdm_futures.http.market.depth(symbol='BTCUSDT')
 ```
 
 This is the recommended style for multiple requests, long-lived sessions, any streaming
@@ -44,15 +43,15 @@ workflow, or code where explicit cleanup matters.
 
 ## Streams
 
-Each `client.streams` method (and its USD-M/COIN-M futures/options equivalents) returns a
-subscription manager, not a stream directly. Use `async with` on it so the subscription is
+Each `client.spot.streams` method (and its USD-M/COIN-M futures/options equivalents) returns
+a subscription manager, not a stream directly. Use `async with` on it so the subscription is
 unsubscribed automatically when the block exits:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
-  async with client.streams.trade('BTCUSDT') as trades:
+  async with client.spot.streams.trade('BTCUSDT') as trades:
     async for trade in trades:
       print(trade['p'])
       break
@@ -62,10 +61,10 @@ async with Binance.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
-  trades = await client.streams.trade('BTCUSDT')
+  trades = await client.spot.streams.trade('BTCUSDT')
   async for trade in trades:
     print(trade['p'])
     break
@@ -74,26 +73,31 @@ async with Binance.new(public=True) as client:
 
 ## Composite/Multi-Surface Client
 
-`Binance.new()` bundles five product lines, each with its own REST surface and its own
-subset of streaming/WS-API surfaces — none of them share a connection:
+`Binance.new()` bundles five product lines, each a nested composite of its own REST surface
+(`http`) and its own subset of streaming/WS-API transports — none of them share a
+connection:
 
-- **Spot**: REST (`client.spot`), market-data streams (`client.streams`), and a
-  request/response WS API (`client.ws_api`, also used for account/order push events via
+- **Spot**: REST (`client.spot.http`), market-data streams (`client.spot.streams`), and a
+  request/response WS API (`client.spot.ws`, also used for account/order push events via
   `subscribe_user_data()`).
-- **USD-M Futures**: REST (`client.usdm_futures`), two streams connections
-  (`client.usdm_futures_streams` for the general channel set, plus
-  `client.usdm_futures_public_streams` specifically for order-book channels, which Binance
-  serves on a separate connection), and a WS API (`client.usdm_futures_ws_api`).
-- **COIN-M Futures**: REST (`client.coinm_futures`), streams
-  (`client.coinm_futures_streams`), and a WS API (`client.coinm_futures_ws_api`).
-- **Options**: REST (`client.options`) and streams (`client.options_streams`) — Binance
-  publishes no WS API for options.
-- **Portfolio Margin**: REST only (`client.portfolio_margin`) — no streaming or WS API
-  surface of its own.
+- **USD-M Futures**: REST (`client.usdm_futures.http`), two market-data streams connections
+  (`client.usdm_futures.streams` for the general channel set, plus
+  `client.usdm_futures.public_streams` specifically for order-book channels, which Binance
+  serves on a separate connection), the private user-data stream
+  (`client.usdm_futures.private_streams`), and a WS API (`client.usdm_futures.ws`).
+- **COIN-M Futures**: REST (`client.coinm_futures.http`), streams
+  (`client.coinm_futures.streams`), and a WS API (`client.coinm_futures.ws`). COIN-M has no
+  private user-data stream yet.
+- **Options**: REST (`client.options.http`), streams (`client.options.streams`), and the
+  private user-data stream (`client.options.private_streams`) — Binance publishes no WS API
+  for options.
+- **Portfolio Margin**: REST (`client.portfolio_margin.http`) and the private user-data
+  stream (`client.portfolio_margin.private_streams`) — no public streaming or WS API surface
+  of its own.
 
-All 13 fields are entered and exited together under one `async with Binance.new(...)`, and
-every surface shares one set of credentials — Binance's HMAC signing scheme is uniform
-across every REST host and the WS API.
+All five products (and every transport nested under them) are entered and exited together
+under one `async with Binance.new(...)`, and every surface shares one set of credentials —
+Binance's HMAC signing scheme is uniform across every REST host and the WS API.
 
 ## Guidance
 
