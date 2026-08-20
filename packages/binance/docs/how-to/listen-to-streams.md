@@ -5,7 +5,7 @@
 Streams are public — no credentials needed.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   async with client.streams.ticker('BTCUSDT') as stream:
@@ -27,7 +27,7 @@ Signed. Subscribing on the WS API connection also pushes this account's order an
 events on the same connection:
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new() as client:
   async with client.ws_api.subscribe_user_data() as events:

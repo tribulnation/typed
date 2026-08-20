@@ -3,7 +3,7 @@
 > A fully typed, validated async client for the Binance API.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   price = await client.spot.market.ticker_price(symbol='BTCUSDT')

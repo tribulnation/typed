@@ -3,7 +3,7 @@
 Market data is public — no credentials needed.
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   price = await client.spot.market.ticker_price(symbol='BTCUSDT')
@@ -14,7 +14,7 @@ async with Binance.new(public=True) as client:
 
 ```python
 from datetime import datetime, timezone
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   candles = await client.spot.market.klines(
@@ -30,7 +30,7 @@ async with Binance.new(public=True) as client:
 ## Order Book & Recent Trades
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   book = await client.spot.market.order_book(symbol='BTCUSDT', limit=20)
@@ -40,7 +40,7 @@ async with Binance.new(public=True) as client:
 ## Tradeable Symbols
 
 ```python
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   info = await client.spot.market.exchange_info(symbol='BTCUSDT')

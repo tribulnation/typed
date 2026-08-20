@@ -5,7 +5,7 @@ counterpart that yields successive windows automatically.
 
 ```python
 from datetime import datetime, timezone
-from binance import Binance
+from typed_binance import Binance
 
 async with Binance.new(public=True) as client:
   async for page in client.spot.market.klines_paged(

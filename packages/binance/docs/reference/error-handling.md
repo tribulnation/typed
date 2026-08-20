@@ -3,7 +3,7 @@
 All exceptions live in `binance.core.exc`, re-exporting `typed_core`'s exception hierarchy:
 
 ```python
-from binance.core.exc import (
+from typed_binance.core.exc import (
   Error,
   NetworkError,
   ValidationError,
@@ -26,7 +26,7 @@ from binance.core.exc import (
 `Error` is the common base class — catch it to handle every case uniformly.
 
 ```python
-from binance.core.exc import ApiError, AuthError, NetworkError, RateLimited, ValidationError
+from typed_binance.core.exc import ApiError, AuthError, NetworkError, RateLimited, ValidationError
 
 try:
   ...
