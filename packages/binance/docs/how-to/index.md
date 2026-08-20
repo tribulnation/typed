@@ -10,8 +10,9 @@ Task-focused guides for the most common workflows.
 - [Manage Deposits & Withdrawals](manage-deposits-and-withdrawals.md) — deposit addresses/history and withdrawals
 - [Paginate Through Results](paginate-through-results.md) — walk a time range across multiple pages
 
-These guides use the spot surface (`client.spot`, `client.streams`, `client.ws_api`) as the
-common case. USD-M futures (`client.usdm_futures`), COIN-M futures (`client.coinm_futures`),
-and options (`client.options`) mirror `client.spot`'s `market`/`trading`/`account` shape on
-their own hosts. Portfolio margin (`client.portfolio_margin`) only exposes `account` and
-`trading` — it has no market data of its own.
+These guides use Spot (`client.spot.http`, `client.spot.streams`, `client.spot.ws`) as the
+common case. USD-M futures (`client.usdm_futures.http`), COIN-M futures
+(`client.coinm_futures.http`), and options (`client.options.http`) mirror `client.spot.http`'s
+`market`/`trading`/`account` shape on their own hosts. Portfolio margin
+(`client.portfolio_margin.http`) only exposes `account` and `trading` — it has no market data
+of its own.
