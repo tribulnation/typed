@@ -1,0 +1,105 @@
+env_setup:
+  body: >-
+    Create a `.env` with your Alchemy app API key — see
+    [API keys setup](/typed/alchemy/api-keys) for how to create one.
+  code: |
+    # .env
+    ALCHEMY_API_KEY="your_api_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-alchemy python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_alchemy import Alchemy
+
+    load_dotenv()
+
+    async with Alchemy.new() as client:
+      prices = await client.prices.by_symbol(symbols=['ETH', 'BTC'])
+      print(prices['data'])
+
+how_tos:
+  - title: Look up token prices
+    body: Current prices by symbol or contract, plus a historical price series.
+    code: |
+      from datetime import datetime, timedelta, timezone
+
+      current = await client.prices.by_symbol(symbols=['ETH', 'BTC'])  # current prices by symbol
+      by_address = await client.prices.by_address({
+        'addresses': [{'network': 'eth-mainnet', 'address': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'}],
+      })  # current price by contract
+      now = datetime.now(timezone.utc)
+      history = await client.prices.historical({
+        'symbol': 'ETH', 'startTime': now - timedelta(days=7), 'endTime': now, 'interval': '1d',
+      })  # historical prices
+
+  - title: Inspect wallet portfolio
+    body: Balances, NFTs, and transaction history for one or more wallet addresses.
+    code: |
+      wallet = '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152'
+      balances = await client.portfolio.token_balances({
+        'addresses': [{'address': wallet, 'networks': ['eth-mainnet']}],
+      })  # token balances
+      nfts = await client.portfolio.nfts({
+        'addresses': [{'address': wallet, 'networks': ['eth-mainnet']}],
+      })  # NFT holdings
+      history = await client.portfolio.transactions.history({
+        'addresses': [{'address': wallet, 'networks': ['eth-mainnet']}],
+      })  # transaction history
+
+  - title: Query NFTs
+    body: NFT ownership, contract metadata, and collection lookups via NFT API v3, per chain.
+    code: |
+      owned = await client.nft('ethereum').get_nfts_for_owner(
+        owner='0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152',
+      )  # NFTs owned by a wallet
+      metadata = await client.nft('ethereum').get_nft_metadata(
+        contract_address='0xe785E82358879F061BC3dcAC6f0444462D4b5330', token_id='1',
+      )  # metadata for one NFT
+      collection = await client.nft('ethereum').get_collection_metadata(
+        collection_slug='world-of-women-nft',
+      )  # collection metadata
+
+  - title: Get asset transfers
+    body: Historical transfers for an address, contract, or block range, per chain.
+    code: |
+      transfers = await client.transfers('ethereum').get_asset_transfers({
+        'category': ['erc20'], 'fromAddress': '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      })  # historical transfers
+      pages = client.transfers('ethereum').get_asset_transfers_paged({
+        'category': ['erc20'], 'fromAddress': '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      })  # async iterator over further pages
+
+  - title: Paginate through results
+    body: A `_paged` method (or, on Portfolio, `.paged(...)`) is both awaitable (flattens every page into one row list) and a real async iterator (one page's rows at a time).
+    code: |
+      transfers = await client.transfers('ethereum').get_asset_transfers_paged({
+        'category': ['external'], 'toAddress': '0x5c43B1eD97e52d009611D89b74fA829FE4ac56b1',
+      })  # every transfer, flattened across pages
+
+      async for tokens in client.portfolio.tokens.paged({
+        'addresses': [{'address': '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152', 'networks': ['eth-mainnet']}],
+      }):
+        print(tokens)  # walk portfolio token pages, one page's rows at a time
+
+  - title: Advanced RPC methods
+    body: Token metadata/balances, transaction receipts, and simulated asset changes via `alchemy_*` JSON-RPC methods, per chain.
+    code: |
+      metadata = await client.token('ethereum').get_token_metadata(
+        '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      )  # token metadata
+      balances = await client.token('ethereum').get_token_balances(
+        '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 'erc20',
+      )  # token balances
+      receipts = await client.utility('ethereum').get_transaction_receipts({
+        'blockNumber': '0xF1D1C6',
+      })  # transaction receipts for a block
+      changes = await client.simulation('ethereum').asset_changes({
+        'from': '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        'to': '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152',
+        'value': '0xDE0B6B3A7640000',
+      })  # simulate asset changes
