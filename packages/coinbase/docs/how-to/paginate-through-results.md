@@ -1,38 +1,48 @@
 # Paginate Through Results
 
-A paged endpoint has two forms on the same method: call it directly for one page, or its pager sibling for an async iterator that walks every page automatically. Pass `max_pages` to any pager to cap how many pages it walks.
+A paged endpoint has two forms on the same method: call it directly for one page, or its
+pager sibling for every page. Every cursor-paginated pager below returns a
+`PaginatedResponse` — `await` it to flatten every page into one list, or `async for` it to
+walk one page (a list of rows) at a time; either way it stops on its own once the venue
+stops returning a next cursor, with no `max_pages` to pass. `products.candles`' pager is
+different (a time-window walk, not cursor pagination) — it stays a plain async generator
+of whole response frames, and does take `max_pages` to cap how many windows it walks.
 
 ## Coinbase App (v2)
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  page = await client.accounts.list(limit=25)          # one page
+  page = await client.accounts.list(limit=25)          # one page (the whole response frame)
   print(page['data'])
 
-  async for page in client.accounts.list.paged(limit=25):     # every page
-    print(page['data'])
+  accounts = await client.accounts.list.paged(limit=25)       # every account, flattened
+  print(accounts[0]['id'])
 
-  async for page in client.accounts.transactions.list_paged('account-id', limit=25):
-    print(page['data'])
+  async for page in client.accounts.list.paged(limit=25):     # every page, one at a time
+    for account in page:
+      print(account['id'])
+
+  transactions = await client.accounts.transactions.list_paged('account-id', limit=25)
+  print(transactions[0]['id'])
 ```
 
 ## Advanced Trade (v3)
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   page = await client.advanced_trade.products.list(limit=50)
   print(page['products'])
 
-  async for page in client.advanced_trade.products.list.paged(limit=50):
-    print(page['products'])
+  products = await client.advanced_trade.products.list.paged(limit=50)      # every product, flattened
+  print(products[0]['product_id'])
 
-  async for page in client.advanced_trade.orders.historical.batch_paged(order_status=['OPEN']):
-    print(page['orders'])
+  orders = await client.advanced_trade.orders.historical.batch_paged(order_status=['OPEN'])
+  print(len(orders))
 
-  async for page in client.advanced_trade.orders.historical.fills_paged():
-    print(page['fills'])
+  fills = await client.advanced_trade.orders.historical.fills_paged()
+  print(len(fills))
 ```

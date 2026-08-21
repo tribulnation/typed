@@ -10,7 +10,7 @@ Coinbase clients are async-first and support two usage styles:
 For short request-response flows, plain construction is fine — the underlying transports open lazily on first use.
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 client = Coinbase.new(public=True)
 product = await client.advanced_trade.products.public.get('BTC-USD')
@@ -22,7 +22,7 @@ print(product['price'])
 Use `async with` when you want the client to open up front and close cleanly at the end of the block.
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   product = await client.advanced_trade.products.public.get('BTC-USD')
@@ -47,7 +47,7 @@ stream methods, not a stream directly. Use `async with` on it so the subscriptio
 unsubscribes automatically when the block exits:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   async with client.market_data.ticker(['BTC-USD']) as ticker:
@@ -59,7 +59,7 @@ async with Coinbase.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   orders = await client.user.orders()

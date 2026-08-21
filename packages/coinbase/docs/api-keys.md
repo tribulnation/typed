@@ -4,9 +4,11 @@ Typed Coinbase authenticates with a **CDP API Key** — one keypair that signs a
 
 ## Create a Key
 
-Create a CDP API Key from the [CDP Portal](https://portal.cdp.coinbase.com/), scoped to your Coinbase account. The same key authenticates both `accounts` (v2) and `advanced_trade` (v3) — grant it the view/trade/transfer permissions you actually need.
+Create a CDP API Key from your account's [API settings](https://www.coinbase.com/settings/api):
 
-The portal exports the private key either as an EC (P-256) PEM string, or as a base64-encoded Ed25519 seed. Typed Coinbase detects the format automatically.
+| 1) Create API keys                                  | 2) Copy API & Secret key |
+| --------------------------------------------------- | --------------------------------------------------- |
+|![How to create API keys](media/create_api_keys.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
 ## Environment Variables
 
@@ -16,7 +18,7 @@ export COINBASE_PRIVATE_KEY="-----BEGIN EC PRIVATE KEY-----..."
 ```
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   accounts = await client.advanced_trade.accounts.list()
@@ -25,7 +27,7 @@ async with Coinbase.new() as client:
 ## Direct Usage
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(
   key_name='organizations/{org_id}/apiKeys/{key_id}',
@@ -39,7 +41,7 @@ async with Coinbase.new(
 The product catalog under `advanced_trade.products.public`, and the `market_data` WebSocket channels, need no key at all. Skip credential resolution entirely with `public=True`:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   product = await client.advanced_trade.products.public.get('BTC-USD')

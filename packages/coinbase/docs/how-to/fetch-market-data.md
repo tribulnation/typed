@@ -5,7 +5,7 @@ Advanced Trade's public product catalog, under `advanced_trade.products.public`,
 ```python
 import time
 
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   products = await client.advanced_trade.products.public.list(limit=50)             # tradable products
@@ -26,7 +26,7 @@ async with Coinbase.new(public=True) as client:
 `advanced_trade.products` (without `.public`) mirrors the same catalog but requires a CDP API Key. It includes futures and equities the public catalog omits, and adds `best_bid_ask`:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   products = await client.advanced_trade.products.list(limit=50)

@@ -3,7 +3,7 @@
 Typed Coinbase raises `typed_core`'s standard exceptions, re-exported from `coinbase.core.exc`:
 
 ```python
-from coinbase.core.exc import (
+from typed_coinbase.core.exc import (
   ApiError, AuthError, BadRequest, RateLimited, ValidationError, NetworkError, LogicError,
 )
 ```
@@ -21,8 +21,8 @@ HTTP status is the only failure signal on both `accounts` (v2) and `advanced_tra
 ## Pattern
 
 ```python
-from coinbase import Coinbase
-from coinbase.core.exc import ApiError, AuthError, RateLimited, ValidationError
+from typed_coinbase import Coinbase
+from typed_coinbase.core.exc import ApiError, AuthError, RateLimited, ValidationError
 
 async with Coinbase.new() as client:
   try:

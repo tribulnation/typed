@@ -3,7 +3,7 @@
 > A fully typed, validated async client for the Coinbase API.
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   product = await client.advanced_trade.products.public.get('BTC-USD')

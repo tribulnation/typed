@@ -7,7 +7,7 @@ Every order call is against Advanced Trade (v3) and requires a CDP API Key — s
 `order_configuration` is a discriminated union — pick exactly one key matching the order type:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   market_order = await client.advanced_trade.orders.create({
@@ -34,7 +34,7 @@ async with Coinbase.new() as client:
 ## Get, List & Cancel
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   order = await client.advanced_trade.orders.historical.get('order-id')                     # one order by id

@@ -7,7 +7,7 @@ The Advanced Trade WebSocket splits into two connections: `market_data` for publ
 `market_data` needs no credentials, on any client:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   async with client.market_data.ticker(['BTC-USD']) as stream:
@@ -18,7 +18,7 @@ async with Coinbase.new(public=True) as client:
 Order book updates work the same way, on `level2`:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   async with client.market_data.level2(['BTC-USD']) as stream:
@@ -34,7 +34,7 @@ async with Coinbase.new(public=True) as client:
 `user` carries the calling key's own open-order and futures/perpetuals position updates, and requires credentials:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   async with client.user.orders() as stream:
