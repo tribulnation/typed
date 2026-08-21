@@ -6,9 +6,10 @@ from no fractional digits to nanoseconds (kraken's `post_trade`: `...123456789Z`
 `datetime.fromisoformat` only understands `Z` and arbitrary fraction lengths from Python
 3.11 on, one minor version above this package's declared floor (`>=3.10`).
 """
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from pydantic import TypeAdapter
 
+from typed_core.times.date import DateConverter
 from typed_core.times.iso import IsoConverter
 from typed_core.times.ms import EpochConverter
 
@@ -67,3 +68,37 @@ class TestEpochConverterMicroseconds:
     dt = datetime(2024, 5, 30, 12, 34, 56, 123456, tzinfo=timezone.utc)
     assert conv.dump(dt) == int(dt.timestamp() * 1_000_000)
     assert conv.parse(conv.dump(dt)) == dt
+
+
+class TestEpochConverterNanoseconds:
+  def test_factory_exists_and_round_trips(self):
+    """`epoch-nanos` (deribit's `starbase_timestamp`/`starbase_last_update_timestamp`) had
+    no factory -- `EpochConverter` was already generic on `unit`, just missing this one."""
+    conv = EpochConverter.nanoseconds(tz=timezone.utc)
+    dt = datetime(2024, 5, 30, 12, 34, 56, 123456, tzinfo=timezone.utc)
+    assert conv.dump(dt) == int(dt.timestamp() * 1_000_000_000)
+    assert conv.parse(conv.dump(dt)) == dt
+
+
+class TestDateConverter:
+  def test_parse(self):
+    """Plain calendar date, no time component -- deribit's
+    `market_data.get_delivery_prices.date` (e.g. `'2026-08-03'`)."""
+    assert DateConverter().parse('2026-08-03') == date(2026, 8, 3)
+
+  def test_dump(self):
+    assert DateConverter().dump(date(2026, 8, 3)) == '2026-08-03'
+
+  def test_round_trips(self):
+    conv = DateConverter()
+    assert conv.parse(conv.dump(date(2026, 8, 3))) == date(2026, 8, 3)
+
+
+class TestDateConverterPydantic:
+  def test_validates_through_annotated_type(self):
+    from typing_extensions import Annotated
+    from pydantic import BeforeValidator
+    converter = DateConverter()
+    DateIso = Annotated[date, BeforeValidator(converter.parse)]
+    validated = TypeAdapter(DateIso).validate_python('2026-08-03')
+    assert validated == date(2026, 8, 3)
