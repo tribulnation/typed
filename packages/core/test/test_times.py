@@ -102,3 +102,20 @@ class TestDateConverterPydantic:
     DateIso = Annotated[date, BeforeValidator(converter.parse)]
     validated = TypeAdapter(DateIso).validate_python('2026-08-03')
     assert validated == date(2026, 8, 3)
+
+
+class TestDateConverterCustomPattern:
+  def test_compact_pattern_exists_and_round_trips(self):
+    """bitget's broker-commission endpoints send a compact `YYYYMMDD` date with no
+    separators (`"date": "20260101"`), which the default RFC 3339 pattern can't parse --
+    `DateConverter` was already a single fixed pattern, this makes it generic the same
+    way `EpochConverter` is generic on `unit`."""
+    conv = DateConverter(pattern='%Y%m%d')
+    assert conv.parse('20260101') == date(2026, 1, 1)
+    assert conv.dump(date(2026, 1, 1)) == '20260101'
+    assert conv.parse(conv.dump(date(2026, 1, 1))) == date(2026, 1, 1)
+
+  def test_default_pattern_is_unchanged(self):
+    """Omitting `pattern` still means RFC 3339 `YYYY-MM-DD` -- existing callers see no
+    behavior change."""
+    assert DateConverter().pattern == '%Y-%m-%d'
