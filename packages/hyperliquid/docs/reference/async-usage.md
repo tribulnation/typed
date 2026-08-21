@@ -9,36 +9,26 @@ Hyperliquid clients are async-first and support two usage styles:
 
 For short request-response flows, plain construction is fine.
 
-The underlying HTTP and WebSocket clients open lazily on first use.
+The underlying HTTP and WebSocket transports open lazily on first use.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-client = Hyperliquid.http(public=True)
+client = Hyperliquid.new(public=True)
 mids = await client.info.all_mids()
 print(mids['BTC'])
 ```
 
 That works because the internal HTTP client creates its `httpx.AsyncClient` when the first request is sent.
 
-The same idea applies to request-response WebSocket usage:
-
-```python
-from hyperliquid import Hyperliquid
-
-client = Hyperliquid.ws(public=True)
-book = await client.info.l2_book(coin='BTC')
-print(book['coin'])
-```
-
 ## Context Manager Usage
 
 Use `async with` when you want the client to open up front and close cleanly at the end of the block.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   mids = await client.info.all_mids()
   book = await client.info.l2_book(coin='BTC')
 ```
@@ -50,15 +40,18 @@ This is the recommended style for:
 - any streaming workflow
 - code where explicit cleanup matters
 
+Entering the top-level client is the only thing you do -- `info`, `streams`, and `exchange`
+each lazily enter their own transport as it's first used, not up front.
+
 ## Streams
 
 Each `client.streams` method returns a subscription manager, not a stream directly. Use
 `async with` on it so the subscription is unsubscribed automatically when the block exits:
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.trades('BTC') as trades:
     async for batch in trades:
       print(batch[0]['px'])
@@ -68,9 +61,9 @@ async with Hyperliquid.ws(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   trades = await client.streams.trades('BTC')
   async for batch in trades:
     print(batch[0]['px'])
@@ -80,23 +73,28 @@ async with Hyperliquid.ws(public=True) as client:
 
 ## Composite Client
 
-`Hyperliquid.http()` and `Hyperliquid.ws()` bundle `info`, `exchange`, and `streams` together.
+`Hyperliquid.new()` wires up all three surfaces at once -- there's no separate
+transport-choice constructor:
+
+- `client.info` -- always HTTP.
+- `client.streams` -- always the shared WebSocket connection.
+- `client.exchange` -- reachable over **both** transports as sibling properties:
+  `client.exchange.http` and `client.exchange.ws` expose the exact same signed trading
+  methods, one bound to HTTP, the other posted over the same WebSocket connection
+  `streams` uses.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.http() as client:
+async with Hyperliquid.new() as client:
   mids = await client.info.all_mids()
-  result = await client.exchange.noop()
+  http_result = await client.exchange.http.noop()
+  ws_result = await client.exchange.ws.noop()
 ```
 
-These convenience constructors read `HYPERLIQUID_PRIVATE_KEY` unless you pass a wallet explicitly.
-
-Inside the composite client:
-
-- `info` and `exchange` share one HTTP or request-response WebSocket transport
-- `streams` uses its own subscription transport in `Hyperliquid.http()`
-- all three are entered and exited together when you use `async with`
+`Hyperliquid.new()` reads `HYPERLIQUID_PRIVATE_KEY` unless you pass a wallet explicitly.
+`client.exchange` raises `AuthError` on access if the client was constructed with
+`public=True` and no wallet was found.
 
 ## Guidance
 
@@ -107,3 +105,6 @@ Use `async with` by default when:
 - you are doing more than one call
 - you are opening streams
 - you want predictable cleanup
+
+Pick `client.exchange.http` or `client.exchange.ws` per call based on whether you're already
+holding the WebSocket connection open for streaming -- both sign and behave identically.

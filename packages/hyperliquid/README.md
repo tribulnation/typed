@@ -35,9 +35,9 @@
 ---
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.trades('BTC') as trades:
     async for msg in trades:
       for trade in msg:

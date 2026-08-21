@@ -23,14 +23,15 @@ endpoint has no cursor finer than time. The helpers raise `LogicError` rather
 than skipping it:
 
 ```python
-from hyperliquid import Hyperliquid, LogicError
+from datetime import datetime, timezone
+from typed_hyperliquid import Hyperliquid, LogicError
 
 user = '0xYourAccountAddress'
-start_ms = 0
+start_time = datetime.fromtimestamp(0, tz=timezone.utc)
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   try:
-    async for page in client.info.user_fills_by_time_paged(user=user, start_time=start_ms):
+    async for page in client.info.user_fills_by_time_paged(user=user, start_time=start_time):
       ...
   except LogicError:
     # the sweep stopped rather than dropping entries; the message names the
@@ -41,7 +42,7 @@ async with Hyperliquid.http(public=True) as client:
 ## Recommended Pattern
 
 ```python
-from hyperliquid import ApiError, AuthError, NetworkError, ValidationError
+from typed_hyperliquid import ApiError, AuthError, NetworkError, ValidationError
 
 try:
   ...

@@ -7,16 +7,15 @@ Use `client.info` for account history reads. These methods take a user address a
 Use `user_fills()` for recent fills or `user_fills_by_time()` for a specific window.
 
 ```python
-from datetime import datetime, timedelta
-from hyperliquid import Hyperliquid
-from hyperliquid.core import timestamp as ts
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
-end_ms = ts.now()
-start_ms = ts.dump(datetime.now() - timedelta(days=7))
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=7)
 
-async with Hyperliquid.http(public=True) as client:
-  fills = await client.info.user_fills_by_time(user=user, start_time=start_ms, end_time=end_ms)
+async with Hyperliquid.new(public=True) as client:
+  fills = await client.info.user_fills_by_time(user=user, start_time=start_time, end_time=end_time)
   for fill in fills:
     print(fill['coin'], fill['side'], fill['px'], fill['sz'])
 ```
@@ -26,16 +25,15 @@ For large windows, use `user_fills_by_time_paged()`.
 ## Fetch Funding Payments
 
 ```python
-from datetime import datetime, timedelta
-from hyperliquid import Hyperliquid
-from hyperliquid.core import timestamp as ts
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
-end_ms = ts.now()
-start_ms = ts.dump(datetime.now() - timedelta(days=7))
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=7)
 
-async with Hyperliquid.http(public=True) as client:
-  funding = await client.info.user_funding(user=user, start_time=start_ms, end_time=end_ms)
+async with Hyperliquid.new(public=True) as client:
+  funding = await client.info.user_funding(user=user, start_time=start_time, end_time=end_time)
   for entry in funding:
     delta = entry['delta']
     print(delta['coin'], delta['usdc'], delta['fundingRate'])
@@ -44,16 +42,15 @@ async with Hyperliquid.http(public=True) as client:
 For long ranges, use `user_funding_paged()`.
 
 ```python
-from datetime import datetime, timedelta
-from hyperliquid import Hyperliquid
-from hyperliquid.core import timestamp as ts
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
-end_ms = ts.now()
-start_ms = ts.dump(datetime.now() - timedelta(days=7))
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=7)
 
-async with Hyperliquid.http(public=True) as client:
-  async for chunk in client.info.user_funding_paged(user=user, start_time=start_ms, end_time=end_ms):
+async with Hyperliquid.new(public=True) as client:
+  async for chunk in client.info.user_funding_paged(user=user, start_time=start_time, end_time=end_time):
     print(len(chunk))
 ```
 
@@ -64,19 +61,18 @@ deposits, withdrawals, spot and sub-account transfers, vault flows, staking, liq
 and rewards.
 
 ```python
-from datetime import datetime, timedelta
-from hyperliquid import Hyperliquid
-from hyperliquid.core import timestamp as ts
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
-end_ms = ts.now()
-start_ms = ts.dump(datetime.now() - timedelta(days=7))
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=7)
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   flows = await client.info.user_non_funding_ledger_updates(
     user=user,
-    start_time=start_ms,
-    end_time=end_ms,
+    start_time=start_time,
+    end_time=end_time,
   )
   for entry in flows:
     print(entry['time'], entry['delta']['type'])
@@ -86,17 +82,16 @@ Each `delta` is a union discriminated on `type`, so checking `type` narrows the 
 the exact variant and its fields:
 
 ```python
-from datetime import datetime, timedelta
-from hyperliquid import Hyperliquid
-from hyperliquid.core import timestamp as ts
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
-end_ms = ts.now()
-start_ms = ts.dump(datetime.now() - timedelta(days=7))
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=7)
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   flows = await client.info.user_non_funding_ledger_updates(
-    user=user, start_time=start_ms, end_time=end_ms,
+    user=user, start_time=start_time, end_time=end_time,
   )
   for entry in flows:
     delta = entry['delta']
@@ -122,14 +117,15 @@ To tolerate unmodeled types, validate each delta individually and handle the fai
 explicitly, rather than letting one unknown row abort a whole history read:
 
 ```python
-from hyperliquid.info import Info
-from hyperliquid.info.user_non_funding_ledger_updates import UserNonFundingLedgerEntry
+from datetime import datetime, timezone
+from typed_hyperliquid.info import Info
+from typed_hyperliquid.info.user_non_funding_ledger_updates import UserNonFundingLedgerEntry
 import pydantic
 
 entry_adapter = pydantic.TypeAdapter(UserNonFundingLedgerEntry)
 
 address = '0xYourAccountAddress'
-start_time = 0
+start_time = datetime.fromtimestamp(0, tz=timezone.utc)
 
 info = Info.http(validate=False)
 for raw in await info.user_non_funding_ledger_updates(user=address, start_time=start_time):
@@ -146,9 +142,10 @@ This endpoint returns **at most 2000 entries**, keeping the oldest and silently 
 the rest -- no error, no indicator. Accounts with more history must be paginated:
 
 ```python
-from hyperliquid.info import Info
+from datetime import datetime, timedelta
+from typed_hyperliquid.info import Info
 
-async def all_ledger_updates(info: Info, address: str, start_time: int):
+async def all_ledger_updates(info: Info, address: str, start_time: datetime):
   while True:
     page = await info.user_non_funding_ledger_updates(user=address, start_time=start_time)
     if not page:
@@ -156,7 +153,7 @@ async def all_ledger_updates(info: Info, address: str, start_time: int):
     yield page
     if len(page) < 2000:
       return
-    start_time = max(entry['time'] for entry in page) + 1
+    start_time = max(entry['time'] for entry in page) + timedelta(milliseconds=1)
 ```
 
 Note that `hash` is **not** unique: one transaction can emit several deltas, so `(time,
