@@ -5,7 +5,7 @@ Deposit and withdrawal methods live on `client.spot.wallet`.
 ## Fetch A Deposit Address
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   addresses = await client.spot.wallet.deposit_address(coin='USDT')
@@ -15,7 +15,7 @@ async with MEXC.new() as client:
 ## Generate A New Deposit Address
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   addresses = await client.spot.wallet.generate_deposit_address(coin='USDT', network='TRC20')
@@ -25,7 +25,7 @@ async with MEXC.new() as client:
 ## Fetch Deposit History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   deposits = await client.spot.wallet.deposit_history(coin='USDT', limit=20)
@@ -35,7 +35,7 @@ async with MEXC.new() as client:
 ## Submit A Withdrawal
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   result = await client.spot.wallet.withdraw(
@@ -49,7 +49,7 @@ async with MEXC.new() as client:
 ## Fetch Withdrawal History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   withdrawals = await client.spot.wallet.withdraw_history(coin='USDT', limit=20)
@@ -59,7 +59,7 @@ async with MEXC.new() as client:
 ## Cancel A Withdrawal
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   result = await client.spot.wallet.cancel_withdraw(id='your-withdrawal-id')

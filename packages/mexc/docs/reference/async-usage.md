@@ -10,9 +10,9 @@ MEXC clients are async-first and support two usage styles:
 For short request-response flows, plain construction is fine — the underlying HTTP and WebSocket transports open lazily on first use.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-client = MEXC.public()
+client = MEXC.new(public=True)
 candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
 print(candles[-1][4])
 ```
@@ -22,9 +22,9 @@ print(candles[-1][4])
 Use `async with` when you want the client to open up front and close cleanly at the end of the block.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
   contract_candles = await client.futures.market.candles('BTC_USDT', interval='Min1')
 ```
@@ -51,9 +51,9 @@ Each stream method returns a `StreamManager`, not a stream directly. Use `async 
 so the subscription is unsubscribed automatically when the block exits:
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   async with client.spot.streams.market.candles('BTCUSDT', 'Min1') as candles:
     async for kline in candles:
       print(kline.closing_price)
@@ -64,9 +64,9 @@ async with MEXC.public() as client:
 `unsubscribe()` yourself:
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   candles = await client.spot.streams.market.candles('BTCUSDT', 'Min1')
   async for kline in candles:
     print(kline.closing_price)
@@ -76,7 +76,7 @@ async with MEXC.public() as client:
 
 ## Composite/Multi-Surface Client
 
-`MEXC.new()`/`MEXC.public()` bundle two fully independent surfaces: `spot` and `futures`.
+`MEXC.new()` bundles two fully independent surfaces: `spot` and `futures`.
 Each has its own `AuthHttpClient`, its own base URL, its own WebSocket URL, its own product
 groups (`account`, `market`, `rebate`, `sub_accounts`, `trade`, `wallet` on spot;
 `account`, `market`, `position`, `trade` on futures), and its own `streams`. Nothing is
@@ -84,9 +84,9 @@ shared between them — a spot API key and a futures API key are the same MEXC c
 but the two surfaces authenticate, connect, and disconnect independently.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   spot_candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
   futures_candles = await client.futures.market.candles('BTC_USDT', interval='Min1')
 ```

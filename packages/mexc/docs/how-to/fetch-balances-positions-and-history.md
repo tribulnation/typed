@@ -5,7 +5,7 @@ Use `MEXC.new()` when you need authenticated spot and futures account data toget
 ## Fetch Spot Balances
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   account = await client.spot.account.info()
@@ -15,7 +15,7 @@ async with MEXC.new() as client:
 ## Fetch Spot Trade History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   trades = await client.spot.account.trades(symbol='BTCUSDT', limit=100)
@@ -25,7 +25,7 @@ async with MEXC.new() as client:
 ## Fetch Futures Assets
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   assets = await client.futures.account.assets()
@@ -36,7 +36,7 @@ async with MEXC.new() as client:
 ## Fetch Futures Positions
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   positions = await client.futures.position.open()
@@ -47,7 +47,7 @@ async with MEXC.new() as client:
 ## Fetch Futures Trades
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   trades = await client.futures.trade.order_deals(
@@ -62,7 +62,7 @@ async with MEXC.new() as client:
 ## Fetch Futures Funding History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   history = await client.futures.account.funding_records(

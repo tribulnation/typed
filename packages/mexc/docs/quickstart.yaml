@@ -15,7 +15,7 @@ first_call:
   body: Load the environment, then make your first call.
   code: |
     from dotenv import load_dotenv
-    from mexc import MEXC
+    from typed_mexc import MEXC
 
     load_dotenv()
 
@@ -36,7 +36,7 @@ how_tos:
   - title: Place & manage orders
     body: Submit, inspect, and cancel orders on spot or futures. Needs credentials.
     code: |
-      order = await client.spot.trade.place_order(symbol='USDCUSDT', side='BUY', type_='MARKET', quantity='1')  # place a spot market order
+      order = await client.spot.trade.place_order({'symbol': 'USDCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': '1'})  # place a spot market order
       status = await client.spot.account.order(symbol='USDCUSDT', order_id=str(order['orderId']))  # check its status
       open_orders = await client.spot.account.open_orders(symbol='USDCUSDT')  # list open spot orders
       await client.spot.trade.cancel_order(symbol='USDCUSDT', order_id=str(order['orderId']))  # cancel it
@@ -66,4 +66,4 @@ how_tos:
       candles_stream = await client.spot.streams.market.candles('BTCUSDT', interval='Min1')  # public spot candles
       depth_stream = await client.spot.streams.market.depth('BTCUSDT', level=5)              # public spot order book
       spot_trades_stream = await client.spot.streams.user.trades()                           # your spot fills
-      futures_trades_stream = await client.futures.streams.user.trades()                     # your futures fills
+      futures_trades_stream = await client.futures.streams.user.my_trades()                  # your futures fills
