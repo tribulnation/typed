@@ -7,9 +7,9 @@ Bit2Me exposes two independent WebSocket connections, `client.trading_ws` and `c
 `client.trading_ws` needs no credentials for its public channels:
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   async with client.trading_ws as trading:
     async with trading.order_book(symbol='BTC/EUR') as stream:
       async for update in stream:
@@ -23,10 +23,7 @@ async with Bit2Me.public() as client:
 The same connection carries private channels once authenticated. Build the client with `Bit2Me.new()`, and Bit2Me authenticates the socket for you on `__aenter__`:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   async with client.trading_ws as trading:
@@ -42,11 +39,8 @@ async with Bit2Me.new() as client:
 `client.crypto_ws` is a separate connection: one `authenticate` frame, then every notification your account is entitled to arrives unprompted, with no subscribe/unsubscribe protocol. Mint the token the same way `trading_ws` does, from `client.http.credentials`:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-from bit2me.core.auth import mint_ws_token
-
-load_dotenv()
+from typed_bit2me import Bit2Me
+from typed_bit2me.core.auth import mint_ws_token
 
 async with Bit2Me.new() as client:
   assert client.http.credentials is not None

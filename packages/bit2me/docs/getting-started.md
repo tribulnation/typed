@@ -3,17 +3,17 @@
 ## Install The Package
 
 ```bash
-pip install typed-bit2me python-dotenv
+pip install typed-bit2me
 ```
 
 ## Public Requests
 
-Public endpoints (market data, tickers, order books) need no credentials, so use `Bit2Me.public()`:
+Public endpoints (market data, tickers, order books) need no credentials, so use `Bit2Me.new(public=True)`:
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   book = await client.v2.trading.order_book(symbol='BTC/EUR')
   print(book.get('bids', [])[:1])
 ```
@@ -35,10 +35,7 @@ BIT2ME_SECRET_KEY="your_secret_key"
 `Bit2Me.new()` reads `BIT2ME_API_KEY`/`BIT2ME_SECRET_KEY` from the environment when no explicit `api_key`/`api_secret` is passed:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   balances = await client.v1.trading.balance()
@@ -48,7 +45,7 @@ async with Bit2Me.new() as client:
 Passing credentials directly works too, and overrides the environment:
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new(api_key='your_api_key', api_secret='your_secret_key') as client:
   ...
@@ -56,7 +53,7 @@ async with Bit2Me.new(api_key='your_api_key', api_secret='your_secret_key') as c
 
 ## Client Surface
 
-`Bit2Me.new()`/`.public()` give you three peer HTTP routers plus both WebSocket surfaces:
+`Bit2Me.new()` gives you three peer HTTP routers plus both WebSocket surfaces:
 
 - `client.v1`, `client.v2`, `client.v3`: the REST surface, split exactly as Bit2Me's own API versions (trading, wallet, account, earn, and more live under `v1`; newer market-data and account routes under `v2`/`v3`)
 - `client.trading_ws`: the Trading Spot WebSocket (public/private channel subscriptions and order commands)

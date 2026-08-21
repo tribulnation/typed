@@ -1,9 +1,9 @@
 # Error Handling
 
-All exceptions live at `bit2me.core.exc`:
+All exceptions live at `typed_bit2me.core.exc`:
 
 ```python
-from bit2me.core.exc import (
+from typed_bit2me.core.exc import (
   Error,          # base of everything below
   NetworkError,   # connection failure, timeout
   ValidationError,  # response didn't match its documented schema
@@ -19,11 +19,8 @@ from bit2me.core.exc import (
 ## HTTP
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-from bit2me.core.exc import ApiError, AuthError, RateLimited, NetworkError, ValidationError
-
-load_dotenv()
+from typed_bit2me import Bit2Me
+from typed_bit2me.core.exc import ApiError, AuthError, RateLimited, NetworkError, ValidationError
 
 async with Bit2Me.new() as client:
   try:

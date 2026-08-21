@@ -36,7 +36,7 @@
 
 ```python
 from dotenv import load_dotenv
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
 load_dotenv()
 
