@@ -1,6 +1,16 @@
-# Typed Etherscan
+<p align="center">
+  <a href="https://tribulnation.com/typed/etherscan">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-light.svg">
+      <img alt="Typed Etherscan" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
-> A fully typed, validated async client for the Etherscan API
+<p align="center">
+  <em>A fully typed, validated async client for the Etherscan API.</em>
+</p>
 
 <p align="center">
   <a href="https://pypi.org/project/typed-etherscan/">
