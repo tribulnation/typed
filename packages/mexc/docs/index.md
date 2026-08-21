@@ -3,9 +3,9 @@
 > A fully typed, validated async client for the MEXC spot and futures APIs.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
   stream = await client.futures.streams.market.ticker('BTC_USDT')
   print(candles[-1][4])

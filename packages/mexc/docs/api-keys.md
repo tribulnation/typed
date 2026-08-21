@@ -1,18 +1,13 @@
 # API Keys Setup
 
-This page explains how to configure credentials for authenticated spot and futures requests.
-
 ## Create API Credentials
 
-Create API credentials from the MEXC API management page:
+You can get your API keys from the [MEXC website](https://www.mexc.com/user/openapi):
 
-<https://www.mexc.com/user/openapi>
+| 1) Create API keys | 2) Copy Access & Secret key |
+| ----------------- | ------------------------ |
+| ![How to create API keys](media/create_api_keys.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
-Before using them in production:
-
-1. Enable only the permissions you actually need.
-2. Restrict IPs when the provider supports it.
-3. Keep trading and withdrawal permissions separate when possible.
 
 ## Environment Variables
 
@@ -23,16 +18,12 @@ export MEXC_ACCESS_KEY="your_access_key"
 export MEXC_SECRET_KEY="your_secret_key"
 ```
 
-Those are the only credential variables used by `MEXC.new()`, `Spot.new()`, and `Futures.new()`.
-
-MEXC uses access key + secret key only. There is no passphrase in the current client model.
-
 ## Direct Usage
 
 You can also pass credentials directly:
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new(
   api_key="your_access_key",

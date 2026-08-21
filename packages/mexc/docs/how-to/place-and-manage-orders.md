@@ -7,22 +7,22 @@ For safe live testing, `USDCUSDT` is a practical symbol because you can buy a ve
 ## Place A Spot Market Order
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  order = await client.spot.trade.place_order(
-    symbol='USDCUSDT',
-    side='BUY',
-    type_='MARKET',
-    quantity='1',
-  )
+  order = await client.spot.trade.place_order({
+    'symbol': 'USDCUSDT',
+    'side': 'BUY',
+    'type': 'MARKET',
+    'quantity': '1',
+  })
   print(order['orderId'])
 ```
 
 ## Query A Spot Order
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 order_id = 'your-order-id'
 
@@ -34,7 +34,7 @@ async with MEXC.new() as client:
 ## Fetch Open Spot Orders
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   orders = await client.spot.account.open_orders(symbol='USDCUSDT')
@@ -44,7 +44,7 @@ async with MEXC.new() as client:
 ## Fetch Spot Order History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   orders = await client.spot.account.orders(symbol='USDCUSDT', limit=20)
@@ -56,23 +56,23 @@ async with MEXC.new() as client:
 Use a far-off limit price with valid notional if you want an order that stays open long enough to cancel.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  order = await client.spot.trade.place_order(
-    symbol='USDCUSDT',
-    side='BUY',
-    type_='LIMIT',
-    price='0.8000',
-    quantity='2',
-  )
+  order = await client.spot.trade.place_order({
+    'symbol': 'USDCUSDT',
+    'side': 'BUY',
+    'type': 'LIMIT',
+    'price': '0.8000',
+    'quantity': '2',
+  })
   print(order['orderId'])
 ```
 
 ## Cancel A Spot Order
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 order_id = 'your-order-id'
 
@@ -84,7 +84,7 @@ async with MEXC.new() as client:
 ## Cancel All Spot Orders For A Symbol
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   orders = await client.spot.trade.cancel_open_orders(symbol='USDCUSDT')
@@ -96,7 +96,7 @@ async with MEXC.new() as client:
 Futures side and type are numeric codes: `side=1` opens a long, `type=1` is a limit order.
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   order = await client.futures.trade.submit_order({
@@ -114,7 +114,7 @@ async with MEXC.new() as client:
 ## Query A Futures Order
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 order_id = 'your-order-id'
 
@@ -127,7 +127,7 @@ async with MEXC.new() as client:
 ## Fetch Open Futures Orders
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   orders = await client.futures.trade.open_orders('BTC_USDT', page_num=1, page_size=20)
@@ -138,7 +138,7 @@ async with MEXC.new() as client:
 ## Cancel A Futures Order
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 order_id = 'your-order-id'
 
@@ -151,7 +151,7 @@ async with MEXC.new() as client:
 ## Cancel All Futures Orders For A Symbol
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   await client.futures.trade.cancel_all_orders({'symbol': 'BTC_USDT'})

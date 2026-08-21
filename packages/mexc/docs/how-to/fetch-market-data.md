@@ -7,9 +7,9 @@ For time windows, pass `datetime` objects directly. See [Timestamps](../referenc
 ## Fetch Spot Market Data
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   server_time = await client.spot.market.time()
   depth = await client.spot.market.depth(symbol='BTCUSDT', limit=5)
   trades = await client.spot.market.trades(symbol='BTCUSDT', limit=10)
@@ -20,9 +20,9 @@ async with MEXC.public() as client:
 
 ```python
 from datetime import datetime, timedelta
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   end_time = datetime.now()
   start_time = end_time - timedelta(hours=1)
   candles = await client.spot.market.candles(
@@ -43,9 +43,9 @@ one is capped by MEXC and the walk moves on to the next window:
 
 ```python
 from datetime import datetime, timedelta
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   start_time = datetime.now() - timedelta(hours=6)
   closes = []
   async for page in client.spot.market.candles_paged(
@@ -68,9 +68,9 @@ pass is the step the walk takes.
 
 ```python
 from datetime import datetime, timedelta
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   end = datetime.now()
   start = end - timedelta(hours=1)
   candles = await client.futures.market.candles(
@@ -86,9 +86,9 @@ async with MEXC.public() as client:
 ## Fetch Spot Exchange Metadata
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   info = await client.spot.market.exchange_info(symbol='BTCUSDT')
   print(info['symbols'][0]['symbol'])
 ```
@@ -96,9 +96,9 @@ async with MEXC.public() as client:
 ## Fetch Futures Market Data
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   contract = await client.futures.market.contract_info(symbol='BTC_USDT')
   depth = await client.futures.market.depth('BTC_USDT', limit=20)
   rate = await client.futures.market.funding_rate('BTC_USDT')
@@ -111,9 +111,9 @@ async with MEXC.public() as client:
 ## Fetch Futures Funding History
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   history = await client.futures.market.funding_rate_history(
     symbol='BTC_USDT',
     page_num=1,

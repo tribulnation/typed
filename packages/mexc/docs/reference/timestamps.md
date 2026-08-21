@@ -17,9 +17,9 @@ This works for spot endpoints that use milliseconds and futures K-line endpoints
 
 ```python
 from datetime import datetime, timedelta
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   await client.spot.market.candles(
     symbol='BTCUSDT',
     interval='1m',
@@ -38,10 +38,10 @@ Timestamp parameters take `datetime` only. If you already have a raw venue-forma
 integer, convert it first with `ts.parse` (see Raw Helpers below).
 
 ```python
-from mexc import MEXC
-from mexc.core import timestamp as ts, timestamp_s as ts_s
+from typed_mexc import MEXC
+from typed_mexc.core import timestamp_millis as ts, timestamp_seconds as ts_s
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   await client.spot.market.candles(
     symbol='BTCUSDT',
     interval='1m',
@@ -62,18 +62,18 @@ Use the helper exported by the client when you explicitly need raw millisecond i
 
 ```python
 from datetime import datetime
-from mexc.core import timestamp as ts
+from typed_mexc.core import timestamp_millis as ts
 
 timestamp_ms = ts.dump(datetime.now())
 current_ms = ts.now()
 parsed = ts.parse(1715200000000)
 ```
 
-For second-based values, use `timestamp_s`.
+For second-based values, use `timestamp_seconds`.
 
 ```python
 from datetime import datetime
-from mexc.core import timestamp_s as ts_s
+from typed_mexc.core import timestamp_seconds as ts_s
 
-timestamp_s = ts_s.dump(datetime.now())
+timestamp_secs = ts_s.dump(datetime.now())
 ```

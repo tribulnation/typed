@@ -7,9 +7,9 @@ The subscription methods are `async`, so first await the subscription, then iter
 ## Listen To Spot Candles
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   stream = await client.spot.streams.market.candles('BTCUSDT', interval='Min1')
   async for candle in stream:
     print(candle)
@@ -18,9 +18,9 @@ async with MEXC.public() as client:
 ## Listen To Spot Order Book Updates
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
+async with MEXC.new(public=True) as client:
   stream = await client.spot.streams.market.depth('BTCUSDT', level=5)
   async for book in stream:
     print(book)
@@ -29,7 +29,7 @@ async with MEXC.public() as client:
 ## Listen To Your Spot Trades
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   stream = await client.spot.streams.user.trades()
@@ -40,10 +40,10 @@ async with MEXC.new() as client:
 ## Listen To Futures Tickers
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
-async with MEXC.public() as client:
-  stream = await client.futures.streams.market.tickers()
+async with MEXC.new(public=True) as client:
+  stream = await client.futures.streams.market.all_tickers()
   async for tickers in stream:
     print(tickers[0])
 ```
@@ -51,10 +51,10 @@ async with MEXC.public() as client:
 ## Listen To Your Futures Trades
 
 ```python
-from mexc import MEXC
+from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  stream = await client.futures.streams.user.trades()
+  stream = await client.futures.streams.user.my_trades()
   async for trade in stream:
     print(trade['symbol'], trade['price'])
 ```
