@@ -1,39 +1,66 @@
 # Paginate Through Results
 
-Endpoints that return a page carry a `_paged` sibling that walks every page automatically as an
-async iterator, with no manual cursor bookkeeping.
+Endpoints that return a page carry a `_paged` sibling that walks every page automatically, with
+no manual cursor bookkeeping. Most of these are a plain async iterator; a cursor-paged endpoint
+whose response is just `{rows, cursor}` -- nothing else worth keeping per page -- is instead
+`PaginatedResponse`-shaped: usable both as `async for` (one page of rows at a time) and as a
+single `await` (every page flattened into one list).
 
-## Cursor-Paged: Order History
+## Cursor-Paged, `PaginatedResponse`-Shaped: Order History
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   async for page in client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT'):
-    for order in page['list']:
+    for order in page:
       print(order['orderId'], order['orderStatus'])
+
+  # Or flatten every page into one list in a single call:
+  every_order = await client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT')
 ```
 
-`history_orders_paged` follows the response's `cursor` and stops once a page carries none. Pass
-`max_pages` to cap how many pages it walks.
+`history_orders_paged` follows the response's `cursor` and stops once a page carries none --
+`async for` yields each page's rows directly (no `{list, cursor}` envelope to unwrap), and
+`await` walks every page for you. `elite_records`, `move_position_history`,
+`current_track_orders`/`history_track_orders`/`profit_share_history` (and their Classic Spot
+counterparts), `order_fills`, `position_history`, `virtual_subaccount_list`,
+`current_followers`/`history_followers`/`profit_details`, `all_orders`/`my_ads`/`pending_orders`,
+`sub_transfer_records`, `withdraw_address_book`, `sub_api_list`, and market data's `liquidations`
+follow the same shape.
 
 The one-shot form returns a single page directly, with its own `cursor` for manual paging:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   page = await client.uta.trade.history_orders(category='SPOT', symbol='BTCUSDT')
 ```
 
-`financial_records`, `fills`, `unfilled_orders`, and `elite_records` follow the same
-cursor-paged shape.
+## Cursor-Paged, Plain Async Iterator: Financial Records
+
+A cursor-paged endpoint whose page also carries something worth keeping alongside the rows --
+`financial_records`/`fills`/`unfilled_orders`'s own `{list, cursor}` page object, say -- stays a
+plain async iterator instead, yielding the whole response per page:
+
+```python
+from typed_bitget import Bitget
+
+async with Bitget.new() as client:
+  async for page in client.uta.account.financial_records_paged(category='SPOT', coin='USDT'):
+    for record in page['list'] or []:  # `list` is `null`, not `[]`, on an empty page
+      print(record['amount'])
+```
+
+Pass `max_pages` to cap how many pages a plain async-iterator `_paged` method walks -- unlike the
+`PaginatedResponse`-shaped form above, which has no such parameter.
 
 ## Window-Paged: Candles
 
 ```python
 from datetime import datetime, timezone
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   async for page in client.uta.market.candles_paged(

@@ -1,8 +1,8 @@
 # Error Handling
 
 ```python
-from bitget import Bitget
-from bitget.core.exc import ApiError, AuthError, BadRequest, NetworkError, RateLimited, ValidationError
+from typed_bitget import Bitget
+from typed_bitget.core.exc import ApiError, AuthError, BadRequest, NetworkError, RateLimited, ValidationError
 
 async with Bitget.new() as client:
   try:

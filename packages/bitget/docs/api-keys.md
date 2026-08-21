@@ -1,8 +1,11 @@
 # API Keys Setup
 
 Authenticated calls need an access key, secret key, and passphrase from the Bitget API
-management page. Create one for the account mode you're calling, Classic or UTA (a Bitget
-account is one or the other, never both).
+management page. You can get your API keys from the [Bitget website](https://www.bitget.com/account/newapi):
+
+| 1) Create API keys | 2) Set passphrase & permissions | 3) Copy API & Secret key |
+| ----------------- | -------------------------------- | ------------------------ |
+| ![How to create API keys](media/create_api_keys.png) | ![How to set passphrase & permissions](media/set_passphrase_permissions.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
 ## Environment Variables
 
@@ -13,7 +16,7 @@ export BITGET_PASSPHRASE="your_passphrase"
 ```
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   ...
@@ -24,7 +27,7 @@ async with Bitget.new() as client:
 You can also pass credentials directly, bypassing the environment:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(
   access_key="your_access_key",
@@ -39,7 +42,7 @@ async with Bitget.new(
 For public endpoints only, skip credentials entirely:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   ...

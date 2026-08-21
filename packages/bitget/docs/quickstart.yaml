@@ -16,7 +16,7 @@ first_call:
   body: Load the environment, then make your first call. Examples below use UTA v3, Bitget's recommended surface for new integrations.
   code: |
     from dotenv import load_dotenv
-    from bitget import Bitget
+    from typed_bitget import Bitget
 
     load_dotenv()
 
@@ -74,8 +74,12 @@ how_tos:
   - title: Query & manage deposits/withdrawals
     body: Deposit addresses and history, withdrawals, and internal transfers. Needs credentials.
     code: |
+      from datetime import datetime, timezone
+
       address = await client.uta.transfers.deposit_address(coin='USDT', chain='TRC20')  # deposit address
-      deposits = await client.uta.transfers.deposit_records(start_time=1700000000000, end_time=1700086400000)  # deposit history
+      deposits = await client.uta.transfers.deposit_records(
+        start_time=datetime(2023, 11, 14, tzinfo=timezone.utc), end_time=datetime(2023, 11, 15, tzinfo=timezone.utc),
+      )  # deposit history
       await client.uta.transfers.withdraw({                                      # withdraw
         'coin': 'USDT', 'chain': 'TRC20', 'transferType': 'on_chain',
         'address': 'your_destination_address', 'size': '10',
@@ -85,5 +89,5 @@ how_tos:
     body: Automatic cursor- and window-paged iteration over multi-page results.
     code: |
       async for page in client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT'):  # walk every page
-        for order in page['list']:
+        for order in page:
           print(order['orderId'])

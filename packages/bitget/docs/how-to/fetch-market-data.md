@@ -5,7 +5,7 @@ All of these are public, no credentials needed.
 ## Tradeable Symbols
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   instruments = await client.uta.market.instruments(category='SPOT')
@@ -17,7 +17,7 @@ async with Bitget.new(public=True) as client:
 ## Order Book
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   book = await client.uta.market.orderbook(category='SPOT', symbol='BTCUSDT', limit=50)
@@ -26,7 +26,7 @@ async with Bitget.new(public=True) as client:
 ## Candles
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   candles = await client.uta.market.candles(
@@ -42,7 +42,7 @@ traded price.
 ## Tickers
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   tickers = await client.uta.market.tickers(category='SPOT')
@@ -52,7 +52,7 @@ async with Bitget.new(public=True) as client:
 ## Recent Trades
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   trades = await client.uta.market.fills(category='SPOT', symbol='BTCUSDT', limit=100)
@@ -64,7 +64,7 @@ The same data is available for Classic-mode accounts under `client.classic`, spl
 domain instead of a `category` parameter, e.g.:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   symbols = await client.classic.spot.symbols(symbol='BTCUSDT')

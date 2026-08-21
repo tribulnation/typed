@@ -11,7 +11,7 @@ For short request-response flows, plain construction is fine — the underlying 
 open lazily on first use.
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 client = Bitget.new(public=True)
 tickers = await client.uta.market.tickers(category='SPOT', symbol='BTCUSDT')
@@ -27,7 +27,7 @@ streaming workflow, or code where explicit cleanup matters. Entering the top-lev
 `classic_streams`, and `uta_streams` all enter underneath it.
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   symbols = await client.classic.spot.symbols()
@@ -40,7 +40,7 @@ Each streams method returns a subscription manager, not a stream directly. Use `
 on it so the subscription is unsubscribed automatically when the block exits:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   async with client.uta_streams.orderbook('', 'spot', 'BTCUSDT') as book:
@@ -52,7 +52,7 @@ async with Bitget.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   book = await client.uta_streams.orderbook('', 'spot', 'BTCUSDT')
@@ -68,7 +68,7 @@ sent over the private WebSocket connection and answered with a single reply, not
 subscription. Don't expect it to behave like the pub-sub methods above:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   reply = await client.classic_streams.place_order(
@@ -92,7 +92,7 @@ lazily instantiates its underlying `httpx.AsyncClient` under an `asyncio.Lock`, 
 underneath.
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   # classic and uta share one HTTP client; classic_streams/uta_streams are independent WS connections

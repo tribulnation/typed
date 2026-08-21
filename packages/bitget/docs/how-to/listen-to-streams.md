@@ -6,7 +6,7 @@ use it as an async context manager to auto-unsubscribe on exit.
 ## Public: Ticker
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   async with client.uta_streams.ticker(inst_type='spot', symbol='BTCUSDT') as stream:
@@ -20,7 +20,7 @@ async with Bitget.new(public=True) as client:
 ## Public: Order Book & Trades
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   async with client.uta_streams.orderbook(depth='5', inst_type='spot', symbol='BTCUSDT') as stream:
@@ -41,7 +41,7 @@ Private channels need credentials and all subscribe under the fixed `inst_type='
 doesn't split private channels by product category the way Classic v2 does.
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   async with client.uta_streams.account(inst_type='UTA') as stream:
@@ -70,7 +70,7 @@ subscriptions.
 fixed `UTA`:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   async with client.classic_streams.ticker(inst_type='SPOT', inst_id='BTCUSDT') as stream:
