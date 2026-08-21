@@ -1,0 +1,114 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view (ADR 0014, schema extended for markdown `body` + links ADR
+# 0015). Mirrors docs/index.md and docs/how-to/*.md -- kept in sync by hand
+# until those pages generate from this file instead, not yet decided. Every
+# snippet here is checked against pkg/src, not copied from a prior rendering.
+#
+# `body` fields are markdown (inline subset -- links, code spans, emphasis;
+# no block-level content), rendered at sync time by the landing repo's
+# `scripts/sync-docs.mjs`. Links are absolute native-route paths
+# (`/typed/moralis/...`), not relative doc-tree paths -- this file is authored
+# for exactly one rendering location, unlike docs/*.md's portable relative
+# links (see ADR 0015).
+
+env_setup:
+  body: >-
+    Create a `.env` with your API key -- see
+    [API keys setup](/typed/moralis/api-keys) for how to create one.
+  code: |
+    # .env
+    MORALIS_API_KEY="your_api_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-moralis python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_moralis import Moralis
+
+    load_dotenv()
+
+    async with Moralis.new() as client:
+      balances = await client.evm.wallet.token_balances(
+        '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+      )
+      print(balances['result'])
+
+how_tos:
+  - title: Fetch wallet data
+    body: EVM wallet balances, decoded transaction history, and net worth -- one wallet address, any EVM chain.
+    code: |
+      balances = await client.evm.wallet.token_balances('0x...', chain='eth')       # ERC20 balances
+      history = await client.evm.wallet.history('0x...', chain='eth')               # decoded tx history
+      transfers = await client.evm.wallet.token_transfers('0x...', chain='eth')     # ERC20 transfers
+      net_worth = await client.evm.wallet.wallet_net_worth('0x...', chains=['eth'])  # USD net worth
+
+  - title: Fetch token data
+    body: ERC20 contract-level metadata, price, and holder stats.
+    code: |
+      metadata = await client.evm.token.metadata.token_metadata(chain='eth', addresses=['0x...'])  # metadata
+      price = await client.evm.price.token_price('0x...', chain='eth')                              # current price
+      score = await client.evm.token.metadata.token_score('0x...', chain='eth')                      # spam/risk score
+      holders = await client.evm.token.holders.token_holder_metrics('0x...', chain='eth')            # holder stats
+
+  - title: Fetch NFT data
+    body: NFTs held by a wallet, plus contract-level metadata, ownership, and prices.
+    code: |
+      owned = await client.evm.wallet.nft_balances('0x...', chain='eth')                    # NFTs in a wallet
+      nft = await client.evm.nft.metadata.nft_metadata('0x...', '1', chain='eth')           # one NFT's metadata
+      owners = await client.evm.nft.ownership.owners_by_collection('0x...', chain='eth')    # collection owners
+      floor = await client.evm.nft.prices.floor_price_by_collection('0x...', chain='eth')   # floor price
+
+  - title: Fetch Solana data
+    body: Solana wallet balances/portfolio and SPL token metadata.
+    code: |
+      native = await client.solana.wallet.native_balance('mainnet', 'address...')     # SOL balance
+      tokens = await client.solana.wallet.token_balances('mainnet', 'address...')     # SPL token balances
+      portfolio = await client.solana.wallet.wallet_portfolio('mainnet', 'address...')  # tokens + NFTs
+      metadata = await client.solana.token.token_metadata('mainnet', 'mint...')       # token metadata
+
+  - title: Fetch Bitcoin data
+    body: Bitcoin wallet balances/history, blocks, transactions, and price.
+    code: |
+      balances = await client.bitcoin.wallet.btc_balances('bc1...')            # BTC + linked balances
+      history = await client.bitcoin.wallet.wallet_history('bc1...')           # wallet history
+      block = await client.bitcoin.blockchain.block('800000', 'bitcoin')       # block lookup
+      price = await client.bitcoin.price.current_price('bitcoin-mainnet', 'btc')  # current BTC price
+
+  - title: Explore cross-chain data
+    body: Entity search and market-wide metrics spanning multiple chains at once.
+    code: |
+      found = await client.universal.entity.endpoints.entity_search(query='uniswap')  # entity search
+      chain_metrics = await client.universal.global_.endpoints.chain_metrics()        # per-chain metrics
+      trending = await client.universal.token.trending_tokens(chain='eth')            # trending tokens
+
+  - title: Authenticate a wallet
+    body: A Sign-In-With-Ethereum-style challenge/verify flow, returning a stable per-wallet `profileId`.
+    code: |
+      challenge = await client.auth.challenge.request_evm_challenge({  # request a message to sign
+        'domain': 'example.com', 'uri': 'https://example.com',
+        'timeout': 60, 'chainId': '1', 'address': '0x...',
+      })
+      verified = await client.auth.challenge.verify_evm_challenge({    # verify the signed message
+        'message': challenge['message'], 'signature': '0x...',
+      })
+
+  - title: Manage webhook streams
+    body: Create and configure server-side webhook subscriptions for on-chain activity.
+    code: |
+      stream = await client.streams.evm.create_stream({                          # create a stream
+        'webhookUrl': 'https://example.com/webhook', 'description': 'transfers', 'chainIds': ['0x1'],
+      })
+      await client.streams.evm.add_address_to_stream(stream['id'], {'address': '0x...'})  # add an address
+      await client.streams.evm.update_stream_status(stream['id'], {'status': 'active'})   # activate it
+      streams = await client.streams.evm.all_streams(limit=100)                   # list your streams
+
+  - title: Paginate through results
+    body: Every cursor-paginated endpoint has a `_paged` sibling, awaitable and async-iterable.
+    code: |
+      async for page in client.evm.wallet.token_balances_paged('0x...', chain='eth'):  # one page at a time
+        print(page)
+      all_balances = await client.evm.wallet.token_balances_paged('0x...', chain='eth')  # flattened
