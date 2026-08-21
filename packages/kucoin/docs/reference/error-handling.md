@@ -3,7 +3,7 @@
 Every exception is importable from `kucoin` directly:
 
 ```python
-from kucoin import ApiError, AuthError, BadRequest, NetworkError, RateLimited, ValidationError
+from typed_kucoin import ApiError, AuthError, BadRequest, NetworkError, RateLimited, ValidationError
 
 try:
   ...

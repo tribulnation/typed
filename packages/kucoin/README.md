@@ -35,7 +35,7 @@
 ---
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   ticker = await client.spot.ticker(symbol='BTC-USDT')

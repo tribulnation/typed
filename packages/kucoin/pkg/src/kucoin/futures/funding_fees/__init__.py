@@ -1,9 +1,0 @@
-"""KuCoin FundingFees endpoints."""
-
-from .current_funding_rate import CurrentFundingRate
-from .private_funding_history import PrivateFundingHistory
-from .public_funding_history import PublicFundingHistory
-
-
-class FundingFees(CurrentFundingRate, PrivateFundingHistory, PublicFundingHistory):
-  """KuCoin FundingFees endpoints."""

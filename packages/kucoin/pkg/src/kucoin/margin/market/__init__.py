@@ -1,8 +1,0 @@
-"""KuCoin Market endpoints."""
-
-from .available_inventory import AvailableInventory
-from .collateral_ratio import CollateralRatio
-
-
-class Market(AvailableInventory, CollateralRatio):
-  """KuCoin Market endpoints."""

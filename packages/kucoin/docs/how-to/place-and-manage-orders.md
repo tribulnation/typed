@@ -7,7 +7,7 @@ with `Trade` permission — see [API Keys Setup](../api-keys.md).
 ## Place a Limit Order
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   result = await client.spot.orders_hf.add({
@@ -24,7 +24,7 @@ A market order takes `size` (base currency) or `funds` (quote currency) instead 
 `price`:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   result = await client.spot.orders_hf.add({
@@ -35,7 +35,7 @@ async with KuCoin.new() as client:
 ## Query an Order
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   order = await client.spot.orders_hf.get_by_order_id('order-id', symbol='BTC-USDT')
@@ -45,7 +45,7 @@ async with KuCoin.new() as client:
 ## List Open Orders
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   open_orders = await client.spot.orders_hf.get_open_orders(symbol='BTC-USDT')
@@ -56,7 +56,7 @@ async with KuCoin.new() as client:
 ## Cancel an Order
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   cancelled = await client.spot.orders_hf.cancel_by_order_id(
@@ -71,7 +71,7 @@ private order WebSocket topic (see [Listen To Streams](listen-to-streams.md)).
 ## Cancel All Orders
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   result = await client.spot.orders_hf.cancel_all()

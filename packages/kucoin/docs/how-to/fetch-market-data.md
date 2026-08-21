@@ -5,7 +5,7 @@ Every market-data endpoint below is public — no credentials needed.
 ## Ticker
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   ticker = await client.spot.ticker(symbol='BTC-USDT')
@@ -18,7 +18,7 @@ async with KuCoin.new(public=True) as client:
 price — cheaper than `full_orderbook`, which is authenticated and returns every level:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   book = await client.spot.part_orderbook('20', symbol='BTC-USDT')
@@ -28,11 +28,13 @@ async with KuCoin.new(public=True) as client:
 ## Candles
 
 ```python
-from kucoin import KuCoin
+from datetime import datetime, timedelta
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   candles = await client.spot.klines(
-    symbol='BTC-USDT', type='1hour', start_at=1_700_000_000, end_at=1_700_010_000,
+    symbol='BTC-USDT', type='1hour',
+    start_at=datetime.now() - timedelta(hours=1), end_at=datetime.now(),
   )
   for open_time, open_, close, high, low, volume, turnover in candles:
     print(open_time, close)
@@ -44,7 +46,7 @@ automatically — see [Paginate Through Results](paginate-through-results.md).
 ## Trading Pairs
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   symbols = await client.spot.all_symbols()
