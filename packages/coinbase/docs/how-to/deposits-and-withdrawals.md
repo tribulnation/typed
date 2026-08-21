@@ -5,7 +5,7 @@ Moving funds in and out of a Coinbase App wallet (`accounts`, v2) is split by ra
 ## Fiat
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   methods = await client.advanced_trade.payment_methods.list()
@@ -30,7 +30,7 @@ async with Coinbase.new() as client:
 Receive by minting a new address; send with a caller-chosen idempotency token so a retried request can't double-send:
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   address = await client.accounts.addresses.create('account-id', network='ethereum')

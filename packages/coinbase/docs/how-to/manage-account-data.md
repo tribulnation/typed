@@ -5,7 +5,7 @@ Coinbase exposes account balances two ways — legacy Coinbase App wallets (`acc
 ## Coinbase App Wallets (v2)
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   wallets = await client.accounts.list(limit=25)                 # every linked wallet
@@ -17,7 +17,7 @@ async with Coinbase.new() as client:
 ## Advanced Trade Brokerage Accounts (v3)
 
 ```python
-from coinbase import Coinbase
+from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
   accounts = await client.advanced_trade.accounts.list(limit=50)     # every brokerage account

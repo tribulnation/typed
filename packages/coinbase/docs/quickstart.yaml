@@ -15,7 +15,7 @@ first_call:
   body: Load the environment, then make your first call.
   code: |
     from dotenv import load_dotenv
-    from coinbase import Coinbase
+    from typed_coinbase import Coinbase
 
     load_dotenv()
 
@@ -67,5 +67,5 @@ how_tos:
   - title: Paginate through results
     body: Walk every page of a cursor-paginated endpoint automatically.
     code: |
-      async for page in client.accounts.list.paged(limit=25):                       # every v2 wallet
-        print(page['data'])
+      accounts = await client.accounts.list.paged(limit=25)                         # every v2 wallet, flattened
+      print(accounts[0]['id'])

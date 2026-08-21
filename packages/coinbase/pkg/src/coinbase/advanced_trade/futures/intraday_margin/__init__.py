@@ -1,9 +1,0 @@
-from dataclasses import dataclass
-from .current_window import CurrentWindow
-from .get import Get
-from .set import Set
-
-
-@dataclass(frozen=True, kw_only=True)
-class IntradayMargin(CurrentWindow, Get, Set):
-  """`intraday_margin` endpoints."""
