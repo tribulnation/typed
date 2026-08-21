@@ -10,7 +10,7 @@ Deribit clients are async-first and support two usage styles:
 For short request-response flows, plain construction is fine.
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 client = Deribit.new(public=True)
 ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
@@ -26,7 +26,7 @@ Use `async with` when you want the client to open up front and close cleanly at 
 the block.
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   instruments = await client.http.market_data.get_instruments(
@@ -60,7 +60,7 @@ Use `async with` on the returned subscription so it unsubscribes automatically w
 block exits:
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   async with client.streams.market_data.ticker('BTC-PERPETUAL', 'raw') as ticks:
@@ -72,7 +72,7 @@ async with Deribit.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   ticks = await client.streams.market_data.ticker('BTC-PERPETUAL', 'raw')
@@ -101,7 +101,7 @@ once the subscription actually connects, if the client has none.
 separate connections, not aliases for one.
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   via_http = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')

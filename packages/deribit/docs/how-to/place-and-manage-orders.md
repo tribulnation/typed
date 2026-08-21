@@ -9,7 +9,7 @@ targets `testnet=True`; run write calls against testnet only.
 (`limit`, `market`, `stop_limit`, ...):
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   order = await client.http.trading.buy({
@@ -24,7 +24,7 @@ async with Deribit.new(testnet=True) as client:
 ## Inspect Open Orders
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   orders = await client.http.trading.get_open_orders_by_instrument(
@@ -37,7 +37,7 @@ async with Deribit.new(testnet=True) as client:
 ## Query An Order
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   order = await client.http.trading.get_order_state(order_id='some-order-id')
@@ -47,7 +47,7 @@ async with Deribit.new(testnet=True) as client:
 ## Cancel An Order
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   cancelled = await client.http.trading.cancel(order_id='some-order-id')
@@ -57,7 +57,7 @@ async with Deribit.new(testnet=True) as client:
 ## Cancel All Orders
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   count = await client.http.trading.cancel_all()

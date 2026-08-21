@@ -30,7 +30,7 @@ first_call:
     from dotenv import load_dotenv
     load_dotenv()
 
-    from deribit import Deribit
+    from typed_deribit import Deribit
 
     async with Deribit.new(testnet=True) as client:
       instruments = await client.http.market_data.get_instruments(
@@ -42,12 +42,17 @@ how_tos:
   - title: Fetch Market Data
     body: Instruments, tickers, order books, recent trades, candles — all public, no credentials needed.
     code: |
+      from datetime import datetime, timezone
+
       instruments = await client.http.market_data.get_instruments(currency='BTC', kind='future')  # tradeable instruments
       ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')  # ticker
       book = await client.http.market_data.get_order_book(instrument_name='BTC-PERPETUAL', depth=20)  # order book
       trades = await client.http.market_data.get_last_trades_by_currency(currency='BTC', kind='future', count=10)  # recent trades
       candles = await client.http.market_data.get_tradingview_chart_data(
-        instrument_name='BTC-PERPETUAL', start_timestamp=1700000000000, end_timestamp=1700003600000, resolution='60',
+        instrument_name='BTC-PERPETUAL',
+        start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
+        end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
+        resolution='60',
       )  # candles
 
   - title: Place & Manage Orders
@@ -64,10 +69,14 @@ how_tos:
   - title: Fetch Account Data
     body: Balances, positions, and transaction history. Needs credentials.
     code: |
+      from datetime import datetime, timezone
+
       summary = await client.http.account.get_account_summary(currency='BTC')  # account balance/equity
       positions = await client.http.account.get_positions(currency='BTC', kind='future')  # open positions
       log = await client.http.account.get_transaction_log(
-        currency='BTC', start_timestamp=1700000000000, end_timestamp=1700086400000,
+        currency='BTC',
+        start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
+        end_timestamp=datetime(2023, 11, 15, 22, 13, 20, tzinfo=timezone.utc),
       )  # transaction history
 
   - title: Manage Deposits & Withdrawals
@@ -83,8 +92,13 @@ how_tos:
   - title: Paginate Through Results
     body: Endpoints the venue paginates get a `<method>_paged` async-iterator sibling.
     code: |
+      from datetime import datetime, timezone
+
       async for page in client.http.market_data.get_mark_price_history_paged(
-        instrument_name='BTC-PERPETUAL', start_timestamp=1700000000000, end_timestamp=1700003600000, max_pages=5,
+        instrument_name='BTC-PERPETUAL',
+        start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
+        end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
+        max_pages=5,
       ):  # window-paginated mark price history
         for mark_price, timestamp in page:
           print(timestamp, mark_price)

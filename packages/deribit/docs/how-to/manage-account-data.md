@@ -5,7 +5,7 @@
 ## Account Summary
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   summary = await client.http.account.get_account_summary(currency='BTC')
@@ -15,7 +15,7 @@ async with Deribit.new(testnet=True) as client:
 ## Open Positions
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   positions = await client.http.account.get_positions(currency='BTC', kind='future')
@@ -26,11 +26,14 @@ async with Deribit.new(testnet=True) as client:
 ## Transaction Log
 
 ```python
-from deribit import Deribit
+from datetime import datetime, timezone
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   log = await client.http.account.get_transaction_log(
-    currency='BTC', start_timestamp=1700000000000, end_timestamp=1700086400000,
+    currency='BTC',
+    start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
+    end_timestamp=datetime(2023, 11, 15, 22, 13, 20, tzinfo=timezone.utc),
   )
   print(log['logs'])
 ```

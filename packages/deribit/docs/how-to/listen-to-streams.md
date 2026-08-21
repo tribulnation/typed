@@ -6,7 +6,7 @@ from `client.ws`'s request/reply connection.
 ## Public Channel
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   async with client.streams.market_data.ticker('BTC-PERPETUAL', '100ms') as stream:
@@ -19,7 +19,7 @@ async with Deribit.new(public=True) as client:
 Private (`user.*`) channels need credentials — see [API Keys Setup](../api-keys.md):
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   async with client.streams.user.orders_by_instrument('BTC-PERPETUAL', 'raw') as stream:
@@ -34,7 +34,7 @@ async with Deribit.new(testnet=True) as client:
 whatever this package doesn't expose as a typed method:
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   result = await client.streams.rpc.request('public/get_time')
