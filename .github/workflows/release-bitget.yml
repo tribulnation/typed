@@ -63,7 +63,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: bitget-v${{ needs.check.outputs.version }}
-          previous_tag_name: ${{ steps.previous_tag.outputs.previous }}
+          previous_tag: ${{ steps.previous_tag.outputs.previous }}
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-bitget/${{ needs.check.outputs.version }}/) as `typed-bitget==${{ needs.check.outputs.version }}`.
