@@ -65,6 +65,8 @@ jobs:
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-core/${{ needs.check.outputs.version }}/) as `typed-core==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}
       - if: steps.previous_tag.outputs.previous == ''
         uses: softprops/action-gh-release@v2
         with:
@@ -72,3 +74,5 @@ jobs:
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-core/${{ needs.check.outputs.version }}/) as `typed-core==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}
