@@ -7,9 +7,9 @@ Use `client.streams` for public subscription-style updates.
 Use `l2_book()` for order book updates.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.l2_book('BTC') as book:
     async for update in book:
       best_bid = update['levels'][0][0]
@@ -22,9 +22,9 @@ If you need more compact aggregation, use the optional `n_sig_figs` and `mantiss
 ## Listen To Candle Updates
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.candle('BTC', '1m') as candles:
     async for candle in candles:
       print(candle['s'], candle['i'], candle['c'])
@@ -33,9 +33,9 @@ async with Hyperliquid.ws(public=True) as client:
 ## Listen To Market-Wide Mid Prices
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.all_mids() as mids:
     async for update in mids:
       print(update['mids']['BTC'])

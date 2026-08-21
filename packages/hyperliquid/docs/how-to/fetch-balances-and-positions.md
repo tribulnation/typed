@@ -5,11 +5,11 @@ Use `client.info` for account-state reads. These methods take a user address, no
 ## Fetch Spot Balances
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   spot = await client.info.spot_clearinghouse_state(user=user)
   for balance in spot['balances']:
     print(balance['coin'], balance['total'])
@@ -22,11 +22,11 @@ async with Hyperliquid.http(public=True) as client:
 If you trade on a non-default perp dex, pass `dex=...`.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   state = await client.info.clearinghouse_state(user=user)
   print(state['marginSummary']['accountValue'])
 
@@ -40,11 +40,11 @@ async with Hyperliquid.http(public=True) as client:
 Use `user_portfolio()` for account-value and PnL history across the built-in periods.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   portfolio = await client.info.user_portfolio(user=user)
   print(portfolio)
 ```
@@ -55,11 +55,11 @@ async with Hyperliquid.http(public=True) as client:
 or `None` when it has none.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.http(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   sub_accounts = await client.info.sub_accounts(user=user)
   print([account['name'] for account in sub_accounts or []])
 ```

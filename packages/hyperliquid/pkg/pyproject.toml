@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-hyperliquid"
-version = "1.2.5"
+version = "2.0.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -32,4 +32,4 @@ Documentation = "https://tribulnation.com/typed/hyperliquid"
 Website = "https://tribulnation.com/typed"
 
 [tool.setuptools.package-data]
-hyperliquid = ["py.typed", "*.pyi", "**/*.pyi"]
+typed_hyperliquid = ["py.typed", "*.pyi", "**/*.pyi"]

@@ -7,11 +7,11 @@ Use `client.streams` for subscription-style updates.
 `user_fills()` streams fills for a user address. This is the most direct way to listen to your trades.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.user_fills(user) as fills:
     async for update in fills:
       for fill in update['fills']:
@@ -21,11 +21,11 @@ async with Hyperliquid.ws(public=True) as client:
 If you want partial fills aggregated within the same block, pass `aggregate_by_time=True`.
 
 ```python
-from hyperliquid import Hyperliquid
+from typed_hyperliquid import Hyperliquid
 
 user = '0xYourAccountAddress'
 
-async with Hyperliquid.ws(public=True) as client:
+async with Hyperliquid.new(public=True) as client:
   async with client.streams.user_fills(user, aggregate_by_time=True) as fills:
     async for update in fills:
       print(update['fills'])

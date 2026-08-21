@@ -24,11 +24,11 @@ first_call:
   body: Load the environment, then make your first call.
   code: |
     from dotenv import load_dotenv
-    from hyperliquid import Hyperliquid
+    from typed_hyperliquid import Hyperliquid
 
     load_dotenv()
 
-    async with Hyperliquid.http() as client:
+    async with Hyperliquid.new() as client:
       mids = await client.info.all_mids()
       print(mids['BTC'])
 
@@ -36,11 +36,12 @@ how_tos:
   - title: Fetch market data
     body: Order books, candles, current funding, and mid prices -- all public, no credentials needed.
     code: |
-      from hyperliquid.core import timestamp as ts
+      from datetime import datetime, timedelta, timezone
 
       book = await client.info.l2_book(coin='BTC')                        # order book
+      now = datetime.now(timezone.utc)
       candles = await client.info.candle_snapshot(
-        coin='BTC', interval='1m', start_time=ts.now() - 3_600_000, end_time=ts.now(),
+        coin='BTC', interval='1m', start_time=now - timedelta(hours=1), end_time=now,
       )                                                                    # recent candles
       meta, ctxs = await client.info.perp_meta_and_asset_ctxs()            # current funding rates
 
@@ -50,19 +51,19 @@ how_tos:
       meta = await client.info.perp_meta()
       btc_asset = next(i for i, a in enumerate(meta['universe']) if a['name'] == 'BTC')  # resolve asset id
 
-      result = await client.exchange.order(
+      result = await client.exchange.http.order(
         orders=[{'a': btc_asset, 'b': True, 'p': '90000', 's': '0.001', 'r': False, 't': {'limit': {'tif': 'Gtc'}}}],
         grouping='na',
-      )                                                                    # place an order
-      user = client.exchange.wallet.address
+      )                                                                    # place an order (or client.exchange.ws.order over WS)
+      user = client.exchange.http.wallet.address
       order = await client.info.order_status(user=user, oid=123456789)    # check an order's status
       open_orders = await client.info.open_orders(user=user)              # list open orders
-      await client.exchange.cancel(cancels=[{'a': btc_asset, 'o': 123456789}])  # cancel it
+      await client.exchange.http.cancel(cancels=[{'a': btc_asset, 'o': 123456789}])  # cancel it
 
   - title: Fetch balances & positions
     body: Spot balances, perp positions and margin, and portfolio history.
     code: |
-      user = client.exchange.wallet.address
+      user = client.exchange.http.wallet.address
 
       spot = await client.info.spot_clearinghouse_state(user=user)  # spot balances
       state = await client.info.clearinghouse_state(user=user)      # perp positions & margin
@@ -71,15 +72,14 @@ how_tos:
   - title: Fetch transactions
     body: Fills, funding payments, and other ledger flows over a time range.
     code: |
-      from datetime import datetime, timedelta
-      from hyperliquid.core import timestamp as ts
+      from datetime import datetime, timedelta, timezone
 
-      user = client.exchange.wallet.address
-      start_ms = ts.dump(datetime.now() - timedelta(days=7))
+      user = client.exchange.http.wallet.address
+      start_time = datetime.now(timezone.utc) - timedelta(days=7)
 
-      fills = await client.info.user_fills_by_time(user=user, start_time=start_ms)          # fills
-      funding = await client.info.user_funding(user=user, start_time=start_ms)              # funding payments
-      flows = await client.info.user_non_funding_ledger_updates(user=user, start_time=start_ms)  # other ledger flows
+      fills = await client.info.user_fills_by_time(user=user, start_time=start_time)          # fills
+      funding = await client.info.user_funding(user=user, start_time=start_time)              # funding payments
+      flows = await client.info.user_non_funding_ledger_updates(user=user, start_time=start_time)  # other ledger flows
 
   - title: Listen to public data
     body: Public order book and trade subscriptions -- no credentials needed.
@@ -95,7 +95,7 @@ how_tos:
   - title: Listen to your trades
     body: Stream your own fills as they happen.
     code: |
-      user = client.exchange.wallet.address
+      user = client.exchange.http.wallet.address
 
       async with client.streams.user_fills(user) as fills:  # your fills, as they happen
         async for update in fills:
