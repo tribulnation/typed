@@ -11,9 +11,9 @@ For short request-response flows against the REST surface, plain construction is
 underlying HTTP transport opens lazily on first use.
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-client = Bit2Me.public()
+client = Bit2Me.new(public=True)
 book = await client.v2.trading.order_book(symbol='BTC/EUR')
 print(book.get('bids', [])[:1])
 ```
@@ -23,10 +23,7 @@ print(book.get('bids', [])[:1])
 Use `async with` to open the client up front and close it cleanly at the end of the block.
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   balances = await client.v1.trading.balance()
@@ -45,10 +42,7 @@ WebSocket surface connects only when you separately enter it with its own `async
 are two independent connections, and each needs its own `async with` before use:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   async with client.trading_ws as trading:
@@ -68,9 +62,9 @@ directly. `order_book`/`public_trades` are public; the rest need an authenticate
 via `authed_subscribe` under the hood. Both usage variants work:
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   async with client.trading_ws as trading:
     async with trading.order_book(symbol='BTC/EUR') as stream:
       async for update in stream:
@@ -79,9 +73,9 @@ async with Bit2Me.public() as client:
 ```
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   async with client.trading_ws as trading:
     stream = await trading.order_book(symbol='BTC/EUR')
     async for update in stream:

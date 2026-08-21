@@ -4,7 +4,7 @@
 
 ```python
 from dotenv import load_dotenv
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
 load_dotenv()
 
@@ -30,12 +30,12 @@ pip install typed-bit2me
 
 ### Public market data
 
-`Bit2Me.public()` needs no credentials and reaches every public endpoint.
+`Bit2Me.new(public=True)` needs no credentials and reaches every public endpoint.
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   book = await client.v2.trading.order_book(symbol='BTC/EUR')
   print(book.get('bids', [])[:1])
 ```
@@ -50,7 +50,7 @@ BIT2ME_SECRET_KEY="your_secret_key"
 
 ```python
 from dotenv import load_dotenv
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
 load_dotenv()
 
@@ -65,7 +65,7 @@ async with Bit2Me.new() as client:
 - `client.trading_ws`: the Trading Spot WebSocket, public/private channel subscriptions and the six one-shot order commands, on one connection.
 - `client.crypto_ws`: the account-notifications WebSocket, one authenticated connection, every entitled notification pushed unprompted.
 
-Response validation is on by default; pass `validate=False` to `Bit2Me.new()`/`.public()`, or per call, to skip it.
+Response validation is on by default; pass `validate=False` to `Bit2Me.new()`, or per call, to skip it.
 
 ## How To
 

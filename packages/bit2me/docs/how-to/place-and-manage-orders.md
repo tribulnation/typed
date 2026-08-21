@@ -5,10 +5,7 @@ All order endpoints require credentials, so use `Bit2Me.new()`. Check `v1.tradin
 ## Place, Inspect, And Cancel
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   order = await client.v1.trading.orders.create({          # place an order
@@ -36,10 +33,7 @@ async with Bit2Me.new() as client:
 
 ```python
 from decimal import Decimal
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   async with client.trading_ws as trading:

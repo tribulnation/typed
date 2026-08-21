@@ -7,10 +7,7 @@ All of these need credentials, so use `Bit2Me.new()`.
 Pockets are the Bit2Me Wallet's per-currency sub-balances:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pocket = await client.v1.wallet.pockets.create({'currency': 'BTC', 'name': 'Savings'})  # create a pocket
@@ -21,10 +18,7 @@ async with Bit2Me.new() as client:
 ## Find A Deposit Address
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()
@@ -37,10 +31,7 @@ async with Bit2Me.new() as client:
 Trading balance (see [Fetch Account Data](fetch-account-data.md)) is a separate, Pro-account balance funded from a wallet pocket:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()
@@ -62,10 +53,7 @@ async with Bit2Me.new() as client:
 A wallet withdrawal is a two-step proforma/execute flow, same as any other wallet transaction. Check the proforma's `fee`/`expirationTime` before executing:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()

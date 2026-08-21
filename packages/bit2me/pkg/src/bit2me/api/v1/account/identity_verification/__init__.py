@@ -1,6 +1,0 @@
-from .get_retry_window import GetRetryWindow
-from .get_status import GetStatus
-from .submit import Submit
-
-
-class IdentityVerification(GetRetryWindow, GetStatus, Submit): ...

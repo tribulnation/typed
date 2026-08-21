@@ -5,10 +5,7 @@ All of these need credentials, so use `Bit2Me.new()`.
 ## Trading Balance And Working Capital
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   balances = await client.v1.trading.balance()             # per-currency trading balances
@@ -19,10 +16,7 @@ async with Bit2Me.new() as client:
 ## Trade And Funding History
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   trades = await client.v1.trading.trades.list(symbol='BTC/EUR', limit=20)   # your fills
@@ -35,10 +29,7 @@ async with Bit2Me.new() as client:
 Pockets are the Bit2Me Wallet's per-currency sub-balances; trading balance (above) is a separate, Pro-account balance:
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()               # every wallet pocket
@@ -52,10 +43,7 @@ async with Bit2Me.new() as client:
 `v1.earn.summary` gives one converted total across every Earn wallet. See [Query & Manage Earn](manage-earn.md) for per-wallet detail.
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   summary = await client.v1.earn.summary(user_currency='EUR')

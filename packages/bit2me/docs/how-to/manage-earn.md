@@ -2,12 +2,12 @@
 
 ## Browse Earn Assets And Yields
 
-Public: use `Bit2Me.public()`:
+Public: use `Bit2Me.new(public=True)`:
 
 ```python
-from bit2me import Bit2Me
+from typed_bit2me import Bit2Me
 
-async with Bit2Me.public() as client:
+async with Bit2Me.new(public=True) as client:
   apy = await client.v2.earn.apy()          # annual percentage yield per currency
   assets = await client.v2.earn.assets()    # every currency Earn currently supports
   print(list(apy.keys())[:3], assets[0].get('currency'))
@@ -16,10 +16,7 @@ async with Bit2Me.public() as client:
 ## Your Earn Wallets
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   wallets = await client.v2.earn.wallets(limit=20)
@@ -33,10 +30,7 @@ async with Bit2Me.new() as client:
 ## Deposit And Withdraw From Earn
 
 ```python
-from dotenv import load_dotenv
-from bit2me import Bit2Me
-
-load_dotenv()
+from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   deposit = await client.v1.earn.movements.create({    # move funds into Earn
