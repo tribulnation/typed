@@ -1,18 +1,17 @@
 # API Keys Setup
 
 Private `spot.account`, `spot.trading`, `spot.funding`, and `spot.earn` methods, plus
-`streams.private` and `streams.trading`, need a Kraken API key pair. Public market data
+`streams.private` and `trading_ws`, need a Kraken API key pair. Public market data
 needs none.
 
 ## Create An API Key
 
 Generate a key pair from Kraken's [API management page](https://www.kraken.com/u/security/api).
-Grant only the permissions your use case needs -- Kraken scopes keys per action (querying
-funds, placing orders, withdrawing, etc.), and each private method's docstring names the
-permission it requires.
+Grant only the permissions your use case needs, and turn WebSocket on if you plan to use that:
 
-Kraken gives you two values: the **API key** and the **private key** (used to sign
-requests, never sent over the wire).
+| 1) Create API keys                                  | 2) Select permissions & Activate WS | 3) Copy API & Secret key |
+| --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+|![How to create API keys](media/create_api_keys.png) | ![How to copy select permissions](media/select_permissions.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
 ## Environment Variables
 
@@ -24,7 +23,7 @@ export KRAKEN_PRIVATE_KEY="..."
 With both set, `Kraken.new()` picks them up automatically:
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   balance = await client.spot.account.balance()
@@ -34,7 +33,7 @@ async with Kraken.new() as client:
 You can also pass them directly, which takes precedence over the environment:
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(api_key='...', private_key='...') as client:
   ...
@@ -46,7 +45,7 @@ For a client that never authenticates -- no keys read from the environment, no
 `AuthError` on private calls you never make -- pass `public=True`:
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   ticker = await client.spot.market_data.ticker(pair='XBTUSD')

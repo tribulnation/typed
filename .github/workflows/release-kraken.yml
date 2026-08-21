@@ -63,10 +63,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: kraken-v${{ needs.check.outputs.version }}
-          previous_tag_name: ${{ steps.previous_tag.outputs.previous }}
+          previous_tag: ${{ steps.previous_tag.outputs.previous }}
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-kraken/${{ needs.check.outputs.version }}/) as `typed-kraken==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}
       - if: steps.previous_tag.outputs.previous == ''
         uses: softprops/action-gh-release@v2
         with:
@@ -74,3 +76,5 @@ jobs:
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-kraken/${{ needs.check.outputs.version }}/) as `typed-kraken==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}

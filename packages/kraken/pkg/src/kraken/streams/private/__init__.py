@@ -1,8 +1,0 @@
-"""`private` endpoints."""
-
-from .balances import Balances
-from .executions import Executions
-
-
-class Private(Balances, Executions):
-  """`private` endpoints."""

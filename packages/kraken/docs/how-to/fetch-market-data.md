@@ -5,7 +5,7 @@
 ## Ticker
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   ticker = await client.spot.market_data.ticker(pair='XBTUSD')
@@ -18,7 +18,7 @@ Leave `pair` unset to get every tradeable pair.
 ## Order Book
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   book = await client.spot.market_data.depth(pair='XBTUSD', count=10)
@@ -29,7 +29,7 @@ async with Kraken.new(public=True) as client:
 ## Candles
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   candles = await client.spot.market_data.ohlc(pair='XBTUSD', interval=60)
@@ -41,7 +41,7 @@ Kraken returns at most the last 720 candles per call -- there is no deeper backf
 ## Recent Trades
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   trades = await client.spot.market_data.trades(pair='XBTUSD', count=100)
@@ -50,7 +50,7 @@ async with Kraken.new(public=True) as client:
 ## Asset Pairs
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   pairs = await client.spot.market_data.asset_pairs()

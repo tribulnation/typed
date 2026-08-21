@@ -8,7 +8,7 @@ Every subscription returns a `StreamManager`. Use it as an async context manager
 unsubscribes automatically on exit:
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   async with client.streams.market_data.ticker(symbol=['BTC/USD']) as stream:
@@ -23,7 +23,7 @@ afterwards. `data` is a list because one subscription can cover several symbols.
 ## Public Channels
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   async with client.streams.market_data.book(symbol=['BTC/USD'], depth=10) as stream:
@@ -41,7 +41,7 @@ metadata updates), and `status` (system status) channels, subscribed the same wa
 ## Private Channels
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   async with client.streams.private.balances(snapshot=True) as stream:
@@ -60,7 +60,7 @@ WebSocket v1's separate `openOrders`/`ownTrades` channels.
 ## Keeping The Connection Alive
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   await client.streams.market_data.ping()

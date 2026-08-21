@@ -5,7 +5,7 @@
 ## Deposit
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   methods = await client.spot.funding.deposit_methods(asset='XBT')
@@ -23,7 +23,7 @@ deposits, most recent first -- pass `cursor=True` on the first call and its retu
 ## Withdraw
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   methods = await client.spot.funding.withdraw_methods(asset='XBT')

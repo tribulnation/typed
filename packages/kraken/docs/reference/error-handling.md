@@ -1,9 +1,9 @@
 # Error Handling
 
-All exceptions live at `kraken.core.exc`, not the top-level package:
+All exceptions live at `typed_kraken.core.exc`, not the top-level package:
 
 ```python
-from kraken.core.exc import ApiError, AuthError, BadRequest, LogicError, NetworkError, RateLimited, ValidationError
+from typed_kraken.core.exc import ApiError, AuthError, BadRequest, LogicError, NetworkError, RateLimited, ValidationError
 ```
 
 - `AuthError` -- missing/invalid credentials, invalid signature, invalid nonce, permission
@@ -39,14 +39,14 @@ rate-limit messages always raise `RateLimited`; `Invalid key`/`Invalid signature
 ## Recommended Pattern
 
 ```python
-from kraken import Kraken
-from kraken.core.exc import ApiError, AuthError, BadRequest, RateLimited
+from typed_kraken import Kraken
+from typed_kraken.core.exc import ApiError, AuthError, BadRequest, RateLimited
 
 async with Kraken.new() as client:
   try:
-    order = await client.spot.trading.add_order(
-      pair='XBTUSD', type='buy', ordertype='market', volume='0.0001',
-    )
+    order = await client.spot.trading.add_order({
+      'pair': 'XBTUSD', 'type': 'buy', 'ordertype': 'market', 'volume': '0.0001',
+    })
   except RateLimited:
     ...  # back off and retry
   except AuthError:

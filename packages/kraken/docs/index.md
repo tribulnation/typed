@@ -3,7 +3,7 @@
 > A fully typed, validated async client for the Kraken Spot API -- REST and WebSocket v2.
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new(public=True) as client:
   ticker = await client.spot.market_data.ticker(pair='XBTUSD')
@@ -12,8 +12,9 @@ async with Kraken.new(public=True) as client:
 
 ## Why Typed Kraken?
 
-- **🎯 Precise Types**: every `client.spot` and `client.streams` parameter and response is
-  typed, down to `TypedDict`s and `Literal`s for Kraken's own field names.
+- **🎯 Precise Types**: every `client.spot`, `client.streams`, and `client.trading_ws`
+  parameter and response is typed, down to `TypedDict`s and `Literal`s for Kraken's own
+  field names.
 - **✅ Runtime Validation**: REST and WebSocket v2 responses are validated against their
   schema before you see them, not just typed on paper.
 - **⚡ Async First**: async REST calls and long-lived WebSocket v2 subscriptions, built for
