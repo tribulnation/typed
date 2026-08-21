@@ -5,7 +5,7 @@
 ## List Strategies
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   strategies = await client.spot.earn.strategies()
@@ -17,7 +17,7 @@ Each strategy carries a `strategy_id`, the asset it earns on, and its lock type
 ## List Your Allocations
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   allocations = await client.spot.earn.allocations()
@@ -28,7 +28,7 @@ Your current Earn subscriptions, one entry per strategy you've allocated funds t
 ## Subscribe & Redeem
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   await client.spot.earn.allocate(strategy_id='...', amount='5')

@@ -30,7 +30,7 @@ first_call:
     from dotenv import load_dotenv
     load_dotenv()
 
-    from kraken import Kraken
+    from typed_kraken import Kraken
 
     async with Kraken.new() as client:
       balances = await client.spot.account.balance()
@@ -59,9 +59,9 @@ how_tos:
   - title: Place & manage orders
     body: Submit, query, and cancel orders, over REST or the authenticated WebSocket connection.
     code: |
-      order = await client.spot.trading.add_order(         # place an order
-        pair='XBTUSD', type='buy', ordertype='limit', volume='0.0001', price='10000',
-      )
+      order = await client.spot.trading.add_order({        # place an order
+        'pair': 'XBTUSD', 'type': 'buy', 'ordertype': 'limit', 'volume': '0.0001', 'price': '10000',
+      })
       one = await client.spot.account.query_orders(txid='O-ABC12-34567')  # check its status
       open_orders = await client.spot.account.open_orders()  # list open orders
       await client.spot.trading.cancel_order(txid='O-ABC12-34567')  # cancel it

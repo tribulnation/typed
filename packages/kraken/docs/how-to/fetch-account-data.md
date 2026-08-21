@@ -5,7 +5,7 @@ These calls are private -- see [API Keys Setup](../api-keys.md) first.
 ## Balances
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   balances = await client.spot.account.balance()
@@ -18,7 +18,7 @@ async with Kraken.new() as client:
 ## Positions
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   positions = await client.spot.account.open_positions()
@@ -30,7 +30,7 @@ positions.
 ## Trade & Ledger History
 
 ```python
-from kraken import Kraken
+from typed_kraken import Kraken
 
 async with Kraken.new() as client:
   trades = await client.spot.account.trades_history()
