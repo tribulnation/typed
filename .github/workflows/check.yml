@@ -45,6 +45,6 @@ jobs:
           fi
       - run: pip install -e packages/core
       - run: pip install -e ${{ steps.dir.outputs.path }}
-      - run: pip install ruff pyright
+      - run: pip install ruff pyright pytest
       - run: ruff check --select TID251 ${{ steps.dir.outputs.path }}
       - run: pyright ${{ steps.dir.outputs.path }}
