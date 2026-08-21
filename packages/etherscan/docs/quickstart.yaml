@@ -1,0 +1,63 @@
+env_setup:
+  body: >-
+    Create a `.env` with your Etherscan API key — see
+    [API keys setup](/typed/etherscan/api-keys) to get one.
+  code: |
+    # .env
+    ETHERSCAN_API_KEY="your_api_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-etherscan python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_etherscan import Etherscan
+
+    load_dotenv()
+
+    async with Etherscan.new() as client:
+      balance = await client.account.balance(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+      print(balance)
+
+how_tos:
+  - title: Query account data
+    body: Balances, transaction history, and token transfers for an address.
+    code: |
+      balance = await client.account.balance(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')  # native balance
+      txs = await client.account.transactions(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')  # normal transactions
+      erc20 = await client.account.erc20_transfers(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae', contractaddress='0xdAC17F958D2ee523a2206206994597C13D831ec7')  # ERC-20 transfers
+      mined = await client.account.mined_blocks(address='0xea674fdde714fd979de3edf0f56aa9716b898ec8')  # blocks validated by an address
+
+  - title: Query blocks & network data
+    body: Block lookups, chain-wide stats, and gas estimates.
+    code: |
+      reward = await client.blocks.reward(blockno=2165403)          # block + uncle rewards
+      price = await client.stats.eth_price()                        # latest ETH price
+      supply = await client.stats.eth_supply()                      # total ETH supply
+      oracle = await client.gas_tracker.oracle()                    # current gas price tiers
+
+  - title: Query contracts
+    body: A verified contract's ABI, source, and deployment info.
+    code: |
+      abi = await client.contracts.abi(address='0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413')          # verified ABI
+      source = await client.contracts.source_code(address='0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413')  # verified source
+      creation = await client.contracts.creation(contractaddresses='0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413')  # creator + creation tx
+
+  - title: Query event logs & raw RPC
+    body: Event-log search and Ethereum JSON-RPC passthrough.
+    code: |
+      logs = await client.logs.by_address(address='0xbd3531da5cf5857e7cfaa92426877b022e612cf8')  # event logs by address
+      block_number = await client.proxy.eth_block_number()                                        # latest block number, JSON-RPC
+      call = await client.proxy.eth_call(to='0xdAC17F958D2ee523a2206206994597C13D831ec7', data='0x18160ddd', tag='latest')  # read-only contract call
+
+  - title: Paginate through results
+    body: Walk multi-page responses automatically with a method's `_paged` sibling.
+    code: |
+      async for page in client.account.transactions_paged(
+        address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae', offset=100,
+      ):
+        for tx in page['result']:
+          print(tx.get('hash'))
