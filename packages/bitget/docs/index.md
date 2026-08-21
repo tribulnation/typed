@@ -3,7 +3,7 @@
 > A fully typed, validated async client for the Bitget API.
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
   tickers = await client.uta.market.tickers(category='SPOT', symbol='BTCUSDT')

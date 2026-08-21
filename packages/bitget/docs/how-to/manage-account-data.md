@@ -5,7 +5,7 @@ All of these are authenticated.
 ## Balances
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   assets = await client.uta.account.assets()
@@ -18,7 +18,7 @@ are omitted.
 ## Account Info
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   info = await client.uta.account.info()
@@ -28,7 +28,7 @@ async with Bitget.new() as client:
 ## Financial Records
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   records = await client.uta.account.financial_records(category='SPOT', coin='USDT')
@@ -39,7 +39,7 @@ Paged, see [Paginate Through Results](paginate-through-results.md).
 ## Positions (Futures)
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   positions = await client.uta.position.current_positions(category='USDT-FUTURES')
@@ -52,7 +52,7 @@ async with Bitget.new() as client:
 ## Classic v2
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   assets = await client.classic.spot.account_assets()

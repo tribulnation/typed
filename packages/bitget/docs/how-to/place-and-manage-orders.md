@@ -5,7 +5,7 @@ All of these are authenticated.
 ## Place An Order
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   order = await client.uta.trade.place_order({
@@ -26,7 +26,7 @@ orders additionally take `posSide` (`long`/`short`, required in hedge mode), `ma
 ## Look Up An Order
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   info = await client.uta.trade.order_info(order_id='your_order_id')
@@ -38,7 +38,7 @@ you tracked the order by.
 ## Cancel An Order
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   await client.uta.trade.cancel_order({'orderId': 'your_order_id', 'category': 'SPOT'})
@@ -47,7 +47,7 @@ async with Bitget.new() as client:
 ## List Open Orders
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   open_orders = await client.uta.trade.unfilled_orders(category='SPOT')
@@ -58,7 +58,7 @@ async with Bitget.new() as client:
 ## Order History & Fills
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   history = await client.uta.trade.history_orders(category='SPOT', symbol='BTCUSDT')
@@ -70,7 +70,7 @@ Both are paged, see [Paginate Through Results](paginate-through-results.md).
 ## Classic v2
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   order = await client.classic.spot.place_order({

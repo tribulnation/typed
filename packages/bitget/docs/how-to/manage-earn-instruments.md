@@ -6,7 +6,7 @@ authenticated.
 ## List Products & Holdings
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   products = await client.uta.earn.elite_products()
@@ -18,7 +18,7 @@ async with Bitget.new() as client:
 Look up current subscription terms for a product, then subscribe using its `productSubId`:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   products = await client.uta.earn.elite_products()
@@ -35,7 +35,7 @@ async with Bitget.new() as client:
 Same pattern, with a redemption mode chosen from the terms:
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   products = await client.uta.earn.elite_products()
@@ -52,7 +52,7 @@ async with Bitget.new() as client:
 ## Subscription / Redemption / Interest Records
 
 ```python
-from bitget import Bitget
+from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   records = await client.uta.earn.elite_records(type='subscribe')

@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/bitget/pkg
-      - run: pip install ruff pyright build
+      - run: pip install ruff pyright pytest build
       - run: ruff check --select TID251 packages/bitget/pkg
       - run: pyright packages/bitget/pkg
       - run: cp packages/bitget/README.md packages/bitget/LICENSE packages/bitget/pkg/
@@ -67,6 +67,8 @@ jobs:
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-bitget/${{ needs.check.outputs.version }}/) as `typed-bitget==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}
       - if: steps.previous_tag.outputs.previous == ''
         uses: softprops/action-gh-release@v2
         with:
@@ -74,3 +76,5 @@ jobs:
           generate_release_notes: true
           body: |
             Published to [PyPI](https://pypi.org/project/typed-bitget/${{ needs.check.outputs.version }}/) as `typed-bitget==${{ needs.check.outputs.version }}`.
+
+            ${{ github.event.pull_request.body }}
