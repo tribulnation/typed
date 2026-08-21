@@ -35,7 +35,7 @@
 ---
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   instruments = await client.http.market_data.get_instruments(

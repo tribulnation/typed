@@ -3,12 +3,15 @@
 Authenticated calls (`private/*` methods, `authed_subscribe` channels) need a Deribit
 `client_id`/`client_secret` pair. Public methods and public channel subscriptions need
 neither.
-
 ## Create API Credentials
 
-Create a client id and secret from Deribit's API management page — `test.deribit.com` for
-a testnet account, `www.deribit.com` for mainnet. Grant only the scopes you need
-(`trade:read_write` for order placement, `account:read`, ...).
+Create a client id and secret from [Deribit's API management page](https://www.deribit.com/account/BTC/api):
+
+| 1) Create API keys | 2) Select permissions |
+| ------------------ | --------------------- |
+| ![How to create API keys](media/create_api_keys.png) | ![How to select permissions](media/select_permissions.png) |
+| 3) Show API keys | 4) Copy API keys |
+| ![How to show API keys](media/show_api_keys.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
 ## Environment Variables
 
@@ -27,7 +30,7 @@ export TEST_DERIBIT_CLIENT_SECRET="your_testnet_client_secret"
 ## Usage
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   summary = await client.http.account.get_account_summary(currency='BTC')
@@ -37,7 +40,7 @@ async with Deribit.new(testnet=True) as client:
 Credentials also pass directly, which skips the environment lookup:
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(
   client_id='your_client_id', client_secret='your_client_secret', testnet=True,
@@ -49,7 +52,7 @@ A client built with `public=True` skips credential resolution entirely and can o
 public methods and public channels:
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
@@ -62,7 +65,7 @@ automatically). Pass `http_auth='hmac'` to sign every request individually inste
 (`client_signature` grant, no token exchange):
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True, http_auth='hmac') as client:
   summary = await client.http.account.get_account_summary(currency='BTC')

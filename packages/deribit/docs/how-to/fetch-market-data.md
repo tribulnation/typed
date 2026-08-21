@@ -6,7 +6,7 @@
 ## Instruments
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   instruments = await client.http.market_data.get_instruments(
@@ -19,7 +19,7 @@ async with Deribit.new(public=True) as client:
 ## Ticker
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
@@ -29,7 +29,7 @@ async with Deribit.new(public=True) as client:
 ## Order Book
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   book = await client.http.market_data.get_order_book(
@@ -41,7 +41,7 @@ async with Deribit.new(public=True) as client:
 ## Recent Trades
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   trades = await client.http.market_data.get_last_trades_by_currency(
@@ -53,13 +53,14 @@ async with Deribit.new(public=True) as client:
 ## Candles
 
 ```python
-from deribit import Deribit
+from datetime import datetime, timezone
+from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
   candles = await client.http.market_data.get_tradingview_chart_data(
     instrument_name='BTC-PERPETUAL',
-    start_timestamp=1700000000000,
-    end_timestamp=1700003600000,
+    start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
+    end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
     resolution='60',
   )
   print(candles.get('open'), candles.get('close'))

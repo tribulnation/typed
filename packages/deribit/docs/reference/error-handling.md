@@ -1,7 +1,7 @@
 # Error Handling
 
 `Deribit` maps every JSON-RPC error Deribit returns onto one of these exceptions,
-importable from `deribit` directly:
+importable from `typed_deribit` directly:
 
 | exception | raised on |
 | --- | --- |
@@ -16,7 +16,7 @@ importable from `deribit` directly:
 ## Pattern
 
 ```python
-from deribit import (
+from typed_deribit import (
   ApiError, AuthError, BadRequest, Deribit, NetworkError, RateLimited, ValidationError,
 )
 

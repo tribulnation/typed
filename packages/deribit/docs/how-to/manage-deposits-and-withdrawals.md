@@ -5,7 +5,7 @@
 ## Deposit Address
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   address = await client.http.wallet.address_book.get_current_deposit_address(
@@ -19,7 +19,7 @@ async with Deribit.new(testnet=True) as client:
 ## Deposit History
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   deposits = await client.http.wallet.deposits.get_deposits(currency='BTC', count=10)
@@ -32,7 +32,7 @@ async with Deribit.new(testnet=True) as client:
 The destination address must already be in this account's address book.
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   withdrawal = await client.http.wallet.withdrawals.withdraw(
@@ -44,7 +44,7 @@ async with Deribit.new(testnet=True) as client:
 ## Withdrawal History
 
 ```python
-from deribit import Deribit
+from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
   withdrawals = await client.http.wallet.withdrawals.get_withdrawals(
