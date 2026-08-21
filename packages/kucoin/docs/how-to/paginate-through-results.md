@@ -3,7 +3,7 @@
 `account.ledgers` returns one page:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   page = await client.account.ledgers(currency='USDT', current_page=1, page_size=50)
@@ -14,7 +14,7 @@ async with KuCoin.new() as client:
 `totalPage`:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   async for page in client.account.ledgers_paged(currency='USDT', page_size=50):

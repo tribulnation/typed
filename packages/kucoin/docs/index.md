@@ -5,7 +5,7 @@ Margin, Futures, Earn, VIP Lending, Affiliate, Convert, Copy Trading, Broker, an
 public and private WebSocket feeds.
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   ticker = await client.spot.ticker(symbol='BTC-USDT')
@@ -34,7 +34,7 @@ pip install typed-kucoin
 ## Quickstart
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   accounts = await client.account.spot_accounts()
@@ -49,9 +49,9 @@ endpoints — see [API Keys Setup](api-keys.md).
 
 `client.account`, `client.spot`, `client.margin`, `client.earn`, `client.vip_lending`,
 `client.affiliate`, `client.convert`, `client.futures`, `client.copy_trading` and
-`client.broker` cover REST. `client.streams.spot_margin` covers WebSocket (public and
-private topics on one connection) — see [Listen To Streams](how-to/listen-to-streams.md).
-`client.streams.futures` exists but has no channels wired yet.
+`client.broker` cover REST. `client.streams.spot_margin` and `client.streams.futures`
+cover WebSocket (each is public and private topics on one connection) — see
+[Listen To Streams](how-to/listen-to-streams.md).
 
 ## Documentation
 

@@ -11,7 +11,7 @@ For short request-response flows, plain construction is fine — every underlyin
 opens lazily on first use.
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 client = KuCoin.new(public=True)
 ticker = await client.spot.ticker(symbol='BTC-USDT')
@@ -24,7 +24,7 @@ Use `async with` when you want the client to open up front and close cleanly at 
 the block.
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   ticker = await client.spot.ticker(symbol='BTC-USDT')
@@ -52,7 +52,7 @@ not a stream directly.
 Use `async with` on it so the subscription is unsubscribed automatically when the block exits:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   async with client.streams.spot_margin.ticker('BTC-USDT') as stream:
@@ -64,7 +64,7 @@ async with KuCoin.new(public=True) as client:
 `unsubscribe()` yourself:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   stream = await client.streams.spot_margin.ticker('BTC-USDT')
@@ -77,7 +77,7 @@ async with KuCoin.new(public=True) as client:
 Private topics work the same way, against a client built with real credentials:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   async with client.streams.spot_margin.balance() as stream:
@@ -85,11 +85,16 @@ async with KuCoin.new() as client:
       print(update['currency'], update['available'])
 ```
 
-**`client.streams.futures` is not usable yet.** The connection itself opens the same way as
-`spot_margin`, but no channel (ticker, order book, private order/position updates, ...) is
-wired onto it — there is currently no method to subscribe to. Futures market data and
-account updates need polling the REST `client.futures` surface instead, until futures
-streaming channels are added.
+`client.streams.futures` works the same way, on its own connection:
+
+```python
+from typed_kucoin import KuCoin
+
+async with KuCoin.new() as client:
+  async with client.streams.futures.ticker_v2('XBTUSDTM') as stream:
+    async for update in stream:
+      print(update['bestBidPrice'], update['bestAskPrice'])
+```
 
 ## Composite/Multi-Surface Client
 
@@ -107,7 +112,7 @@ The ten REST products share exactly three HTTP clients, by base URL:
 Every product on the same host shares one connection pool, rather than each opening its own.
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   spot_balances = await client.account.spot_accounts()

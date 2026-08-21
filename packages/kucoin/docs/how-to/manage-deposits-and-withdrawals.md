@@ -6,7 +6,7 @@ KuCoin. These calls need credentials — see [API Keys Setup](../api-keys.md).
 ## Get A Deposit Address
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   addresses = await client.account.deposit.address(currency='USDT', chain='trx')
@@ -19,7 +19,7 @@ async with KuCoin.new() as client:
 ## Deposit History
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   page = await client.account.deposit.history(currency='USDT', status='SUCCESS')
@@ -35,7 +35,7 @@ async with KuCoin.new() as client:
 Check the current limit, fee, and minimum size before submitting a withdrawal:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   quota = await client.account.withdrawals.quotas(currency='USDT', chain='trx')
@@ -45,7 +45,7 @@ async with KuCoin.new() as client:
 ## Submit A Withdrawal
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   result = await client.account.withdrawals.withdraw({
@@ -61,7 +61,7 @@ async with KuCoin.new() as client:
 ## Withdrawal History & Cancellation
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   page = await client.account.withdrawals.history(currency='USDT')

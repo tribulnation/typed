@@ -9,7 +9,7 @@ These calls need credentials — see [API Keys Setup](../api-keys.md).
 Each product family has its own listing call:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   savings = await client.earn.savings_products(currency='USDT')
@@ -25,7 +25,7 @@ cover the remaining families.
 ## List Your Holdings
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   holdings = await client.earn.account_holding(currency='USDT')
@@ -39,7 +39,7 @@ Use `earn.account_holding_paged` to walk every page automatically — see
 ## Subscribe To A Product
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   savings = await client.earn.savings_products(currency='USDT')
@@ -57,7 +57,7 @@ Preview a redemption before submitting it — early redemption of a fixed-term h
 can carry an interest penalty:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   order_id = 'holding-order-id'

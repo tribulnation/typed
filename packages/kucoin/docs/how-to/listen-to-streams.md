@@ -10,7 +10,7 @@ automatically when the block exits.
 No credentials needed:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   async with client.streams.spot_margin.ticker('BTC-USDT') as stream:
@@ -24,7 +24,7 @@ Private topics need a client built with real credentials — `public=True` raise
 `AuthError` before any connection is attempted:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   async with client.streams.spot_margin.balance() as stream:

@@ -31,7 +31,7 @@ first_call:
     from dotenv import load_dotenv
     load_dotenv()
 
-    from kucoin import KuCoin
+    from typed_kucoin import KuCoin
 
     async with KuCoin.new() as client:
       accounts = await client.account.spot_accounts()
@@ -105,10 +105,13 @@ how_tos:
   - title: Paginate through results
     body: Every `_paged` method walks all pages automatically; pass `max_pages` to cap it.
     code: |
+      from datetime import datetime, timedelta
+
       async for page in client.account.ledgers_paged(currency='USDT', page_size=50):  # walk ledger pages
         for entry in page['items']:
           print(entry['id'], entry['amount'])
       async for candles in client.spot.klines_paged(                                  # walk a candle window
-        symbol='BTC-USDT', type='1hour', start_at=1_700_000_000, end_at=1_700_100_000,
+        symbol='BTC-USDT', type='1hour',
+        start_at=datetime.now() - timedelta(hours=1), end_at=datetime.now(),
       ):
         print(len(candles))

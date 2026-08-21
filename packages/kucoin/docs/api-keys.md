@@ -1,9 +1,10 @@
 # API Keys Setup
 
-KuCoin authenticates every private request with an API key, secret, and passphrase
-created from **Account → API Management** on kucoin.com. Give the key only the
-permissions your use case needs (`General` for reads, `Trade` to place or cancel orders,
-`Transfer` for internal transfers), and restrict it to an IP whitelist when you can.
+You can get your API keys from the [KuCoin website](https://www.kucoin.com/account/api):
+
+| 1) Create API keys | 2) Set passphrase & permissions | 3) Copy API key & secret |
+| ----------------- | ------------------------------- | ------------------------ |
+| ![How to create API keys](media/create_api_keys.png) | ![How to set passphrase & permissions](media/set_passphrase_permissions.png) | ![How to copy API keys](media/copy_api_keys.png) |
 
 ## Environment Variables
 
@@ -16,7 +17,7 @@ export KUCOIN_API_PASSPHRASE="..."
 ```
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   info = await client.account.user_info()
@@ -30,7 +31,7 @@ with the key, secret, and a passphrase that is itself HMAC-signed with the secre
 ## Passing Credentials Directly
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(
   api_key='...',
@@ -46,7 +47,7 @@ Market data, symbols, and server time don't need credentials. Pass `public=True`
 client that never signs a request and works without any environment variables set:
 
 ```python
-from kucoin import KuCoin
+from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
   ticker = await client.spot.ticker(symbol='BTC-USDT')
