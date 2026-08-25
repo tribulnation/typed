@@ -4,11 +4,13 @@ Identical across Classic v2 and UTA v3, confirmed live against both. See `spec/c
 Envelope and Errors sections for the source of every code below.
 """
 
-from typing_extensions import Any, NotRequired
+from typing_extensions import Any, Literal, NotRequired
 import httpx
 
 from typed_core.exceptions import ApiError, AuthError, BadRequest, RateLimited
 from typed_core.validation import TypedDict, validator
+
+from .exc import AccountModeMismatch
 
 
 class Envelope(TypedDict):
@@ -25,6 +27,13 @@ class Envelope(TypedDict):
 
 
 validate_envelope = validator(Envelope)
+
+ACCOUNT_MODE_CODES: dict[str, Literal['classic', 'uta']] = {
+  '40084': 'classic',
+  '40085': 'uta',
+}
+"""Endpoint called under the wrong account mode, keyed to the mode it actually requires —
+confirmed live for both codes."""
 
 AUTH_CODES = frozenset(
   {
@@ -65,6 +74,7 @@ def raise_code(code: str, msg: str, payload: Any):
   Raises:
     AuthError: Credential, signature, permission or IP-binding rejection.
     RateLimited: Request throttled by the venue.
+    AccountModeMismatch: Endpoint called under the wrong account mode.
     BadRequest: Malformed request parameters.
     ApiError: Any other non-`"00000"` code.
   """
@@ -72,6 +82,8 @@ def raise_code(code: str, msg: str, payload: Any):
     raise AuthError(code, msg, payload)
   if code in RATE_LIMIT_CODES:
     raise RateLimited(code, msg, payload)
+  if code in ACCOUNT_MODE_CODES:
+    raise AccountModeMismatch(ACCOUNT_MODE_CODES[code], code, msg, payload)
   if code in BAD_REQUEST_CODES:
     raise BadRequest(code, msg, payload)
   raise ApiError(code, msg, payload)
@@ -80,19 +92,27 @@ def raise_code(code: str, msg: str, payload: Any):
 def raise_http_status(response: httpx.Response):
   """Raise the `typed_core` exception matching a non-2xx HTTP status.
 
+  Bitget sends some embedded error codes (e.g. an account-mode mismatch) with a non-2xx
+  HTTP status rather than the usual `200` + `code != "00000"` shape, so a JSON body
+  carrying its own `code` is classified by that code, the same as `raise_code`, rather than
+  by HTTP status alone.
+
   Args:
     response: The unsuccessful HTTP response.
 
   Raises:
-    AuthError: Status `401` or `403`.
-    RateLimited: Status `429`.
-    BadRequest: Any other `4xx` status.
-    ApiError: Any other unsuccessful status.
+    AuthError: Status `401`/`403`, or an embedded code classified as such.
+    RateLimited: Status `429`, or an embedded code classified as such.
+    AccountModeMismatch: An embedded code for the wrong account mode.
+    BadRequest: Any other `4xx` status, or an embedded code classified as such.
+    ApiError: Any other unsuccessful status, or an embedded code classified as such.
   """
   try:
     payload: Any = response.json()
   except ValueError:
     payload = response.text
+  if isinstance(payload, dict) and isinstance(payload.get('code'), str):
+    raise_code(payload['code'], payload.get('msg', ''), payload)
   status = response.status_code
   if status in (401, 403):
     raise AuthError(status, payload)
