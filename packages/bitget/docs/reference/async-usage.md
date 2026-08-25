@@ -71,7 +71,7 @@ subscription. Don't expect it to behave like the pub-sub methods above:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  reply = await client.classic_streams.place_order(
+  reply = await client.classic_streams.order.place(
     'SPOT', 'BTCUSDT',
     {'orderType': 'limit', 'side': 'buy', 'size': '0.001', 'force': 'gtc', 'price': '30000'},
   )

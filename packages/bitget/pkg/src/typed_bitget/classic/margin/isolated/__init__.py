@@ -5,22 +5,10 @@ from functools import cached_property
 
 from typed_bitget.core.endpoint.rpc import RpcEndpoint
 from .account import Account
-from .borrow_history import BorrowHistory
-from .financial_records import FinancialRecords
-from .interest_history import InterestHistory
-from .liquidation_history import LiquidationHistory
 from .order import Order
-from .repay_history import RepayHistory
 
 
-class Isolated(
-  BorrowHistory,
-  FinancialRecords,
-  InterestHistory,
-  LiquidationHistory,
-  RepayHistory,
-  RpcEndpoint,
-):
+class Isolated(RpcEndpoint):
   """`isolated` endpoints."""
 
   @cached_property

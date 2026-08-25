@@ -4,12 +4,17 @@
 from typed_bitget.core.endpoint.rpc import RpcEndpoint
 from .assets import Assets
 from .borrow import Borrow
+from .borrow_history import BorrowHistory
+from .financial_records import FinancialRecords
 from .flash_repay import FlashRepay
 from .flash_repay_status import FlashRepayStatus
+from .interest_history import InterestHistory
 from .interest_rate_and_limit import InterestRateAndLimit
+from .liquidation_history import LiquidationHistory
 from .max_borrowable import MaxBorrowable
 from .max_transferable import MaxTransferable
 from .repay import Repay
+from .repay_history import RepayHistory
 from .risk_rate import RiskRate
 from .tier_data import TierData
 
@@ -17,12 +22,17 @@ from .tier_data import TierData
 class Account(
   Assets,
   Borrow,
+  BorrowHistory,
+  FinancialRecords,
   FlashRepay,
   FlashRepayStatus,
+  InterestHistory,
   InterestRateAndLimit,
+  LiquidationHistory,
   MaxBorrowable,
   MaxTransferable,
   Repay,
+  RepayHistory,
   RiskRate,
   TierData,
   RpcEndpoint,

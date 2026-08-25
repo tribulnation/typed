@@ -8,7 +8,7 @@ All of these are authenticated.
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  order = await client.uta.trade.place_order({
+  order = await client.uta.trade.order.place({
     'category': 'SPOT',
     'symbol': 'BTCUSDT',
     'side': 'buy',
@@ -29,7 +29,7 @@ orders additionally take `posSide` (`long`/`short`, required in hedge mode), `ma
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  info = await client.uta.trade.order_info(order_id='your_order_id')
+  info = await client.uta.trade.order.info(order_id='your_order_id')
 ```
 
 Lookups, cancels, and modifies all accept either `order_id` or `client_oid`. Pass whichever
@@ -41,7 +41,7 @@ you tracked the order by.
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  await client.uta.trade.cancel_order({'orderId': 'your_order_id', 'category': 'SPOT'})
+  await client.uta.trade.order.cancel({'orderId': 'your_order_id', 'category': 'SPOT'})
 ```
 
 ## List Open Orders
@@ -50,7 +50,7 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  open_orders = await client.uta.trade.unfilled_orders(category='SPOT')
+  open_orders = await client.uta.trade.order.unfilled(category='SPOT')
   for o in open_orders['list'] or []:
     print(o['orderId'], o['orderStatus'])
 ```
@@ -61,8 +61,8 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  history = await client.uta.trade.history_orders(category='SPOT', symbol='BTCUSDT')
-  fills = await client.uta.trade.fills(category='SPOT')
+  history = await client.uta.trade.order.history(category='SPOT', symbol='BTCUSDT')
+  fills = await client.uta.trade.order.fills(category='SPOT')
 ```
 
 Both are paged, see [Paginate Through Results](paginate-through-results.md).
@@ -73,7 +73,7 @@ Both are paged, see [Paginate Through Results](paginate-through-results.md).
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  order = await client.classic.spot.place_order({
+  order = await client.classic.spot.order.place({
     'symbol': 'BTCUSDT', 'side': 'buy', 'orderType': 'limit',
     'force': 'gtc', 'price': '20000', 'size': '0.001',
   })

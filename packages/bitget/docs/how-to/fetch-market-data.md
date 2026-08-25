@@ -29,7 +29,7 @@ async with Bitget.new(public=True) as client:
 from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
-  candles = await client.uta.market.candles(
+  candles = await client.uta.market.candles.recent(
     category='SPOT', symbol='BTCUSDT', interval='1m',
   )
 ```

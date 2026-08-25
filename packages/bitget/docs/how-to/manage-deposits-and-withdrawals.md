@@ -8,7 +8,7 @@ All of these are authenticated.
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  address = await client.uta.transfers.deposit_address(coin='USDT', chain='TRC20')
+  address = await client.uta.transfers.deposit.address(coin='USDT', chain='TRC20')
 ```
 
 ## Deposit Records
@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  deposits = await client.uta.transfers.deposit_records(
+  deposits = await client.uta.transfers.deposit.records(
     start_time=datetime(2023, 11, 14, tzinfo=timezone.utc),
     end_time=datetime(2023, 11, 15, tzinfo=timezone.utc),
   )
@@ -31,7 +31,7 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  result = await client.uta.transfers.withdraw({
+  result = await client.uta.transfers.withdraw.submit({
     'coin': 'USDT',
     'chain': 'TRC20',
     'transferType': 'on_chain',
@@ -51,7 +51,7 @@ from datetime import datetime, timezone
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  withdrawals = await client.uta.transfers.withdraw_records(
+  withdrawals = await client.uta.transfers.withdraw.records(
     start_time=datetime(2023, 11, 14, tzinfo=timezone.utc),
     end_time=datetime(2023, 11, 15, tzinfo=timezone.utc),
   )
@@ -77,8 +77,8 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  address = await client.classic.spot.deposit_address(coin='USDT', chain='TRC20', size='')
-  await client.classic.spot.withdraw({
+  address = await client.classic.spot.deposit.address(coin='USDT', chain='TRC20', size='')
+  await client.classic.spot.withdrawal.create({
     'coin': 'USDT', 'transferType': 'on_chain', 'address': 'your_destination_address', 'size': '10',
   })
 ```

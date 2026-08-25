@@ -55,6 +55,6 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  assets = await client.classic.spot.account_assets()
-  positions = await client.classic.mix.positions(product_type='USDT-FUTURES')
+  assets = await client.classic.spot.account.assets()
+  positions = await client.classic.mix.position.list(product_type='USDT-FUTURES')
 ```

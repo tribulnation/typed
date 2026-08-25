@@ -2,19 +2,12 @@
 """`uta/strategy` router, generated from `spec/endpoints/`."""
 
 from typed_bitget.core.endpoint.rpc import RpcEndpoint
-from .cancel_strategy_order import CancelStrategyOrder
-from .history_strategy_orders import HistoryStrategyOrders
-from .modify_strategy_order import ModifyStrategyOrder
-from .place_strategy_order import PlaceStrategyOrder
-from .unfilled_strategy_orders import UnfilledStrategyOrders
+from .cancel import Cancel
+from .history import History
+from .modify import Modify
+from .place import Place
+from .unfilled import Unfilled
 
 
-class Strategy(
-  CancelStrategyOrder,
-  HistoryStrategyOrders,
-  ModifyStrategyOrder,
-  PlaceStrategyOrder,
-  UnfilledStrategyOrders,
-  RpcEndpoint,
-):
+class Strategy(Cancel, History, Modify, Place, Unfilled, RpcEndpoint):
   """`uta/strategy` endpoints."""
