@@ -13,7 +13,7 @@ For short request-response flows, plain construction is fine — the underlying 
 from typed_coinbase import Coinbase
 
 client = Coinbase.new(public=True)
-product = await client.advanced_trade.products.public.get('BTC-USD')
+product = await client.app.advanced_trade.http.products.public.get('BTC-USD')
 print(product['price'])
 ```
 
@@ -25,13 +25,14 @@ Use `async with` when you want the client to open up front and close cleanly at 
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  product = await client.advanced_trade.products.public.get('BTC-USD')
-  book = await client.advanced_trade.products.public.book(product_id='BTC-USD', limit=50)
+  product = await client.app.advanced_trade.http.products.public.get('BTC-USD')
+  book = await client.app.advanced_trade.http.products.public.book(product_id='BTC-USD', limit=50)
 ```
 
-`Coinbase.new(...)` is the only thing the caller ever enters directly. `accounts`,
-`advanced_trade`, `market_data`, and `user` each bottom out on their own transport
-underneath that single call — the caller never separately enters a sub-client.
+`Coinbase.new(...)` is the only thing the caller ever enters directly. It builds a single
+`app`, composing `accounts` and `advanced_trade` — the latter itself composing `http` and
+`streams`, with `streams` composing `market_data` and `user` — so every transport bottoms
+out underneath that one call and the caller never separately enters a sub-client.
 
 This is the recommended style for:
 
@@ -50,7 +51,7 @@ unsubscribes automatically when the block exits:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  async with client.market_data.ticker(['BTC-USD']) as ticker:
+  async with client.app.advanced_trade.streams.market_data.ticker(['BTC-USD']) as ticker:
     async for message in ticker:
       print(message['events'])
 ```
@@ -62,7 +63,7 @@ async with Coinbase.new(public=True) as client:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  orders = await client.user.orders()
+  orders = await client.app.advanced_trade.streams.user.orders()
   async for message in orders:
     print(message['events'])
     break
@@ -71,18 +72,19 @@ async with Coinbase.new() as client:
 
 ## Composite Client
 
-`Coinbase.new(...)` bundles four independent surfaces:
+`Coinbase.new(...)` builds a single `app`, which composes:
 
-- `accounts` — Coinbase App v2, over HTTP
-- `advanced_trade` — Advanced Trade v3, over HTTP
-- `market_data` — public WebSocket channels
-- `user` — private WebSocket channels
+- `app.accounts` — Coinbase App v2, over HTTP
+- `app.advanced_trade` — Advanced Trade v3, itself composing:
+  - `app.advanced_trade.http` — the v3 REST surface
+  - `app.advanced_trade.streams` — the v3 WebSocket surface, composing `market_data`
+    (public channels) and `user` (private channels)
 
-`accounts` and `advanced_trade` share one HTTP transport, since both v2 and v3 sit on the
-same host and are authenticated the same way. `market_data` and `user` each open their own
-WebSocket connection, since Coinbase serves public and private streams on different hosts.
-`async with Coinbase.new(...)` enters all four concurrently and closes all four together at
-the end of the block.
+`app.accounts` and `app.advanced_trade.http` share one HTTP transport, since both v2 and v3
+sit on the same host and are authenticated the same way. `app.advanced_trade.streams.market_data`
+and `.user` each open their own WebSocket connection, since Coinbase serves public and
+private streams on different hosts. `async with Coinbase.new(...)` enters every transport
+concurrently and closes them all together at the end of the block.
 
 ## Guidance
 

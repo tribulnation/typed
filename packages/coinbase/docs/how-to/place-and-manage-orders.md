@@ -10,7 +10,7 @@ Every order call is against Advanced Trade (v3) and requires a CDP API Key — s
 from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  market_order = await client.advanced_trade.orders.create({
+  market_order = await client.app.advanced_trade.http.orders.create({
     'client_order_id': 'my-market-order-001',
     'product_id': 'BTC-USD',
     'side': 'BUY',
@@ -18,7 +18,7 @@ async with Coinbase.new() as client:
   })
   print(market_order['success'])
 
-  limit_order = await client.advanced_trade.orders.create({
+  limit_order = await client.app.advanced_trade.http.orders.create({
     'client_order_id': 'my-limit-order-001',
     'product_id': 'BTC-USD',
     'side': 'BUY',
@@ -37,12 +37,12 @@ async with Coinbase.new() as client:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  order = await client.advanced_trade.orders.historical.get('order-id')                     # one order by id
-  open_orders = await client.advanced_trade.orders.historical.batch(order_status=['OPEN'])   # open orders
-  fills = await client.advanced_trade.orders.historical.fills(order_ids=['order-id'])        # its fills
+  order = await client.app.advanced_trade.http.orders.historical.get('order-id')                     # one order by id
+  open_orders = await client.app.advanced_trade.http.orders.historical.batch(order_status=['OPEN'])   # open orders
+  fills = await client.app.advanced_trade.http.orders.historical.fills(order_ids=['order-id'])        # its fills
 
-  await client.advanced_trade.orders.edit(order_id='order-id', price='51000.00', size='0.001')  # edit in place
-  await client.advanced_trade.orders.batch_cancel(order_ids=['order-id'])                    # cancel
+  await client.app.advanced_trade.http.orders.edit(order_id='order-id', price='51000.00', size='0.001')  # edit in place
+  await client.app.advanced_trade.http.orders.batch_cancel(order_ids=['order-id'])                    # cancel
 ```
 
 `orders.close_position` places a reduce-only market order against an open futures/perpetuals position, sized to close it in full or in part.

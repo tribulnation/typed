@@ -13,7 +13,7 @@ validation — there's nothing extra to do:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  trades = await client.advanced_trade.products.public.market_trades('BTC-USD', limit=5)
+  trades = await client.app.advanced_trade.http.products.public.market_trades('BTC-USD', limit=5)
   print(trades['trades'][0]['time'])  # already a datetime
 ```
 
@@ -26,7 +26,7 @@ from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   now = int(time.time())
-  candles = await client.advanced_trade.products.public.candles(
+  candles = await client.app.advanced_trade.http.products.public.candles(
     'BTC-USD', start=now - 3600, end=now, granularity='ONE_HOUR',
   )
 ```
@@ -39,7 +39,7 @@ from datetime import datetime, timezone
 from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  fills = await client.advanced_trade.orders.historical.fills(
+  fills = await client.app.advanced_trade.http.orders.historical.fills(
     start_sequence_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
     end_sequence_timestamp=datetime(2024, 1, 2, tzinfo=timezone.utc),
   )

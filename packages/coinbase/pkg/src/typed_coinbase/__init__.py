@@ -5,7 +5,7 @@ Examples:
   from typed_coinbase import Coinbase
 
   async with Coinbase.new(public=True) as client:
-    product = await client.advanced_trade.products.public.get('BTC-USD')
+    product = await client.app.advanced_trade.http.products.public.get('BTC-USD')
     print(product['price'])
   ```
 """
