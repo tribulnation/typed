@@ -10,12 +10,12 @@ class SpotCoinChain(TypedDict):
 
   chain: str
   """Chain name, e.g. `BTC`, `ERC20`."""
-  needTag: str
-  """Whether a memo/tag is required alongside the address. As the literal string `"true"`/`"false"`. Confirmed live -- not a JSON boolean."""
-  withdrawable: str
-  """Whether withdrawal is currently enabled on this chain. As the literal string `"true"`/`"false"`. Confirmed live -- not a JSON boolean."""
-  rechargeable: str
-  """Whether deposit is currently enabled on this chain. As the literal string `"true"`/`"false"`. Confirmed live -- not a JSON boolean."""
+  needTag: bool
+  """Whether a memo/tag is required alongside the address."""
+  withdrawable: bool
+  """Whether withdrawal is currently enabled on this chain."""
+  rechargeable: bool
+  """Whether deposit is currently enabled on this chain."""
   withdrawFee: str
   """Flat withdrawal fee, as a decimal string."""
   extraWithdrawFee: str
@@ -47,8 +47,8 @@ class SpotCoin(TypedDict):
   """Bitget-internal numeric coin ID, as a string."""
   coin: str
   """Coin ticker, e.g. `BTC`."""
-  transfer: str
-  """Whether this coin can be transferred between Bitget product accounts, as the literal string `"true"`/`"false"`. Confirmed live -- not a JSON boolean."""
+  transfer: bool
+  """Whether this coin can be transferred between Bitget product accounts."""
   chains: list[SpotCoinChain]
   """Chains this coin can be deposited/withdrawn on."""
 

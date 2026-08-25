@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/bitget">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-light.svg">
-      <img alt="Typed Bitget" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bitget/media/bitget-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/bitget-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/bitget-light.svg">
+      <img alt="Typed Bitget" src="https://tribulnation.com/media/lockups/bitget-light.svg" width="520">
     </picture>
   </a>
 </p>
