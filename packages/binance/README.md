@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/binance">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-light.svg">
-      <img alt="Typed Binance" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/binance/media/binance-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/binance-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/binance-light.svg">
+      <img alt="Typed Binance" src="https://tribulnation.com/media/lockups/binance-light.svg" width="520">
     </picture>
   </a>
 </p>

@@ -28,7 +28,7 @@ async with Binance.new() as client:
 ```python
 from typed_binance import Binance
 
-async with Binance.new(api_key='your_api_key', secret='your_api_secret') as client:
+async with Binance.new(api_key='your_api_key', secret_key='your_api_secret') as client:
   ...
 ```
 

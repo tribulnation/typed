@@ -24,11 +24,11 @@ class Credentials:
   """
 
   api_key: str
-  secret: str = field(repr=False)
+  secret_key: str = field(repr=False)
 
 
 def resolve_credentials(
-  api_key: str | None, secret: str | None, *, public: bool
+  api_key: str | None, secret_key: str | None, *, public: bool
 ) -> Credentials | None:
   """Resolve the one `Credentials` every Binance transport shares.
 
@@ -37,7 +37,7 @@ def resolve_credentials(
 
   Args:
     api_key: Binance API key; read from `BINANCE_API_KEY` when omitted.
-    secret: HMAC secret; read from `BINANCE_SECRET_KEY` when omitted.
+    secret_key: HMAC secret; read from `BINANCE_SECRET_KEY` when omitted.
     public: Skip resolution entirely and return `None`, for a credential-free client.
 
   Raises:
@@ -46,18 +46,18 @@ def resolve_credentials(
   if public:
     return None
   api_key = api_key or os.environ.get('BINANCE_API_KEY')
-  secret = secret or os.environ.get('BINANCE_SECRET_KEY')
-  if not api_key or not secret:
+  secret_key = secret_key or os.environ.get('BINANCE_SECRET_KEY')
+  if not api_key or not secret_key:
     raise AuthError(
-      'No credentials: set BINANCE_API_KEY/BINANCE_SECRET_KEY, pass api_key/secret, '
+      'No credentials: set BINANCE_API_KEY/BINANCE_SECRET_KEY, pass api_key/secret_key, '
       'or build with `public=True` for the credential-free surface.'
     )
-  return Credentials(api_key, secret)
+  return Credentials(api_key, secret_key)
 
 
 def sign(payload: str, credentials: Credentials) -> str:
-  """Hex-encoded HMAC-SHA256 of `payload`, keyed by `credentials.secret` — case-insensitive
-  on Binance's side, unlike RSA/Ed25519 signatures.
+  """Hex-encoded HMAC-SHA256 of `payload`, keyed by `credentials.secret_key` --
+  case-insensitive on Binance's side, unlike RSA/Ed25519 signatures.
 
   Args:
     payload: The exact bytes signed, ASCII (Binance requires non-ASCII characters
@@ -65,7 +65,7 @@ def sign(payload: str, credentials: Credentials) -> str:
     credentials: API key and secret.
   """
   return hmac.new(
-    credentials.secret.encode(), payload.encode('ascii'), hashlib.sha256
+    credentials.secret_key.encode(), payload.encode('ascii'), hashlib.sha256
   ).hexdigest()
 
 
