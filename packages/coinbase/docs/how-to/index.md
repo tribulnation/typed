@@ -1,6 +1,6 @@
 # Overview
 
-Task-focused guides for Typed Coinbase's real surface: Coinbase App (v2) and Advanced Trade (v3) REST, plus the Advanced Trade WebSocket.
+Task-focused guides for Typed Coinbase's real surface — the Coinbase App tier: `app.accounts` (v2) and `app.advanced_trade` (v3 REST plus both WebSocket connections).
 
 ## Guides
 

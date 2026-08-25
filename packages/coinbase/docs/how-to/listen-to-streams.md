@@ -1,6 +1,8 @@
 # Listen To Streams
 
-The Advanced Trade WebSocket splits into two connections: `market_data` for public channels, and `user` for the calling key's own orders and positions.
+Advanced Trade's WebSocket splits into two connections, both reachable under
+`client.app.advanced_trade.streams`: `market_data` for public channels, and `user` for the
+calling key's own orders and positions.
 
 ## Public Channels
 
@@ -10,7 +12,7 @@ The Advanced Trade WebSocket splits into two connections: `market_data` for publ
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  async with client.market_data.ticker(['BTC-USD']) as stream:
+  async with client.app.advanced_trade.streams.market_data.ticker(['BTC-USD']) as stream:
     async for message in stream:
       print(message)
 ```
@@ -21,7 +23,7 @@ Order book updates work the same way, on `level2`:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  async with client.market_data.level2(['BTC-USD']) as stream:
+  async with client.app.advanced_trade.streams.market_data.level2(['BTC-USD']) as stream:
     async for message in stream:
       for event in message['events']:
         print(event['type'], event['product_id'])
@@ -37,7 +39,7 @@ async with Coinbase.new(public=True) as client:
 from typed_coinbase import Coinbase
 
 async with Coinbase.new() as client:
-  async with client.user.orders() as stream:
+  async with client.app.advanced_trade.streams.user.orders() as stream:
     async for message in stream:
       print(message)
 ```

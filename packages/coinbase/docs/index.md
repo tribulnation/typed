@@ -6,7 +6,7 @@
 from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
-  product = await client.advanced_trade.products.public.get('BTC-USD')
+  product = await client.app.advanced_trade.http.products.public.get('BTC-USD')
   print(product['price'])
 ```
 
@@ -14,7 +14,7 @@ async with Coinbase.new(public=True) as client:
 
 - **🎯 Precise Types**: every endpoint's inputs and responses are typed, from Coinbase App (v2) wallets to Advanced Trade (v3) order configurations and fee tiers, not `dict`/`Any`.
 - **✅ Runtime Validation**: every response is validated against its declared schema by default, across both the v2 and v3 APIs.
-- **⚡ Async First**: async HTTP and WebSocket streaming, built for concurrent workflows against `accounts`, `advanced_trade`, and the public/private streams.
+- **⚡ Async First**: async HTTP and WebSocket streaming, built for concurrent workflows across `app.accounts`, `app.advanced_trade.http`, and its two WebSocket connections.
 - **📚 Full Surface**: every documented Coinbase App and Advanced Trade endpoint, not just the popular ones.
 
 ## Installation

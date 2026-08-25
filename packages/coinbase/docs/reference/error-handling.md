@@ -26,7 +26,7 @@ from typed_coinbase.core.exc import ApiError, AuthError, RateLimited, Validation
 
 async with Coinbase.new() as client:
   try:
-    accounts = await client.advanced_trade.accounts.list()
+    accounts = await client.app.advanced_trade.http.accounts.list()
   except AuthError:
     ...
   except RateLimited:

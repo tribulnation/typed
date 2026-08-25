@@ -72,7 +72,7 @@ class TransferMoney(TypedDict):
   """ISO 4217 currency code, or asset symbol for a crypto amount."""
 
 
-class V2pagination(TypedDict):
+class V2Pagination(TypedDict):
   """Cursor pagination metadata accompanying a Coinbase App v2 list response. The real shape varies noticeably by endpoint (verified live): some list endpoints echo `next_starting_after`/`previous_ending_before` cursor values or a `total_count`, others use a bare `page` index instead of URI-based paging, and `limit`/`previous_uri`/`next_uri` are not reliably present on every endpoint — so only the fields common to every observed v2 list response stay required."""
 
   ending_before: str | None
@@ -132,7 +132,7 @@ class TransferParty(TypedDict):
   ledger_account: NotRequired[LedgerAccountEndpoint]
 
 
-class V2transfer(TypedDict):
+class V2Transfer(TypedDict):
   """A v2 fiat transfer (deposit or withdrawal) as returned by the create/commit calls. Undocumented in prose -- typed from the raw response examples on the Fiat Deposits/Fiat Withdrawals pages, which show a different shape than the `Deposit`/`Withdrawal` resource described in those same pages' overview and returned by the list/show calls."""
 
   user_entered_amount: TransferMoney
