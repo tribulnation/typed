@@ -12,12 +12,12 @@ single `await` (every page flattened into one list).
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  async for page in client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT'):
+  async for page in client.uta.trade.order.history_paged(category='SPOT', symbol='BTCUSDT'):
     for order in page:
       print(order['orderId'], order['orderStatus'])
 
   # Or flatten every page into one list in a single call:
-  every_order = await client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT')
+  every_order = await client.uta.trade.order.history_paged(category='SPOT', symbol='BTCUSDT')
 ```
 
 `history_orders_paged` follows the response's `cursor` and stops once a page carries none --
@@ -35,7 +35,7 @@ The one-shot form returns a single page directly, with its own `cursor` for manu
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  page = await client.uta.trade.history_orders(category='SPOT', symbol='BTCUSDT')
+  page = await client.uta.trade.order.history(category='SPOT', symbol='BTCUSDT')
 ```
 
 ## Cursor-Paged, Plain Async Iterator: Financial Records
@@ -63,7 +63,7 @@ from datetime import datetime, timezone
 from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
-  async for page in client.uta.market.candles_paged(
+  async for page in client.uta.market.candles.recent_paged(
     category='SPOT', symbol='BTCUSDT', interval='1m',
     start_time=datetime(2024, 1, 1, tzinfo=timezone.utc),
     end_time=datetime(2024, 1, 2, tzinfo=timezone.utc),

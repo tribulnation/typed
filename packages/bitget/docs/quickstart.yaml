@@ -30,7 +30,7 @@ how_tos:
     code: |
       instruments = await client.uta.market.instruments(category='SPOT', symbol='BTCUSDT')  # trading rules
       book = await client.uta.market.orderbook(category='SPOT', symbol='BTCUSDT')            # order book
-      candles = await client.uta.market.candles(category='SPOT', symbol='BTCUSDT', interval='1m')  # candles
+      candles = await client.uta.market.candles.recent(category='SPOT', symbol='BTCUSDT', interval='1m')  # candles
       trades = await client.uta.market.fills(category='SPOT', symbol='BTCUSDT')              # recent trades
 
   - title: Listen to streams
@@ -46,13 +46,13 @@ how_tos:
   - title: Place & manage orders
     body: Submit, inspect, list, and cancel orders. Needs credentials.
     code: |
-      order = await client.uta.trade.place_order({                    # place an order
+      order = await client.uta.trade.order.place({                    # place an order
         'category': 'SPOT', 'symbol': 'BTCUSDT', 'side': 'buy',
         'orderType': 'limit', 'qty': '0.001', 'price': '20000', 'timeInForce': 'gtc',
       })
-      info = await client.uta.trade.order_info(order_id=order['orderId'])  # check its status
-      open_orders = await client.uta.trade.unfilled_orders(category='SPOT')  # list open orders
-      await client.uta.trade.cancel_order({'orderId': order['orderId'], 'category': 'SPOT'})  # cancel it
+      info = await client.uta.trade.order.info(order_id=order['orderId'])  # check its status
+      open_orders = await client.uta.trade.order.unfilled(category='SPOT')  # list open orders
+      await client.uta.trade.order.cancel({'orderId': order['orderId'], 'category': 'SPOT'})  # cancel it
 
   - title: Fetch account data
     body: Balances, positions, and financial records. Needs credentials.
@@ -64,10 +64,10 @@ how_tos:
   - title: Query & manage earn instruments
     body: List, subscribe to, and redeem Elite structured products. Needs credentials.
     code: |
-      products = await client.uta.earn.elite_products()                          # list products
-      holdings = await client.uta.earn.elite_assets()                            # current holdings
-      sub_info = await client.uta.earn.elite_subscribe_info(product_id=products[0]['productId'])  # subscription terms
-      result = await client.uta.earn.elite_subscribe({                          # subscribe
+      products = await client.uta.earn.elite.products()                          # list products
+      holdings = await client.uta.earn.elite.assets()                            # current holdings
+      sub_info = await client.uta.earn.elite.subscribe_info(product_id=products[0]['productId'])  # subscription terms
+      result = await client.uta.earn.elite.subscribe({                          # subscribe
         'productSubId': sub_info['productSubId'], 'amount': 10.0, 'paymentAccount': 'unified',
       })
 
@@ -76,11 +76,11 @@ how_tos:
     code: |
       from datetime import datetime, timezone
 
-      address = await client.uta.transfers.deposit_address(coin='USDT', chain='TRC20')  # deposit address
-      deposits = await client.uta.transfers.deposit_records(
+      address = await client.uta.transfers.deposit.address(coin='USDT', chain='TRC20')  # deposit address
+      deposits = await client.uta.transfers.deposit.records(
         start_time=datetime(2023, 11, 14, tzinfo=timezone.utc), end_time=datetime(2023, 11, 15, tzinfo=timezone.utc),
       )  # deposit history
-      await client.uta.transfers.withdraw({                                      # withdraw
+      await client.uta.transfers.withdraw.submit({                                      # withdraw
         'coin': 'USDT', 'chain': 'TRC20', 'transferType': 'on_chain',
         'address': 'your_destination_address', 'size': '10',
       })
@@ -88,6 +88,6 @@ how_tos:
   - title: Paginate through results
     body: Automatic cursor- and window-paged iteration over multi-page results.
     code: |
-      async for page in client.uta.trade.history_orders_paged(category='SPOT', symbol='BTCUSDT'):  # walk every page
+      async for page in client.uta.trade.order.history_paged(category='SPOT', symbol='BTCUSDT'):  # walk every page
         for order in page:
           print(order['orderId'])

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
-  candles = await client.classic.mix.candles(
+  candles = await client.classic.mix.market.candles.recent(
     symbol='BTCUSDT',
     product_type='USDT-FUTURES',
     granularity='1m',

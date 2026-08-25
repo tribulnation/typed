@@ -7,7 +7,7 @@ from typed_bitget.core import TimestampMillis, timestamp_millis
 from typed_bitget.core.endpoint.rpc import RpcEndpoint
 
 
-class P2pTaxRecord(TypedDict):
+class P2PTaxRecord(TypedDict):
   id: str
   """Unique record id."""
   coin: str
@@ -32,7 +32,7 @@ class P2pRecords(RpcEndpoint):
     limit: int | None = None,
     id_less_than: str | None = None,
     validate: bool | None = None,
-  ) -> list[P2pTaxRecord]:
+  ) -> list[P2PTaxRecord]:
     """List the authenticated user's P2P tax records over a time window of at most 30 days.
 
     Args:
@@ -59,6 +59,6 @@ class P2pRecords(RpcEndpoint):
       'GET',
       '/api/v2/tax/p2p-record',
       params=params,
-      validator=validator(list[P2pTaxRecord]),
+      validator=validator(list[P2PTaxRecord]),
       validate=validate,
     )

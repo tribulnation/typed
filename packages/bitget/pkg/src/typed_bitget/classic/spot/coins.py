@@ -20,9 +20,9 @@ class SpotCoinChain(TypedDict):
   """Flat withdrawal fee, as a decimal string."""
   extraWithdrawFee: str
   """Additional withdrawal fee (e.g. a chain congestion surcharge), as a decimal string."""
-  depositConfirm: str
+  depositConfirm: int
   """Block confirmations required before a deposit is credited."""
-  withdrawConfirm: str
+  withdrawConfirm: int
   """Block confirmations required before a withdrawal is considered final."""
   minDepositAmount: str
   """Minimum deposit amount, as a decimal string."""
@@ -34,7 +34,7 @@ class SpotCoinChain(TypedDict):
   """Token contract address on this chain. Confirmed live: `null` (not an empty string) for a native coin."""
   withdrawStep: str
   """Withdrawal amount step size, as a decimal string."""
-  withdrawMinScale: str
+  withdrawMinScale: int
   """Minimum decimal precision accepted for a withdrawal amount."""
   congestion: str
   """Current chain congestion status."""

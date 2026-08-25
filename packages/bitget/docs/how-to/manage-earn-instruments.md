@@ -9,8 +9,8 @@ authenticated.
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  products = await client.uta.earn.elite_products()
-  holdings = await client.uta.earn.elite_assets()
+  products = await client.uta.earn.elite.products()
+  holdings = await client.uta.earn.elite.assets()
 ```
 
 ## Subscribe
@@ -21,9 +21,9 @@ Look up current subscription terms for a product, then subscribe using its `prod
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  products = await client.uta.earn.elite_products()
-  info = await client.uta.earn.elite_subscribe_info(product_id=products[0]['productId'])
-  result = await client.uta.earn.elite_subscribe({
+  products = await client.uta.earn.elite.products()
+  info = await client.uta.earn.elite.subscribe_info(product_id=products[0]['productId'])
+  result = await client.uta.earn.elite.subscribe({
     'productSubId': info['productSubId'],
     'amount': 10.0,
     'paymentAccount': 'unified',
@@ -38,9 +38,9 @@ Same pattern, with a redemption mode chosen from the terms:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  products = await client.uta.earn.elite_products()
-  info = await client.uta.earn.elite_redeem_info(product_id=products[0]['productId'])
-  await client.uta.earn.elite_redeem({
+  products = await client.uta.earn.elite.products()
+  info = await client.uta.earn.elite.redeem_info(product_id=products[0]['productId'])
+  await client.uta.earn.elite.redeem({
     'productId': info['productId'],
     'productSubId': info['productSubId'],
     'redeemType': 'fast',
@@ -55,7 +55,7 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  records = await client.uta.earn.elite_records(type='subscribe')
+  records = await client.uta.earn.elite.records(type='subscribe')
 ```
 
 Paged, see [Paginate Through Results](paginate-through-results.md).
