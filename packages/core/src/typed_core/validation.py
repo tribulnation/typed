@@ -46,3 +46,7 @@ class validator(Generic[T]):
     if isinstance(data, str | bytes | bytearray):
       return self.json(data)
     return self.python(data)
+
+  def dump(self, data: T) -> bytes:
+    """Dump a Python value to a JSON bytes string."""
+    return self.adapter.dump_json(data)
