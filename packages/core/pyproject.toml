@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
   "typing-extensions", "httpx", "websockets", "orjson", "pydantic",
-  "lazy-loader",
+  "lazy-loader", "grpclib",
 ]
 requires-python = ">=3.10"
 readme = {file="README.md", content-type="text/markdown"}
