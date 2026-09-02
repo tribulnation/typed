@@ -20,6 +20,18 @@ async def test_wrap_exceptions_maps_transport_failure_to_network_error():
     await _raises_protocol_error()
 
 @pytest.mark.asyncio
+async def test_aenter_opens_nothing():
+  """Entering a `GrpcClient` must not construct a channel -- mirrors `test_http.py`'s
+  `test_aenter_opens_nothing` for `HttpClient`, whose own `__aenter__` docstring states
+  the same contract this class's docstring claims ("owns a lazily opened channel"):
+  taking ownership via `async with` opens nothing, first use opens the transport.
+  """
+  client = GrpcClient(host='example.com', port=443)
+  async with client as opened:
+    assert opened is client
+    assert client._channel is None
+
+@pytest.mark.asyncio
 async def test_grpc_client_channel_is_lazy():
   """`GrpcClient.channel` is built on first access, not at construction.
 
@@ -30,6 +42,17 @@ async def test_grpc_client_channel_is_lazy():
   prior test's own loop has been torn down.
   """
   client = GrpcClient(host='example.com', port=443)
-  assert 'channel' not in client.__dict__
-  _ = client.channel
-  assert 'channel' in client.__dict__
+  assert client._channel is None
+  channel = client.channel
+  assert client._channel is channel
+
+@pytest.mark.asyncio
+async def test_close_clears_the_cached_channel():
+  """`close()` closes the cached channel and clears the slot, so a later `.channel`
+  access opens a fresh one rather than reusing a closed connection.
+  """
+  client = GrpcClient(host='example.com', port=443)
+  channel = client.channel
+  client.close()
+  assert client._channel is None
+  assert client.channel is not channel

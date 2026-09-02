@@ -19,10 +19,13 @@ classifiers = [
 ]
 dependencies = [
   "typing-extensions", "httpx", "websockets", "orjson", "pydantic",
-  "lazy-loader", "grpclib",
+  "lazy-loader",
 ]
 requires-python = ">=3.10"
 readme = {file="README.md", content-type="text/markdown"}
+
+[project.optional-dependencies]
+grpc = ["grpclib"]
 
 [project.urls]
 Repository = "https://github.com/tribulnation/typed"

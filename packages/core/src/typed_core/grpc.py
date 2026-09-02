@@ -2,8 +2,8 @@
 2026-08-31 codegen mechanization)."""
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
-from functools import cached_property, wraps
+from dataclasses import dataclass, field
+from functools import wraps
 from types import TracebackType
 
 from grpclib.client import Channel
@@ -40,27 +40,32 @@ def wrap_exceptions(fn: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
       raise
   return wrapper
 
-@dataclass(kw_only=True, frozen=True)
+@dataclass(kw_only=True)
 class GrpcClient:
-  """Async gRPC transport that owns a lazily opened channel."""
+  """Async gRPC transport that owns a lazily opened channel.
 
-  host: str = 'oegs.dydx.trade'
+  Not frozen, unlike `GrpcEndpoint` below -- it needs a real mutable `_channel` slot
+  to cache into, the same shape `HttpClient._client` already uses for the identical
+  lazy-open/close contract on the HTTP side. `GrpcEndpoint`'s own freeze is a separate
+  concern (matching every other `Endpoint` composition base) and doesn't require the
+  `Client` object it merely holds a reference to to be frozen too.
+  """
+
+  host: str
   port: int = 443
   ssl: bool = True
+  _channel: Channel | None = field(default=None, init=False, repr=False)
 
-  @cached_property
+  @property
   def channel(self) -> Channel:
-    """Return the gRPC channel, creating it on first use.
-
-    `cached_property` writes straight into `instance.__dict__`, bypassing
-    `__setattr__`, so this works on a frozen dataclass -- see `client-core`'s
-    `endpoint/rpc.py` reference for the same idiom applied to composed children.
-    """
-    return Channel(self.host, self.port, ssl=self.ssl)
+    """Return the gRPC channel, creating it on first use."""
+    if self._channel is None:
+      self._channel = Channel(self.host, self.port, ssl=self.ssl)
+    return self._channel
 
   async def __aenter__(self) -> Self:
-    """Open the channel for an async client context."""
-    self.channel
+    """Take ownership without connecting -- the channel opens lazily on first use,
+    matching `HttpClient.__aenter__`'s own contract."""
     return self
 
   async def __aexit__(
@@ -73,15 +78,10 @@ class GrpcClient:
     self.close()
 
   def close(self):
-    """Close the open channel, if one was created.
-
-    Mutates `self.__dict__` directly (the same trick `cached_property` itself uses)
-    rather than reassigning a field -- there is no stored `_channel` field anymore,
-    only the `cached_property`'s own cache slot.
-    """
-    if 'channel' in self.__dict__:
-      self.__dict__['channel'].close()
-      del self.__dict__['channel']
+    """Close the open channel, if one was created."""
+    if self._channel is not None:
+      self._channel.close()
+      self._channel = None
 
 @dataclass(kw_only=True, frozen=True)
 class GrpcEndpoint:
