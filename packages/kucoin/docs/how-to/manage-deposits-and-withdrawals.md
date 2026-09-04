@@ -45,16 +45,17 @@ async with KuCoin.new() as client:
 ## Submit A Withdrawal
 
 ```python
+from decimal import Decimal
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
-  result = await client.account.withdrawals.withdraw({
-    'currency': 'USDT',
-    'toAddress': 'destination-address',
-    'amount': '10',
-    'withdrawType': 'ADDRESS',
-    'chain': 'trx',
-  })
+  result = await client.account.withdrawals.withdraw(
+    currency='USDT',
+    to_address='destination-address',
+    amount=Decimal('10'),
+    withdraw_type='ADDRESS',
+    chain='trx',
+  )
   print(result['withdrawalId'])
 ```
 

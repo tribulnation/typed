@@ -6,7 +6,7 @@ References:
 
 from typing_extensions import Annotated
 from datetime import date, datetime, timezone
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 
 from typed_core.times import EpochConverter
 
@@ -15,7 +15,11 @@ timestamp_millis = EpochConverter.milliseconds(tz=timezone.utc)
 against `/api/v1/timestamp` (Spot and Futures) and `/api/v2/user-info`'s neighboring fields.
 """
 
-TimestampMillis = Annotated[datetime, BeforeValidator(timestamp_millis.parse)]
+TimestampMillis = Annotated[
+  datetime,
+  BeforeValidator(timestamp_millis.parse),
+  PlainSerializer(timestamp_millis.dump, when_used='json'),
+]
 """A timestamp field, to use directly in a generated `TypedDict`'s annotations."""
 
 timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
@@ -24,7 +28,11 @@ KuCoin's usual millisecond convention: its `startAt`/`endAt` query parameters ar
 second Unix epoch integer, UTC.
 """
 
-TimestampSeconds = Annotated[datetime, BeforeValidator(timestamp_seconds.parse)]
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
 """A second-epoch timestamp field, to use directly in a generated `TypedDict`'s
 annotations — Spot Market's Get Klines only; every other KuCoin timestamp is
 `TimestampMillis`.
@@ -36,7 +44,11 @@ push timestamps) are documented in nanoseconds rather than KuCoin's usual millis
 confirmed against each field's own upstream description.
 """
 
-TimestampNanos = Annotated[datetime, BeforeValidator(timestamp_nanos.parse)]
+TimestampNanos = Annotated[
+  datetime,
+  BeforeValidator(timestamp_nanos.parse),
+  PlainSerializer(timestamp_nanos.dump, when_used='json'),
+]
 """A nanosecond-epoch timestamp field, to use directly in a generated `TypedDict`'s
 annotations. Response-side only so far — every wire occurrence declaring `epoch-nanos`
 is a read-only field; see `docs/spec/authoring.md` rule 3.
@@ -66,7 +78,11 @@ date_iso = _DateConverter()
 `expireDate`) are plain `YYYY-MM-DD` calendar dates, no time-of-day component.
 """
 
-DateIso = Annotated[date, BeforeValidator(date_iso.parse)]
+DateIso = Annotated[
+  date,
+  BeforeValidator(date_iso.parse),
+  PlainSerializer(date_iso.dump, when_used='json'),
+]
 """A calendar-date field (no time-of-day), to use directly in a generated `TypedDict`'s
 annotations.
 """

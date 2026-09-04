@@ -1,7 +1,8 @@
 """`GET /api/v1/broker/nd/account` — Get sub-account."""
 
 from typed_core.validation import TypedDict, validator
-from typed_kucoin.core import RpcEndpoint, TimestampMillis
+from typed_kucoin.core import TimestampMillis
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 
 class BrokerSubAccount(TypedDict):
@@ -53,7 +54,7 @@ class SubAccounts(RpcEndpoint):
     params: dict = {'currentPage': current_page, 'pageSize': page_size}
     if uid is not None:
       params['uid'] = uid
-    return await self.authed_request(
+    return await self.client.authed_request(
       'GET',
       '/api/v1/broker/nd/account',
       params=params,

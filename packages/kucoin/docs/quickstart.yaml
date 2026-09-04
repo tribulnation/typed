@@ -51,24 +51,27 @@ how_tos:
       Public topics need no credentials; private topics (like balance updates) need a
       client built with real credentials.
     code: |
-      async with client.streams.spot_margin.ticker('BTC-USDT') as stream:  # public ticker pushes
+      async with client.streams.spot_margin_public.ticker('BTC-USDT') as stream:  # public ticker pushes
         async for update in stream:
           print(update['price'])
-      async with client.streams.spot_margin.balance() as stream:  # private balance pushes
+      async with client.streams.spot_margin_private.balance() as stream:  # private balance pushes
         async for update in stream:
           print(update['currency'], update['available'])
 
   - title: Place & manage orders
     body: Spot trading goes through the high-frequency (`hf`) order book. Needs a `Trade` key.
     code: |
+      from decimal import Decimal
+
       order = await client.spot.orders_hf.add({                                    # place a limit order
-        'symbol': 'BTC-USDT', 'type': 'limit', 'side': 'buy', 'price': '10000', 'size': '0.0001',
+        'symbol': 'BTC-USDT', 'type': 'limit', 'side': 'buy',
+        'price': Decimal('10000'), 'size': Decimal('0.0001'),
       })
       detail = await client.spot.orders_hf.get_by_order_id(                        # query it
-        order['orderId'], symbol='BTC-USDT',
+        order_id=order['orderId'], symbol='BTC-USDT',
       )
       open_orders = await client.spot.orders_hf.get_open_orders(symbol='BTC-USDT')  # list open orders
-      await client.spot.orders_hf.cancel_by_order_id(order['orderId'], symbol='BTC-USDT')  # cancel it
+      await client.spot.orders_hf.cancel_by_order_id(order_id=order['orderId'], symbol='BTC-USDT')  # cancel it
       await client.spot.orders_hf.cancel_all()                                      # cancel everything
 
   - title: Manage account data
@@ -82,24 +85,28 @@ how_tos:
   - title: Query & manage earn instruments
     body: Savings, staking, and dual-investment products.
     code: |
+      from decimal import Decimal
+
       products = await client.earn.savings_products(currency='USDT')                # list products
       holdings = await client.earn.account_holding(currency='USDT')                 # list your holdings
-      purchased = await client.earn.purchase({                                      # subscribe
-        'productId': products[0]['id'], 'amount': '10', 'accountType': 'TRADE',
-      })
+      purchased = await client.earn.purchase(                                       # subscribe
+        products[0]['id'], amount=Decimal('10'), account_type='TRADE',
+      )
       preview = await client.earn.redeem_preview(order_id=purchased['orderId'])     # preview a redemption
-      await client.earn.redeem(order_id=purchased['orderId'], amount='10')          # redeem it
+      await client.earn.redeem(order_id=purchased['orderId'], amount=Decimal('10'))  # redeem it
 
   - title: Deposits & withdrawals
     body: Deposit addresses, deposit/withdrawal history, and submitting a withdrawal.
     code: |
+      from decimal import Decimal
+
       addresses = await client.account.deposit.address(currency='USDT', chain='trx')  # deposit addresses
       deposits = await client.account.deposit.history(currency='USDT')                # deposit history
       quota = await client.account.withdrawals.quotas(currency='USDT', chain='trx')   # withdrawal quota
-      withdrawal = await client.account.withdrawals.withdraw({                        # submit a withdrawal
-        'currency': 'USDT', 'toAddress': 'destination-address', 'amount': '10',
-        'withdrawType': 'ADDRESS', 'chain': 'trx',
-      })
+      withdrawal = await client.account.withdrawals.withdraw(                         # submit a withdrawal
+        currency='USDT', to_address='destination-address', amount=Decimal('10'),
+        withdraw_type='ADDRESS', chain='trx',
+      )
       withdrawals = await client.account.withdrawals.history(currency='USDT')         # withdrawal history
 
   - title: Paginate through results

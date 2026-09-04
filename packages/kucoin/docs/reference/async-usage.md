@@ -44,10 +44,11 @@ This is the recommended style for:
 
 ## Streams
 
-`client.streams.spot_margin` is one physical WebSocket connection carrying both public
-topics (order book, ticker, trades, ...) and, once the client has credentials, private
-topics (balance updates, order updates, ...). Each subscription method returns a manager,
-not a stream directly.
+`client.streams.spot_margin_public` and `client.streams.spot_margin_private` share one
+physical WebSocket connection (order book, ticker, trades, ... on the public side; balance
+updates, order updates, ... on the private side, once the client has credentials) — split
+into two attributes by visibility, not two sockets. Each subscription method returns a
+manager, not a stream directly.
 
 Use `async with` on it so the subscription is unsubscribed automatically when the block exits:
 
@@ -55,7 +56,7 @@ Use `async with` on it so the subscription is unsubscribed automatically when th
 from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
-  async with client.streams.spot_margin.ticker('BTC-USDT') as stream:
+  async with client.streams.spot_margin_public.ticker('BTC-USDT') as stream:
     async for update in stream:
       print(update['price'])
 ```
@@ -67,7 +68,7 @@ async with KuCoin.new(public=True) as client:
 from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
-  stream = await client.streams.spot_margin.ticker('BTC-USDT')
+  stream = await client.streams.spot_margin_public.ticker('BTC-USDT')
   async for update in stream:
     print(update['price'])
     break
@@ -80,18 +81,19 @@ Private topics work the same way, against a client built with real credentials:
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
-  async with client.streams.spot_margin.balance() as stream:
+  async with client.streams.spot_margin_private.balance() as stream:
     async for update in stream:
       print(update['currency'], update['available'])
 ```
 
-`client.streams.futures` works the same way, on its own connection:
+`client.streams.futures_public`/`client.streams.futures_private` work the same way, on
+their own connection:
 
 ```python
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
-  async with client.streams.futures.ticker_v2('XBTUSDTM') as stream:
+  async with client.streams.futures_public.ticker_v2('XBTUSDTM') as stream:
     async for update in stream:
       print(update['bestBidPrice'], update['bestAskPrice'])
 ```
@@ -119,9 +121,10 @@ async with KuCoin.new() as client:
   positions = await client.futures.positions.get_position_list()
 ```
 
-`client.streams.spot_margin` and `client.streams.futures` are two independent WebSocket
-connections, each with its own bullet-token endpoint — they don't share a base URL with
-each other or with the REST clients above.
+`client.streams.spot_margin_public`/`.spot_margin_private` and `client.streams.
+futures_public`/`.futures_private` are two independent WebSocket connections (one per
+pair), each with its own bullet-token endpoint — they don't share a base URL with each
+other or with the REST clients above.
 
 ## Guidance
 

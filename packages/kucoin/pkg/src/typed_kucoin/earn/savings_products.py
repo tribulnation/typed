@@ -2,7 +2,8 @@
 
 from typing_extensions import Literal
 from typed_core.validation import TypedDict, validator
-from typed_kucoin.core import RpcEndpoint, TimestampMillis
+from typed_kucoin.core import TimestampMillis
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 
 class SavingsProduct(TypedDict):
@@ -86,7 +87,7 @@ class SavingsProducts(RpcEndpoint):
       - [KuCoin API docs](https://www.kucoin.com/docs-new)
     """
     params = {'currency': currency} if currency is not None else None
-    return await self.authed_request(
+    return await self.client.authed_request(
       'GET',
       '/api/v1/earn/saving/products',
       params=params,
