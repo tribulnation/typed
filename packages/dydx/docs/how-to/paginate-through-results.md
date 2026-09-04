@@ -7,16 +7,16 @@ from typed_dydx import Dydx
 
 async with Dydx.testnet(public=True) as client:
   async for page in client.indexer.data.get_fills_paged(
-    'dydx1...',
+    address='dydx1...',
     subaccount=0,
     limit=100,
   ):
-    for fill in page:
+    for fill in page['fills']:
       ...
   # instead of
   first_page = await client.indexer.data.get_fills(
-    'dydx1...',
+    address='dydx1...',
     subaccount=0,
-    page=0
+    page=1
   )
 ```

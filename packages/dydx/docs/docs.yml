@@ -1,0 +1,19 @@
+# Sidebar order for the docs site. Structure comes from the directory tree; this file
+# only orders siblings. `index.md` is always first; anything not listed follows the
+# listed entries, alphabetically. A directory is a bare entry when its own contents
+# need no ordering, or a key with its own list when they do.
+
+- authenticated-setup.md
+- how-to:
+    - fetch-market-data.md
+    - manage-account-data.md
+    - query-chain-state.md
+    - inspect-blocks-and-transactions.md
+    - place-and-manage-orders.md
+    - paginate-through-results.md
+    - listen-to-streams.md
+- reference:
+    - async-usage.md
+    - error-handling.md
+    - env-vars.md
+    - timestamps.md

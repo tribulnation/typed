@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from typed_dydx.indexer.types.market import PerpetualMarket
+from typed_dydx.indexer.schemas import PerpetualMarket
 
 from .get_markets import GetMarkets
 

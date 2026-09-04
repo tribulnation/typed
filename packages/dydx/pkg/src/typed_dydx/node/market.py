@@ -1,9 +1,9 @@
 """Market conversion helpers for dYdX order construction."""
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_FLOOR
+from decimal import ROUND_FLOOR, Decimal
 
-from typed_dydx.indexer.types.market import PerpetualMarket
+from typed_dydx.indexer.schemas import PerpetualMarket
 from typed_dydx.protos.dydxprotocol import clob, subaccounts
 
 DecimalValue = Decimal | str | int
