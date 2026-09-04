@@ -92,13 +92,22 @@ class HttpRpcClient(RpcClient):
     path: str,
     *,
     json: Any | None = None,
+    content: bytes | None = None,
     params: Mapping[str, Any] | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
-    """Send an unsigned request to `base_url + path`."""
+    """Send an unsigned request to `base_url + path`.
+
+    Args:
+      content: A pre-serialized JSON body (`typed_core.validation.validator.dump`'s own
+        output) -- bypasses `httpx`'s own JSON encoding, needed for a body carrying a
+        `Decimal`/`datetime` field it can't encode itself. Sets `Content-Type:
+        application/json` explicitly, since `content=` (unlike `json=`) doesn't.
+    """
+    headers = {'Content-Type': 'application/json'} if content is not None else None
     response = await self.http.request(
-      method, self.base_url + path, json=json, params=params
+      method, self.base_url + path, json=json, content=content, params=params, headers=headers
     )
     return self.result(response, validator=validator, validate=validate)
 
@@ -108,11 +117,18 @@ class HttpRpcClient(RpcClient):
     path: str,
     *,
     json: Any | None = None,
+    content: bytes | None = None,
     params: Mapping[str, Any] | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
     """Sign and send one request, JWT-bound to this exact method and path.
+
+    Args:
+      content: A pre-serialized JSON body (`typed_core.validation.validator.dump`'s own
+        output) -- bypasses `httpx`'s own JSON encoding, needed for a body carrying a
+        `Decimal`/`datetime` field it can't encode itself. Sets `Content-Type:
+        application/json` explicitly, since `content=` (unlike `json=`) doesn't.
 
     Raises:
       AuthError: This client was built with no credentials (`public=True` upstream).
@@ -120,8 +136,10 @@ class HttpRpcClient(RpcClient):
     if self.credentials is None:
       raise AuthError('No credentials: this client was built with `public=True`.')
     headers = auth_headers(self.credentials, method=method, host=self.host, path=path)
+    if content is not None:
+      headers['Content-Type'] = 'application/json'
     response = await self.http.request(
-      method, self.base_url + path, json=json, params=params, headers=headers
+      method, self.base_url + path, json=json, content=content, params=params, headers=headers
     )
     return self.result(response, validator=validator, validate=validate)
 

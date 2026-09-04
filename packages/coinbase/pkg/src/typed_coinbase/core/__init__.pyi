@@ -13,7 +13,7 @@ from .endpoint.rpc import RpcClient, RpcEndpoint
 from .endpoint.stream import StreamClient, StreamEndpoint
 from .transport.http import HttpRpcClient
 from .transport.ws import CoinbaseSocketClient
-from .types import TimestampIso, timestamp_iso
+from .types import TimestampIso, timestamp_iso, TimestampSeconds, timestamp_seconds, DateIso, date_iso
 
 __all__ = [
   'ApiError',
@@ -21,6 +21,7 @@ __all__ = [
   'BadRequest',
   'CoinbaseSocketClient',
   'Credentials',
+  'DateIso',
   'Error',
   'HttpRpcClient',
   'LogicError',
@@ -31,7 +32,10 @@ __all__ = [
   'StreamClient',
   'StreamEndpoint',
   'TimestampIso',
+  'TimestampSeconds',
   'ValidationError',
+  'date_iso',
   'resolve_credentials',
   'timestamp_iso',
+  'timestamp_seconds',
 ]

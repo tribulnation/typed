@@ -1,40 +1,50 @@
-"""Coinbase's wire timestamp shape: ISO 8601, 'Z'-suffixed, with fractional-second
-precision ranging from none up to nanoseconds (WebSocket payloads go to 9 digits).
-`datetime` can't hold past microseconds and `datetime.fromisoformat` can't parse a `Z`
-suffix before Python 3.11, so both are normalized before parsing.
+"""Coinbase's wire timestamp shapes.
+
+`app`'s and `exchange`'s REST/WS timestamps use ISO 8601/RFC 3339 with up to
+nanosecond fractional precision. The shared `typed_core.times.IsoConverter` handles that
+wire shape and serializes request-body timestamps back to JSON.
+
+`exchange`'s `products.candles` is the one endpoint spec'd with a second format,
+`epoch-seconds` (each candle row's own bucket-start time) -- a plain Unix-second epoch, so
+it reuses `typed_core.times.EpochConverter` directly rather than a bespoke converter, per
+`.agents/skills/client-core`'s "Timestamp Types" standard shape.
+
+`app.accounts.prices.spot`'s `date` query parameter is a third shape: a plain `YYYY-MM-DD`
+calendar date with no time component, matching `typed_core.times.DateConverter`'s default
+pattern exactly, so it's used directly rather than a bespoke converter.
 """
 
 from typing_extensions import Annotated
-from datetime import datetime, timezone
-from pydantic import BeforeValidator
-import re
+from datetime import date, datetime, timezone
+from pydantic import BeforeValidator, PlainSerializer
 
-from typed_core.times.base import TimeConverter
+from typed_core.times import DateConverter, EpochConverter, IsoConverter
 
-_FRACTION = re.compile(r'\.(\d+)')
+timestamp_iso = IsoConverter()
 
-
-class CoinbaseIsoConverter(TimeConverter[str]):
-  """Converter for Coinbase's `Z`-suffixed ISO 8601 timestamps."""
-
-  def parse(self, value: str) -> datetime:
-    """Parse a Coinbase wire timestamp into a `datetime`."""
-    if value.endswith('Z'):
-      value = value[:-1] + '+00:00'
-    if (m := _FRACTION.search(value)) and len(m.group(1)) > 6:
-      value = value[: m.start(1)] + m.group(1)[:6] + value[m.end(1) :]
-    return datetime.fromisoformat(value)
-
-  def dump(self, dt: datetime) -> str:
-    """Convert a `datetime` back into a Coinbase wire timestamp."""
-    return dt.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
-
-  def now(self) -> str:
-    """The current time, in Coinbase's wire format."""
-    return self.dump(datetime.now(timezone.utc))
-
-
-timestamp_iso = CoinbaseIsoConverter()
-
-TimestampIso = Annotated[datetime, BeforeValidator(timestamp_iso.parse)]
+TimestampIso = Annotated[
+  datetime,
+  BeforeValidator(timestamp_iso.parse),
+  PlainSerializer(timestamp_iso.dump, when_used='json'),
+]
 """A Coinbase wire timestamp field, to use directly in a generated `TypedDict`'s annotations."""
+
+timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
+
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
+"""A Coinbase Exchange Unix-second epoch timestamp field (`exchange.http.products.candles`'
+row bucket-start time), to use directly in a generated `TypedDict`'s annotations."""
+
+date_iso = DateConverter()
+
+DateIso = Annotated[
+  date,
+  BeforeValidator(date_iso.parse),
+  PlainSerializer(date_iso.dump, when_used='json'),
+]
+"""A Coinbase wire plain calendar date field (`app.accounts.prices.spot`'s `date` query
+parameter), to use directly in a generated `TypedDict`'s annotations."""

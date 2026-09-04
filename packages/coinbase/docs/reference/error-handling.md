@@ -18,6 +18,8 @@ from typed_coinbase.core.exc import (
 
 HTTP status is the only failure signal on both `accounts` (v2) and `advanced_trade` (v3) — there is no embedded error code on a `200` response to branch on instead. The response body (`{"error", "message", "error_details"}` on v3, `{"error", "code", "message", "details"}` on v2) rides along on the raised exception for debugging.
 
+`client.exchange` maps to the exact same table — HTTP status is its only failure signal too, and its response body is a plain `{"message": "..."}` with no structured error code.
+
 ## Pattern
 
 ```python
@@ -40,3 +42,5 @@ async with Coinbase.new() as client:
 ## WebSocket
 
 A rejected (un)subscribe on `market_data`/`user` raises the same split: `AuthError` for an authentication failure, `BadRequest` for anything else. That only covers a bad channel *name* — a bad channel *argument* (e.g. an unknown `product_id`) is not rejected by Coinbase at all; the acknowledgement comes back with an empty subscription instead, so check that it actually covers what was requested.
+
+`exchange.streams` raises the same `AuthError`/`BadRequest` split on a rejected (un)subscribe, matched against the rejection's own `message`/`reason` text.

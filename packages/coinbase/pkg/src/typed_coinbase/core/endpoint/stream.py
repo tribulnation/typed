@@ -1,12 +1,33 @@
-"""Base endpoint class for WebSocket stream (channel subscription) endpoints."""
+"""Base endpoint class for WebSocket stream (channel subscription) endpoints: design §2/§8's
+single `subscribe()` verb, deciding public-vs-signed purely from `meta['signed']` -- every
+generated call's own `meta` dict literal, matching `codegen/config.toml`'s `[cores.app_streams]`/
+`[cores.exchange_streams]` meta schema.
 
-from typing_extensions import Any, Mapping, Protocol, Self, TypeVar
+Shared, auth-agnostic: both Coinbase App's `market_data`/`user` connections and Coinbase
+Exchange's single WebSocket Feed connection resolve to this exact class -- only the
+pre-built `client` transport and the venue-specific `meta` schema differ per subtree
+(design §5)."""
+
+from typing_extensions import Any, NotRequired, Protocol, Self, TypedDict, TypeVar, cast
 from dataclasses import dataclass
+from types import UnionType
+import json
 
 from typed_core.util import StreamManager
 from typed_core.validation import validator
 
 T = TypeVar('T', default=Any)
+
+
+class Meta(TypedDict):
+  """`app_streams`'s and `exchange_streams`'s shared `meta` shape (`codegen/config.toml`
+  `[cores.app_streams]`/`[cores.exchange_streams]`): whether this channel needs a signed
+  subscribe. Hand-written to match that declared JSON Schema -- never code-generated
+  (design §2/§6, same precedent as `core.endpoint.rpc.Meta`)."""
+
+  signed: NotRequired[bool]
+  """Whether this channel needs a signed/authenticated subscribe (absent/`False` for
+  every public channel)."""
 
 
 class StreamClient(Protocol):
@@ -15,7 +36,7 @@ class StreamClient(Protocol):
   def subscribe(
     self,
     channel: str,
-    params: 'Mapping[str, Any] | None' = None,
+    params: 'dict[str, Any] | None' = None,
     *,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
@@ -26,7 +47,7 @@ class StreamClient(Protocol):
   def authed_subscribe(
     self,
     channel: str,
-    params: 'Mapping[str, Any] | None' = None,
+    params: 'dict[str, Any] | None' = None,
     *,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
@@ -35,8 +56,7 @@ class StreamClient(Protocol):
 
     Raises:
       AuthError: This transport was built with no credentials. Raised lazily, once the
-        returned `StreamManager` is actually connected — matching `StreamManager`'s own
-        "nothing happens until you connect" contract, not eagerly at call time.
+        returned `StreamManager` is actually connected.
     """
     ...
 
@@ -47,7 +67,8 @@ class StreamClient(Protocol):
 
 @dataclass(frozen=True, kw_only=True)
 class StreamEndpoint:
-  """Base class for stream endpoints."""
+  """Base class for every Coinbase WebSocket stream endpoint -- the resolved `core` for
+  both `app`'s and `exchange`'s own streams subtrees (design §5)."""
 
   client: StreamClient
 
@@ -61,23 +82,30 @@ class StreamEndpoint:
   def subscribe(
     self,
     channel: str,
-    params: 'Mapping[str, Any] | None' = None,
+    request: Any = None,
     *,
-    validator: 'validator[T] | None' = None,
+    meta: Meta,
     validate: bool | None = None,
+    request_type: type[Any] | UnionType | None = None,
+    response_type: type[T] | UnionType | None = None,
   ) -> 'StreamManager[T, Any, Any]':
-    return self.client.subscribe(
-      channel, params, validator=validator, validate=validate
-    )
+    """One channel subscription (design §2/§8's `subscribe` verb).
 
-  def authed_subscribe(
-    self,
-    channel: str,
-    params: 'Mapping[str, Any] | None' = None,
-    *,
-    validator: 'validator[T] | None' = None,
-    validate: bool | None = None,
-  ) -> 'StreamManager[T, Any, Any]':
-    return self.client.authed_subscribe(
-      channel, params, validator=validator, validate=validate
+    Args:
+      channel: The wire channel name/template.
+      request: The generated `Parameters` value (a `TypedDict` instance, or `None`).
+      meta: This call's own quirks -- whether the channel needs a signed subscribe.
+      validate: Per-call override of pushed-payload validation.
+      request_type: The generated parameters type, used to serialize `request`.
+      response_type: The generated payload type, used to validate each push.
+    """
+    params = (
+      json.loads(validator(cast(type, request_type)).dump(request))
+      if request_type is not None and request is not None
+      else None
     )
+    payload_validator = (
+      validator(cast(type, response_type)) if response_type is not None else None
+    )
+    call = self.client.authed_subscribe if meta.get('signed', False) else self.client.subscribe
+    return call(channel, params, validator=payload_validator, validate=validate)

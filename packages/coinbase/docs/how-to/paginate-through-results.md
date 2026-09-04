@@ -17,14 +17,14 @@ async with Coinbase.new() as client:
   page = await client.app.accounts.list(limit=25)          # one page (the whole response frame)
   print(page['data'])
 
-  accounts = await client.app.accounts.list.paged(limit=25)       # every account, flattened
+  accounts = await client.app.accounts.list_paged(limit=25)       # every account, flattened
   print(accounts[0]['id'])
 
-  async for page in client.app.accounts.list.paged(limit=25):     # every page, one at a time
+  async for page in client.app.accounts.list_paged(limit=25):     # every page, one at a time
     for account in page:
       print(account['id'])
 
-  transactions = await client.app.accounts.transactions.list_paged('account-id', limit=25)
+  transactions = await client.app.accounts.transactions.list_paged(account_id='account-id', limit=25)
   print(transactions[0]['id'])
 ```
 
@@ -37,7 +37,7 @@ async with Coinbase.new() as client:
   page = await client.app.advanced_trade.http.products.list(limit=50)
   print(page['products'])
 
-  products = await client.app.advanced_trade.http.products.list.paged(limit=50)      # every product, flattened
+  products = await client.app.advanced_trade.http.products.list_paged(limit=50)      # every product, flattened
   print(products[0]['product_id'])
 
   orders = await client.app.advanced_trade.http.orders.historical.batch_paged(order_status=['OPEN'])

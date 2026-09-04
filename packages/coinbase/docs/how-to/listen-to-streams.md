@@ -47,3 +47,5 @@ async with Coinbase.new() as client:
 `user.futures_balance_summary` is a second authenticated channel, for margin/balance updates on a futures account.
 
 Every subscription is a `StreamManager` — `async with ... as stream:` subscribes and auto-unsubscribes on exit; `async for` yields each notification. A rejected subscription (bad channel name, bad credentials) raises `AuthError` or `BadRequest`; a bad argument on a *valid* channel (e.g. an unknown `product_id`) is acknowledged with an empty subscription instead, since Coinbase itself does not reject it.
+
+This is Advanced Trade's own WebSocket. Coinbase Exchange has a separate, single-connection WebSocket Feed under `client.exchange.streams` — see [Fetch Exchange Market Data](fetch-exchange-market-data.md#public-websocket-channels).
