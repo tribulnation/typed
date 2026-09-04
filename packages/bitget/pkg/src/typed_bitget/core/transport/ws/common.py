@@ -15,7 +15,7 @@ command carries a real caller-visible `id`, matched via `StreamsRpc`'s own inter
 `parse_msg` reads it back off the echoed reply.
 """
 
-from typing_extensions import Any, Callable, ClassVar, Mapping, TypeVar, cast
+from typing_extensions import Any, Callable, ClassVar, Mapping, NotRequired, TypedDict, TypeVar, cast
 from abc import abstractmethod
 from dataclasses import dataclass, field
 import asyncio
@@ -44,7 +44,31 @@ merged into the wire `arg` by `build_arg`, never translated between generations.
 
 Reply = Mapping[str, Any]
 """One `{event: "subscribe"|"unsubscribe"|"login"|"error", ...}` ack frame, or a
-`{event: "trade"|"error", arg: [...], code, msg}` command reply."""
+`{event: "trade"|"error", arg: [...], code, msg}` command reply -- kept as a loose object
+rather than one `TypedDict` because it's genuinely reused (`BaseSocketConnection`'s own
+`StreamsRpc[Command, Reply, Notification, SubscriptionParams, Reply, Reply]`) across shapes
+that disagree even on `arg`'s own type: a dict on every ack, a list on every command reply
+(confirmed against `classic_streams/order/place`'s and `.../cancel`'s own response schema).
+See `SubscriptionAck`, below, for the one sub-shape (subscribe/unsubscribe, post-error-check)
+that *is* consistent enough to name."""
+
+
+class SubscriptionAck(TypedDict):
+  """One subscribe/unsubscribe ack frame -- what `request_subscription`/
+  `request_unsubscription` actually return once `_ack_request`'s reply has already been
+  confirmed not `event: "error"` (they raise before returning otherwise). `arg` echoes the
+  venue's subscription target and is shaped differently per channel and generation (Classic:
+  `{channel, instType, instId}`/`{channel, instType, coin}`; Uta: `{topic, instType,
+  symbol}`, sometimes with `interval` too), so it's kept as a loose object rather than
+  pinned to one dialect -- confirmed consistent (always a dict, always present) across every
+  real captured example under `spec/endpoints/{classic,uta}_streams/**/examples/`.
+  `connId` is present on every Uta ack and absent on every Classic one, also confirmed
+  against every real capture.
+  """
+  event: str
+  arg: Mapping[str, Any]
+  connId: NotRequired[str]
+
 
 Command = Mapping[str, Any]
 """One outgoing `{op: "trade", args: [{...}]}` command frame, `id` omitted — `rpc_send`
@@ -86,7 +110,9 @@ def _resolve_channel(
 
 
 @dataclass
-class BaseSocketConnection(StreamsRpc[Command, Reply, Notification, SubscriptionParams, Reply, Reply]):
+class BaseSocketConnection(
+  StreamsRpc[Command, Reply, Notification, SubscriptionParams, SubscriptionAck, SubscriptionAck]
+):
   """One physical connection's worth of subscribe/unsubscribe/login/ping mechanics, plus
   id-correlated trade commands.
 
@@ -146,7 +172,7 @@ class BaseSocketConnection(StreamsRpc[Command, Reply, Notification, Subscription
 
   async def request_subscription(
     self, channel: str, params: SubscriptionParams | None = None
-  ) -> Reply:
+  ) -> SubscriptionAck:
     reply = await self._ack_request(
       {'op': 'subscribe', 'args': [self.build_arg(channel, params or {})]}
     )
@@ -154,11 +180,11 @@ class BaseSocketConnection(StreamsRpc[Command, Reply, Notification, Subscription
       raise BadRequest(reply)
     if reply.get('event') != 'subscribe':
       raise ApiError(f'Expected "subscribe" reply, got {reply.get("event")!r}')
-    return reply
+    return cast(SubscriptionAck, reply)
 
   async def request_unsubscription(
     self, channel: str, params: SubscriptionParams | None = None
-  ) -> Reply:
+  ) -> SubscriptionAck:
     reply = await self._ack_request(
       {'op': 'unsubscribe', 'args': [self.build_arg(channel, params or {})]}
     )
@@ -166,7 +192,7 @@ class BaseSocketConnection(StreamsRpc[Command, Reply, Notification, Subscription
       raise BadRequest(reply)
     if reply.get('event') != 'unsubscribe':
       raise ApiError(f'Expected "unsubscribe" reply, got {reply.get("event")!r}')
-    return reply
+    return cast(SubscriptionAck, reply)
 
   async def login(self, credentials: Credentials) -> Reply:
     """Send the login op and wait for its ack, sent once per connection before any private

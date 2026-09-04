@@ -26,8 +26,8 @@ async with Bitget.new() as client:
 `current_track_orders`/`history_track_orders`/`profit_share_history` (and their Classic Spot
 counterparts), `order_fills`, `position_history`, `virtual_subaccount_list`,
 `current_followers`/`history_followers`/`profit_details`, `all_orders`/`my_ads`/`pending_orders`,
-`sub_transfer_records`, `withdraw_address_book`, `sub_api_list`, and market data's `liquidations`
-follow the same shape.
+`sub_transfer_records`, `withdraw_address_book`, `sub_api_list`, market data's `liquidations`,
+and UTA's `financial_records`/`order_fills`/`unfilled_orders` follow the same shape.
 
 The one-shot form returns a single page directly, with its own `cursor` for manual paging:
 
@@ -38,19 +38,22 @@ async with Bitget.new() as client:
   page = await client.uta.trade.order.history(category='SPOT', symbol='BTCUSDT')
 ```
 
-## Cursor-Paged, Plain Async Iterator: Financial Records
+## Cursor-Paged, Plain Async Iterator: Cross Margin Order Fills
 
-A cursor-paged endpoint whose page also carries something worth keeping alongside the rows --
-`financial_records`/`fills`/`unfilled_orders`'s own `{list, cursor}` page object, say -- stays a
-plain async iterator instead, yielding the whole response per page:
+A cursor-paged endpoint that stops on an empty page, rather than an absent cursor -- Classic
+Margin's `fills` endpoints, say -- stays a plain async iterator instead, yielding the whole
+response per page:
 
 ```python
+from datetime import datetime, timezone
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  async for page in client.uta.account.financial_records_paged(category='SPOT', coin='USDT'):
-    for record in page['list'] or []:  # `list` is `null`, not `[]`, on an empty page
-      print(record['amount'])
+  async for page in client.classic.margin.cross.order.fills_paged(
+    symbol='BTCUSDT', start_time=datetime(2024, 1, 1, tzinfo=timezone.utc),
+  ):
+    for fill in page['fills']:
+      print(fill.get('orderId'), fill.get('tradeId'))
 ```
 
 Pass `max_pages` to cap how many pages a plain async-iterator `_paged` method walks -- unlike the

@@ -43,7 +43,7 @@ on it so the subscription is unsubscribed automatically when the block exits:
 from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
-  async with client.uta_streams.orderbook('', 'spot', 'BTCUSDT') as book:
+  async with client.uta_streams.orderbook('spot', symbol='BTCUSDT', depth='') as book:
     async for update in book:
       print(update['data'])
 ```
@@ -55,7 +55,7 @@ async with Bitget.new(public=True) as client:
 from typed_bitget import Bitget
 
 async with Bitget.new(public=True) as client:
-  book = await client.uta_streams.orderbook('', 'spot', 'BTCUSDT')
+  book = await client.uta_streams.orderbook('spot', symbol='BTCUSDT', depth='')
   async for update in book:
     print(update['data'])
     break
@@ -63,7 +63,7 @@ async with Bitget.new(public=True) as client:
 ```
 
 Both `classic_streams` and `uta_streams` also expose `authed_command` — a lower-latency,
-id-correlated trade command (`classic_streams.place_order`, `classic_streams.cancel_order`)
+id-correlated trade command (`classic_streams.order.place`, `classic_streams.order.cancel`)
 sent over the private WebSocket connection and answered with a single reply, not a
 subscription. Don't expect it to behave like the pub-sub methods above:
 
@@ -82,14 +82,15 @@ async with Bitget.new() as client:
 
 `Bitget.new()` composes four independent surfaces: `classic` and `uta` (REST, Classic v2 and
 UTA v3), and `classic_streams`/`uta_streams` (their independent WebSocket feeds). `classic`
-and `uta` **share one `HttpRpcClient` instance** (`main.py:63-66`) — same host, envelope, and
-signing scheme either way — while the two streaming surfaces each own a separate connection,
-since their wire shapes differ structurally.
+and `uta` **share one `HttpRpcClient` instance** (`BitgetBase.http_client`,
+`core/base.py`) — same host, envelope, and signing scheme either way — while the two
+streaming surfaces each own a separate connection, since their wire shapes differ
+structurally.
 
-`__aenter__` gathers all four concurrently (`main.py:75-82`). `typed_core`'s `HttpClient.client`
-lazily instantiates its underlying `httpx.AsyncClient` under an `asyncio.Lock`, so entering
-`classic` and `uta` at the same time is safe even though they share one HTTP client
-underneath.
+`__aenter__` gathers all three underlying transports concurrently (`BitgetBase.__aenter__`,
+`core/base.py`). `typed_core`'s `HttpClient.client` lazily instantiates its underlying
+`httpx.AsyncClient` under an `asyncio.Lock`, so entering `classic` and `uta` at the same time
+is safe even though they share one HTTP client underneath.
 
 ```python
 from typed_bitget import Bitget

@@ -5,6 +5,8 @@ All of these are authenticated.
 ## Place An Order
 
 ```python
+from decimal import Decimal
+
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
@@ -13,8 +15,8 @@ async with Bitget.new() as client:
     'symbol': 'BTCUSDT',
     'side': 'buy',
     'orderType': 'limit',
-    'qty': '0.001',
-    'price': '20000',
+    'qty': Decimal('0.001'),
+    'price': Decimal('20000'),
     'timeInForce': 'gtc',
   })
 ```
@@ -41,7 +43,7 @@ you tracked the order by.
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  await client.uta.trade.order.cancel({'orderId': 'your_order_id', 'category': 'SPOT'})
+  await client.uta.trade.order.cancel(order_id='your_order_id', category='SPOT')
 ```
 
 ## List Open Orders
@@ -70,11 +72,13 @@ Both are paged, see [Paginate Through Results](paginate-through-results.md).
 ## Classic v2
 
 ```python
+from decimal import Decimal
+
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   order = await client.classic.spot.order.place({
     'symbol': 'BTCUSDT', 'side': 'buy', 'orderType': 'limit',
-    'force': 'gtc', 'price': '20000', 'size': '0.001',
+    'force': 'gtc', 'price': Decimal('20000'), 'size': Decimal('0.001'),
   })
 ```

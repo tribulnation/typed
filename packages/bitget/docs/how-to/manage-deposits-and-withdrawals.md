@@ -31,13 +31,13 @@ async with Bitget.new() as client:
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  result = await client.uta.transfers.withdraw.submit({
-    'coin': 'USDT',
-    'chain': 'TRC20',
-    'transferType': 'on_chain',
-    'address': 'your_destination_address',
-    'size': '10',
-  })
+  result = await client.uta.transfers.withdraw.submit(
+    coin='USDT',
+    chain='TRC20',
+    transfer_type='on_chain',
+    address='your_destination_address',
+    size='10',
+  )
 ```
 
 `transferType` is `on_chain` for an external withdrawal or `internal_transfer` to send directly
@@ -60,15 +60,14 @@ async with Bitget.new() as client:
 ## Internal Transfers Between Account Types
 
 ```python
+from decimal import Decimal
+
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  await client.uta.transfers.transfer({
-    'fromType': 'spot',
-    'toType': 'uta',
-    'coin': 'USDT',
-    'amount': '10',
-  })
+  await client.uta.transfers.transfer(
+    from_type='spot', to_type='uta', coin='USDT', amount=Decimal('10'),
+  )
 ```
 
 ## Classic v2
@@ -78,7 +77,7 @@ from typed_bitget import Bitget
 
 async with Bitget.new() as client:
   address = await client.classic.spot.deposit.address(coin='USDT', chain='TRC20', size='')
-  await client.classic.spot.withdrawal.create({
-    'coin': 'USDT', 'transferType': 'on_chain', 'address': 'your_destination_address', 'size': '10',
-  })
+  await client.classic.spot.withdrawal.create(
+    coin='USDT', transfer_type='on_chain', address='your_destination_address', size='10',
+  )
 ```
