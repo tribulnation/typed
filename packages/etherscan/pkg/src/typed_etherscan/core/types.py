@@ -2,15 +2,35 @@
 the transaction-shaped endpoints."""
 
 from typing_extensions import Annotated, TypedDict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 
-from typed_core.times import EpochConverter
+from typed_core.times import DateConverter, EpochConverter
 
 timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
-TimestampSeconds = Annotated[datetime, BeforeValidator(timestamp_seconds.parse)]
-"""A Unix epoch in seconds, as Etherscan's request-side `timestamp` parameters carry it."""
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
+"""A Unix epoch in seconds, as Etherscan's request-side `timestamp` parameters carry it.
+
+`PlainSerializer` (ADR 0020/S27) is load-bearing here, not just symmetry: the codegen
+mechanization migration serializes every request through `validator(Request).dump(...)`
+(design §7), including `blocks.number_by_time`'s `timestamp` field, so a missing
+serializer would silently render it as an ISO-8601 string instead of the epoch-seconds
+integer Etherscan's wire actually expects -- exactly the live bug ADR 0020 itself warns
+was "latent... harmless only until one of them dumps a body through pydantic"."""
+
+date_iso = DateConverter()
+DateIso = Annotated[
+  date,
+  BeforeValidator(date_iso.parse),
+  PlainSerializer(date_iso.dump, when_used='json'),
+]
+"""A plain calendar date field with no time component (`chainTimeStamp`, `UTCDate`, ...),
+to use directly in a generated `TypedDict`'s annotations."""
 
 
 class Value(TypedDict):

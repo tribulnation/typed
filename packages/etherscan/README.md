@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/etherscan">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-light.svg">
-      <img alt="Typed Etherscan" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/etherscan/media/etherscan-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/etherscan-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/etherscan-light.svg">
+      <img alt="Typed Etherscan" src="https://tribulnation.com/media/lockups/etherscan-light.svg" width="520">
     </picture>
   </a>
 </p>
