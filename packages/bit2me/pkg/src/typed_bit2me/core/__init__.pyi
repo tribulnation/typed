@@ -5,6 +5,8 @@ from .types import (
   timestamp_iso,
   TimestampSeconds,
   timestamp_seconds,
+  DateIso,
+  date_iso,
 )
 from .exc import (
   Error,
@@ -26,6 +28,8 @@ __all__ = [
   'timestamp_iso',
   'TimestampSeconds',
   'timestamp_seconds',
+  'DateIso',
+  'date_iso',
   'Error',
   'NetworkError',
   'ValidationError',

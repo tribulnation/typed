@@ -116,9 +116,9 @@ async def _answered(pending: Awaitable[Reply]) -> Reply:
 
 @dataclass(kw_only=True)
 class TradingWsClient:
-  """Implements `endpoint.rpc.RpcClient` (for commands) and
-  `endpoint.stream.StreamClient` (for subscriptions) over one `TradingWsConnection`.
-  """
+  """Implements `core.endpoint.socket.SocketClient` (both `request()` for the six
+  one-shot commands and `subscribe()` for channel subscriptions) over one
+  `TradingWsConnection`."""
 
   conn: TradingWsConnection = field(default_factory=TradingWsConnection)
   credentials: Credentials | None = None
@@ -157,48 +157,30 @@ class TradingWsClient:
   async def __aexit__(self, exc_type, exc_value, traceback):
     await self.conn.__aexit__(exc_type, exc_value, traceback)
 
-  # RpcClient
+  # SocketClient (typed_bit2me.core.endpoint.socket) -- every `trading_ws` command/
+  # channel requires the connection to already be authenticated when private (done
+  # once in `__aenter__`), so there is no per-call public/private distinction to make
+  # here the way `http`'s `RpcClient.request`/`.authed_request` split has.
 
   async def request(
     self,
-    method: str,
     path: str,
-    *,
     params: Mapping[str, Any] | None = None,
-    json: Any | None = None,
+    *,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
   ) -> T:
-    """`method`/`path` are unused — every `trading_ws` command names itself via
-    `path` alone (the command's `event`), matching `RpcClient`'s HTTP-shaped
-    signature so `RpcEndpoint` needs no WS-specific override."""
-    reply = await self.conn.command(path, **(json or {}))
-    return self._parsed(reply, validator, validate)
-
-  async def authed_request(
-    self,
-    method: str,
-    path: str,
-    *,
-    params: Mapping[str, Any] | None = None,
-    json: Any | None = None,
-    validator: 'validator[T] | None' = None,
-    validate: bool | None = None,
-  ) -> T:
-    """Every `trading_ws` command requires the connection to already be
-    authenticated (done once in `__aenter__`); no per-call distinction."""
-    return await self.request(
-      method, path, params=params, json=json, validator=validator, validate=validate
-    )
-
-  def _parsed(
-    self, reply: Reply, validator: 'validator[T] | None', validate: bool | None
-  ) -> T:
+    """Send one of the six one-shot commands (`path` names the command's own
+    `event`) and wait for its reply. The generated `Request` dict carries its own
+    `event` key too (a required, literal-defaulted field on every command's own
+    schema) -- dropped here since `path` already is that value and
+    `TradingWsConnection.command`'s own `event` positional would otherwise collide
+    with it."""
+    command_params = {k: v for k, v in (params or {}).items() if k != 'event'}
+    reply = await self.conn.command(path, **command_params)
     if validator is not None and self.should_validate(validate):
       return validator.python(reply)
     return reply  # type: ignore[return-value]
-
-  # StreamClient
 
   def subscribe(
     self,
@@ -213,15 +195,3 @@ class TradingWsClient:
     if validator is not None and self.should_validate(validate):
       return manager.map(validator.python)
     return manager
-
-  def authed_subscribe(
-    self,
-    channel: str,
-    params: Mapping[str, Any] | None = None,
-    *,
-    validator: 'validator[T] | None' = None,
-    validate: bool | None = None,
-  ) -> StreamManager[T, Any, Any]:
-    """Every private `trading_ws` channel requires the connection to already be
-    authenticated (done once in `__aenter__`); no per-call distinction."""
-    return self.subscribe(channel, params, validator=validator, validate=validate)

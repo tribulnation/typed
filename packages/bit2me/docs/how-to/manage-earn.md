@@ -25,7 +25,7 @@ async with Bit2Me.new() as client:
     print(data[0].get('currency'), data[0].get('balance'))
 ```
 
-`v1.earn.wallets.get(wallet_id)` fetches one wallet's full detail, and `v1.earn.wallets.list_movements(wallet_id)` its deposit/withdrawal/reward history.
+`v1.earn.wallets.get(wallet_id=...)` fetches one wallet's full detail, and `v1.earn.wallets.list_movements(wallet_id=...)` its deposit/withdrawal/reward history.
 
 ## Deposit And Withdraw From Earn
 
@@ -33,11 +33,9 @@ async with Bit2Me.new() as client:
 from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
-  deposit = await client.v1.earn.movements.create({    # move funds into Earn
-    'currency': 'BTC',
-    'amount': '0.001',
-    'type': 'deposit',
-  })
+  deposit = await client.v1.earn.movements.create(    # move funds into Earn
+    currency='BTC', amount='0.001', type='deposit',
+  )
   print(deposit['movementId'])
 ```
 

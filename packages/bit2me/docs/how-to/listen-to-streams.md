@@ -36,19 +36,19 @@ async with Bit2Me.new() as client:
 
 ## Account Notifications
 
-`client.crypto_ws` is a separate connection: one `authenticate` frame, then every notification your account is entitled to arrives unprompted, with no subscribe/unsubscribe protocol. Mint the token the same way `trading_ws` does, from `client.http.credentials`:
+`client.crypto_ws` is a separate connection: one `authenticate` command, then every notification your account is entitled to arrives unprompted, with no subscribe/unsubscribe protocol of its own. Mint the token the same way `trading_ws` does, from `client.http_client.credentials`:
 
 ```python
 from typed_bit2me import Bit2Me
 from typed_bit2me.core.auth import mint_ws_token
 
 async with Bit2Me.new() as client:
-  assert client.http.credentials is not None
-  token = await mint_ws_token(client.http.credentials, base_url=client.http.base_url)
+  assert client.http_client.credentials is not None
+  token = await mint_ws_token(client.http_client.credentials, base_url=client.http_client.base_url)
   async with client.crypto_ws as crypto:
-    await crypto.authenticate(token=token)
+    await crypto.authenticate(payload={'token': token})
     async for notification in crypto.notifications():
       print(notification['type'], notification['payload'])
 ```
 
-Each notification is a permissive `dict` carrying at least `type` and `payload`. Bit2Me documents dozens of notification types (deposits, withdrawals, order fills, KYC status changes, ...) but only sketches each payload's shape, not a full schema.
+`authenticate` gets no reply frame of its own -- silence means it worked, and every notification the account is entitled to starts arriving on this same connection once it succeeds. `notifications()` yields `AccountNotification`, a real, typed union discriminated by each message's own `type` field, one variant per notification type Bit2Me documents (deposits, withdrawals, order fills, KYC status changes, ...) -- a handful whose upstream docs sketch only field names, with no live example to type against yet, keep their inner `payload` permissive rather than guessing a shape.

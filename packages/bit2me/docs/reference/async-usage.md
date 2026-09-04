@@ -51,8 +51,8 @@ async with Bit2Me.new() as client:
 
 For `client.trading_ws`, entering it is also what authenticates the connection when the
 client holds credentials — there's no separate login step. `client.crypto_ws` needs an
-explicit `authenticate(token=...)` call after entering (see Getting Started's WebSocket
-section and [Listen To Streams](../how-to/listen-to-streams.md)).
+explicit `authenticate(payload={'token': ...})` call after entering (see Getting Started's
+WebSocket section and [Listen To Streams](../how-to/listen-to-streams.md)).
 
 ## Streams
 

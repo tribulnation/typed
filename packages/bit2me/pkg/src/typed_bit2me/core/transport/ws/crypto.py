@@ -14,12 +14,16 @@ the auth payload on the same connection/host.
 
 import asyncio
 from dataclasses import dataclass, field
-from typing_extensions import Any, AsyncIterator, Self
+from typing_extensions import Any, Self, TypeVar, cast
 import orjson
 
+from typed_core.util import Stream, StreamManager
+from typed_core.validation import validator
 from typed_core.ws import Socket
 
 BIT2ME_CRYPTO_WS_URL = 'wss://ws.bit2me.com/'
+
+T = TypeVar('T')
 
 
 @dataclass
@@ -35,47 +39,28 @@ class CryptoWsConnection(Socket):
   def on_msg(self, msg: str | bytes):
     self.queue.put_nowait(orjson.loads(msg))
 
-  async def authenticate(self, *, token: str | None = None, api_key: str | None = None):
-    """Send the first frame after connect. Exactly one of `token`/`api_key` should be
-    given, per Bit2Me's documented `{type: 'authenticate', payload: {token}}` /
-    `{type: 'authenticate', payload: {apikey: [key]}}` shapes.
-
-    Prefer `token` — confirmed working live (mint one with `auth.mint_ws_token`, the
-    same flow `trading_ws` uses). `api_key` is kept because Bit2Me documents it, but a
-    direct A/B test against the same connection found it reproducibly closes the
-    socket with code `1006` instead of authenticating; that path is currently known
-    broken, not just unverified.
-
-    Bit2Me sends no success acknowledgement — silence means it worked. Docs describe
-    an immediate close with code `4000` on failure; the next `notifications()` read
-    then surfaces that as a `NetworkError` from the underlying listener, not a more
-    specific `AuthError` — distinguishing the close code is a follow-up, not core to
-    this PoC. (The `1006` seen from the `api_key` path doesn't match `4000` either,
-    so even the failure-signal shape isn't fully confirmed yet.)
-    """
-    payload = {'token': token} if token is not None else {'apikey': [api_key]}
+  async def send(self, msg: dict[str, Any]):
+    """Send one command frame. `crypto_ws` never replies to a command on the wire —
+    see `CryptoWsClient.request`."""
     ws = await self.ws
-    await ws.send(orjson.dumps({'type': 'authenticate', 'payload': payload}))
-
-  async def notifications(self) -> AsyncIterator[dict]:
-    """Every notification frame received after authenticating, as a permissive dict —
-    matching the spec's own deliberate `additionalProperties: true, no title` choice
-    for all 34 notification types, since Bit2Me documents only a payload sketch per
-    type, not a full schema."""
-    while True:
-      yield await self.wait(self.queue.get())
+    await ws.send(orjson.dumps(msg))
 
 
 @dataclass(kw_only=True)
 class CryptoWsClient:
-  """Thin wrapper resolving `url` at `.new()` time, same shape as the other `ws/`
-  clients even though `crypto_ws` needs no credential-driven auth split."""
+  """Implements `core.endpoint.crypto_ws.CryptoWsSocketClient` (`request()` for the
+  `authenticate` command, `subscribe()` for the notification firehose) over one
+  `CryptoWsConnection`."""
 
   conn: CryptoWsConnection = field(default_factory=CryptoWsConnection)
+  validate: bool = True
 
   @classmethod
-  def new(cls, *, url: str = BIT2ME_CRYPTO_WS_URL) -> Self:
-    return cls(conn=CryptoWsConnection(url=url))
+  def new(cls, *, url: str = BIT2ME_CRYPTO_WS_URL, validate: bool = True) -> Self:
+    return cls(conn=CryptoWsConnection(url=url), validate=validate)
+
+  def should_validate(self, validate: bool | None = None) -> bool:
+    return self.validate if validate is None else validate
 
   async def __aenter__(self) -> Self:
     await self.conn.__aenter__()
@@ -84,8 +69,36 @@ class CryptoWsClient:
   async def __aexit__(self, exc_type, exc_value, traceback):
     await self.conn.__aexit__(exc_type, exc_value, traceback)
 
-  async def authenticate(self, *, token: str | None = None, api_key: str | None = None):
-    await self.conn.authenticate(token=token, api_key=api_key)
+  # CryptoWsSocketClient (typed_bit2me.core.endpoint.crypto_ws)
 
-  def notifications(self) -> AsyncIterator[dict]:
-    return self.conn.notifications()
+  async def request(self, path: str, params: dict[str, Any] | None = None):
+    """Send `path`'s command frame. `crypto_ws` sends no reply to any command it
+    defines — `authenticate`'s success case is silent, so this never awaits one."""
+    await self.conn.send(params if params is not None else {'type': path})
+
+  def subscribe(
+    self,
+    channel: str,
+    *,
+    validator: 'validator[T] | None' = None,
+    validate: bool | None = None,
+  ) -> StreamManager[T, Any, Any]:
+    """Every notification queued by `CryptoWsConnection.on_msg`, as one firehose —
+    `channel` is unread: `crypto_ws` has exactly one, nothing to route on."""
+
+    async def connect() -> Stream[Any, Any, Any]:
+      async def stream():
+        while True:
+          yield await self.conn.wait(self.conn.queue.get())
+
+      async def unsubscribe():
+        """No-op: `crypto_ws` has no unsubscribe frame of its own — see
+        `spec/core.md`'s Surfaces section."""
+        return None
+
+      return Stream(reply=None, stream=stream(), unsubscribe=unsubscribe)
+
+    manager = StreamManager(connect=connect)
+    if validator is not None and self.should_validate(validate):
+      return manager.map(validator.python)
+    return cast(StreamManager[T, Any, Any], manager)

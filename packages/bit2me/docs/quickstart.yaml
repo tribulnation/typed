@@ -68,15 +68,15 @@ how_tos:
     code: |
       apy = await client.v2.earn.apy()                               # yields per currency
       wallets = await client.v2.earn.wallets(limit=20)                # your earn wallets
-      deposit = await client.v1.earn.movements.create({               # deposit into earn
-        'currency': 'BTC', 'amount': '0.001', 'type': 'deposit',
-      })
+      deposit = await client.v1.earn.movements.create(                # deposit into earn
+        currency='BTC', amount='0.001', type='deposit',
+      )
 
   - title: Query & manage deposits/withdrawals
     body: Wallet pockets, deposit addresses, and moving funds between Wallet and Trading.
     code: |
       pockets = await client.v1.wallet.pockets.get()
-      addresses = await client.v2.wallet.pockets(pockets[0]['id'], 'bitcoin')  # deposit address
-      await client.v1.trading.wallets.request_deposit({                       # wallet -> trading
-        'fromPocketId': pockets[0]['id'], 'amount': '100', 'currency': 'EUR',
-      })
+      addresses = await client.v2.wallet.pockets(pocket_id=pockets[0]['id'], network='bitcoin')  # deposit address
+      await client.v1.trading.wallets.request_deposit(                        # wallet -> trading
+        from_pocket_id=pockets[0]['id'], amount='100', currency='EUR',
+      )

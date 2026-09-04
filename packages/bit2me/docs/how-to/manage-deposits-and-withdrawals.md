@@ -10,9 +10,9 @@ Pockets are the Bit2Me Wallet's per-currency sub-balances:
 from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
-  pocket = await client.v1.wallet.pockets.create({'currency': 'BTC', 'name': 'Savings'})  # create a pocket
-  await client.v1.wallet.pockets.update({'id': pocket['id'], 'name': 'Renamed'})          # rename it
-  await client.v1.wallet.pockets.delete(id=pocket['id'])                                  # delete it
+  pocket = await client.v1.wallet.pockets.create(currency='BTC', name='Savings')  # create a pocket
+  await client.v1.wallet.pockets.update(id=pocket['id'], name='Renamed')          # rename it
+  await client.v1.wallet.pockets.delete(pocket['id'])                            # delete it
 ```
 
 ## Find A Deposit Address
@@ -22,7 +22,7 @@ from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()
-  addresses = await client.v2.wallet.pockets(pockets[0]['id'], 'bitcoin')  # find-or-create address
+  addresses = await client.v2.wallet.pockets(pocket_id=pockets[0]['id'], network='bitcoin')  # find-or-create address
   print(addresses[0].get('address'), addresses[0].get('network'))
 ```
 
@@ -35,16 +35,12 @@ from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()
-  deposit = await client.v1.trading.wallets.request_deposit({     # wallet -> trading
-    'fromPocketId': pockets[0]['id'],
-    'amount': '100',
-    'currency': 'EUR',
-  })
-  withdrawal = await client.v1.trading.wallets.request_withdrawal({  # trading -> wallet
-    'toPocketId': pockets[0]['id'],
-    'amount': '0.001',
-    'currency': 'BTC',
-  })
+  deposit = await client.v1.trading.wallets.request_deposit(     # wallet -> trading
+    from_pocket_id=pockets[0]['id'], amount='100', currency='EUR',
+  )
+  withdrawal = await client.v1.trading.wallets.request_withdrawal(  # trading -> wallet
+    to_pocket_id=pockets[0]['id'], amount='0.001', currency='BTC',
+  )
   print(deposit.get('balance'), withdrawal.get('balance'))
 ```
 
@@ -57,12 +53,12 @@ from typed_bit2me import Bit2Me
 
 async with Bit2Me.new() as client:
   pockets = await client.v1.wallet.pockets.get()
-  proforma = await client.v1.wallet.transactions.preview({
-    'pocket': pockets[0]['id'],
-    'amount': '0.001',
-    'currency': 'BTC',
-    'destination': {'address': 'bc1q...', 'network': 'bitcoin'},
-  })
-  executed = await client.v1.wallet.transactions.execute({'proforma': proforma['id']})
+  proforma = await client.v1.wallet.transactions.preview(
+    pocket=pockets[0]['id'],
+    amount='0.001',
+    currency='BTC',
+    destination={'address': 'bc1q...', 'network': 'bitcoin'},
+  )
+  executed = await client.v1.wallet.transactions.execute(proforma=proforma['id'])
   print(executed['id'])
 ```
