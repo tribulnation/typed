@@ -6,7 +6,7 @@
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  instruments = await client.http.market_data.get_instruments(
+  instruments = await client.market_data.get_instruments(
     currency='BTC', kind='future'
   )
   print(instruments)
@@ -14,8 +14,8 @@ async with Deribit.new(testnet=True) as client:
 
 ## Why Typed Deribit?
 
-- **🎯 Precise Types**: every request/reply method and channel subscription across
-  `.http`, `.ws`, and `.streams` is typed, parameters and all — not `dict`/`Any`.
+- **🎯 Precise Types**: every request/reply method and channel subscription, over HTTP,
+  WebSocket, or `.streams`, is typed, parameters and all — not `dict`/`Any`.
 - **✅ Runtime Validation**: responses are validated against the real schema by default,
   not just typed on paper.
 - **⚡ Async First**: async HTTP and WebSocket transports, with `.streams` running

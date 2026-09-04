@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  async for page in client.http.market_data.get_mark_price_history_paged(
+  async for page in client.market_data.get_mark_price_history_paged(
     instrument_name='BTC-PERPETUAL',
     start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
     end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
@@ -33,7 +33,7 @@ async with Deribit.new(public=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  async for page in client.http.wallet.deposits.get_deposits_paged(
+  async for page in client.wallet.deposits.get_deposits_paged(
     currency='BTC', count=10,
   ):
     for deposit in page['data']:
@@ -57,7 +57,7 @@ from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  paged = client.http.account.get_transaction_log_paged(
+  paged = client.account.get_transaction_log_paged(
     currency='BTC',
     start_timestamp=datetime(2025, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
     end_timestamp=datetime(2026, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
@@ -70,7 +70,7 @@ async with Deribit.new(testnet=True) as client:
       print(entry['id'], entry['timestamp'], entry.get('cashflow'))
 
   # or flatten every page into one list:
-  all_entries = await client.http.account.get_transaction_log_paged(
+  all_entries = await client.account.get_transaction_log_paged(
     currency='BTC',
     start_timestamp=datetime(2025, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
     end_timestamp=datetime(2026, 8, 8, 20, 15, 12, tzinfo=timezone.utc),

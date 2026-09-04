@@ -15,4 +15,8 @@ class BlockRfq(
   Taker,
   Trades,
 ):
-  """BlockRfq endpoints."""
+  """Block RFQ WebSocket channels -- maker/taker Block RFQ and quote notifications, plus the block-trade confirmations that arise from them.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/subscriptions/block-rfq)
+  """

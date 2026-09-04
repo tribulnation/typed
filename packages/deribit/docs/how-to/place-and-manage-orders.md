@@ -12,7 +12,7 @@ targets `testnet=True`; run write calls against testnet only.
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  order = await client.http.trading.buy({
+  order = await client.trading.buy({
     'instrument_name': 'BTC-PERPETUAL',
     'amount': 10,
     'type': 'limit',
@@ -27,7 +27,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  orders = await client.http.trading.get_open_orders_by_instrument(
+  orders = await client.trading.get_open_orders_by_instrument(
     instrument_name='BTC-PERPETUAL',
   )
   for order in orders:
@@ -40,7 +40,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  order = await client.http.trading.get_order_state(order_id='some-order-id')
+  order = await client.trading.get_order_state(order_id='some-order-id')
   print(order['order_state'], order.get('filled_amount'))
 ```
 
@@ -50,7 +50,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  cancelled = await client.http.trading.cancel(order_id='some-order-id')
+  cancelled = await client.trading.cancel(order_id='some-order-id')
   print(cancelled['order_state'])
 ```
 
@@ -60,7 +60,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  count = await client.http.trading.cancel_all()
+  count = await client.trading.cancel_all()
   print(count)
 ```
 

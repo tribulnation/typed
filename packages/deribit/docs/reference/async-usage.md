@@ -13,12 +13,13 @@ For short request-response flows, plain construction is fine.
 from typed_deribit import Deribit
 
 client = Deribit.new(public=True)
-ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
+ticker = await client.market_data.ticker(instrument_name='BTC-PERPETUAL')
 print(ticker['last_price'])
 ```
 
-That works because `.http`, `.ws`, and `.streams` are each a `cached_property` — the
-underlying transport opens lazily on first use, not at construction.
+That works because every section (`market_data`, `trading`, `streams`, ...) is a
+`cached_property` — the underlying transport opens lazily on first use, not at
+construction.
 
 ## Context Manager Usage
 
@@ -29,18 +30,18 @@ the block.
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  instruments = await client.http.market_data.get_instruments(
+  instruments = await client.market_data.get_instruments(
     currency='BTC', kind='future'
   )
-  summary = await client.http.account.get_account_summary(currency='BTC')
+  summary = await client.account.get_account_summary(currency='BTC')
 ```
 
 `Deribit.new(...)` connects nothing by itself — entering the top-level client via
-`async with` is the only thing the caller does. `.http`, `.ws`, and `.streams` open their
-own transports lazily as each is first used; there's no separate sub-client to enter.
-Entering the top-level client does eagerly call `__aenter__` on all three at once (so they're
+`async with` is the only thing the caller does. Every section opens its own transport
+lazily as it's first used; there's no separate sub-client to enter. Entering the top-level
+client does eagerly call `__aenter__` on both underlying connections at once (so they're
 already open the moment the block starts, rather than on first call), but that's still one
-`async with`, never three.
+`async with`, never several.
 
 This is the recommended style for:
 
@@ -52,9 +53,8 @@ This is the recommended style for:
 ## Streams
 
 `client.streams` subscribes to Deribit's channel push feed, always over its own dedicated
-WebSocket connection, independent of `.ws`. It fans into `market_data` (public channels —
-tickers, order books, trades, ...), `user` (private `user.*` channels, need credentials),
-`block_rfq`, and a raw `rpc` escape hatch for any JSON-RPC method not otherwise covered.
+WebSocket connection. It fans into `market_data` (public channels — tickers, order books,
+trades, ...), `user` (private `user.*` channels, need credentials), and `block_rfq`.
 
 Use `async with` on the returned subscription so it unsubscribes automatically when the
 block exits:
@@ -63,7 +63,7 @@ block exits:
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  async with client.streams.market_data.ticker('BTC-PERPETUAL', 'raw') as ticks:
+  async with client.streams.market_data.ticker('BTC-PERPETUAL', interval='raw') as ticks:
     async for tick in ticks:
       print(tick['last_price'])
 ```
@@ -75,7 +75,7 @@ async with Deribit.new(public=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  ticks = await client.streams.market_data.ticker('BTC-PERPETUAL', 'raw')
+  ticks = await client.streams.market_data.ticker('BTC-PERPETUAL', interval='raw')
   async for tick in ticks:
     print(tick['last_price'])
     break
@@ -85,31 +85,29 @@ async with Deribit.new(public=True) as client:
 Private channels (`client.streams.user.*`) need credentials and raise `AuthError` lazily,
 once the subscription actually connects, if the client has none.
 
-## Composite/Multi-Surface Client
+## Transport
 
-`Deribit.new(...)` bundles three independent transports:
-
-- `.http` — request/reply over HTTP.
-- `.ws` — the same request/reply surface over WebSocket, plus a handful of methods Deribit
-  only serves this way (`trading.mass_quote`, `session.set_heartbeat`, ...).
-- `.streams` — channel subscriptions, always WebSocket, on its own connection separate
-  from `.ws`.
-
-`.http` and `.ws` expose the identical method surface — `market_data`, `trading`, `account`,
+`Deribit.new(...)` bundles two independent connections: an HTTP connection and a shared
+WebSocket connection. Every request/reply method — `market_data`, `trading`, `account`,
 `auth`, `block_rfq`, `block_trade`, `combo_books`, `matching_engine`, `session`,
-`subscription_management`, `supporting` — call whichever transport fits; they're two
-separate connections, not aliases for one.
+`subscription_management`, `supporting` — is reachable through one call site, with a
+per-call `transport` keyword picking the connection: `'http'` (the default) or `'ws'`.
+`client.streams` is a third connection again, dedicated to channel subscriptions.
 
 ```python
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  via_http = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
-  via_ws = await client.ws.market_data.ticker(instrument_name='BTC-PERPETUAL')
+  via_http = await client.market_data.ticker(instrument_name='BTC-PERPETUAL')
+  via_ws = await client.market_data.ticker(instrument_name='BTC-PERPETUAL', transport='ws')
 ```
 
-All three (`.http`, `.ws`, `.streams`) are entered and exited together under one top-level
-`async with Deribit.new(...)`.
+A handful of methods Deribit only ever serves over WebSocket (`trading.mass_quote`,
+`session.set_heartbeat`, ...) take no `transport` keyword at all — there's nothing to
+choose, so the call always goes out over the WebSocket connection.
+
+All three underlying connections (HTTP, WebSocket, and the dedicated streams socket) are
+entered and exited together under one top-level `async with Deribit.new(...)`.
 
 ## Guidance
 

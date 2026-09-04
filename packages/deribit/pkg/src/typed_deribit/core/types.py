@@ -14,24 +14,36 @@ with no time component (e.g. `"2026-08-03"`).
 
 from typing_extensions import Annotated
 from datetime import date, datetime, timezone
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 
 from typed_core.times import DateConverter, EpochConverter
 
 timestamp_millis = EpochConverter.milliseconds(tz=timezone.utc)
 
-TimestampMillis = Annotated[datetime, BeforeValidator(timestamp_millis.parse)]
+TimestampMillis = Annotated[
+  datetime,
+  BeforeValidator(timestamp_millis.parse),
+  PlainSerializer(timestamp_millis.dump, when_used='json'),
+]
 """A millisecond-epoch UTC timestamp field, to use directly in a generated `TypedDict`'s
 annotations."""
 
 timestamp_nanos = EpochConverter.nanoseconds(tz=timezone.utc)
 
-TimestampNanos = Annotated[datetime, BeforeValidator(timestamp_nanos.parse)]
+TimestampNanos = Annotated[
+  datetime,
+  BeforeValidator(timestamp_nanos.parse),
+  PlainSerializer(timestamp_nanos.dump, when_used='json'),
+]
 """A nanosecond-epoch UTC timestamp field (Starbase's own causal timestamps), to use
 directly in a generated `TypedDict`'s annotations."""
 
 date_iso = DateConverter()
 
-DateIso = Annotated[date, BeforeValidator(date_iso.parse)]
+DateIso = Annotated[
+  date,
+  BeforeValidator(date_iso.parse),
+  PlainSerializer(date_iso.dump, when_used='json'),
+]
 """A plain calendar date field with no time component, to use directly in a generated
 `TypedDict`'s annotations."""

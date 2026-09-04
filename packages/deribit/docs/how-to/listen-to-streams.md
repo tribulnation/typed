@@ -1,7 +1,7 @@
 # Listen To Streams
 
 `client.streams` opens its own WebSocket connection for channel subscriptions, separate
-from `client.ws`'s request/reply connection.
+from the connection request/reply methods (`market_data`, `trading`, ...) use.
 
 ## Public Channel
 
@@ -9,7 +9,7 @@ from `client.ws`'s request/reply connection.
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  async with client.streams.market_data.ticker('BTC-PERPETUAL', '100ms') as stream:
+  async with client.streams.market_data.ticker('BTC-PERPETUAL', interval='100ms') as stream:
     async for tick in stream:
       print(tick['instrument_name'], tick['last_price'])
 ```
@@ -22,20 +22,23 @@ Private (`user.*`) channels need credentials — see [API Keys Setup](../api-key
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  async with client.streams.user.orders_by_instrument('BTC-PERPETUAL', 'raw') as stream:
+  async with client.streams.user.orders_by_instrument(
+    'BTC-PERPETUAL', interval='raw'
+  ) as stream:
     async for orders in stream:
       for order in orders:
         print(order['order_id'], order['order_state'])
 ```
 
-## Escape Hatch
+## Reaching Any Method Over WebSocket
 
-`client.streams.rpc` reaches any JSON-RPC method over the same open connection, for
-whatever this package doesn't expose as a typed method:
+There's no separate "raw RPC" escape hatch — every request/reply method already takes a
+per-call `transport` keyword, so any JSON-RPC method this package exposes as a typed call
+is already reachable over WebSocket directly:
 
 ```python
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  result = await client.streams.rpc.request('public/get_time')
+  result = await client.supporting.get_time(transport='ws')
 ```

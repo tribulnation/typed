@@ -33,7 +33,7 @@ first_call:
     from typed_deribit import Deribit
 
     async with Deribit.new(testnet=True) as client:
-      instruments = await client.http.market_data.get_instruments(
+      instruments = await client.market_data.get_instruments(
         currency='BTC', kind='future'
       )
       print(instruments)
@@ -44,11 +44,11 @@ how_tos:
     code: |
       from datetime import datetime, timezone
 
-      instruments = await client.http.market_data.get_instruments(currency='BTC', kind='future')  # tradeable instruments
-      ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')  # ticker
-      book = await client.http.market_data.get_order_book(instrument_name='BTC-PERPETUAL', depth=20)  # order book
-      trades = await client.http.market_data.get_last_trades_by_currency(currency='BTC', kind='future', count=10)  # recent trades
-      candles = await client.http.market_data.get_tradingview_chart_data(
+      instruments = await client.market_data.get_instruments(currency='BTC', kind='future')  # tradeable instruments
+      ticker = await client.market_data.ticker(instrument_name='BTC-PERPETUAL')  # ticker
+      book = await client.market_data.get_order_book(instrument_name='BTC-PERPETUAL', depth=20)  # order book
+      trades = await client.market_data.get_last_trades_by_currency(currency='BTC', kind='future', count=10)  # recent trades
+      candles = await client.market_data.get_tradingview_chart_data(
         instrument_name='BTC-PERPETUAL',
         start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
         end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
@@ -58,22 +58,22 @@ how_tos:
   - title: Place & Manage Orders
     body: Submit, inspect, query, and cancel orders. Needs credentials.
     code: |
-      order = await client.http.trading.buy({
+      order = await client.trading.buy({
         'instrument_name': 'BTC-PERPETUAL', 'amount': 10, 'type': 'limit', 'price': 32503.0,
       })  # place a limit order
-      open = await client.http.trading.get_open_orders_by_instrument(instrument_name='BTC-PERPETUAL')  # list open orders
-      state = await client.http.trading.get_order_state(order_id=order['order']['order_id'])  # query one order
-      await client.http.trading.cancel(order_id=order['order']['order_id'])  # cancel one order
-      await client.http.trading.cancel_all()  # cancel every open order
+      open = await client.trading.get_open_orders_by_instrument(instrument_name='BTC-PERPETUAL')  # list open orders
+      state = await client.trading.get_order_state(order_id=order['order']['order_id'])  # query one order
+      await client.trading.cancel(order_id=order['order']['order_id'])  # cancel one order
+      await client.trading.cancel_all()  # cancel every open order
 
   - title: Fetch Account Data
     body: Balances, positions, and transaction history. Needs credentials.
     code: |
       from datetime import datetime, timezone
 
-      summary = await client.http.account.get_account_summary(currency='BTC')  # account balance/equity
-      positions = await client.http.account.get_positions(currency='BTC', kind='future')  # open positions
-      log = await client.http.account.get_transaction_log(
+      summary = await client.account.get_account_summary(currency='BTC')  # account balance/equity
+      positions = await client.account.get_positions(currency='BTC', kind='future')  # open positions
+      log = await client.account.get_transaction_log(
         currency='BTC',
         start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
         end_timestamp=datetime(2023, 11, 15, 22, 13, 20, tzinfo=timezone.utc),
@@ -82,19 +82,19 @@ how_tos:
   - title: Manage Deposits & Withdrawals
     body: Deposit addresses, deposit/withdrawal history, and submitting a withdrawal. Needs credentials.
     code: |
-      address = await client.http.wallet.address_book.get_current_deposit_address(currency='BTC')  # current deposit address
-      deposits = await client.http.wallet.deposits.get_deposits(currency='BTC', count=10)  # deposit history
-      withdrawal = await client.http.wallet.withdrawals.withdraw(
+      address = await client.wallet.address_book.get_current_deposit_address(currency='BTC')  # current deposit address
+      deposits = await client.wallet.deposits.get_deposits(currency='BTC', count=10)  # deposit history
+      withdrawal = await client.wallet.withdrawals.withdraw(
         currency='BTC', address='some-address-book-address', amount=0.001,
       )  # submit a withdrawal
-      withdrawals = await client.http.wallet.withdrawals.get_withdrawals(currency='BTC', count=10)  # withdrawal history
+      withdrawals = await client.wallet.withdrawals.get_withdrawals(currency='BTC', count=10)  # withdrawal history
 
   - title: Paginate Through Results
     body: Endpoints the venue paginates get a `<method>_paged` async-iterator sibling.
     code: |
       from datetime import datetime, timezone
 
-      async for page in client.http.market_data.get_mark_price_history_paged(
+      async for page in client.market_data.get_mark_price_history_paged(
         instrument_name='BTC-PERPETUAL',
         start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
         end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
@@ -102,18 +102,18 @@ how_tos:
       ):  # window-paginated mark price history
         for mark_price, timestamp in page:
           print(timestamp, mark_price)
-      async for page in client.http.wallet.deposits.get_deposits_paged(currency='BTC', count=10):  # offset-paginated deposit history
+      async for page in client.wallet.deposits.get_deposits_paged(currency='BTC', count=10):  # offset-paginated deposit history
         for deposit in page['data']:
           print(deposit['transaction_id'])
 
   - title: Listen To Streams
     body: Subscribe to a public channel and a private (authenticated) channel over `client.streams`'s own connection.
     code: |
-      async with client.streams.market_data.ticker('BTC-PERPETUAL', '100ms') as stream:  # public ticker channel
+      async with client.streams.market_data.ticker('BTC-PERPETUAL', interval='100ms') as stream:  # public ticker channel
         async for tick in stream:
           print(tick['instrument_name'], tick['last_price'])
-      async with client.streams.user.orders_by_instrument('BTC-PERPETUAL', 'raw') as stream:  # private order-update channel
+      async with client.streams.user.orders_by_instrument('BTC-PERPETUAL', interval='raw') as stream:  # private order-update channel
         async for orders in stream:
           for order in orders:
             print(order['order_id'], order['order_state'])
-      time = await client.streams.rpc.request('public/get_time')  # untyped JSON-RPC escape hatch
+      time = await client.supporting.get_time(transport='ws')  # any request/reply method also reaches the WS connection directly

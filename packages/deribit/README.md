@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/deribit">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-light.svg">
-      <img alt="Typed Deribit" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/deribit/media/deribit-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/deribit-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/deribit-light.svg">
+      <img alt="Typed Deribit" src="https://tribulnation.com/media/lockups/deribit-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -38,7 +38,7 @@
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  instruments = await client.http.market_data.get_instruments(
+  instruments = await client.market_data.get_instruments(
     currency='BTC', kind='future'
   )
   print(instruments)
@@ -46,8 +46,8 @@ async with Deribit.new(testnet=True) as client:
 
 ## Why Typed Deribit?
 
-- **🎯 Precise Types**: every request/reply method and channel subscription across
-  `.http`, `.ws`, and `.streams` is typed, parameters and all — not `dict`/`Any`.
+- **🎯 Precise Types**: every request/reply method and channel subscription, over HTTP,
+  WebSocket, or `.streams`, is typed, parameters and all — not `dict`/`Any`.
 - **✅ Runtime Validation**: responses are validated against the real schema by default,
   not just typed on paper.
 - **⚡ Async First**: async HTTP and WebSocket transports, with `.streams` running

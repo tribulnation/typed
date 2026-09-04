@@ -11,4 +11,8 @@ class Beneficiary(
   ListAddressBeneficiaries,
   SaveAddressBeneficiary,
 ):
-  """Beneficiary endpoints."""
+  """Beneficiary (VASP travel-rule) information attached to withdrawal addresses — saving, listing, fetching, and deleting the beneficiary details Deribit requires for regulated withdrawals.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/wallet)
+  """

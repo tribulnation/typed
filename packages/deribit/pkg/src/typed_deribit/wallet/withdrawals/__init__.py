@@ -4,9 +4,9 @@ from .get_withdrawals import GetWithdrawals
 from .withdraw import Withdraw
 
 
-class Withdrawals(
-  CancelWithdrawal,
-  GetWithdrawals,
-  Withdraw,
-):
-  """Withdrawals endpoints."""
+class Withdrawals(CancelWithdrawal, GetWithdrawals, Withdraw):
+  """Withdrawal lifecycle — submitting, cancelling, and listing withdrawals from the account's wallet.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/wallet)
+  """

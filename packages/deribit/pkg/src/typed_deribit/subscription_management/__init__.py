@@ -3,8 +3,9 @@ from .authed_unsubscribe_all import AuthedUnsubscribeAll
 from .unsubscribe_all import UnsubscribeAll
 
 
-class SubscriptionManagement(
-  AuthedUnsubscribeAll,
-  UnsubscribeAll,
-):
-  """SubscriptionManagement endpoints."""
+class SubscriptionManagement(AuthedUnsubscribeAll, UnsubscribeAll):
+  """RPC methods that open and close WebSocket channel subscriptions -- public and authenticated subscribe, unsubscribe, and unsubscribe_all.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/subscription-management)
+  """

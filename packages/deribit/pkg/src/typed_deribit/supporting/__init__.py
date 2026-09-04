@@ -5,10 +5,9 @@ from .status import Status
 from .test import Test
 
 
-class Supporting(
-  GetTime,
-  Hello,
-  Status,
-  Test,
-):
-  """Supporting endpoints."""
+class Supporting(GetTime, Hello, Status, Test):
+  """Connectivity and platform-health utility methods -- server time, the hello handshake, platform status, and the test/echo call.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/supporting)
+  """

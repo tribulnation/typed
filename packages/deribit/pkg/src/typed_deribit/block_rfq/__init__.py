@@ -29,4 +29,8 @@ class BlockRfq(
   GetBlockRfqUserInfo,
   GetBlockRfqs,
 ):
-  """BlockRfq endpoints."""
+  """Block RFQ (multi-leg request-for-quote) workflow between takers and makers -- creating, quoting, accepting, and cancelling Block RFQs and their quotes.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/block-rfq)
+  """

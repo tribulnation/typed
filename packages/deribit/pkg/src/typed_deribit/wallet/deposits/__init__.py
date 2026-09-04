@@ -3,8 +3,9 @@ from .get_deposits import GetDeposits
 from .set_clearance_originator import SetClearanceOriginator
 
 
-class Deposits(
-  GetDeposits,
-  SetClearanceOriginator,
-):
-  """Deposits endpoints."""
+class Deposits(GetDeposits, SetClearanceOriginator):
+  """Incoming deposit history and originator-clearance metadata for deposits into the account's wallet.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/wallet)
+  """

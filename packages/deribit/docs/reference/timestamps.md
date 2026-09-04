@@ -2,7 +2,7 @@
 
 Deribit's own wire format is raw epoch integers everywhere, but the generated surface never
 hands you one directly: every documented timestamp field and parameter — request and
-response, across `.http`, `.ws`, and `.streams` — is a real Python `datetime`. Conversion
+response, over HTTP, WebSocket, or `.streams` — is a real Python `datetime`. Conversion
 happens automatically through pydantic validation on the way in, and through the same
 converter on the way out when a request is built for the wire.
 
@@ -29,7 +29,7 @@ from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  history = await client.http.market_data.get_funding_rate_history(
+  history = await client.market_data.get_funding_rate_history(
     instrument_name='BTC-PERPETUAL',
     start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
     end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
@@ -48,7 +48,7 @@ and trade timestamps, ...) come back as real `datetime` values, already converte
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
+  ticker = await client.market_data.ticker(instrument_name='BTC-PERPETUAL')
   print(ticker['timestamp'], ticker['timestamp'].tzinfo)
 ```
 

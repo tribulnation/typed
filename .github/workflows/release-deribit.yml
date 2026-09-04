@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/deribit/pkg
-      - run: pip install ruff pyright build
+      - run: pip install ruff pyright pytest build
       - run: ruff check --select TID251 packages/deribit/pkg
       - run: pyright packages/deribit/pkg
       - run: cp packages/deribit/README.md packages/deribit/LICENSE packages/deribit/pkg/
