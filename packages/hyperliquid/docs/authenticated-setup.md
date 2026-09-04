@@ -29,7 +29,7 @@ Then construct `Hyperliquid` normally:
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new() as client:
-  result = await client.exchange.http.noop()
+  result = await client.exchange.noop()
   print(result['type'])
 ```
 
@@ -43,7 +43,7 @@ export HYPERLIQUID_TESTNET_PRIVATE_KEY="testnet_private_key"
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new(mainnet=False) as client:
-  result = await client.exchange.http.noop()
+  result = await client.exchange.noop()
   print(result['type'])
 ```
 
@@ -55,7 +55,7 @@ You can also pass a private key or wallet object directly:
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new('0xyour_private_key') as client:
-  result = await client.exchange.http.noop()
+  result = await client.exchange.noop()
   print(result['type'])
 ```
 

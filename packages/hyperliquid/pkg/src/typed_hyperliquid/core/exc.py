@@ -5,7 +5,6 @@ from typed_core.exceptions import (
   ApiError,
   BadRequest,
   AuthError,
-  RateLimited,
   LogicError,
 )
 
@@ -17,6 +16,5 @@ __all__ = [
   'ApiError',
   'BadRequest',
   'AuthError',
-  'RateLimited',
   'LogicError',
 ]

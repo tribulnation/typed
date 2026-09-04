@@ -8,6 +8,12 @@ there is no channel that additionally requires a wallet signature to open.
 Not frozen, for the same reason as `endpoint/rpc.py`: `Streams` composes ~20 single-method
 mixins via multiple inheritance rather than nested `cached_property` children, and
 `dataclasses` requires frozen-ness to agree across that whole chain.
+
+`StreamEndpoint` itself supplies only lifecycle (`client`, `validate`,
+`__aenter__`/`__aexit__`) -- the design §2/§8 `.subscribe(channel, parameters, ...)` call
+every generated leaf makes is defined on `StreamsCore` (`streams/core.py`), not here, so
+its own generated parameter name (`parameters`) doesn't have to match this Protocol's
+low-level `params` at all.
 """
 
 from typing_extensions import Any, Callable, Protocol, Self
@@ -60,18 +66,3 @@ class StreamEndpoint:
 
   async def __aexit__(self, exc_type, exc_value, traceback):
     await self.client.__aexit__(exc_type, exc_value, traceback)
-
-  def subscribe(
-    self,
-    channel: str,
-    params: Any = None,
-    *,
-    request_channel: str | None = None,
-    message_key: Callable[[Any], str] | None = None,
-  ) -> StreamManager[Any, Any, Any]:
-    return self.client.subscribe(
-      channel,
-      params,
-      request_channel=request_channel,
-      message_key=message_key,
-    )

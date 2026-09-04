@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/hyperliquid">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-light.svg">
-      <img alt="Typed Hyperliquid" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/hyperliquid/media/hyperliquid-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/hyperliquid-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/hyperliquid-light.svg">
+      <img alt="Typed Hyperliquid" src="https://tribulnation.com/media/lockups/hyperliquid-light.svg" width="520">
     </picture>
   </a>
 </p>

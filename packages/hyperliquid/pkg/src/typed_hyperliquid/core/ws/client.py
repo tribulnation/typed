@@ -139,7 +139,12 @@ class Request(TypedDict):
 @dataclass
 class SocketClient(
   StreamsRpc[
-    Request, PostResponse, Any, SubscriptionResponseData, SubscriptionResponseData
+    Request,
+    PostResponse,
+    Any,
+    SubscriptionResponseData,
+    SubscriptionResponseData,
+    SubscriptionResponseData,
   ]
 ):
   """Hyperliquid WebSocket transport for RPC and subscription messages."""
@@ -152,7 +157,9 @@ class SocketClient(
     default_factory=asyncio.Lock, init=False, repr=False
   )
 
-  async def request_subscription(self, channel: str, params=None):
+  async def request_subscription(
+    self, channel: str, params=None,
+  ) -> SubscriptionResponseData:
     return await self._subscription_request(
       {
         'method': 'subscribe',
@@ -163,7 +170,9 @@ class SocketClient(
       }
     )
 
-  async def request_unsubscription(self, channel: str, params=None):
+  async def request_unsubscription(
+    self, channel: str, params=None,
+  ) -> SubscriptionResponseData:
     return await self._subscription_request(
       {
         'method': 'unsubscribe',
@@ -174,7 +183,7 @@ class SocketClient(
       }
     )
 
-  async def _subscription_request(self, payload: dict):
+  async def _subscription_request(self, payload: dict) -> SubscriptionResponseData:
     async with self.serial_lock:
       self.serial_reply = asyncio.get_running_loop().create_future()
       try:
