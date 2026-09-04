@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/alchemy/pkg
-      - run: pip install ruff pyright build
+      - run: pip install ruff pyright pytest build
       - run: ruff check --select TID251 packages/alchemy/pkg
       - run: pyright packages/alchemy/pkg
       - run: cp packages/alchemy/README.md packages/alchemy/LICENSE packages/alchemy/pkg/

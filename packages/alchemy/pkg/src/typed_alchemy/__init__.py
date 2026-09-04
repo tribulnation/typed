@@ -5,7 +5,7 @@ Examples:
   from typed_alchemy import Alchemy
 
   async with Alchemy.new() as client:
-    result = await client.token('ethereum').get_token_balances('0x...')
+    result = await client.token(network='ethereum').get_token_balances(address='0x...')
   ```
 """
 

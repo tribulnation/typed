@@ -13,18 +13,30 @@ one of these pairs (`docs/spec/authoring.md` rule 3).
 
 from typing_extensions import Annotated
 from datetime import datetime, timezone
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 
 from typed_core.times import EpochConverter, IsoConverter
 
 timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
-TimestampSeconds = Annotated[datetime, BeforeValidator(timestamp_seconds.parse)]
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
 """An epoch-seconds field, e.g. Prices API's `startTime`/`endTime` window bounds."""
 
 timestamp_millis = EpochConverter.milliseconds(tz=timezone.utc)
-TimestampMillis = Annotated[datetime, BeforeValidator(timestamp_millis.parse)]
+TimestampMillis = Annotated[
+  datetime,
+  BeforeValidator(timestamp_millis.parse),
+  PlainSerializer(timestamp_millis.dump, when_used='json'),
+]
 """An epoch-milliseconds field, e.g. NFT API's `timeLastUpdated`."""
 
 timestamp_iso = IsoConverter()
-TimestampIso = Annotated[datetime, BeforeValidator(timestamp_iso.parse)]
+TimestampIso = Annotated[
+  datetime,
+  BeforeValidator(timestamp_iso.parse),
+  PlainSerializer(timestamp_iso.dump, when_used='json'),
+]
 """An RFC 3339 string field, e.g. Prices API's `lastUpdatedAt`."""

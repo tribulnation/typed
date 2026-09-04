@@ -28,7 +28,7 @@ from typed_alchemy import (
 
 async with Alchemy.new() as client:
   try:
-    balances = await client.token('ethereum').get_token_balances('0x...')
+    balances = await client.token(network='ethereum').get_token_balances(address='0x...')
   except AuthError:
     ...
   except RateLimited:

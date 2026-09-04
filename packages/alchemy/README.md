@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/alchemy">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/alchemy/media/alchemy-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/alchemy/media/alchemy-light.svg">
-      <img alt="Typed Alchemy" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/alchemy/media/alchemy-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/alchemy-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/alchemy-light.svg">
+      <img alt="Typed Alchemy" src="https://tribulnation.com/media/lockups/alchemy-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -39,12 +39,12 @@ from typed_alchemy import Alchemy
 
 async with Alchemy.new() as client:
   prices = await client.prices.by_symbol(symbols=['ETH', 'BTC'])
-  transfers = await client.transfers('ethereum').get_asset_transfers({
-    'fromBlock': '0x0',
-    'toAddress': '0x5c43B1eD97e52d009611D89b74fA829FE4ac56b1',
-    'category': ['external'],
-    'maxCount': '0x2',
-  })
+  transfers = await client.transfers(network='ethereum').get_asset_transfers(
+    from_block='0x0',
+    to_address='0x5c43B1eD97e52d009611D89b74fA829FE4ac56b1',
+    category=['external'],
+    max_count='0x2',
+  )
 ```
 
 ## Why Typed Alchemy?

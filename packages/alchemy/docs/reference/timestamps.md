@@ -6,7 +6,7 @@ needed on either side.
 
 ## Request Parameters
 
-`prices.historical`'s `startTime`/`endTime` window bounds are Unix epoch seconds on the
+`prices.historical`'s `start_time`/`end_time` window bounds are Unix epoch seconds on the
 wire, typed as `datetime`:
 
 ```python
@@ -16,11 +16,11 @@ from typed_alchemy import Alchemy
 async with Alchemy.new() as client:
   end = datetime.now(timezone.utc)
   start = end - timedelta(days=1)
-  history = await client.prices.historical({
-    'symbol': 'ETH',
-    'startTime': start,
-    'endTime': end,
-  })
+  history = await client.prices.historical(
+    symbol='ETH',
+    start_time=start,
+    end_time=end,
+  )
 ```
 
 ## Response Fields
