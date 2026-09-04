@@ -8,7 +8,7 @@ Use `MEXC.new()` when you need authenticated spot and futures account data toget
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  account = await client.spot.account.info()
+  account = await client.spot.http.account.info()
   print(account['balances'][0]['asset'], account['balances'][0]['free'])
 ```
 
@@ -18,7 +18,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  trades = await client.spot.account.trades(symbol='BTCUSDT', limit=100)
+  trades = await client.spot.http.account.trades(symbol='BTCUSDT', limit=100)
   print(trades[0]['id'], trades[0]['price'])
 ```
 
@@ -28,7 +28,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  assets = await client.futures.account.assets()
+  assets = await client.futures.http.account.assets()
   if 'data' in assets:
     print(assets['data'][0]['currency'], assets['data'][0]['availableBalance'])
 ```
@@ -39,7 +39,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  positions = await client.futures.position.open()
+  positions = await client.futures.http.position.open()
   if 'data' in positions:
     print(positions['data'][0]['symbol'], positions['data'][0]['holdVol'])
 ```
@@ -50,7 +50,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  trades = await client.futures.trade.order_deals(
+  trades = await client.futures.http.trade.order_deals(
     symbol='BTC_USDT',
     page_num=1,
     page_size=100,
@@ -65,7 +65,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  history = await client.futures.account.funding_records(
+  history = await client.futures.http.account.funding_records(
     symbol='BTC_USDT',
     page_num=1,
     page_size=100,

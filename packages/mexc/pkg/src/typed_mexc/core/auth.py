@@ -5,9 +5,23 @@ in `mexc.spot.core.auth`/`mexc.futures.core.auth`.
 
 from typing_extensions import Literal, overload
 from dataclasses import dataclass, field
+import hashlib
+import hmac
 import os
 
 from typed_core.exceptions import AuthError
+
+
+def sign(payload: str, *, secret: str) -> str:
+  """MEXC's HMAC-SHA256 signature, shared by spot's query-string signing
+  (`spot.core.client`) and futures' header-based signing (`futures.core.client`) --
+  both sign a differently-built string with the same algorithm.
+
+  Args:
+    payload: The exact string being signed.
+    secret: The account's API secret.
+  """
+  return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 
 @dataclass(frozen=True)

@@ -1,20 +1,21 @@
 # Place & Manage Orders
 
-Spot trading methods live on `client.spot.trade`, futures on `client.futures.trade`.
+Spot trading methods live on `client.spot.http.trade`, futures on `client.futures.http.trade`.
 
 For safe live testing, `USDCUSDT` is a practical symbol because you can buy a very small amount.
 
 ## Place A Spot Market Order
 
 ```python
+from decimal import Decimal
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  order = await client.spot.trade.place_order({
+  order = await client.spot.http.trade.place_order({
     'symbol': 'USDCUSDT',
     'side': 'BUY',
     'type': 'MARKET',
-    'quantity': '1',
+    'quantity': Decimal('1'),
   })
   print(order['orderId'])
 ```
@@ -27,7 +28,7 @@ from typed_mexc import MEXC
 order_id = 'your-order-id'
 
 async with MEXC.new() as client:
-  order = await client.spot.account.order(symbol='USDCUSDT', order_id=order_id)
+  order = await client.spot.http.account.order(symbol='USDCUSDT', order_id=order_id)
   print(order['status'])
 ```
 
@@ -37,7 +38,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  orders = await client.spot.account.open_orders(symbol='USDCUSDT')
+  orders = await client.spot.http.account.open_orders(symbol='USDCUSDT')
   print(len(orders))
 ```
 
@@ -47,7 +48,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  orders = await client.spot.account.orders(symbol='USDCUSDT', limit=20)
+  orders = await client.spot.http.account.orders(symbol='USDCUSDT', limit=20)
   print(orders[0]['orderId'])
 ```
 
@@ -56,15 +57,16 @@ async with MEXC.new() as client:
 Use a far-off limit price with valid notional if you want an order that stays open long enough to cancel.
 
 ```python
+from decimal import Decimal
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  order = await client.spot.trade.place_order({
+  order = await client.spot.http.trade.place_order({
     'symbol': 'USDCUSDT',
     'side': 'BUY',
     'type': 'LIMIT',
-    'price': '0.8000',
-    'quantity': '2',
+    'price': Decimal('0.8000'),
+    'quantity': Decimal('2'),
   })
   print(order['orderId'])
 ```
@@ -77,7 +79,7 @@ from typed_mexc import MEXC
 order_id = 'your-order-id'
 
 async with MEXC.new() as client:
-  order = await client.spot.trade.cancel_order(symbol='USDCUSDT', order_id=order_id)
+  order = await client.spot.http.trade.cancel_order(symbol='USDCUSDT', order_id=order_id)
   print(order['status'])
 ```
 
@@ -87,7 +89,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  orders = await client.spot.trade.cancel_open_orders(symbol='USDCUSDT')
+  orders = await client.spot.http.trade.cancel_open_orders(symbol='USDCUSDT')
   print(len(orders))
 ```
 
@@ -99,7 +101,7 @@ Futures side and type are numeric codes: `side=1` opens a long, `type=1` is a li
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  order = await client.futures.trade.submit_order({
+  order = await client.futures.http.trade.submit_order({
     'symbol': 'BTC_USDT',
     'price': 10000,
     'vol': 1,
@@ -119,7 +121,7 @@ from typed_mexc import MEXC
 order_id = 'your-order-id'
 
 async with MEXC.new() as client:
-  order = await client.futures.trade.order(order_id)
+  order = await client.futures.http.trade.order(order_id)
   if 'data' in order:
     print(order['data']['state'])
 ```
@@ -130,7 +132,7 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  orders = await client.futures.trade.open_orders('BTC_USDT', page_num=1, page_size=20)
+  orders = await client.futures.http.trade.open_orders('BTC_USDT', page_num=1, page_size=20)
   if 'data' in orders:
     print(len(orders['data']))
 ```
@@ -143,7 +145,7 @@ from typed_mexc import MEXC
 order_id = 'your-order-id'
 
 async with MEXC.new() as client:
-  result = await client.futures.trade.cancel_order([order_id])
+  result = await client.futures.http.trade.cancel_order([order_id])
   if 'data' in result:
     print(result['data'][0]['errorCode'])
 ```
@@ -154,5 +156,5 @@ async with MEXC.new() as client:
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
-  await client.futures.trade.cancel_all_orders({'symbol': 'BTC_USDT'})
+  await client.futures.http.trade.cancel_all_orders('BTC_USDT')
 ```

@@ -20,45 +20,47 @@ first_call:
     load_dotenv()
 
     async with MEXC.new() as client:
-      candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
+      candles = await client.spot.http.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
       print(candles[-1][4])
 
 how_tos:
   - title: Fetch market data
     body: Order books, candles, tickers, trades — spot and futures, all public.
     code: |
-      depth = await client.spot.market.depth(symbol='BTCUSDT', limit=5)         # spot order book
-      trades = await client.spot.market.trades(symbol='BTCUSDT', limit=10)      # spot recent trades
-      info = await client.spot.market.exchange_info(symbol='BTCUSDT')           # spot symbol metadata
-      contract = await client.futures.market.contract_info(symbol='BTC_USDT')   # futures contract info
-      rate = await client.futures.market.funding_rate('BTC_USDT')               # futures funding rate
+      depth = await client.spot.http.market.depth(symbol='BTCUSDT', limit=5)         # spot order book
+      trades = await client.spot.http.market.trades(symbol='BTCUSDT', limit=10)      # spot recent trades
+      info = await client.spot.http.market.exchange_info(symbol='BTCUSDT')           # spot symbol metadata
+      contract = await client.futures.http.market.contract_info(symbol='BTC_USDT')   # futures contract info
+      rate = await client.futures.http.market.funding_rate('BTC_USDT')               # futures funding rate
 
   - title: Place & manage orders
     body: Submit, inspect, and cancel orders on spot or futures. Needs credentials.
     code: |
-      order = await client.spot.trade.place_order({'symbol': 'USDCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': '1'})  # place a spot market order
-      status = await client.spot.account.order(symbol='USDCUSDT', order_id=str(order['orderId']))  # check its status
-      open_orders = await client.spot.account.open_orders(symbol='USDCUSDT')  # list open spot orders
-      await client.spot.trade.cancel_order(symbol='USDCUSDT', order_id=str(order['orderId']))  # cancel it
-      futures_order = await client.futures.trade.submit_order({'symbol': 'BTC_USDT', 'price': 10000, 'vol': 1, 'side': 1, 'type': 1, 'openType': 2})  # place a futures order
-      futures_open = await client.futures.trade.open_orders('BTC_USDT', page_num=1, page_size=20)  # list open futures orders
-      await client.futures.trade.cancel_all_orders({'symbol': 'BTC_USDT'})  # cancel all futures orders
+      from decimal import Decimal
+
+      order = await client.spot.http.trade.place_order({'symbol': 'USDCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': Decimal('1')})  # place a spot market order
+      status = await client.spot.http.account.order(symbol='USDCUSDT', order_id=str(order['orderId']))  # check its status
+      open_orders = await client.spot.http.account.open_orders(symbol='USDCUSDT')  # list open spot orders
+      await client.spot.http.trade.cancel_order(symbol='USDCUSDT', order_id=str(order['orderId']))  # cancel it
+      futures_order = await client.futures.http.trade.submit_order({'symbol': 'BTC_USDT', 'price': 10000, 'vol': 1, 'side': 1, 'type': 1, 'openType': 2})  # place a futures order
+      futures_open = await client.futures.http.trade.open_orders('BTC_USDT', page_num=1, page_size=20)  # list open futures orders
+      await client.futures.http.trade.cancel_all_orders('BTC_USDT')  # cancel all futures orders
 
   - title: Fetch account data
     body: Spot balances and trade history, futures assets, positions, and funding history.
     code: |
-      account = await client.spot.account.info()                                  # spot balances
-      spot_trades = await client.spot.account.trades(symbol='BTCUSDT', limit=100)  # spot trade history
-      assets = await client.futures.account.assets()                              # futures asset balances
-      positions = await client.futures.position.open()                            # futures open positions
+      account = await client.spot.http.account.info()                                  # spot balances
+      spot_trades = await client.spot.http.account.trades(symbol='BTCUSDT', limit=100)  # spot trade history
+      assets = await client.futures.http.account.assets()                              # futures asset balances
+      positions = await client.futures.http.position.open()                            # futures open positions
 
   - title: Manage deposits & withdrawals
     body: Fetch a deposit address, review deposit/withdrawal history, and submit a withdrawal.
     code: |
-      addresses = await client.spot.wallet.deposit_address(coin='USDT')                # deposit addresses
-      deposits = await client.spot.wallet.deposit_history(coin='USDT', limit=20)       # deposit history
-      withdrawals = await client.spot.wallet.withdraw_history(coin='USDT', limit=20)   # withdrawal history
-      result = await client.spot.wallet.withdraw(coin='USDT', address='your-destination-address', amount='1')  # submit a withdrawal
+      addresses = await client.spot.http.wallet.deposit_address(coin='USDT')                # deposit addresses
+      deposits = await client.spot.http.wallet.deposit_history(coin='USDT', limit=20)       # deposit history
+      withdrawals = await client.spot.http.wallet.withdraw_history(coin='USDT', limit=20)   # withdrawal history
+      result = await client.spot.http.wallet.withdraw(coin='USDT', address='your-destination-address', amount='1')  # submit a withdrawal
 
   - title: Listen to streams
     body: Public candle and order-book channels, plus your own spot and futures fills.

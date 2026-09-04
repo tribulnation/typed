@@ -1,7 +1,16 @@
-from .client import StreamsClient, StreamsMixin, MEXC_SPOT_SOCKET_URL, Reply
-from .auth import UserStreamsClient, UserStreamsMixin
+from .client import MEXC_SPOT_SOCKET_URL, Reply, SpotPublicStreamsClient
+from .auth import SpotPrivateStreamsClient
+from .endpoint import Meta, SpotStreamsClient, SpotStreamsEndpoint
+from .base import SpotStreamsClients, SpotStreamsBase
 
 __all__ = [
-  'StreamsClient', 'StreamsMixin', 'MEXC_SPOT_SOCKET_URL', 'Reply',
-  'UserStreamsClient', 'UserStreamsMixin',
+  'MEXC_SPOT_SOCKET_URL',
+  'Reply',
+  'SpotPublicStreamsClient',
+  'SpotPrivateStreamsClient',
+  'Meta',
+  'SpotStreamsClient',
+  'SpotStreamsEndpoint',
+  'SpotStreamsClients',
+  'SpotStreamsBase',
 ]

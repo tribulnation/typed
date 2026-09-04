@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/mexc">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-light.svg">
-      <img alt="Typed MEXC" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/mexc/media/mexc-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/mexc-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/mexc-light.svg">
+      <img alt="Typed MEXC" src="https://tribulnation.com/media/lockups/mexc-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -38,7 +38,7 @@
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
+  candles = await client.spot.http.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
   stream = await client.futures.streams.market.ticker('BTC_USDT')
   print(candles[-1][4])
 

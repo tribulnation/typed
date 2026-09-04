@@ -8,7 +8,6 @@ malformed requests, auth failures and rate limits via status alone).
 
 from typing_extensions import Any
 import json
-import httpx
 
 from typed_core.exceptions import ApiError, AuthError, BadRequest, RateLimited
 from typed_core.validation import TypedDict, validator
@@ -49,7 +48,7 @@ def raise_code(code: int, msg: str, payload: Any):
   raise ApiError(code, msg, payload)
 
 
-def raise_http_status(response: httpx.Response):
+def raise_http_status(response):
   """Raise the `typed_core` exception matching a non-2xx HTTP status.
 
   Args:
@@ -75,7 +74,7 @@ def raise_http_status(response: httpx.Response):
   raise ApiError(status, payload)
 
 
-def unwrap(response: httpx.Response) -> Any:
+def unwrap(response) -> Any:
   """Return the response body, raising on either failure discriminator.
 
   Args:
