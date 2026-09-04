@@ -6,4 +6,8 @@ from .withdraw_history import WithdrawHistory
 
 
 class Nft(Asset, DepositHistory, TransactionHistory, WithdrawHistory):
-  """Binance nft endpoints."""
+  """Binance NFT marketplace -- asset holdings, deposit history, withdraw history, and transaction history for NFTs held on Binance. No dedicated overview page is live on developers.binance.com; linking the closest real umbrella (Binance Spot's own API docs).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

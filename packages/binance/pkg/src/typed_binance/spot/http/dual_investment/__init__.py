@@ -7,4 +7,8 @@ from .subscribe import Subscribe
 
 
 class DualInvestment(Accounts, AutoCompound, Positions, ProductList, Subscribe):
-  """Binance dual_investment endpoints."""
+  """Dual Investment endpoints -- subscribing to a Dual Investment product, auto-compound settings, and account/position/product-list lookups. Spans two catalog pages (Trade, Market Data); this cites Trade, which covers the majority of these.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-dual-investment/api/rest-api/trade)
+  """

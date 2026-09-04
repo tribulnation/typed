@@ -25,4 +25,8 @@ class VipService(
   LiquidityProgramPerformance,
   LiquidityProgramWeeklyResult,
 ):
-  """Binance vip_service endpoints."""
+  """Binance VIP Service -- commission fee lookup, futures IP/order rate limits, futures IP whitelist management, and liquidity program overview/performance/weekly-result endpoints for VIP accounts. No dedicated overview page is live on developers.binance.com; linking the closest real umbrella (Binance Spot's own API docs).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

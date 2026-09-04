@@ -8,7 +8,7 @@ from .earnings_list import EarningsList
 from .hashrate_resale_cancellation import HashrateResaleCancellation
 from .hashrate_resale_details import HashrateResaleDetails
 from .hashrate_resale_list import HashrateResaleList
-from .hashrate_resale_request import HashrateResaleRequestEndpoint
+from .hashrate_resale_request import HashrateResaleRequest
 from .statistics_list import StatisticsList
 from .worker_detail import WorkerDetail
 from .worker_list import WorkerList
@@ -24,9 +24,13 @@ class Mining(
   HashrateResaleCancellation,
   HashrateResaleDetails,
   HashrateResaleList,
-  HashrateResaleRequestEndpoint,
+  HashrateResaleRequest,
   StatisticsList,
   WorkerDetail,
   WorkerList,
 ):
-  """Binance mining endpoints."""
+  """Binance Pool mining endpoints -- coin/algorithm lookups, account and worker lists, earnings and bonus history, and hashrate-resale configuration.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-mining/api/rest-api/~)
+  """

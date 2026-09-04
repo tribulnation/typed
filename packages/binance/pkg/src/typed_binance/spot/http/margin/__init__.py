@@ -143,4 +143,8 @@ class Margin(
   TradeCoeff,
   TransferHistory,
 ):
-  """Binance margin endpoints."""
+  """Margin Account/Trade endpoints -- cross and isolated margin account info, borrow/repay and interest history, margin order placement/cancellation/query (including OCO/OTO/OTOCO), transfers and capital flow, price index and leverage-bracket data, low-latency special API keys, forced-liquidation records, small-liability exchange, and margin user-data-stream listen keys (current and legacy).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/margin_trading/general-info)
+  """

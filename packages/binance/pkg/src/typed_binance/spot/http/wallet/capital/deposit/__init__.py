@@ -6,4 +6,8 @@ from .history import History
 
 
 class Deposit(Address, AddressList, CreditApply, History):
-  """Binance deposit endpoints."""
+  """Wallet Capital's Deposit endpoints -- fetching/generating deposit addresses, applying for deposit credit, and deposit history. No page of its own -- reusing Wallet's Capital catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital)
+  """

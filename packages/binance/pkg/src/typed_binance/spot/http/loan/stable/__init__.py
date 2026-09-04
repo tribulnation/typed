@@ -6,4 +6,8 @@ from .repayment_history import RepaymentHistory
 
 
 class Stable(BorrowHistory, IncomeHistory, LtvAdjustmentHistory, RepaymentHistory):
-  """Binance stable endpoints."""
+  """Stable Rate Loan endpoints -- history lookups for a fixed-rate crypto loan's income, borrows, repayments, and LTV adjustments.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-crypto-loan/api/rest-api/stable-rate)
+  """

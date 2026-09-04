@@ -35,4 +35,8 @@ class InstitutionalLoan(
   RiskUnitLtv,
   TransferOut,
 ):
-  """Binance institutional_loan endpoints."""
+  """Institutional Loan endpoints for a credit-account risk unit -- borrowing, repaying, and querying interest/rebate history and max-borrowable amounts. Spans four catalog pages (Borrow-Repay, Account, Transfer, and a fourth); this cites Borrow-Repay, the largest of the four.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-institutional-loan/api/rest-api/borrow-repay)
+  """

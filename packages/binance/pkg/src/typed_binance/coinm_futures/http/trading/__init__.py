@@ -57,4 +57,8 @@ class Trading(
   QueryOrder,
   UsersForceOrders,
 ):
-  """Binance trading endpoints."""
+  """COIN-M Futures' order placement and account-configuration endpoints over REST -- new/modify/cancel orders (single and batch), order/trade history queries, leverage and margin-type changes, position mode, isolated-margin adjustments, and the newer algo (conditional) order surface.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/trade)
+  """

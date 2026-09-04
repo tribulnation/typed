@@ -4,4 +4,8 @@ from .transfer import Transfer
 
 
 class Dust(Log, Transfer):
-  """Binance dust endpoints."""
+  """Wallet Asset's Dust endpoints -- converting small asset balances to BNB and fetching that conversion's log history. No page of its own -- reusing Wallet's Asset catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset)
+  """

@@ -3,4 +3,8 @@ from .rewards_history import RewardsHistory
 
 
 class History(RewardsHistory):
-  """Binance history endpoints."""
+  """Soft Staking rewards history -- reward records for automatic, no-lockup staking, documented on the same Soft Staking page as the product list and enable/disable toggle above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/soft-staking)
+  """

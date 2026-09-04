@@ -5,4 +5,8 @@ from .session_status import SessionStatus
 
 
 class General(SessionLogon, SessionLogout, SessionStatus):
-  """Binance general endpoints."""
+  """COIN-M Futures' WS API session-authentication requests -- log on, log out, and query status of the API key authenticated on the current WebSocket connection.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/derivatives/coin-margined-futures/websocket-api-general-info)
+  """

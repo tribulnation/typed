@@ -4,4 +4,8 @@ from .lead_symbol import LeadSymbol
 
 
 class Futures(LeadStatus, LeadSymbol):
-  """Binance futures endpoints."""
+  """Futures Copy Trading endpoints for a lead trader -- checking whether this account currently qualifies as a futures lead trader, and the whitelist of symbols approved for futures copy trading.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-copy-trading/api/rest-api/future-copy-trading)
+  """

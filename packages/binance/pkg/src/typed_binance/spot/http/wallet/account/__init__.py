@@ -17,4 +17,8 @@ class Account(
   Snapshot,
   Status,
 ):
-  """Binance account endpoints."""
+  """Wallet's Account endpoints -- account status, API trading status, API key permissions, account info, the daily account snapshot, and the Fast Withdraw Switch toggle.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/account)
+  """

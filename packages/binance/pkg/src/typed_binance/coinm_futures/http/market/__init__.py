@@ -55,4 +55,8 @@ class Market(
   TopLongShortPositionRatio,
   Trades,
 ):
-  """Binance market endpoints."""
+  """COIN-M Futures' public REST market data -- order book, trades, klines (spot, continuous-contract, mark/index/premium price), funding rate, open interest, and long/short ratio endpoints for the coin-margined delivery and perpetual contracts.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/rest-api/market-data)
+  """

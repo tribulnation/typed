@@ -31,4 +31,8 @@ class Vip(
   Repay,
   RepaymentHistory,
 ):
-  """Binance vip endpoints."""
+  """VIP Loan endpoints -- borrowing (floating and fixed rate), renewing, and repaying a VIP Loan, plus collateral/interest-rate/application/order/repayment lookups. Spans three catalog pages (Trade, Market Data, User Information) roughly evenly; this cites the Trade page, which covers the core borrow/renew/repay actions.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-vip-loan/api/rest-api/trade)
+  """

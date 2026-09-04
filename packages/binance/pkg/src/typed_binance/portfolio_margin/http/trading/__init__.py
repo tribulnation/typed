@@ -129,4 +129,8 @@ class Trading(
   UmTrades,
   UmTradfiPerpsContract,
 ):
-  """Binance trading endpoints."""
+  """Portfolio Margin's unified order surface across CM futures, UM futures, UM algo orders, and cross-margin -- placing, modifying, cancelling, and querying orders, conditional orders, force-liquidation orders, and OCOs across the unified account.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/trade)
+  """

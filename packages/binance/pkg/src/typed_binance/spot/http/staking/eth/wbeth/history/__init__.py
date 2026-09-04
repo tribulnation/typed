@@ -4,4 +4,8 @@ from .wrap_history import WrapHistory
 
 
 class History(UnwrapHistory, WrapHistory):
-  """Binance history endpoints."""
+  """WBETH wrap/unwrap history -- historical records of WBETH wrap and unwrap operations, documented on the same ETH Staking page as the wrap/unwrap endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/eth-staking)
+  """

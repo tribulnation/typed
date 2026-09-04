@@ -15,4 +15,8 @@ class General(
   SessionStatusEndpoint,
   Time,
 ):
-  """Binance general endpoints."""
+  """Spot WebSocket API general requests -- exchange info, symbol execution rules, and server time -- plus the session logon/status/logout commands.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/websocket-api/general-requests)
+  """

@@ -6,4 +6,8 @@ from .wbeth_rewards_history import WbethRewardsHistory
 
 
 class History(RateHistory, RedemptionHistory, StakingHistory, WbethRewardsHistory):
-  """Binance history endpoints."""
+  """ETH Staking history -- staking, redemption, rate, and WBETH-rewards history lookups, documented on the same ETH Staking page as the subscribe/redeem endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/eth-staking)
+  """

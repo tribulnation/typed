@@ -5,4 +5,8 @@ from .history_v2 import HistoryV2
 
 
 class Withdraw(Apply, History, HistoryV2):
-  """Binance withdraw endpoints."""
+  """Wallet Travel Rule's Withdraw endpoints -- submitting a withdrawal with the required travel-rule questionnaire/VASP info and its history, across both API versions. No page of its own -- reusing Wallet's Travel Rule catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule)
+  """

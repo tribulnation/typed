@@ -10,4 +10,8 @@ from .query_order import QueryOrder
 class Trading(
   CancelAlgoOrder, CancelOrder, ModifyOrder, NewAlgoOrder, NewOrder, QueryOrder
 ):
-  """Binance trading endpoints."""
+  """USDⓈ-M Futures' WebSocket API trading requests -- signed commands to place, modify, cancel, and query orders and algo orders.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/trade)
+  """

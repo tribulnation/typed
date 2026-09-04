@@ -35,4 +35,8 @@ class Market(
   TickerWindow,
   UiKlines,
 ):
-  """Binance market endpoints."""
+  """Spot public market-data endpoints -- klines/UI klines, order book depth, recent/historical/aggregate trades, tickers (24hr, price, book, trading-day, rolling window), average price, and reference price -- plus the General endpoints (ping, server time, exchange info) that live in this same directory. Cites the Market Data page, which covers the majority of these; ping/time/exchangeInfo are documented on a separate General page instead.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints)
+  """

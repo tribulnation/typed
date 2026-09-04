@@ -7,4 +7,8 @@ from .sub_orders import SubOrders
 
 
 class Spot(CancelOrder, HistoricalOrders, NewOrderTwap, OpenOrders, SubOrders):
-  """Binance spot endpoints."""
+  """Spot Algo Trading endpoints -- placing a new TWAP order plus querying open orders, historical orders, and the sub-orders that make up a given algo order, and cancelling one.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-algo-trading/api/rest-api/spot-algo)
+  """

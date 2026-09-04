@@ -79,7 +79,7 @@ connection:
 
 - **Spot**: REST (`client.spot.http`), market-data streams (`client.spot.streams`), and a
   request/response WS API (`client.spot.ws`, also used for account/order push events via
-  `subscribe_user_data()`).
+  `client.spot.ws.user_data.events()`).
 - **USD-M Futures**: REST (`client.usdm_futures.http`), two market-data streams connections
   (`client.usdm_futures.streams` for the general channel set, plus
   `client.usdm_futures.public_streams` specifically for order-book channels, which Binance

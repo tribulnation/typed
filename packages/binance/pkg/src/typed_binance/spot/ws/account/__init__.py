@@ -29,4 +29,8 @@ class Account(
   OrderStatusEndpoint,
   RateLimitOrders,
 ):
-  """Binance account endpoints."""
+  """Account requests -- signed WebSocket API commands querying the authenticated account's balances, commission rates, order/trade history, allocations, filters, and unfilled-order rate limits.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/websocket-api/account-requests)
+  """

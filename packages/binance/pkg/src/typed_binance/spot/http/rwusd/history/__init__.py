@@ -6,4 +6,8 @@ from .subscription_history import SubscriptionHistory
 
 
 class History(RateHistory, RedemptionHistory, RewardsHistory, SubscriptionHistory):
-  """Binance history endpoints."""
+  """RWUSD history -- subscription, redemption, rewards, and rate history for holding RWUSD, documented on the same RWUSD upstream page as the account/quota and subscribe/redeem endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/rwusd)
+  """

@@ -52,7 +52,7 @@ how_tos:
         async for update in stream:
           print(update)
 
-      async with client.spot.ws.subscribe_user_data() as events:  # this account's order/balance events
+      async with client.spot.ws.user_data.events() as events:  # this account's order/balance events
         async for event in events:
           print(event)
 

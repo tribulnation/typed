@@ -85,4 +85,8 @@ class Trading(
   TradingFee,
   UserTrades,
 ):
-  """Binance trading endpoints."""
+  """USDⓈ-M Futures' Trade endpoints -- placing, modifying, querying, and cancelling orders and algo orders (single and batch), position mode/margin/leverage management, position risk and ADL quantile queries, trading fees, forced-liquidation history, and downloadable order/trade/income history.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/trade)
+  """

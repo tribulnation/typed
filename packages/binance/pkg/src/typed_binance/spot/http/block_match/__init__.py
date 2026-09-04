@@ -11,4 +11,8 @@ from .symbols import Symbols
 class BlockMatch(
   OpenOrders, OrderCancel, OrderExtend, OrderHistory, OrderPlace, OrderTake, Symbols
 ):
-  """Binance block_match endpoints."""
+  """Spot Block Matching endpoints -- an OTC-style venue for negotiating and settling large trades off the public order book: placing, extending, cancelling, and taking (accepting) a block order, plus its open-order/history queries and supported symbol list. No dedicated overview page is live on developers.binance.com (the legacy `spot_block_match/rest-api` page now resolves to the generic docs landing page); linking the closest real umbrella (Binance Spot's own API docs).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

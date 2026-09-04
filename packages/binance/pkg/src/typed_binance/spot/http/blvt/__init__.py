@@ -8,4 +8,8 @@ from .user_limit import UserLimit
 
 
 class Blvt(Redeem, RedeemRecord, Subscribe, SubscribeRecord, TokenInfo, UserLimit):
-  """Binance blvt endpoints."""
+  """Binance Leveraged Token (BLVT) endpoints -- subscribing to and redeeming a leveraged token, plus token info, user subscription limits, and subscribe/redeem history. No dedicated catalog page exists for BLVT on Binance's current developer docs (the service itself was suspended in 2024); closest available citation is the Spot REST API's own umbrella page, reused from `spot/http/router.json`.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

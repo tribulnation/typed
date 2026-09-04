@@ -15,4 +15,8 @@ class MarketMaker(
   MmpReset,
   MmpSet,
 ):
-  """Binance market_maker endpoints."""
+  """Options market maker protection -- the auto-cancel-all-open-orders kill-switch and Market Maker Protection (MMP), each independently configured, queried, and reset per underlying.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/rest-api/market-maker-endpoints)
+  """

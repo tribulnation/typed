@@ -27,4 +27,8 @@ class Flexible(
   Repay,
   RepaymentHistory,
 ):
-  """Binance flexible endpoints."""
+  """Flexible Loan endpoints -- borrow, repay, and LTV adjustment against a floating-rate crypto loan, plus loanable/collateral asset data and history for borrows, repayments, interest rates, and liquidations.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-crypto-loan/api/rest-api/flexible-rate)
+  """

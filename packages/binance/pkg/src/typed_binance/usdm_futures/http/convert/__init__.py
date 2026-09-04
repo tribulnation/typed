@@ -6,4 +6,8 @@ from .order_status import OrderStatus
 
 
 class Convert(AcceptQuote, ExchangeInfo, GetQuote, OrderStatus):
-  """Binance convert endpoints."""
+  """USDⓈ-M Futures' Convert endpoints -- request a quote between two assets, accept it, and query the resulting order's status.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/convert)
+  """

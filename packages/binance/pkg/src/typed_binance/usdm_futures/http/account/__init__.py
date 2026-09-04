@@ -35,4 +35,8 @@ class Account(
   SymbolConfig,
   ToggleFeeBurn,
 ):
-  """Binance account endpoints."""
+  """USDⓈ-M Futures' Account endpoints -- balances (V2/V3), account snapshots, futures trading quantitative-rules status, BNB-burn toggle, notional/leverage brackets, income history, symbol/rate-limit configuration, Portfolio Margin account info, and User Data Stream (listenKey) start/keepalive/close management.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/account)
+  """

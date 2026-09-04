@@ -55,4 +55,8 @@ class Prediction(
   TransferStatus,
   WalletList,
 ):
-  """Binance prediction endpoints."""
+  """Binance Prediction Markets -- browsing markets, placing and cancelling orders, positions, quotes, and transfers for Binance's prediction-market product. No dedicated upstream page exists yet on developers.binance.com for this newly-launched product, so this falls back to the umbrella Spot API docs.
+
+  References:
+    - [Upstream docs](https://github.com/binance/binance-spot-api-docs)
+  """

@@ -4,4 +4,8 @@ from .toggle import Toggle
 
 
 class BnbBurn(Status, Toggle):
-  """Binance bnb_burn endpoints."""
+  """Wallet Asset's BNB Burn endpoints -- toggling and querying the BNB spot/margin trading fee discount setting. No page of its own -- reusing Wallet's Asset catalog page, which covers this endpoint too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset)
+  """

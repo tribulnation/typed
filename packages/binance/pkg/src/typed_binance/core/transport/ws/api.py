@@ -4,14 +4,26 @@
 upgraded to push this account's order/balance events once subscribed (see
 `request_subscription` below), not just answer requests.
 
-Only Spot is wired. `session.logon` (stateful session auth) isn't implemented: Binance
-only supports it with an Ed25519 key, and every credential this client has is HMAC — see
-`spec/core.md`'s Authentication section. `userDataStream.subscribe.signature` covers the
-same practical need (push events over this connection) with a plain per-request HMAC
-signature instead, confirmed live.
+`SocketRpc`/`SocketRpcClient` are shared by all three WS API surfaces (Spot, USD-M, COIN-M
+— see `codegen/config.toml`'s `[python.cores.spot/usdm_futures/coinm_futures]`). Only Spot's own
+`userDataStream.subscribe.signature`/`.unsubscribe` genuinely exist on the wire, though:
+USD-M/COIN-M's WS API documents `userDataStream.start`/`.ping`/`.stop` instead, a
+structurally distinct, listenKey-based family feeding a *separate* connection
+(`private_streams.user_data`) rather than pushing on this one (confirmed against each
+product's own downloadable WS API schema — see `spec/core.md`'s Surfaces section and
+`spec/discovery.md` §9). So only `spot/ws/user_data/events/endpoint.json` resolves a
+`kind: 'stream'` endpoint to this core's `subscribe()`; `request_subscription`/
+`request_unsubscription` below stay generic to every product that shares this class, unused
+on USD-M/COIN-M rather than removed from them.
+
+`session.logon` (stateful session auth) isn't implemented: Binance only supports it with an
+Ed25519 key, and every credential this client has is HMAC — see `spec/core.md`'s
+Authentication section. `userDataStream.subscribe.signature` covers the same practical need
+(push events over this connection) with a plain per-request HMAC signature instead,
+confirmed live.
 """
 
-from typing_extensions import Any, Mapping, TypeVar, cast
+from typing_extensions import Any, Mapping, TypedDict, TypeVar, cast
 from dataclasses import dataclass, field
 from datetime import timedelta
 import json
@@ -37,8 +49,53 @@ channel name — so this is a fixed local identifier, not a venue concept.
 """
 
 
+class RateLimit(TypedDict):
+  """One rate-limit bucket's current usage, reported on every WS API reply."""
+  rateLimitType: str
+  interval: str
+  intervalNum: int
+  limit: int
+  count: int
+
+
+class UserDataSubscription(TypedDict):
+  """The resulting subscription, per `userDataStream.subscribe.signature`'s own spec'd
+  response.
+  """
+  subscriptionId: int
+  """Id of the new subscription."""
+
+
+class SubscribeAck(TypedDict):
+  """Reply to `userDataStream.subscribe.signature` on success — confirmed against a real
+  captured example. A `status != 200` reply raises via `raise_error` before this type is
+  ever returned.
+  """
+  id: int
+  status: int
+  result: UserDataSubscription
+  rateLimits: list[RateLimit]
+
+
+class UserDataUnsubscribeResult(TypedDict):
+  """Empty result confirming the subscription ended, per `userDataStream.unsubscribe`'s
+  own spec'd response.
+  """
+
+
+class UnsubscribeAck(TypedDict):
+  """Reply to `userDataStream.unsubscribe` on success — confirmed against a real captured
+  example. A `status != 200` reply raises via `raise_error` before this type is ever
+  returned.
+  """
+  id: int
+  status: int
+  result: UserDataUnsubscribeResult
+  rateLimits: list[RateLimit]
+
+
 @dataclass
-class SocketRpc(StreamsRpc[dict, dict, dict, None, dict, dict]):
+class SocketRpc(StreamsRpc[dict, dict, dict, None, SubscribeAck, UnsubscribeAck]):
   """Raw WS API connection: id-correlated request/response, plus (once subscribed)
   un-id'd `{"subscriptionId", "event"}` pushes — confirmed live, not assumed from docs.
   """
@@ -83,13 +140,15 @@ class SocketRpc(StreamsRpc[dict, dict, dict, None, dict, dict]):
     query['apiKey'] = self.credentials.api_key
     return await self.rpc_request({'method': method, 'params': query})
 
-  async def request_subscription(self, channel: str, params: None = None) -> dict:
+  async def request_subscription(self, channel: str, params: None = None) -> SubscribeAck:
     reply = await self.authed_rpc_request('userDataStream.subscribe.signature')
     if reply['status'] != 200:
       raise_error(reply['status'], reply.get('error'))
-    return reply
+    return cast(SubscribeAck, reply)
 
-  async def request_unsubscription(self, channel: str, params: None = None) -> dict:
+  async def request_unsubscription(
+    self, channel: str, params: None = None
+  ) -> UnsubscribeAck:
     """`userDataStream.unsubscribe` takes no params and needs no signature when used
     this way — it just ends *this* connection's subscription, confirmed live.
     """
@@ -98,7 +157,7 @@ class SocketRpc(StreamsRpc[dict, dict, dict, None, dict, dict]):
     )
     if reply['status'] != 200:
       raise_error(reply['status'], reply.get('error'))
-    return reply
+    return cast(UnsubscribeAck, reply)
 
 
 @dataclass(kw_only=True)
@@ -185,13 +244,14 @@ class SocketRpcClient(WsRpcClient):
       return validator.python(result)
     return result
 
-  def subscribe_user_data(
+  def subscribe(
     self,
+    channel: str,
     *,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> StreamManager[T, Any, Any]:
-    manager = self.conn.subscribe(USER_DATA_CHANNEL)
+    manager = self.conn.subscribe(channel)
     if validator is None or not self.should_validate(validate):
       return cast(StreamManager[T, Any, Any], manager)
     return manager.map(validator)

@@ -25,4 +25,8 @@ class Managed(
   TransferLogTradeParent,
   Withdraw,
 ):
-  """Binance managed endpoints."""
+  """Managed Sub-Account endpoints -- deposit, withdrawal, and snapshot operations an investor or trading-team master account runs against its Managed Sub-Accounts, plus per-account asset/futures/margin balance lookups and transfer-log history.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-sub-account/api/rest-api/managed-sub-account)
+  """

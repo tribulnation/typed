@@ -19,4 +19,8 @@ class LinkPlus(
   SubgroupLiquidityWeeklyResult,
   SubgroupNameUpdate,
 ):
-  """Binance link_plus endpoints."""
+  """Link Plus endpoints for a master account's liquidity sub-groups -- creating a sub-group, adding accounts to it, renaming it, and reading its overview/detail/liquidity-performance data. No dedicated catalog landing page exists for Link Plus on Binance's current developer docs (only individual per-endpoint pages under `docs/link_plus/`); closest available citation is the Spot REST API's own umbrella page, reused from `spot/http/router.json`.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

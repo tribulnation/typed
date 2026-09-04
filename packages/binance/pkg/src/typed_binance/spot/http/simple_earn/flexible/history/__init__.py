@@ -9,4 +9,8 @@ from .subscription_record import SubscriptionRecord
 class History(
   CollateralRecord, RateHistory, RedemptionRecord, RewardsHistory, SubscriptionRecord
 ):
-  """Binance history endpoints."""
+  """Simple Earn Flexible history -- subscription, redemption, rewards, collateral, and rate history for the Flexible tier, documented on the same shared Flexible+Locked upstream page as the subscribe/redeem endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked)
+  """

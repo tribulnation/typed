@@ -35,4 +35,8 @@ class Stocks(
   TokenizedHistory,
   TradeHistory,
 ):
-  """Binance stocks endpoints."""
+  """Tokenized Stocks endpoints -- trading US-listed equities and ETFs programmatically through the SAPI endpoint family: quotes, order placement/cancellation, order history, listen keys for the user-data stream, and mint/redeem/convert for the underlying tokenized shares.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/products/stocks/introduction)
+  """

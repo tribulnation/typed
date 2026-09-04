@@ -51,4 +51,8 @@ class PortfolioMarginPro(
   SpanInfo,
   TieredCollateralRate,
 ):
-  """Binance portfolio_margin_pro endpoints."""
+  """Binance Portfolio Margin Pro -- account info, balances, collateral rates, asset leverage, bankruptcy loans, negative-balance repay, and related account-management endpoints for the Portfolio Margin Pro program.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin-pro/api/rest-api/account)
+  """

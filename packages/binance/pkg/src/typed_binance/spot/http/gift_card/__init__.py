@@ -8,4 +8,8 @@ from .verify import Verify
 
 
 class GiftCard(BuyCode, CreateCode, RedeemCode, RsaPublicKey, TokenLimit, Verify):
-  """Binance gift_card endpoints."""
+  """Binance Gift Card endpoints -- fetching the RSA public key and token limit, plus creating, redeeming, buying, and verifying gift cards.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/gift_card/market-data)
+  """
