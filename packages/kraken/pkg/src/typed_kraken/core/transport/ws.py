@@ -33,8 +33,7 @@ from typed_core.ws import StreamsRpc
 from typed_core.ws.streams_rpc import Message, Response, Subscription
 
 from ..auth import AuthResult, TokenCache
-from ..endpoint.stream import StreamClient
-from ..endpoint.ws_rpc import WsRpcClient
+from ..endpoint.socket import SocketClient
 from ..envelope import raise_error
 
 T = TypeVar('T')
@@ -129,7 +128,7 @@ class SocketConnection(
 
 
 @dataclass(kw_only=True)
-class KrakenSocketClient(StreamClient, WsRpcClient):
+class KrakenSocketClient(SocketClient):
   """Kraken Spot WebSocket v2 client, owning connection, token auth and validation --
   backs both `StreamEndpoint` (channel subscriptions) and `WsRpcEndpoint` (trading
   methods).

@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/kraken/pkg
-      - run: pip install ruff pyright build
+      - run: pip install ruff pyright pytest build
       - run: ruff check --select TID251 packages/kraken/pkg
       - run: pyright packages/kraken/pkg
       - run: cp packages/kraken/README.md packages/kraken/LICENSE packages/kraken/pkg/
