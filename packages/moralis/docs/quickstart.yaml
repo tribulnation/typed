@@ -33,7 +33,7 @@ first_call:
 
     async with Moralis.new() as client:
       balances = await client.evm.wallet.token_balances(
-        '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+        address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
       )
       print(balances['result'])
 
@@ -41,74 +41,74 @@ how_tos:
   - title: Fetch wallet data
     body: EVM wallet balances, decoded transaction history, and net worth -- one wallet address, any EVM chain.
     code: |
-      balances = await client.evm.wallet.token_balances('0x...', chain='eth')       # ERC20 balances
-      history = await client.evm.wallet.history('0x...', chain='eth')               # decoded tx history
-      transfers = await client.evm.wallet.token_transfers('0x...', chain='eth')     # ERC20 transfers
-      net_worth = await client.evm.wallet.wallet_net_worth('0x...', chains=['eth'])  # USD net worth
+      balances = await client.evm.wallet.token_balances(address='0x...', chain='eth')       # ERC20 balances
+      history = await client.evm.wallet.history(address='0x...', chain='eth')               # decoded tx history
+      transfers = await client.evm.wallet.token_transfers(address='0x...', chain='eth')     # ERC20 transfers
+      net_worth = await client.evm.wallet.wallet_net_worth(['eth'], address='0x...')  # USD net worth
 
   - title: Fetch token data
     body: ERC20 contract-level metadata, price, and holder stats.
     code: |
       metadata = await client.evm.token.metadata.token_metadata(chain='eth', addresses=['0x...'])  # metadata
-      price = await client.evm.price.token_price('0x...', chain='eth')                              # current price
-      score = await client.evm.token.metadata.token_score('0x...', chain='eth')                      # spam/risk score
-      holders = await client.evm.token.holders.token_holder_metrics('0x...', chain='eth')            # holder stats
+      price = await client.evm.price.token_price('eth', address='0x...')                              # current price
+      score = await client.evm.token.metadata.token_score('eth', token_address='0x...')               # spam/risk score
+      holders = await client.evm.token.holders.token_holder_metrics('eth', token_address='0x...')     # holder stats
 
   - title: Fetch NFT data
     body: NFTs held by a wallet, plus contract-level metadata, ownership, and prices.
     code: |
-      owned = await client.evm.wallet.nft_balances('0x...', chain='eth')                    # NFTs in a wallet
-      nft = await client.evm.nft.metadata.nft_metadata('0x...', '1', chain='eth')           # one NFT's metadata
-      owners = await client.evm.nft.ownership.owners_by_collection('0x...', chain='eth')    # collection owners
-      floor = await client.evm.nft.prices.floor_price_by_collection('0x...', chain='eth')   # floor price
+      owned = await client.evm.wallet.nft_balances('eth', address='0x...')                    # NFTs in a wallet
+      nft = await client.evm.nft.metadata.nft_metadata('eth', address='0x...', token_id='1')  # one NFT's metadata
+      owners = await client.evm.nft.ownership.owners_by_collection('eth', address='0x...')    # collection owners
+      floor = await client.evm.nft.prices.floor_price_by_collection('eth', address='0x...')   # floor price
 
   - title: Fetch Solana data
     body: Solana wallet balances/portfolio and SPL token metadata.
     code: |
-      native = await client.solana.wallet.native_balance('mainnet', 'address...')     # SOL balance
-      tokens = await client.solana.wallet.token_balances('mainnet', 'address...')     # SPL token balances
-      portfolio = await client.solana.wallet.wallet_portfolio('mainnet', 'address...')  # tokens + NFTs
-      metadata = await client.solana.token.token_metadata('mainnet', 'mint...')       # token metadata
+      native = await client.solana.wallet.native_balance('mainnet', address='address...')     # SOL balance
+      tokens = await client.solana.wallet.token_balances('mainnet', address='address...')     # SPL token balances
+      portfolio = await client.solana.wallet.wallet_portfolio('mainnet', address='address...')  # tokens + NFTs
+      metadata = await client.solana.token.token_metadata('mainnet', address='mint...')       # token metadata
 
   - title: Fetch Bitcoin data
     body: Bitcoin wallet balances/history, blocks, transactions, and price.
     code: |
-      balances = await client.bitcoin.wallet.btc_balances('bc1...')            # BTC + linked balances
-      history = await client.bitcoin.wallet.wallet_history('bc1...')           # wallet history
-      block = await client.bitcoin.blockchain.block('800000', 'bitcoin')       # block lookup
-      price = await client.bitcoin.price.current_price('bitcoin-mainnet', 'btc')  # current BTC price
+      balances = await client.bitcoin.wallet.btc_balances(wallet_address_or_public_key='bc1...')    # BTC + linked balances
+      history = await client.bitcoin.wallet.wallet_history(wallet_address_or_public_key='bc1...')   # wallet history
+      block = await client.bitcoin.blockchain.block(block_identifier='800000', chain_alias='bitcoin')  # block lookup
+      price = await client.bitcoin.price.current_price('bitcoin-mainnet', token_alias_or_token_address='btc')  # current BTC price
 
   - title: Explore cross-chain data
     body: Entity search and market-wide metrics spanning multiple chains at once.
     code: |
-      found = await client.universal.entity.endpoints.entity_search(query='uniswap')  # entity search
-      chain_metrics = await client.universal.global_.endpoints.chain_metrics()        # per-chain metrics
-      trending = await client.universal.token.trending_tokens(chain='eth')            # trending tokens
+      found = await client.universal.entity.entity_search(query='uniswap')       # entity search
+      chain_metrics = await client.universal.global_metrics.chain_metrics()      # per-chain metrics
+      trending = await client.universal.token.trending_tokens(chain='eth')       # trending tokens
 
   - title: Authenticate a wallet
     body: A Sign-In-With-Ethereum-style challenge/verify flow, returning a stable per-wallet `profileId`.
     code: |
-      challenge = await client.auth.challenge.request_evm_challenge({  # request a message to sign
-        'domain': 'example.com', 'uri': 'https://example.com',
-        'timeout': 60, 'chainId': '1', 'address': '0x...',
-      })
-      verified = await client.auth.challenge.verify_evm_challenge({    # verify the signed message
-        'message': challenge['message'], 'signature': '0x...',
-      })
+      challenge = await client.auth.challenge.request_evm_challenge(  # request a message to sign
+        domain='example.com', uri='https://example.com',
+        timeout=60, chain_id='1', address='0x...',
+      )
+      verified = await client.auth.challenge.verify_evm_challenge(    # verify the signed message
+        message=challenge['message'], signature='0x...',
+      )
 
   - title: Manage webhook streams
     body: Create and configure server-side webhook subscriptions for on-chain activity.
     code: |
-      stream = await client.streams.evm.create_stream({                          # create a stream
-        'webhookUrl': 'https://example.com/webhook', 'description': 'transfers', 'chainIds': ['0x1'],
-      })
-      await client.streams.evm.add_address_to_stream(stream['id'], {'address': '0x...'})  # add an address
-      await client.streams.evm.update_stream_status(stream['id'], {'status': 'active'})   # activate it
-      streams = await client.streams.evm.all_streams(limit=100)                   # list your streams
+      stream = await client.streams.evm.create_stream(                          # create a stream
+        webhook_url='https://example.com/webhook', description='transfers', chain_ids=['0x1'],
+      )
+      await client.streams.evm.add_address_to_stream(stream['id'], address='0x...')  # add an address
+      await client.streams.evm.update_stream_status(stream['id'], status='active')   # activate it
+      streams = await client.streams.evm.all_streams(100)                   # list your streams
 
   - title: Paginate through results
     body: Every cursor-paginated endpoint has a `_paged` sibling, awaitable and async-iterable.
     code: |
-      async for page in client.evm.wallet.token_balances_paged('0x...', chain='eth'):  # one page at a time
+      async for page in client.evm.wallet.token_balances_paged(address='0x...', chain='eth'):  # one page at a time
         print(page)
-      all_balances = await client.evm.wallet.token_balances_paged('0x...', chain='eth')  # flattened
+      all_balances = await client.evm.wallet.token_balances_paged(address='0x...', chain='eth')  # flattened

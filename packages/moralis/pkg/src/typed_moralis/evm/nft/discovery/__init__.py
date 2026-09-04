@@ -4,4 +4,8 @@ from .trending_nfts_by_trade_volume import TrendingNftsByTradeVolume
 
 
 class Discovery(TrendingNftsByMarketCap, TrendingNftsByTradeVolume):
-  """Grouped Moralis Discovery endpoints."""
+  """Trending EVM NFT collections, ranked by market cap or by trading volume.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

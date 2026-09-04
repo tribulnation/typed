@@ -4,4 +4,8 @@ from .resync_nft_traits import ResyncNftTraits
 
 
 class Utilities(ResyncNftMetadata, ResyncNftTraits):
-  """Grouped Moralis Utilities endpoints."""
+  """Resync jobs that force Moralis to refresh a stale NFT's cached metadata or traits.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

@@ -44,7 +44,7 @@ from typed_moralis import AuthError, BadRequest, Moralis, RateLimited
 async with Moralis.new() as client:
   try:
     await client.evm.wallet.history(
-      '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+      address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
     )
   except AuthError:
     ...  # check MORALIS_API_KEY

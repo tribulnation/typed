@@ -5,7 +5,11 @@ from .chain_metrics import ChainMetrics
 from .chain_metrics_timeseries import ChainMetricsTimeseries
 
 
-class Endpoints(
+class GlobalMetrics(
   CategoryMetrics, CategoryMetricsTimeseries, ChainMetrics, ChainMetricsTimeseries
 ):
-  """Grouped Moralis Endpoints endpoints."""
+  """Trading-volume and category-metrics lookups, by chain or by category, current and timeseries.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/universal/overview)
+  """

@@ -13,4 +13,8 @@ class Metadata(
   NftMetadataEndpoint,
   NftMetadataBatch,
 ):
-  """Grouped Moralis Metadata endpoints."""
+  """Contract- and token-level NFT metadata, plus per-collection summary stats, single or batched.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

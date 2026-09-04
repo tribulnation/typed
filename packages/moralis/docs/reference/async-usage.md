@@ -15,7 +15,7 @@ from typed_moralis import Moralis
 
 client = Moralis.new()
 balances = await client.evm.wallet.token_balances(
-  '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+  address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
 )
 print(balances['result'])
 ```
@@ -32,7 +32,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   balances = await client.evm.wallet.token_balances(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   metadata = await client.evm.token.metadata.token_metadata(
     chain='eth', addresses=['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'],
@@ -40,10 +40,11 @@ async with Moralis.new() as client:
 ```
 
 Moralis routes its 7 product groups (`evm`, `bitcoin`, `solana`, `universal`, `cortex`,
-`auth`, `streams`) to 5 different hosts -- `evm`/`bitcoin`/`universal` share one, since
-they're all served from Moralis's "deep-index" API. Entering the top-level client takes
-ownership of all 5 transports up front; each still opens its actual HTTP connection
-lazily, on that transport's own first request, exactly like Quick Usage above.
+`auth`, `streams`) across 5 different hosts, but every product shares one underlying HTTP
+transport -- each product already knows its own real host, so there's nothing to
+configure per call or per product. Entering the top-level client opens that one shared
+transport; the actual HTTP connection itself still opens lazily, on the first request,
+exactly like Quick Usage above.
 
 Moralis has no client-side streaming surface: `streams` manages server-side webhook
 subscriptions over plain REST calls, not a socket you read from in Python, so there's no

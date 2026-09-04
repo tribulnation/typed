@@ -5,4 +5,8 @@ from .top_token_holders import TopTokenHolders
 
 
 class Holders(HistoricalTokenHolders, TokenHolderMetricsEndpoint, TopTokenHolders):
-  """Grouped Moralis Holders endpoints."""
+  """ERC20 token holder counts, ranked holder lists, and historical holder trends.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

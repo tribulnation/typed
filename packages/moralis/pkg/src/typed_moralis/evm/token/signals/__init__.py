@@ -4,4 +4,8 @@ from .top_traders_by_token import TopTradersByToken
 
 
 class Signals(Snipers, TopTradersByToken):
-  """Grouped Moralis Signals endpoints."""
+  """Sniper and top-trader detection for an ERC20 token or trading pair.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

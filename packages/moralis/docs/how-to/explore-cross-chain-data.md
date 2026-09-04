@@ -9,12 +9,12 @@ metrics, and trending tokens spanning multiple chains at once.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  found = await client.universal.entity.endpoints.entity_search(query='uniswap')
+  found = await client.universal.entity.entity_search(query='uniswap')
   print(found['result'].get('entities'))
 ```
 
 An entity is an organization, project, or address cluster Moralis has linked together
-(a protocol's known contracts, for example). `endpoints.entity(entity_id)` fetches one
+(a protocol's known contracts, for example). `entity.get(entity_id)` fetches one
 entity's full profile by the `id` a search result returns.
 
 ## Chain And Category Metrics
@@ -23,8 +23,8 @@ entity's full profile by the `id` a search result returns.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  chain_metrics = await client.universal.global_.endpoints.chain_metrics()
-  category_metrics = await client.universal.global_.endpoints.category_metrics()
+  chain_metrics = await client.universal.global_metrics.chain_metrics()
+  category_metrics = await client.universal.global_metrics.category_metrics()
   print(chain_metrics, category_metrics)
 ```
 

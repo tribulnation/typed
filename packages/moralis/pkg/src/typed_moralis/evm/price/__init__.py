@@ -5,4 +5,8 @@ from .token_prices_batch import TokenPricesBatch
 
 
 class Price(OhlcByPairAddress, TokenPrice, TokenPricesBatch):
-  """Grouped Moralis Price endpoints."""
+  """Real-time and historical pricing for tokens and NFTs across EVM chains, including OHLC candlesticks, floor prices, and trading volume.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/price/overview)
+  """

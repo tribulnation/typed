@@ -3,4 +3,8 @@ from .addresses_from_xpub import AddressesFromXpub
 
 
 class Utility(AddressesFromXpub):
-  """Grouped Moralis Utility endpoints."""
+  """Native Bitcoin xpub tooling — deriving every address (and its transfer count) from a Bitcoin extended public key.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/bitcoin/utility/overview)
+  """

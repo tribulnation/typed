@@ -5,4 +5,8 @@ from .token_score_timeseries import TokenScoreTimeseries
 
 
 class Metadata(TokenMetadata, TokenScore, TokenScoreTimeseries):
-  """Grouped Moralis Metadata endpoints."""
+  """ERC20 token metadata, plus Moralis's own token score and its history.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

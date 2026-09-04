@@ -13,4 +13,8 @@ class Prices(
   SalePriceByTokenId,
   TimeseriesFloorPriceByContract,
 ):
-  """Grouped Moralis Prices endpoints."""
+  """Floor and sale price data for NFT collections and individual tokens, including historical floor-price series.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

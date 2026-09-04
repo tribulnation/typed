@@ -39,4 +39,8 @@ class Wallet(
   WalletPnlSummary,
   WalletStats,
 ):
-  """Grouped Moralis Wallet endpoints."""
+  """Wallet balances, transfers, DeFi positions, PnL, NFTs, and fully decoded wallet activity for EVM addresses across 30+ chains.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/wallet/overview)
+  """

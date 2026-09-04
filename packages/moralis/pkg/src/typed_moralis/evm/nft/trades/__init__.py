@@ -4,4 +4,8 @@ from .nft_trades_by_token_id import NftTradesByTokenId
 
 
 class Trades(NftTradesByCollection, NftTradesByTokenId):
-  """Grouped Moralis Trades endpoints."""
+  """Historical trade activity for an NFT collection, or for one specific token within it.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

@@ -23,7 +23,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   price = await client.evm.price.token_price(
-    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', chain='eth',
+    'eth', address='0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   )
   print(price.get('usdPrice'))
 ```
@@ -35,10 +35,10 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   score = await client.evm.token.metadata.token_score(
-    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', chain='eth',
+    'eth', token_address='0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   )
   holders = await client.evm.token.holders.token_holder_metrics(
-    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', chain='eth',
+    'eth', token_address='0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   )
   print(score.get('score'), holders['totalHolders'])
 ```

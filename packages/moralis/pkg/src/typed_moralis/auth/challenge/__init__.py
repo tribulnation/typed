@@ -15,4 +15,8 @@ class Challenge(
   VerifyEvmChallenge,
   VerifySolanaChallenge,
 ):
-  """Grouped Moralis Challenge endpoints."""
+  """Sign-In with Ethereum style challenge request/verify pairs, for EVM, Solana, and Aptos wallets, used to open a new Auth API session.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/auth-api/overview)
+  """

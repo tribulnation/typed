@@ -9,9 +9,9 @@ Solana's own `mainnet`/`devnet` networks.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  native = await client.solana.wallet.native_balance('mainnet', 'address...')
-  tokens = await client.solana.wallet.token_balances('mainnet', 'address...')
-  portfolio = await client.solana.wallet.wallet_portfolio('mainnet', 'address...')
+  native = await client.solana.wallet.native_balance('mainnet', address='address...')
+  tokens = await client.solana.wallet.token_balances('mainnet', address='address...')
+  portfolio = await client.solana.wallet.wallet_portfolio('mainnet', address='address...')
   print(native['solana'], tokens, portfolio['tokens'])
 ```
 
@@ -24,7 +24,7 @@ every SPL token the wallet holds; `wallet_portfolio` combines both plus NFTs in 
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  metadata = await client.solana.token.token_metadata('mainnet', 'mint_address...')
+  metadata = await client.solana.token.token_metadata('mainnet', address='mint_address...')
   print(metadata['name'], metadata['symbol'])
 ```
 

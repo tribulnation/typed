@@ -4,4 +4,8 @@ from .owners_by_token_id import OwnersByTokenId
 
 
 class Ownership(OwnersByCollection, OwnersByTokenId):
-  """Grouped Moralis Ownership endpoints."""
+  """Current owners of an NFT collection, or of one specific token within it.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

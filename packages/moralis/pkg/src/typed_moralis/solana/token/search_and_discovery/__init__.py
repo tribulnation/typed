@@ -3,14 +3,13 @@ from .pump_fun_bonding_status import PumpFunBondingStatus
 from .pump_fun_bonding_tokens import PumpFunBondingTokens
 from .pump_fun_graduated_tokens import PumpFunGraduatedTokens
 from .pump_fun_new_tokens import PumpFunNewTokens
-from .token_search import TokenSearch
 
 
 class SearchAndDiscovery(
-  PumpFunBondingStatus,
-  PumpFunBondingTokens,
-  PumpFunGraduatedTokens,
-  PumpFunNewTokens,
-  TokenSearch,
+  PumpFunBondingStatus, PumpFunBondingTokens, PumpFunGraduatedTokens, PumpFunNewTokens
 ):
-  """Grouped Moralis SearchAndDiscovery endpoints."""
+  """Pump.fun bonding-curve status and new/graduated token listings.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """

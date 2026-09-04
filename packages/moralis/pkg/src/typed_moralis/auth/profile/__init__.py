@@ -5,4 +5,8 @@ from .addresses_that_are_bound_to_the_specific_profileid import (
 
 
 class Profile(AddressesThatAreBoundToTheSpecificProfileid):
-  """Grouped Moralis Profile endpoints."""
+  """Lookup of the wallet addresses currently bound to a given Auth API profileId.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/auth-api/overview)
+  """

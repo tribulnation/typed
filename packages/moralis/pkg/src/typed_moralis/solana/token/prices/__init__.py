@@ -3,4 +3,8 @@ from .token_price_batch import TokenPriceBatch
 
 
 class Prices(TokenPriceBatch):
-  """Grouped Moralis Prices endpoints."""
+  """Batched SPL token price lookups.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """

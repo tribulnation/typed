@@ -11,18 +11,16 @@ own server.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  stream = await client.streams.evm.create_stream({
-    'webhookUrl': 'https://example.com/webhook',
-    'description': 'USDC transfers',
-    'chainIds': ['0x1'],
-  })
-  streams = await client.streams.evm.all_streams(limit=100)
+  stream = await client.streams.evm.create_stream(
+    webhook_url='https://example.com/webhook',
+    description='USDC transfers',
+    chain_ids=['0x1'],
+  )
+  streams = await client.streams.evm.all_streams(100)
   await client.streams.evm.add_address_to_stream(
-    stream['id'], {'address': '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045'},
+    stream['id'], address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
   )
-  await client.streams.evm.update_stream_status(
-    stream['id'], {'status': 'active'},
-  )
+  await client.streams.evm.update_stream_status(stream['id'], status='active')
   print(stream['id'], streams['result'])
 ```
 
@@ -36,8 +34,8 @@ one of `'active'`, `'paused'`, `'error'`, or `'terminated'`.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  history = await client.streams.history.history(limit=100)
-  stats = await client.streams.stats.stats()
+  history = await client.streams.history.entries(limit=100)
+  stats = await client.streams.stats.account()
   print(history['result'], stats)
 ```
 
@@ -51,7 +49,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   settings = await client.streams.settings.project_settings()
-  await client.streams.settings.set_project_settings({'region': 'us-east-1'})
+  await client.streams.settings.set_project_settings('us-east-1')
   print(settings)
 ```
 

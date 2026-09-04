@@ -4,4 +4,8 @@ from .nft_transfers_by_token_id import NftTransfersByTokenId
 
 
 class Transfers(NftTransfersByContract, NftTransfersByTokenId):
-  """Grouped Moralis Transfers endpoints."""
+  """NFT transfer history, by contract address or by individual token ID.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

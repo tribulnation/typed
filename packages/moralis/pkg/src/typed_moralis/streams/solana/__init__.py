@@ -3,8 +3,8 @@ from .add_address_to_stream import AddAddressToStream
 from .address_from_stream import AddressFromStream
 from .addresses_by_stream import AddressesByStream
 from .create_stream import CreateStream
+from .delete_stream import DeleteStream
 from .send_webhook_data_by_block_number import SendWebhookDataByBlockNumber
-from .stream import StreamEndpoint
 from .stream_by_id import StreamById
 from .streams import Streams
 from .update_stream import UpdateStream
@@ -17,12 +17,16 @@ class Solana(
   AddressFromStream,
   AddressesByStream,
   CreateStream,
+  DeleteStream,
   SendWebhookDataByBlockNumber,
-  StreamEndpoint,
   StreamById,
   Streams,
   UpdateStream,
   UpdateStreamStatus,
   WebhookDataByBlockNumber,
 ):
-  """Grouped Moralis Solana endpoints."""
+  """Real-time Solana transaction data delivered via webhooks — address, program-ID, and mint-address filtering, plus a network-wide firehose mode.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/streams/solana-streams)
+  """

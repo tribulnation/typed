@@ -5,4 +5,8 @@ from .token_analytics_timeseries import TokenAnalyticsTimeseries
 
 
 class MarketMetrics(TokenAnalytics, TokenAnalyticsBatch, TokenAnalyticsTimeseries):
-  """Grouped Moralis MarketMetrics endpoints."""
+  """Trading analytics for one or many SPL tokens, including a timeseries view.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """

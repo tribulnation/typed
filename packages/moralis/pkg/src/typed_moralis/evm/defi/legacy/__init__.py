@@ -5,4 +5,8 @@ from .wallet_protocols import WalletProtocols
 
 
 class Legacy(DetailedPositions, WalletPositions, WalletProtocols):
-  """Grouped Moralis Legacy endpoints."""
+  """Deprecated per-wallet DeFi position, protocol summary, and per-protocol detail endpoints, kept for backward compatibility and superseded by the newer DeFi positions endpoint.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/defi/overview)
+  """

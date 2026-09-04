@@ -4,4 +4,8 @@ from .token_price import TokenPrice
 
 
 class Price(OhlcByPairAddress, TokenPrice):
-  """Grouped Moralis Price endpoints."""
+  """Real-time and historical price data for Solana SPL tokens, including OHLC candlestick data.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/price/overview)
+  """

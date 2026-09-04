@@ -15,4 +15,8 @@ class Bind(
   VerifyBindRequest,
   VerifyRemoveBindRequest,
 ):
-  """Grouped Moralis Bind endpoints."""
+  """Bind and unbind additional wallet addresses to an existing Auth API profileId: request/verify pairs for linking a second address to, or removing one from, one profile.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/auth-api/overview)
+  """

@@ -6,4 +6,8 @@ from .wallet_portfolio import WalletPortfolio
 
 
 class Wallet(NativeBalance, NftBalances, TokenBalances, WalletPortfolio):
-  """Grouped Moralis Wallet endpoints."""
+  """Solana wallet data — native SOL balance, SPL token holdings, NFT balances, portfolio overview, and swap history.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/wallet/overview)
+  """

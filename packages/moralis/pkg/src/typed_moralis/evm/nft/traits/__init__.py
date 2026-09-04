@@ -5,4 +5,8 @@ from .traits_by_collection_paginated import TraitsByCollectionPaginated
 
 
 class Traits(NftTraitsByCollection, NftsByTraits, TraitsByCollectionPaginated):
-  """Grouped Moralis Traits endpoints."""
+  """NFT trait listing and rarity data for a collection, plus trait-based NFT search.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

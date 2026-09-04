@@ -3,4 +3,8 @@ from .trending_tokens import TrendingTokens
 
 
 class Token(TrendingTokens):
-  """Grouped Moralis Token endpoints."""
+  """Search, score, rank, and analyze tokens across EVM chains and Solana through one multichain interface.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/universal/token/overview)
+  """

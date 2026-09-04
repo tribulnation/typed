@@ -5,4 +5,8 @@ from .sparkline import Sparkline
 
 
 class Price(CurrentPrice, HistoricalPrice, Sparkline):
-  """Grouped Moralis Price endpoints."""
+  """BTC market data, served through Moralis's Universal Token Price endpoints via the `bitcoin` chain alias and `native` token alias.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/bitcoin/price/overview)
+  """

@@ -4,4 +4,8 @@ from .wallet_history import WalletHistory
 
 
 class Wallet(BtcBalances, WalletHistory):
-  """Grouped Moralis Wallet endpoints."""
+  """Transaction history and token balances for any Bitcoin address or xpub.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/bitcoin/wallet/overview)
+  """

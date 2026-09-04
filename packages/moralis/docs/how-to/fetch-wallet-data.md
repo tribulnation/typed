@@ -10,7 +10,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   balances = await client.evm.wallet.token_balances(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(balances['result'])
 ```
@@ -25,7 +25,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   history = await client.evm.wallet.history(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(history['result'][0]['block_timestamp'])
 ```
@@ -41,7 +41,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   transfers = await client.evm.wallet.token_transfers(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(transfers['result'])
 ```
@@ -58,7 +58,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   net_worth = await client.evm.wallet.wallet_net_worth(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chains=['eth', 'polygon'],
+    ['eth', 'polygon'], address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
   )
   address = await client.evm.wallet.resolve_address_from_ens_domain('vitalik.eth')
   print(net_worth.get('total_networth_usd'), address)

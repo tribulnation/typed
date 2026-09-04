@@ -3,4 +3,8 @@ from .token_transfers_by_contract import TokenTransfersByContract
 
 
 class Transfers(TokenTransfersByContract):
-  """Grouped Moralis Transfers endpoints."""
+  """ERC20 token transfer history by contract address.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

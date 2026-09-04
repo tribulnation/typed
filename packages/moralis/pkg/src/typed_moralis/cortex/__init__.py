@@ -3,4 +3,8 @@ from .chat import Chat
 
 
 class Cortex(Chat):
-  """Grouped Moralis Cortex endpoints."""
+  """Cortex API: an LLM-backed chat endpoint that answers natural-language questions grounded in Moralis's own onchain data. Deprecated in favor of Onchain Skills.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/cortex-api/chat)
+  """
