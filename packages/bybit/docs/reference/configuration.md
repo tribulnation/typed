@@ -9,7 +9,7 @@ credentials specifically.
 | --- | --- | --- |
 | `api_key` | `None` | Falls back to `BYBIT_API_KEY` |
 | `api_secret` | `None` | Falls back to `BYBIT_API_SECRET` |
-| `public` | `False` | Build a credential-free client, restricted to `client.http.market` and the public WebSocket streams |
+| `public` | `False` | Build a credential-free client, restricted to `client.market` and the public WebSocket streams |
 | `region` | `'global'` | Target a documented regional host — see [Regional Endpoints](#regional-endpoints) |
 | `testnet` | `False` | Target that region's testnet host instead of mainnet |
 | `base_url` | `None` | Fully-qualified REST base URL override; WebSocket URLs are still resolved from `region`/`testnet` |
@@ -83,7 +83,7 @@ from typed_bybit import Bybit
 
 for region in ('global', 'eu'):
   async with Bybit.new(public=True, region=region) as client:
-    spot = await client.http.market.instruments(category='spot')
+    spot = await client.market.instruments(category='spot')
     print(region, 'spot instruments:', len(spot['list']))
 ```
 
@@ -95,7 +95,7 @@ from typed_bybit import Bybit
 
 for region in ('global', 'eu'):
   async with Bybit.new(public=True, region=region) as client:
-    info = await client.http.market.instruments(category='spot', symbol='BTCUSDT')
+    info = await client.market.instruments(category='spot', symbol='BTCUSDT')
     print(region, 'BTCUSDT listed:', bool(info['list']))
 ```
 
@@ -109,9 +109,9 @@ On `region='eu'` `BTCUSDT` may be absent from the spot catalogue while `market.t
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True, region='eu') as client:
-  listed = await client.http.market.instruments(category='spot', symbol='BTCUSDT')
+  listed = await client.market.instruments(category='spot', symbol='BTCUSDT')
   print('BTCUSDT in eu catalogue:', bool(listed['list']))
-  ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+  ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
   print('BTCUSDT ticker on eu:', ticker['list'][0]['lastPrice'])
 ```
 
@@ -143,11 +143,11 @@ from typed_bybit import Bybit, ApiError, ValidationError
 
 async with Bybit.new(public=True, region='eu') as client:
   try:
-    await client.http.market.tickers(category='linear', symbol='BTCUSDT')
+    await client.market.tickers(category='linear', symbol='BTCUSDT')
   except ApiError as e:
     print('tickers(linear):', type(e).__name__, e.args[0])
   try:
-    await client.http.market.instruments(category='linear')
+    await client.market.instruments(category='linear')
   except ValidationError:
     print('instruments(linear): ValidationError — empty category, not an empty list')
 ```
@@ -172,17 +172,17 @@ connections — they always resolve from `region`/`testnet`.
 
 ## Connection Pooling
 
-`client.http` owns one `HttpClient`, shared by `client.http.market` and `client.http.account`
-alike, since `Http` is a router that instantiates both from the same base URL, credentials and
-`HttpClient`. Enter the top-level client as an async context manager so that one connection
-pool is reused across every call:
+`client.client` is the one shared `HttpTransport`, reused by `client.market`,
+`client.account`, and every other REST product domain alike — each is built from that same
+transport rather than opening its own. Enter the top-level client as an async context
+manager so that one connection pool is reused across every call:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=1)
-  trades = await client.http.market.recent_trades(category='spot', symbol='BTCUSDT', limit=1)
+  book = await client.market.orderbook(category='spot', symbol='BTCUSDT', limit=1)
+  trades = await client.market.recent_trades(category='spot', symbol='BTCUSDT', limit=1)
   print(book['s'], trades['list'][0]['price'])
 ```
 
@@ -199,7 +199,7 @@ override:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  tickers = await client.http.market.tickers(category='linear', validate=False)
+  tickers = await client.market.tickers(category='linear', validate=False)
   print(len(tickers['list']))
 ```
 
@@ -220,16 +220,18 @@ validation; a changed or removed one does.
 
 ## Raw Requests
 
-For anything not yet covered by a typed method, or to inspect the untouched envelope:
+For anything not yet covered by a typed method, or to inspect the untouched envelope, use
+`client.client` -- the shared `HttpTransport` every generated REST method calls into:
 
 ```python
 from typed_bybit import Bybit
+from typed_bybit.core.envelope import unwrap
 
 async with Bybit.new(public=True) as client:
-  r = await client.http.request('GET', '/v5/market/tickers', params={'category': 'spot', 'symbol': 'BTCUSDT'})
+  r = await client.client.request('GET', '/v5/market/tickers', params={'category': 'spot', 'symbol': 'BTCUSDT'})
   print(r.status_code)
-  print(client.http.result(r)['list'][0]['lastPrice'])
+  print(unwrap(r)['list'][0]['lastPrice'])
 ```
 
-`request` returns the raw `httpx.Response`. `result(response, adapter=None, validate=None)`
-unwraps the envelope and raises on a non-zero `retCode`, exactly as the generated methods do.
+`client.client.request` returns the raw `httpx.Response`. `unwrap(response)` unwraps the
+envelope and raises on a non-zero `retCode`, exactly as the generated methods do.

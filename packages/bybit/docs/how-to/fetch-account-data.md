@@ -1,6 +1,6 @@
 # Fetch Account Data
 
-`client.http.account` and `client.http.position` report balances, positions, fills, and
+`client.account` and `client.position` report balances, positions, fills, and
 ledger activity. They need credentials — see [API Keys Setup](../api-keys.md).
 
 ## Wallet Balance
@@ -12,7 +12,7 @@ ledger activity. They need credentials — see [API Keys Setup](../api-keys.md).
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  balance = await client.http.account.wallet_balance(account_type='UNIFIED')
+  balance = await client.account.wallet_balance(account_type='UNIFIED')
   account = balance['list'][0]
   print(account['totalEquity'])
   for coin in account['coin']:
@@ -24,14 +24,14 @@ non-zero balance or liability comes back.
 
 ## Positions
 
-`client.http.position.list` reports open positions for `'linear'`, `'inverse'`, or
+`client.position.list` reports open positions for `'linear'`, `'inverse'`, or
 `'option'` — spot has no positions, so `category` never accepts `'spot'` here:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  page = await client.http.position.list(category='linear', settle_coin='USDT')
+  page = await client.position.list(category='linear', settle_coin='USDT')
   for position in page['list']:
     print(position['symbol'], position['side'], position['size'], position['unrealisedPnl'])
 ```
@@ -42,14 +42,14 @@ Pass `symbol` to look up one symbol regardless of whether a position exists, or
 
 ## Trade History
 
-`client.http.trade.trade_history` returns your executions (fills), not order state —
+`client.trade.trade_history` returns your executions (fills), not order state —
 one order can produce several:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  page = await client.http.trade.trade_history(category='spot', symbol='BTCUSDT', limit=50)
+  page = await client.trade.trade_history(category='spot', symbol='BTCUSDT', limit=50)
   for execution in page['list']:
     print(execution['execId'], execution['execPrice'], execution['execQty'])
 ```
@@ -60,14 +60,14 @@ It also has a `trade_history_paged` iterator.
 
 ## Transaction Log
 
-`client.http.account.transaction_log` reports ledger-level account activity in a Unified
+`client.account.transaction_log` reports ledger-level account activity in a Unified
 account — transfers, trades, funding, settlements, and more — going back up to two years:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  page = await client.http.account.transaction_log(category='linear', limit=50)
+  page = await client.account.transaction_log(category='linear', limit=50)
   for entry in page['list']:
     print(entry['type'], entry['currency'], entry['change'], entry['cashBalance'])
 ```

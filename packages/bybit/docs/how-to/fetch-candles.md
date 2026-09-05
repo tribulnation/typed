@@ -16,7 +16,7 @@ positional-row response shape, but each returns a different price series.
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)
+  candles = await client.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)
   for start, open_, high, low, close, volume, turnover in candles['list']:
     print(start, open_, high, low, close, volume, turnover)
 ```
@@ -39,9 +39,9 @@ These three drop the volume and turnover columns, leaving start time, open, high
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  mark = await client.http.market.mark_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
-  index = await client.http.market.index_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
-  premium = await client.http.market.premium_index_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
+  mark = await client.market.mark_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
+  index = await client.market.index_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
+  premium = await client.market.premium_index_price_kline(category='linear', symbol='BTCUSDT', interval='60', limit=2)
   print(mark['list'][0])
   print(index['list'][0])
   print(premium['list'][0])
@@ -61,7 +61,7 @@ from typed_bybit import Bybit
 async with Bybit.new(public=True) as client:
   end = datetime.now(timezone.utc)
   start = end - timedelta(hours=24)
-  candles = await client.http.market.kline(
+  candles = await client.market.kline(
     category='spot', symbol='BTCUSDT', interval='60',
     start=start, end=end, limit=1000,
   )

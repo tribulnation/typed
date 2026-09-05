@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/bybit">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bybit/media/bybit-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bybit/media/bybit-light.svg">
-      <img alt="Typed Bybit" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bybit/media/bybit-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/bybit-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/bybit-light.svg">
+      <img alt="Typed Bybit" src="https://tribulnation.com/media/lockups/bybit-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -38,7 +38,7 @@
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+  ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
   print(ticker['list'][0]['lastPrice'])
 ```
 

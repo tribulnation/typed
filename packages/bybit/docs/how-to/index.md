@@ -37,7 +37,7 @@ from typed_bybit import Bybit
 
 async def main():
   async with Bybit.new(public=True) as client:
-    server_time = await client.http.market.time()
+    server_time = await client.market.time()
     print(server_time['timeSecond'])
 
 asyncio.run(main())

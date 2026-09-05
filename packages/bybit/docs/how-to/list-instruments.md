@@ -16,7 +16,7 @@ size, quantity steps, leverage bounds, launch and delivery times.
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  info = await client.http.market.instruments(category='spot', symbol='BTCUSDT')
+  info = await client.market.instruments(category='spot', symbol='BTCUSDT')
   assert info['category'] == 'spot'
   pair = info['list'][0]
   print(pair['baseCoin'], pair['quoteCoin'], pair['status'])
@@ -39,7 +39,7 @@ Type checkers follow the literal:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  info = await client.http.market.instruments(category='linear', symbol='BTCUSDT')
+  info = await client.market.instruments(category='linear', symbol='BTCUSDT')
   if info['category'] == 'spot':
     print(info['list'][0]['marginTrading'])
   elif info['category'] == 'option':
@@ -56,7 +56,7 @@ async with Bybit.new(public=True) as client:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  info = await client.http.market.instruments(category='linear', base_coin='BTC', status='Trading')
+  info = await client.market.instruments(category='linear', base_coin='BTC', status='Trading')
   print([i['symbol'] for i in info['list']])
 ```
 
@@ -75,7 +75,7 @@ async with Bybit.new(public=True) as client:
   symbols: list[str] = []
   cursor = None
   while True:
-    page = await client.http.market.instruments(category='linear', limit=200, cursor=cursor)
+    page = await client.market.instruments(category='linear', limit=200, cursor=cursor)
     assert page['category'] != 'spot'
     symbols += [i['symbol'] for i in page['list']]
     cursor = page['nextPageCursor']
@@ -94,7 +94,7 @@ Contracts also carry a tiered risk limit table, available separately:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  tiers = await client.http.market.risk_limit(category='linear', symbol='BTCUSDT')
+  tiers = await client.market.risk_limit(category='linear', symbol='BTCUSDT')
   for tier in tiers['list'][:3]:
     print(tier['id'], tier['riskLimitValue'], tier['maxLeverage'], tier['maintenanceMargin'])
 ```

@@ -6,7 +6,7 @@
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+  ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
   assert ticker['category'] == 'spot'
   spot = ticker['list'][0]
   print(spot['lastPrice'], spot['price24hPcnt'], spot['volume24h'])
@@ -20,7 +20,7 @@ Omit `symbol` to get the whole category in one response. There is no pagination 
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  tickers = await client.http.market.tickers(category='linear')
+  tickers = await client.market.tickers(category='linear')
   print(len(tickers['list']))
   top = sorted(tickers['list'], key=lambda t: float(t['turnover24h']), reverse=True)[:5]
   for t in top:
@@ -39,7 +39,7 @@ Like `market.instruments`, the return type is a union tagged by `category`:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  tickers = await client.http.market.tickers(category='linear', symbol='BTCUSDT')
+  tickers = await client.market.tickers(category='linear', symbol='BTCUSDT')
   if tickers['category'] == 'spot':
     print(tickers['list'][0]['lastPrice'])
   elif tickers['category'] == 'option':
@@ -55,7 +55,7 @@ Options are keyed by expiry, so filter them with `base_coin` and optionally `exp
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  tickers = await client.http.market.tickers(category='option', base_coin='BTC')
+  tickers = await client.market.tickers(category='option', base_coin='BTC')
   print(len(tickers['list']), tickers['list'][0]['symbol'])
 ```
 
@@ -65,7 +65,7 @@ async with Bybit.new(public=True) as client:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  trades = await client.http.market.recent_trades(category='spot', symbol='BTCUSDT', limit=5)
+  trades = await client.market.recent_trades(category='spot', symbol='BTCUSDT', limit=5)
   for trade in trades['list']:
     print(trade['time'], trade['side'], trade['price'], trade['size'])
 ```
@@ -75,7 +75,7 @@ Trades are newest first. `side` is the taker's side, `'Buy'` or `'Sell'`. `limit
 fields and drop `isRPITrade`.
 
 This is a one-shot snapshot of at most a few hundred prints. There is no historical trade
-endpoint, and no public trade stream — `client.ws.spot` only streams the order book today, see
+endpoint, and no public trade stream — `client.spot` only streams the order book today, see
 [Async Usage](../reference/async-usage.md).
 
 ## Price Bands
@@ -86,7 +86,7 @@ The band an order must fall inside, for a single symbol:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  band = await client.http.market.price_limit(category='linear', symbol='BTCUSDT')
+  band = await client.market.price_limit(category='linear', symbol='BTCUSDT')
   print(band['buyLmt'], band['sellLmt'])
 ```
 
@@ -96,11 +96,11 @@ async with Bybit.new(public=True) as client:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  funding = await client.http.market.funding_history(category='linear', symbol='BTCUSDT', limit=3)
+  funding = await client.market.funding_history(category='linear', symbol='BTCUSDT', limit=3)
   for rate in funding['list']:
     print(rate['fundingRateTimestamp'], rate['fundingRate'])
 
-  oi = await client.http.market.open_interest(
+  oi = await client.market.open_interest(
     category='linear', symbol='BTCUSDT', interval_time='1h', limit=3,
   )
   for sample in oi['list']:

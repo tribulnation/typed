@@ -1,6 +1,6 @@
 # Manage Earn Instruments
 
-`client.http.finance` covers Bybit's earn products: `fixed_saving`, `easy_onchain`,
+`client.finance` covers Bybit's earn products: `fixed_saving`, `easy_onchain`,
 `hold_to_earn`, `advanced_earn`, and `byusdt`. They share the same list/position/subscribe/redeem
 shape; this guide works through `fixed_saving` as the worked example. Listing products is
 public; everything else needs credentials — see [API Keys Setup](../api-keys.md).
@@ -13,7 +13,7 @@ public; everything else needs credentials — see [API Keys Setup](../api-keys.m
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  products = await client.http.finance.fixed_saving.product(coin='USDT')
+  products = await client.finance.fixed_saving.product(coin='USDT')
   for product in products['list']:
     print(product['productId'], product['category'], product['duration'], product['status'])
 ```
@@ -29,7 +29,7 @@ Omit `coin` to list every coin's products. `category` is one of `'FixedTermSavin
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  positions = await client.http.finance.fixed_saving.position(category='FundPool')
+  positions = await client.finance.fixed_saving.position(category='FundPool')
   for position in positions['list']:
     print(position['positionId'], position['coin'], position['amount'], position['status'])
 ```
@@ -39,7 +39,7 @@ optional and combine as filters.
 
 ## Subscribe
 
-`finance.fixed_saving.place_order` takes one request dict and stakes into a product. Supply your
+`finance.fixed_saving.place_order` takes keyword arguments and stakes into a product. Supply your
 own `orderLinkId`, up to 36 characters, as an idempotency key — Bybit rejects the call if you
 reuse one:
 
@@ -48,14 +48,14 @@ import uuid
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  order = await client.http.finance.fixed_saving.place_order({
-    'productId': '10001',
-    'category': 'FundPool',
-    'coin': 'USDT',
-    'amount': '100',
-    'accountType': 'UNIFIED',
-    'orderLinkId': str(uuid.uuid4()),
-  })
+  order = await client.finance.fixed_saving.place_order(
+    product_id='10001',
+    category='FundPool',
+    coin='USDT',
+    amount='100',
+    account_type='UNIFIED',
+    order_link_id=str(uuid.uuid4()),
+  )
   print(order['orderId'], order['orderLinkId'])
 ```
 
@@ -71,11 +71,11 @@ from `finance.fixed_saving.product`.
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  redemption = await client.http.finance.fixed_saving.redeem({
-    'productId': '10001',
-    'category': 'FundPool',
-    'positionId': '20001',
-  })
+  redemption = await client.finance.fixed_saving.redeem(
+    product_id='10001',
+    category='FundPool',
+    position_id='20001',
+  )
   print(redemption['redeemAmount'], redemption['estEarnings'])
 ```
 

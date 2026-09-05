@@ -28,6 +28,7 @@ def resolve_credentials(
   api_secret: str | None,
   *,
   public: bool,
+  region: str = 'global',
 ) -> Credentials | None:
   """Resolve the one `Credentials` a client's HTTP and WebSocket transports share.
 
@@ -35,10 +36,20 @@ def resolve_credentials(
   already-resolved `Credentials | None` rather than resolving it themselves, so the two
   transports can't read the environment at different times and disagree.
 
+  Bybit's regional entities are separate accounts with separate keys (`BybitBase.new`'s
+  own docstring) — `region='global'` reads the plain `BYBIT_API_KEY`/`BYBIT_API_SECRET`
+  (unchanged, and still what an unprefixed `api_key`/`api_secret` override always means);
+  any other region reads a region-prefixed pair instead (`BYBIT_EU_API_KEY`/
+  `BYBIT_EU_API_SECRET` for `region='eu'`), never silently falling back to the global
+  pair — signing a request against one entity's host with a different entity's key is
+  exactly the kind of cross-account mixup this refuses to guess through.
+
   Args:
-    api_key: Bybit API key; read from `BYBIT_API_KEY` when omitted.
-    api_secret: Bybit API secret; read from `BYBIT_API_SECRET` when omitted.
+    api_key: Bybit API key; read from the environment when omitted (see `region`).
+    api_secret: Bybit API secret; read from the environment when omitted (see `region`).
     public: Skip resolution entirely and return `None`, for a credential-free client.
+    region: Which regional entity's credentials to read from the environment when
+      `api_key`/`api_secret` aren't passed explicitly.
 
   Raises:
     AuthError: `public` is false and no credentials were passed or found in the
@@ -46,12 +57,15 @@ def resolve_credentials(
   """
   if public:
     return None
-  api_key = api_key or os.environ.get('BYBIT_API_KEY')
-  api_secret = api_secret or os.environ.get('BYBIT_API_SECRET')
+  prefix = 'BYBIT_' if region == 'global' else f'BYBIT_{region.upper()}_'
+  key_var, secret_var = f'{prefix}API_KEY', f'{prefix}API_SECRET'
+  api_key = api_key or os.environ.get(key_var)
+  api_secret = api_secret or os.environ.get(secret_var)
   if not api_key or not api_secret:
     raise AuthError(
-      'No credentials: set BYBIT_API_KEY/BYBIT_API_SECRET, pass api_key/api_secret, '
-      'or build with `public=True` for the credential-free Market surface.'
+      f'No credentials for region {region!r}: set {key_var}/{secret_var}, pass '
+      'api_key/api_secret, or build with `public=True` for the credential-free Market '
+      'surface.'
     )
   return Credentials(api_key, api_secret)
 

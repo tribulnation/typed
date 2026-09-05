@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/bybit/pkg
-      - run: pip install ruff pyright build
+      - run: pip install ruff pyright pytest build
       - run: ruff check --select TID251 packages/bybit/pkg
       - run: pyright packages/bybit/pkg
       - run: cp packages/bybit/README.md packages/bybit/LICENSE packages/bybit/pkg/

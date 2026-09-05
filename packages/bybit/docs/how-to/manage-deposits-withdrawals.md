@@ -11,7 +11,7 @@ entry per supported chain:
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  addresses = await client.http.asset.deposit.master_address(coin='USDT')
+  addresses = await client.asset.deposit.master_address(coin='USDT')
   for chain in addresses['chains']:
     print(chain['chainType'], chain['addressDeposit'], chain['tagDeposit'])
 ```
@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  page = await client.http.asset.deposit.record(
+  page = await client.asset.deposit.record(
     coin='USDT',
     start_time=datetime.now(timezone.utc) - timedelta(days=7),
     end_time=datetime.now(timezone.utc),
@@ -44,7 +44,7 @@ most `limit` rows per call; walk the full history with `record_paged` instead �
 
 ## Submit A Withdrawal
 
-`asset.withdraw.create` takes one request dict and moves real funds — start with a small
+`asset.withdraw.create` moves real funds — start with a small
 amount until you've confirmed the address and chain are right:
 
 ```python
@@ -52,14 +52,14 @@ from datetime import datetime, timezone
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  result = await client.http.asset.withdraw.create({
-    'coin': 'USDT',
-    'chain': 'TRX',
-    'address': 'T...',
-    'amount': '10',
-    'timestamp': datetime.now(timezone.utc),
-    'accountType': 'FUND',
-  })
+  result = await client.asset.withdraw.create(
+    coin='USDT',
+    chain='TRX',
+    address='T...',
+    amount='10',
+    timestamp=datetime.now(timezone.utc),
+    account_type='FUND',
+  )
   print(result['id'])
 ```
 
@@ -76,7 +76,7 @@ when you need to force on-chain, off-chain, or a UID transfer explicitly.
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  page = await client.http.asset.withdraw.record(coin='USDT', limit=50)
+  page = await client.asset.withdraw.record(coin='USDT', limit=50)
   for withdrawal in page['rows']:
     print(withdrawal['withdrawId'], withdrawal['status'], withdrawal['amount'])
 ```

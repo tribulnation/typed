@@ -14,24 +14,24 @@ open lazily on first use.
 from typed_bybit import Bybit
 
 client = Bybit.new(public=True)
-ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
 print(ticker['list'][0]['lastPrice'])
 ```
 
 ## Context Manager Usage
 
 `async with Bybit.new(...) as client:` is the only thing the caller does. Underneath it,
-`client.http` (one shared HTTP connection pool) and all nine of `client.ws`'s WebSocket
-connections (`spot`, `linear`, `inverse`, `option`, `spread`, `rfq`, `private`, `trade`,
-`finance`) open concurrently, and every one of them closes cleanly on exit — the caller
-never separately enters `client.http` or an individual `client.ws.*` connection.
+the one shared REST connection pool and all nine WebSocket connections (`spot`, `linear`,
+`inverse`, `option`, `spread_ws`, `rfq_ws`, `private`, `trade_ws`, `finance_ws`) open
+concurrently, and every one of them closes cleanly on exit — the caller never separately
+enters an individual `client.*` connection.
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60')
-  book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
+  candles = await client.market.kline(category='spot', symbol='BTCUSDT', interval='60')
+  book = await client.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
 ```
 
 Use `async with` by default for multiple requests, long-lived sessions, any streaming
@@ -40,18 +40,18 @@ workflow, or code where explicit cleanup matters.
 ## Streams
 
 Bybit's WebSocket surface is nine separate connections, not one: seven public-category
-channels (`spot`, `linear`, `inverse`, `option`, `spread`, `rfq`, `finance`), one private
-channel (`private`), and one order-entry connection (`trade` — see below, it isn't a
-subscription).
+channels (`spot`, `linear`, `inverse`, `option`, `spread_ws`, `rfq_ws`, `finance_ws`), one
+private channel (`private`), and one order-entry connection (`trade_ws` — see below, it
+isn't a subscription).
 
-Each subscribe-shaped method on `client.ws.*` returns a `StreamManager`. Use `async with` on
+Each subscribe-shaped method on `client.*` returns a `StreamManager`. Use `async with` on
 it so the subscription is unsubscribed automatically when the block exits:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  async with client.ws.spot.orderbook(50, 'BTCUSDT') as book:
+  async with client.spot.orderbook(50, symbol='BTCUSDT') as book:
     async for update in book:
       print(update['s'], update['u'])
 ```
@@ -63,31 +63,31 @@ async with Bybit.new(public=True) as client:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.ws.spot.orderbook(50, 'BTCUSDT')
+  book = await client.spot.orderbook(50, symbol='BTCUSDT')
   async for update in book:
     print(update['s'], update['u'])
     break
   await book.unsubscribe()
 ```
 
-`client.ws.private.wallet()` works the same way, and needs credentials — see
+`client.private.wallet()` works the same way, and needs credentials — see
 [API Keys Setup](../api-keys.md).
 
 ## The WS Trade Connection
 
-`client.ws.trade` is request/reply order entry, not a subscription — don't lump it in with
-the streams above. `order_create(args)` builds and signs the `order.create` command frame; it
-does not send it:
+`client.trade_ws` is request/reply order entry, not a subscription — don't lump it in with
+the streams above. `order_create(request)` builds and signs the `order.create` command
+frame; it does not send it:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  frame = client.ws.trade.order_create({
+  frame = await client.trade_ws.order_create({
     'category': 'spot', 'symbol': 'BTCUSDT',
     'side': 'Buy', 'orderType': 'Limit', 'qty': '0.001', 'price': '20000',
   })
-  reply = await client.ws.trade.socket.rpc_request(frame)
+  reply = await client.trade_ws.client.rpc_request(frame)
 ```
 
 Building the frame separately from sending it lets you inspect or compare a command's exact

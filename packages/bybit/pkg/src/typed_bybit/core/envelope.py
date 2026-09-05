@@ -20,7 +20,7 @@ from typed_core.exceptions import (
   ValidationError,
 )
 
-from .validation import TypedDict
+from typed_core.validation import TypedDict
 
 
 class Envelope(TypedDict):

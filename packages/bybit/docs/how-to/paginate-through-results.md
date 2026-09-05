@@ -20,34 +20,37 @@ an **empty string** means there are no further pages.
 `market.instruments` with `category='spot'` is **not** paginated — that variant has no
 `nextPageCursor` field at all, and returns every pair in one response.
 
-Each `*_paged` method takes the same arguments as the single-request one minus `cursor`, which
-it drives itself, plus an optional `max_pages`. It yields whole pages, so the response type is
-unchanged:
+`open_interest_paged`, `risk_limit_paged`, `delivery_price_paged` and `long_short_ratio_paged`
+return a `PaginatedResponse`: `async for` walks it one page of *rows* at a time, and `await`
+instead flattens every page into one list. There is no `max_pages` — the walk runs to the end:
+
+```python
+from typed_bybit import Bybit
+
+async with Bybit.new(public=True) as client:
+  # Awaited: every row, flattened.
+  samples = await client.market.open_interest_paged(
+    category='linear', symbol='BTCUSDT', interval_time='1h', limit=200,
+  )
+  print(len(samples))
+
+  # Iterated: one page of rows at a time.
+  async for page in client.market.risk_limit_paged(category='linear'):
+    print(len(page), page[0]['id'])
+```
+
+`market.instruments_paged` is the one exception: `linear`/`inverse` and `option` return
+different row shapes, so it stays a plain async iterator over whole response pages instead,
+and takes an optional `max_pages`:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
   symbols: list[str] = []
-  async for page in client.http.market.instruments_paged(category='linear', limit=200):
+  async for page in client.market.instruments_paged(category='linear', limit=200):
     symbols += [i['symbol'] for i in page['list']]
   print(len(symbols))
-```
-
-Pass `max_pages` when you only want the first few, which also bounds a walk over a surface that
-keeps growing:
-
-```python
-from typed_bybit import Bybit
-
-async with Bybit.new(public=True) as client:
-  pages = [
-    page
-    async for page in client.http.market.open_interest_paged(
-      category='linear', symbol='BTCUSDT', interval_time='1h', limit=200, max_pages=3,
-    )
-  ]
-  print(len(pages), sum(len(page['list']) for page in pages))
 ```
 
 The equivalent hand-written loop, if you want to hold the cursor yourself:
@@ -59,7 +62,7 @@ async with Bybit.new(public=True) as client:
   symbols: list[str] = []
   cursor = None
   while True:
-    page = await client.http.market.instruments(category='linear', limit=200, cursor=cursor)
+    page = await client.market.instruments(category='linear', limit=200, cursor=cursor)
     assert page['category'] != 'spot'
     symbols += [i['symbol'] for i in page['list']]
     cursor = page['nextPageCursor']
@@ -98,7 +101,7 @@ from typed_bybit import Bybit
 async with Bybit.new(public=True) as client:
   end = datetime.now(timezone.utc)
   rates = []
-  async for page in client.http.market.funding_history_paged(
+  async for page in client.market.funding_history_paged(
     category='linear', symbol='BTCUSDT',
     start_time=end - timedelta(hours=24), end_time=end, limit=200, max_pages=30,
   ):
@@ -117,7 +120,7 @@ from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
   end = datetime.now(timezone.utc)
-  async for page in client.http.market.kline_paged(
+  async for page in client.market.kline_paged(
     category='linear', symbol='BTCUSDT', interval='1',
     start=end - timedelta(minutes=4), end=end, limit=200, max_pages=5,
   ):
@@ -141,7 +144,7 @@ async with Bybit.new(public=True) as client:
   start = end - timedelta(days=30)
   rates = []
   while True:
-    page = await client.http.market.funding_history(
+    page = await client.market.funding_history(
       category='linear', symbol='BTCUSDT',
       start_time=start, end_time=end, limit=200,
     )
@@ -163,16 +166,14 @@ generated one and needs the response to do it.
 
 The same cursor pattern shows up well past `market.*`: `trade.open_orders_paged` and
 `trade.order_history_paged`, `position.list_paged`, `asset.deposit.record_paged` and
-`asset.withdraw.record_paged`, and `account.transaction_log_paged` all walk a `nextPageCursor`
-the same way `market.instruments_paged` does above.
+`asset.withdraw.record_paged`, and `account.transaction_log_paged` are all the same
+`PaginatedResponse` shape as `market.open_interest_paged` above:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new() as client:
-  orders = []
-  async for page in client.http.trade.order_history_paged(category='spot', limit=50):
-    orders += page['list']
+  orders = await client.trade.order_history_paged(category='spot', limit=50)
   print(len(orders))
 ```
 
