@@ -33,6 +33,27 @@ timestamp_millis = EpochConverter.milliseconds()  # epoch, milliseconds
 timestamp_iso = IsoConverter()                    # RFC 3339, Z-suffixed
 ```
 
+### Paging
+
+Every generated `<method>_paged` returns a `PaginatedResponse`: awaitable (every row,
+flattened) and async-iterable (one page of rows at a time). Each page is one pure
+`next(state)` call, so a caller can retry or resume a single page rather than the whole walk.
+
+```python
+from typed_core import PaginatedResponse
+
+paging = client.market.kline_paged(symbol='BTCUSDT', interval='1', start=start, end=end)
+candles = await paging                       # every row, flattened
+async for rows in paging: ...                # one page at a time
+async for page in paging.pages():            # Page(rows, state, next), for checkpointing
+  checkpoint(page.next)
+paging.resume(saved_state)                   # restart from a checkpointed state
+paging.via(retried)                          # route every page fetch through a middleware
+```
+
+`via(call)` hands each page fetch to `call` as one zero-argument coroutine function, so a
+retry or logging layer wraps a page without unrolling the loop by hand.
+
 Clients re-export the exceptions users are expected to catch from their own package root, so
 `from kraken import AuthError` works while implementation imports still come from
 `typed_core`. Route those re-exports through `lazy_loader.attach_stub`, not a plain
