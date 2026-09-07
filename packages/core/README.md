@@ -33,6 +33,11 @@ timestamp_millis = EpochConverter.milliseconds()  # epoch, milliseconds
 timestamp_iso = IsoConverter()                    # RFC 3339, Z-suffixed
 ```
 
+A wire value carrying no offset is read as UTC, matching what `dump` already assumes of a
+naive `datetime`; pass `tz=None` to keep it naive instead. Every converter raises
+`ValueError` on a value of the wrong kind, so a `null` on a non-nullable field arrives as
+an ordinary validation error rather than an `AttributeError`.
+
 ### Paging
 
 Every generated `<method>_paged` returns a `PaginatedResponse`: awaitable (every row,
