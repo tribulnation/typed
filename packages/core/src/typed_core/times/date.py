@@ -27,7 +27,14 @@ class DateConverter:
 
     Args:
       value: The wire date, e.g. `'2026-08-03'` for the default pattern.
+
+    Raises:
+      ValueError: `value` is not a string (a JSON `null` on a non-nullable field), so
+        pydantic reports it as a validation failure instead of a `TypeError` escaping
+        the `BeforeValidator`.
     """
+    if not isinstance(value, str):
+      raise ValueError(f'calendar date must be a string, got {type(value).__name__}')
     return datetime.strptime(value, self.pattern).date()
 
   def dump(self, d: date) -> str:

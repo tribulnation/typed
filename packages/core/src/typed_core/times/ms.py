@@ -32,15 +32,30 @@ class EpochConverter(TimeConverter[int]):
     """Create a converter for nanosecond epoch timestamps."""
     return cls(unit=1e9, tz=tz)
 
-  def parse(self, value: int | str) -> datetime:
+  def parse(self, value: int | float | str) -> datetime:
     """Parse an epoch timestamp into a `datetime`.
 
     Args:
       value: The epoch timestamp. Some venues serialize it as a numeral string rather
         than a bare number (binance's `options.market.open_interest.timestamp`,
-        confirmed live: `"timestamp": "1786302600000"`) -- coerced with `int()` first.
+        confirmed live: `"timestamp": "1786302600000"`), others as a fractional number
+        (kraken's `trades_history` `time`: `1688669597.8277`); a string is parsed as an
+        `int` when it can be, so a large integer keeps every digit, and as a `float`
+        otherwise.
+
+    Raises:
+      ValueError: `value` is not a number or a numeral string (a JSON `null` on a
+        non-nullable field), so pydantic reports it as a validation failure instead of
+        a `TypeError` escaping the `BeforeValidator`.
     """
-    return datetime.fromtimestamp(int(value) / self.unit, self.tz)
+    if isinstance(value, bool) or not isinstance(value, int | float | str):
+      raise ValueError(f'epoch timestamp must be a number or numeral string, got {type(value).__name__}')
+    if isinstance(value, str):
+      try:
+        value = int(value)
+      except ValueError:
+        value = float(value)
+    return datetime.fromtimestamp(value / self.unit, self.tz)
 
   def dump(self, dt: datetime) -> int:
     """Convert a `datetime` back into an epoch timestamp."""

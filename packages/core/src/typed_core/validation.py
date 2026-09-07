@@ -19,6 +19,11 @@ def _adapter(Type: type) -> pydantic.TypeAdapter:
 class validator(Generic[T]):
   """Pydantic-backed validator that raises `typed_core.ValidationError` on mismatch.
 
+  The raised error carries pydantic's own rendered report as its message (field path,
+  offending value, reason per failure): a pydantic v2 `ValidationError` has empty `args`,
+  so re-raising with `*e.args` used to read `ValidationError()` and hid every detail on
+  `__cause__`. The pydantic error stays reachable there for `.errors()`.
+
   `TypeAdapter` construction is the expensive part of validating a response, so it's
   cached per `Type` rather than rebuilt on every generated `validator(Type)` call site:
   the first call against a given `Type` pays for it, every call after (including from
@@ -33,14 +38,14 @@ class validator(Generic[T]):
     try:
       return self.adapter.validate_json(data)
     except pydantic.ValidationError as e:
-      raise ValidationError(*e.args) from e
+      raise ValidationError(str(e)) from e
 
   def python(self, data: Any) -> T:
     """Validate an already-decoded Python value."""
     try:
       return self.adapter.validate_python(data)
     except pydantic.ValidationError as e:
-      raise ValidationError(*e.args) from e
+      raise ValidationError(str(e)) from e
 
   def __call__(self, data) -> T:
     if isinstance(data, str | bytes | bytearray):
