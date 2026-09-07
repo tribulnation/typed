@@ -8,6 +8,7 @@ from no fractional digits to nanoseconds (kraken's `post_trade`: `...123456789Z`
 """
 from datetime import date, datetime, timezone, timedelta
 from pydantic import TypeAdapter
+import pytest
 
 from typed_core.times.date import DateConverter
 from typed_core.times.iso import IsoConverter
@@ -119,3 +120,61 @@ class TestDateConverterCustomPattern:
     """Omitting `pattern` still means RFC 3339 `YYYY-MM-DD` -- existing callers see no
     behavior change."""
     assert DateConverter().pattern == '%Y-%m-%d'
+
+
+class TestIsoConverterTimezone:
+  def test_offset_free_value_gets_utc_by_default(self):
+    """binance's `ListenKey`-style strings carry no offset; `dump` already treats a naive
+    `datetime` as UTC, so `parse` now agrees with it instead of returning a naive value a
+    client had to patch UTC back onto (`NaiveUtcIsoConverter`)."""
+    dt = IsoConverter().parse('2026-09-04T16:00:00')
+    assert dt == datetime(2026, 9, 4, 16, 0, tzinfo=timezone.utc)
+
+  def test_tz_none_keeps_an_offset_free_value_naive(self):
+    dt = IsoConverter(tz=None).parse('2026-09-04T16:00:00')
+    assert dt.tzinfo is None
+
+  def test_explicit_offset_is_never_overridden(self):
+    dt = IsoConverter(tz=timezone(timedelta(hours=2))).parse('2026-09-04T16:00:00Z')
+    assert dt == datetime(2026, 9, 4, 16, 0, tzinfo=timezone.utc)
+
+
+class TestConvertersRejectNonStrings:
+  """A JSON `null` reaching a non-nullable timestamp field used to escape as an
+  `AttributeError`/`TypeError` from inside the `BeforeValidator`; a `ValueError` lets
+  pydantic report it as an ordinary validation failure."""
+
+  def test_iso_rejects_none_as_value_error(self):
+    with pytest.raises(ValueError, match='must be a string'):
+      IsoConverter().parse(None)  # type: ignore[arg-type]
+
+  def test_epoch_rejects_none_as_value_error(self):
+    with pytest.raises(ValueError, match='must be a number'):
+      EpochConverter.milliseconds().parse(None)  # type: ignore[arg-type]
+
+  def test_date_rejects_none_as_value_error(self):
+    with pytest.raises(ValueError, match='must be a string'):
+      DateConverter().parse(None)  # type: ignore[arg-type]
+
+  def test_null_on_a_non_nullable_field_is_a_validation_error(self):
+    from typing_extensions import Annotated
+    from pydantic import BeforeValidator, ValidationError
+    TimestampIso = Annotated[datetime, BeforeValidator(IsoConverter().parse)]
+    with pytest.raises(ValidationError):
+      TypeAdapter(TimestampIso).validate_python(None)
+
+
+class TestEpochConverterFractions:
+  def test_fractional_seconds_keep_their_fraction(self):
+    """kraken's `trades_history` `time` is a fractional epoch float; `int()` used to
+    truncate it to the second."""
+    dt = EpochConverter.seconds(tz=timezone.utc).parse(1688669597.8277)
+    assert dt == datetime(2023, 7, 6, 18, 53, 17, 827700, tzinfo=timezone.utc)
+
+  def test_integer_string_keeps_every_digit(self):
+    conv = EpochConverter.nanoseconds(tz=timezone.utc)
+    assert conv.parse('1688669597827700123') == conv.parse(1688669597827700123)
+
+  def test_fractional_string_parses(self):
+    dt = EpochConverter.seconds(tz=timezone.utc).parse('1688669597.5')
+    assert dt.microsecond == 500000
