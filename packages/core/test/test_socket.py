@@ -156,3 +156,35 @@ def test_a_socket_is_constructible_outside_an_event_loop():
   """
   socket = RaisingSocket(url='wss://example.invalid')
   assert socket._ctx_future is None
+
+
+@dataclass
+class BareSocket(Socket):
+  """`Socket` with the real `force_open`, so the connect error wrapping is exercised."""
+  def on_msg(self, msg: str | bytes):
+    pass
+
+
+@pytest.mark.parametrize('raised', [
+  ConnectionRefusedError(111, 'Connection refused'),
+  OSError('[Errno -2] Name or service not known'),
+  TimeoutError('timed out during opening handshake'),
+  EOFError('connection closed while reading HTTP status line'),
+  websockets.exceptions.InvalidMessage('did not receive a valid HTTP response'),
+])
+@pytest.mark.asyncio
+async def test_every_connect_failure_is_a_network_error(monkeypatch: pytest.MonkeyPatch, raised: BaseException):
+  """`websockets.connect` reports a refused or unresolvable host as `OSError`, a handshake
+  timeout as `TimeoutError` and a peer hang-up as `EOFError`, none of them a
+  `WebSocketException`. Only that one used to be wrapped, so a refused connection, the
+  most common failure of all, escaped as a raw `OSError`."""
+  async def refuse(uri: str, **kwargs):
+    raise raised
+  monkeypatch.setattr(websockets, 'connect', refuse)
+
+  from typed_core.exceptions import NetworkError
+  socket = BareSocket(url='wss://stream.invalid')
+  with pytest.raises(NetworkError) as info:
+    await socket.open()
+  assert info.value.__cause__ is raised
+  assert 'stream.invalid' in str(info.value)

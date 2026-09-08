@@ -145,9 +145,15 @@ class Socket(ABC):
     never need `self.ctx` at all, so there's nothing left for them to wait on.
     """
     async def connect():
+      # `websockets.connect` raises `OSError` for a refused or unreachable host (DNS,
+      # TCP, TLS), `TimeoutError` when the handshake outlives `open_timeout`, and
+      # `EOFError` when the peer closes mid-handshake -- none of them
+      # `WebSocketException`s, so catching only that let the most common failure, a
+      # refused connection, escape as a raw `OSError` a caller's `except NetworkError`
+      # never saw.
       try:
         return await websockets.connect(self.url, open_timeout=self.timeout.total_seconds())
-      except websockets.exceptions.WebSocketException as e:
+      except (websockets.exceptions.WebSocketException, OSError, EOFError, TimeoutError) as e:
         raise NetworkError(f'Failed to connect to {self.url}') from e
 
     ws = await connect()
