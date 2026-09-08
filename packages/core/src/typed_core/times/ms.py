@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 import time
 from .base import TimeConverter
+
 
 @dataclass(kw_only=True)
 class EpochConverter(TimeConverter[int]):
@@ -37,11 +40,10 @@ class EpochConverter(TimeConverter[int]):
 
     Args:
       value: The epoch timestamp. Some venues serialize it as a numeral string rather
-        than a bare number (binance's `options.market.open_interest.timestamp`,
-        confirmed live: `"timestamp": "1786302600000"`), others as a fractional number
-        (kraken's `trades_history` `time`: `1688669597.8277`); a string is parsed as an
-        `int` when it can be, so a large integer keeps every digit, and as a `float`
-        otherwise.
+        than a bare number (binance's `options.market.open_interest.timestamp`),
+        others as a fractional number (kraken's `trades_history` `time`).
+        Integer and string inputs avoid floating-point conversion. Submicrosecond
+        values round to the nearest representable microsecond, with ties to even.
 
     Raises:
       ValueError: `value` is not a number or a numeral string (a JSON `null` on a
@@ -49,17 +51,26 @@ class EpochConverter(TimeConverter[int]):
         a `TypeError` escaping the `BeforeValidator`.
     """
     if isinstance(value, bool) or not isinstance(value, int | float | str):
-      raise ValueError(f'epoch timestamp must be a number or numeral string, got {type(value).__name__}')
-    if isinstance(value, str):
-      try:
-        value = int(value)
-      except ValueError:
-        value = float(value)
-    return datetime.fromtimestamp(value / self.unit, self.tz)
+      raise ValueError(
+        f'epoch timestamp must be a number or numeral string, got {type(value).__name__}'
+      )
+    try:
+      numeric = Fraction(Decimal(value)) if isinstance(value, str) else Fraction(value)
+    except InvalidOperation as error:
+      raise ValueError('epoch timestamp must be a numeral string') from error
+    microseconds = round(numeric * 1_000_000 / Fraction(self.unit))
+    seconds, remainder = divmod(microseconds, 1_000_000)
+    return datetime.fromtimestamp(seconds, self.tz).replace(microsecond=remainder)
 
   def dump(self, dt: datetime) -> int:
-    """Convert a `datetime` back into an epoch timestamp."""
-    return int(self.unit * dt.timestamp())
+    """Convert a datetime to epoch units without floating-point timestamp loss.
+
+    Fractional wire units truncate toward zero. Naive datetimes retain Python's
+    existing local-time interpretation, just as datetime.timestamp() does.
+    """
+    delta = dt.astimezone(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)
+    microseconds = (delta.days * 86400 + delta.seconds) * 1_000_000 + delta.microseconds
+    return int(Fraction(microseconds) * Fraction(self.unit) / 1_000_000)
 
   def now(self) -> int:
     """The current time, in the unit specified."""
