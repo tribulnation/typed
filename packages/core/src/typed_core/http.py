@@ -64,5 +64,9 @@ class HttpClient:
         headers=headers,
       )
     except httpx.HTTPError as e:
-      req = f'{method} {url}'
-      raise NetworkError(f'Error sending request to {req}', *e.args) from e
+      target = httpx.URL(url).copy_with(userinfo=b'', query=None, fragment=None)
+      # Transport messages can repeat the signed URL; don't copy their arguments
+      # or include their traceback in ordinary exception logging.
+      raise NetworkError(
+        f'Error sending request to {method} {target} ({type(e).__name__})'
+      ) from None
