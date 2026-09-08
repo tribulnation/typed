@@ -48,7 +48,7 @@ class HttpClient:
     files: httpx._types.RequestFiles | None = None,
     json: Any | None = None,
     params: Mapping[str, Any] | None = None,
-    headers: Mapping | None = None,
+    headers: httpx._types.HeaderTypes | None = None,
     cookies: httpx._types.CookieTypes | None = None,
     auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
     follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
