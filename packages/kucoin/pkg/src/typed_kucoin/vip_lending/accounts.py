@@ -1,7 +1,7 @@
 """`GET /api/v1/otc-loan/accounts` — Get Accounts."""
 
 from typed_core.validation import TypedDict, validator
-from typed_kucoin.core import RpcEndpoint
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 
 class LoanAccount(TypedDict):
@@ -37,6 +37,6 @@ class Accounts(RpcEndpoint):
     References:
       - [KuCoin API docs](https://www.kucoin.com/docs-new)
     """
-    return await self.authed_request(
+    return await self.client.authed_request(
       'GET', '/api/v1/otc-loan/accounts', validator=adapter, validate=validate
     )

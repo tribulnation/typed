@@ -2,7 +2,8 @@
 
 from datetime import datetime
 from typed_core.validation import validator
-from typed_kucoin.core import RpcEndpoint, timestamp_millis
+from typed_kucoin.core import timestamp_millis
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 adapter = validator(int)
 
@@ -19,7 +20,7 @@ class ServerTime(RpcEndpoint):
     References:
       - [KuCoin API docs](https://www.kucoin.com/docs-new)
     """
-    ms = await self.request(
+    ms = await self.client.request(
       'GET', '/api/v1/timestamp', validator=adapter, validate=validate
     )
     return timestamp_millis.parse(ms)

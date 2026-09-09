@@ -1,7 +1,7 @@
 """`GET /api/v1/margin/config` — Get Margin Config."""
 
 from typed_core.validation import TypedDict, validator
-from typed_kucoin.core import RpcEndpoint
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 
 class MarginConfig(TypedDict):
@@ -33,6 +33,6 @@ class Config(RpcEndpoint):
     References:
       - [KuCoin API docs](https://www.kucoin.com/docs-new)
     """
-    return await self.request(
+    return await self.client.request(
       'GET', '/api/v1/margin/config', validator=adapter, validate=validate
     )

@@ -49,8 +49,9 @@ endpoints — see [API Keys Setup](api-keys.md).
 
 `client.account`, `client.spot`, `client.margin`, `client.earn`, `client.vip_lending`,
 `client.affiliate`, `client.convert`, `client.futures`, `client.copy_trading` and
-`client.broker` cover REST. `client.streams.spot_margin` and `client.streams.futures`
-cover WebSocket (each is public and private topics on one connection) — see
+`client.broker` cover REST. `client.streams.spot_margin_public`/`.spot_margin_private` and
+`client.streams.futures_public`/`.futures_private` cover WebSocket (each pair is public
+and private topics on one connection) — see
 [Listen To Streams](how-to/listen-to-streams.md).
 
 ## Documentation

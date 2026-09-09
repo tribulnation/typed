@@ -63,13 +63,19 @@ class HttpRpcClient(RpcClient):
     *,
     params: Mapping[str, Any] | None = None,
     json: Any | None = None,
+    content: bytes | None = None,
     headers: Mapping[str, str] | None = None,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
   ) -> T:
     """Send an unsigned request to `base_url + path`."""
     response = await self.http.request(
-      method, self.base_url + path, json=json, params=params, headers=headers
+      method,
+      self.base_url + path,
+      json=json,
+      content=content,
+      params=params,
+      headers=headers,
     )
     return self.result(response, validator, validate=validate)
 
@@ -80,6 +86,7 @@ class HttpRpcClient(RpcClient):
     *,
     params: Mapping[str, Any] | None = None,
     json: Any | None = None,
+    content: bytes | None = None,
     headers: Mapping[str, str] | None = None,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
@@ -89,13 +96,18 @@ class HttpRpcClient(RpcClient):
     Builds the exact query string and compact JSON body by hand, then signs that
     string — handing `params`/`json` to `httpx` and letting it encode them
     independently could produce wire bytes that don't match what was signed, and KuCoin
-    rejects the signature if they don't.
+    rejects the signature if they don't. When the caller already has the exact wire bytes
+    (`content`, from a generated method's `validator(Type).dump(body)`), those bytes are
+    decoded to build the signed string and then sent unchanged — never re-encoded — so the
+    signed string and the sent bytes stay identical by construction.
 
     Args:
       method: HTTP method, for example `GET`.
       path: Path relative to the base URL, for example `/api/v2/user-info`.
       params: Query string parameters.
-      json: JSON request body.
+      json: JSON request body, for a caller with no pre-serialized wire bytes.
+      content: Pre-serialized JSON request body bytes, signed and sent verbatim. Takes
+        precedence over `json` when both are given.
       headers: Extra headers to send alongside the signed `KC-API-*` ones — every
         endpoint but `broker.rebate_download_v3` (its own `x-tenant`) needs none.
       validator: Adapter to validate the unwrapped result against, if any.
@@ -110,7 +122,10 @@ class HttpRpcClient(RpcClient):
         '`KuCoin.new(api_key=..., api_secret=..., api_passphrase=...)`.'
       )
     query = urlencode(params, safe=',') if params else ''
-    body = _dumps(json) if json is not None else ''
+    if content is not None:
+      body = content.decode('utf-8')
+    else:
+      body = _dumps(json) if json is not None else ''
     endpoint = path + (f'?{query}' if query else '')
     timestamp = str(int(time.time() * 1000))
     signed_headers = auth_headers(
@@ -125,7 +140,10 @@ class HttpRpcClient(RpcClient):
     if headers:
       signed_headers.update(headers)
     response = await self.http.request(
-      method, self.base_url + endpoint, content=body or None, headers=signed_headers
+      method,
+      self.base_url + endpoint,
+      content=content if content is not None else (body or None),
+      headers=signed_headers,
     )
     return self.result(response, validator, validate=validate)
 

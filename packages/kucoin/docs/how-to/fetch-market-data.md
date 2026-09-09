@@ -40,8 +40,9 @@ async with KuCoin.new(public=True) as client:
     print(open_time, close)
 ```
 
-A single response caps at 1500 rows; use `klines_paged` to walk a wider window
-automatically — see [Paginate Through Results](paginate-through-results.md).
+A single response caps at 1500 rows, keeping the newest; use `klines_paged` to walk a
+wider range automatically, newest page first, moving `end_at` back until a page comes up
+short — see [Paginate Through Results](paginate-through-results.md).
 
 ## Trading Pairs
 
