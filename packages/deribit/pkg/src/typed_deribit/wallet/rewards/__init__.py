@@ -2,7 +2,9 @@
 from .get_reward_eligibility import GetRewardEligibility
 
 
-class Rewards(
-  GetRewardEligibility,
-):
-  """Rewards endpoints."""
+class Rewards(GetRewardEligibility):
+  """Eligibility lookups for Deribit's wallet reward programs.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/wallet)
+  """

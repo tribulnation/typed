@@ -15,4 +15,8 @@ class AddressBook(
   RemoveFromAddressBook,
   UpdateInAddressBook,
 ):
-  """AddressBook endpoints."""
+  """Deposit-address bookkeeping — the current and past deposit addresses generated for the account, plus a separate whitelist of external withdrawal addresses (the address book proper) that can be added, updated, listed, and removed.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/wallet)
+  """

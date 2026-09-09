@@ -63,4 +63,8 @@ class MarketData(
   GetVolatilityIndexData,
   TickerEndpoint,
 ):
-  """MarketData endpoints."""
+  """Public market data -- instruments, order books, tickers, historical trades, funding, volatility, and settlement/delivery prices.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/market-data)
+  """

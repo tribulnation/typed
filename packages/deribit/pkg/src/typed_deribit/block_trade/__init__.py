@@ -21,4 +21,8 @@ class BlockTrade(
   InvalidateBlockTradeSignature,
   RejectBlockTrade,
 ):
-  """BlockTrade endpoints."""
+  """Bilateral block trade lifecycle -- broker client and trade-request listings, and the approve/reject step that follows matching-engine execution.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/block-trade)
+  """

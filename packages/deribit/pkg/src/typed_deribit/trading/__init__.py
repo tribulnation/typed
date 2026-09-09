@@ -77,4 +77,8 @@ class Trading(
   Sell,
   SetMmpConfig,
 ):
-  """Trading endpoints."""
+  """Order placement and management -- buy/sell/edit/cancel, open-order and order-history lookups, margins, mass quoting, and market-maker-protection controls.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/trading)
+  """

@@ -43,4 +43,8 @@ class MarketData(
   TradesByKindCurrency,
   VolatilityIndex,
 ):
-  """MarketData endpoints."""
+  """Public market-data WebSocket channels -- tickers, order books, trades, price indices/statistics, platform state, and instrument lifecycle notifications.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/subscriptions/market-data)
+  """

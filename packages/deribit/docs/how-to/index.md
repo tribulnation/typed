@@ -6,5 +6,5 @@ Task-focused guides for Deribit's real surface.
 - [Manage Account Data](manage-account-data.md) — balances, positions, transaction history
 - [Place & Manage Orders](place-and-manage-orders.md) — buy, sell, query, cancel one, cancel all
 - [Manage Deposits & Withdrawals](manage-deposits-and-withdrawals.md) — deposit addresses, deposit/withdrawal history, submit a withdrawal
-- [Paginate Through Results](paginate-through-results.md) — walk windowed and offset-paged endpoints
+- [Paginate Through Results](paginate-through-results.md) — walk seek-, offset- and token-paged endpoints
 - [Listen To Streams](listen-to-streams.md) — public and private channel subscriptions

@@ -31,4 +31,8 @@ class User(
   TradesByInstrument,
   TradesByKindCurrency,
 ):
-  """User endpoints."""
+  """Private, account-scoped WebSocket channels -- order, trade, combo-trade, and portfolio-change notifications, plus MMP-trigger, lock, and access-log events.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/subscriptions/user)
+  """
