@@ -12,4 +12,4 @@ Task-focused guides for the most common client workflows. Examples use the UTA v
 - [Manage Account Data](manage-account-data.md) - balances, positions, financial records
 - [Manage Earn Instruments](manage-earn-instruments.md) - subscribe to and redeem Elite products
 - [Manage Deposits & Withdrawals](manage-deposits-and-withdrawals.md) - deposit addresses, records, withdrawals, internal transfers
-- [Paginate Through Results](paginate-through-results.md) - cursor- and window-paged endpoints
+- [Paginate Through Results](paginate-through-results.md) - cursor-, page- and time-range-paged endpoints
