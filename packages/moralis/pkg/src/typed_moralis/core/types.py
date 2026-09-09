@@ -6,24 +6,40 @@ and `date`.
 from datetime import date, datetime, timezone
 from typing_extensions import Annotated, Literal
 
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, PlainSerializer
 from typed_core.times import DateConverter, EpochConverter, IsoConverter
 
 
 timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
-TimestampSeconds = Annotated[datetime, BeforeValidator(timestamp_seconds.parse)]
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
 """A Moralis Unix-epoch-seconds timestamp field."""
 
 timestamp_millis = EpochConverter.milliseconds(tz=timezone.utc)
-TimestampMillis = Annotated[datetime, BeforeValidator(timestamp_millis.parse)]
+TimestampMillis = Annotated[
+  datetime,
+  BeforeValidator(timestamp_millis.parse),
+  PlainSerializer(timestamp_millis.dump, when_used='json'),
+]
 """A Moralis Unix-epoch-milliseconds timestamp field."""
 
 timestamp_iso = IsoConverter()
-TimestampIso = Annotated[datetime, BeforeValidator(timestamp_iso.parse)]
+TimestampIso = Annotated[
+  datetime,
+  BeforeValidator(timestamp_iso.parse),
+  PlainSerializer(timestamp_iso.dump, when_used='json'),
+]
 """A Moralis RFC 3339 timestamp field."""
 
 date_iso = DateConverter()
-DateIso = Annotated[date, BeforeValidator(date_iso.parse)]
+DateIso = Annotated[
+  date,
+  BeforeValidator(date_iso.parse),
+  PlainSerializer(date_iso.dump, when_used='json'),
+]
 """A Moralis plain-calendar-date field, with no time component."""
 
 

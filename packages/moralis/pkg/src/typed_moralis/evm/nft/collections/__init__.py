@@ -4,4 +4,8 @@ from .nfts_by_collection import NftsByCollection
 
 
 class Collections(NftCollectionsByWallet, NftsByCollection):
-  """Grouped Moralis Collections endpoints."""
+  """NFT collection lookup: every collection held by a wallet, or every NFT within one contract.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/nft/overview)
+  """

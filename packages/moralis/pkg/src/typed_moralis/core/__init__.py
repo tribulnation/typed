@@ -1,6 +1,7 @@
 """Moralis client core: transport, auth, and shared types -- re-exported here so a
-generated leaf module (`from typed_moralis.core import RpcEndpoint, clean_params`)
-never has to reach into a submodule directly.
+generated leaf module (`from typed_moralis.core.rest import RestEndpoint`) and
+`main.py` (`from typed_moralis.core.base import ClientBase`) never have to reach past
+their own resolved module.
 """
 
 from typed_core.exceptions import (
@@ -14,21 +15,8 @@ from typed_core.exceptions import (
   ValidationError as ValidationError,
 )
 from .auth import env_api_key as env_api_key
-from .endpoint.rpc import (
-  RpcClient as RpcClient,
-  RpcEndpoint as RpcEndpoint,
-  clean_params as clean_params,
-)
-from .transport.http import (
-  MORALIS_API_URL as MORALIS_API_URL,
-  MORALIS_AUTH_API_URL as MORALIS_AUTH_API_URL,
-  MORALIS_CORTEX_API_URL as MORALIS_CORTEX_API_URL,
-  MORALIS_SOLANA_API_URL as MORALIS_SOLANA_API_URL,
-  MORALIS_STREAMS_API_URL as MORALIS_STREAMS_API_URL,
-  MORALIS_USER_AGENT as MORALIS_USER_AGENT,
-  HttpRpcClient as HttpRpcClient,
-  MoralisErrorPayload as MoralisErrorPayload,
-)
+from .base import ClientBase as ClientBase, MoralisTransport as MoralisTransport
+from .rest import RestEndpoint as RestEndpoint
 from .types import (
   Chain as Chain,
   DateIso as DateIso,

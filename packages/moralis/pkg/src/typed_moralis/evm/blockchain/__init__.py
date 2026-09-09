@@ -17,4 +17,8 @@ class Blockchain(
   Transaction,
   TransactionDecoded,
 ):
-  """Grouped Moralis Blockchain endpoints."""
+  """Low-level, raw EVM blockchain data — blocks, transactions, internal transactions, and decoded logs — without running a node.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/blockchain/overview)
+  """

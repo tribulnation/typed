@@ -4,4 +4,8 @@ from .set_project_settings import SetProjectSettings
 
 
 class Settings(ProjectSettings, SetProjectSettings):
-  """Grouped Moralis Settings endpoints."""
+  """Read and update the project-level settings applied to every Stream on the account.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/streams/overview)
+  """

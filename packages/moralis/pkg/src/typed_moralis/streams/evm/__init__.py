@@ -4,10 +4,10 @@ from .address_from_stream import AddressFromStream
 from .addresses_by_stream import AddressesByStream
 from .all_streams import AllStreams
 from .create_stream import CreateStream
+from .delete_stream import DeleteStream
 from .duplicate_stream import DuplicateStream
 from .replace_address_on_stream import ReplaceAddressOnStream
 from .send_webhook_data_by_block_number import SendWebhookDataByBlockNumber
-from .stream import StreamEndpoint
 from .stream_by_id import StreamById
 from .update_stream import UpdateStream
 from .update_stream_status import UpdateStreamStatus
@@ -20,13 +20,17 @@ class Evm(
   AddressesByStream,
   AllStreams,
   CreateStream,
+  DeleteStream,
   DuplicateStream,
   ReplaceAddressOnStream,
   SendWebhookDataByBlockNumber,
-  StreamEndpoint,
   StreamById,
   UpdateStream,
   UpdateStreamStatus,
   WebhookDataByBlockNumber,
 ):
-  """Grouped Moralis Evm endpoints."""
+  """Real-time EVM transaction and event data delivered via webhooks — dual-phase (unconfirmed/confirmed) notifications with automatic decoding of token transfers and NFT activity.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/streams/evm-streams)
+  """

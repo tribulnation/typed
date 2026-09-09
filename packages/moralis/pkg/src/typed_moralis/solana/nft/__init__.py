@@ -3,4 +3,8 @@ from .nft_metadata import NftMetadata
 
 
 class Nft(NftMetadata):
-  """Grouped Moralis Nft endpoints."""
+  """Solana NFT metadata — token details, attributes, and media URLs.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/nft/overview)
+  """

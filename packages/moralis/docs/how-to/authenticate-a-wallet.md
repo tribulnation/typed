@@ -9,18 +9,18 @@ have the user sign it with their wallet, then verify the signature server-side.
 from typed_moralis import Moralis
 
 async with Moralis.new() as client:
-  challenge = await client.auth.challenge.request_evm_challenge({
-    'domain': 'example.com',
-    'uri': 'https://example.com',
-    'timeout': 60,
-    'chainId': '1',
-    'address': '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
-  })
+  challenge = await client.auth.challenge.request_evm_challenge(
+    domain='example.com',
+    uri='https://example.com',
+    timeout=60,
+    chain_id='1',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
+  )
   # have the end user sign `challenge['message']` with their wallet, then:
-  verified = await client.auth.challenge.verify_evm_challenge({
-    'message': challenge['message'],
-    'signature': '0x...',
-  })
+  verified = await client.auth.challenge.verify_evm_challenge(
+    message=challenge['message'],
+    signature='0x...',
+  )
   print(verified['profileId'])
 ```
 

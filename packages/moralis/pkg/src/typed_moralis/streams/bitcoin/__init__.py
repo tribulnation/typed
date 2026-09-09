@@ -4,8 +4,8 @@ from .add_xpub_to_stream import AddXpubToStream
 from .address_from_stream import AddressFromStream
 from .addresses_by_stream import AddressesByStream
 from .create_stream import CreateStream
+from .delete_stream import DeleteStream
 from .send_webhook_data_by_block_number import SendWebhookDataByBlockNumber
-from .stream import StreamEndpoint
 from .stream_by_id import StreamById
 from .streams import Streams
 from .update_stream import UpdateStream
@@ -21,8 +21,8 @@ class Bitcoin(
   AddressFromStream,
   AddressesByStream,
   CreateStream,
+  DeleteStream,
   SendWebhookDataByBlockNumber,
-  StreamEndpoint,
   StreamById,
   Streams,
   UpdateStream,
@@ -31,4 +31,8 @@ class Bitcoin(
   XpubFromStream,
   XpubsByStream,
 ):
-  """Grouped Moralis Bitcoin endpoints."""
+  """Real-time Bitcoin transaction monitoring — mempool broadcast, block inclusion, and reorg-safe confirmation delivered as webhooks, for watched addresses and xpubs.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/streams/bitcoin-streams)
+  """

@@ -22,7 +22,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   history = await client.evm.wallet.history(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   when = history['result'][0]['block_timestamp']
   print(when.isoformat())  # a real datetime, already parsed
@@ -41,7 +41,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   history = await client.evm.wallet.history(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045',
     chain='eth',
     from_date='2024-01-01',
     to_date='2024-02-01',

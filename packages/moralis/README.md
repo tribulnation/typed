@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/moralis">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/moralis/media/moralis-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/moralis/media/moralis-light.svg">
-      <img alt="Typed Moralis" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/moralis/media/moralis-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/moralis-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/moralis-light.svg">
+      <img alt="Typed Moralis" src="https://tribulnation.com/media/lockups/moralis-light.svg" width="520">
     </picture>
   </a>
 </p>
@@ -39,7 +39,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   balances = await client.evm.wallet.token_balances(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(balances['result'])
 ```
