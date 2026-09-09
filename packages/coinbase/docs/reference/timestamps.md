@@ -26,8 +26,8 @@ from typed_coinbase import Coinbase
 
 async with Coinbase.new(public=True) as client:
   now = int(time.time())
-  candles = await client.app.advanced_trade.http.products.public.candles(
-    'BTC-USD', start=now - 3600, end=now, granularity='ONE_HOUR',
+  trades = await client.app.advanced_trade.http.products.public.market_trades(
+    'BTC-USD', start=now - 3600, end=now, limit=50,
   )
 ```
 
