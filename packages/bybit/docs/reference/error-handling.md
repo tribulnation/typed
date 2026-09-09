@@ -42,7 +42,7 @@ Two mappings apply, in order.
 | anything else non-zero | `ApiError` | any other application error |
 
 `AuthError` also covers a client built without credentials calling a signed endpoint
-(`client.http.account`, `client.ws.private`, `client.ws.trade`) — see
+(`client.account`, `client.private`, `client.trade_ws`) — see
 [API Keys Setup](../api-keys.md).
 
 Each exception carries the code, the message, and the full envelope, in that order:
@@ -52,7 +52,7 @@ from typed_bybit import Bybit, BadRequest
 
 async with Bybit.new(public=True) as client:
   try:
-    await client.http.market.tickers(category='spot', symbol='NOTREAL')
+    await client.market.tickers(category='spot', symbol='NOTREAL')
   except BadRequest as e:
     code, message, payload = e.args
     print(code, message)
@@ -96,7 +96,7 @@ from typed_bybit import Bybit, ApiError, BadRequest, NetworkError, RateLimited, 
 
 async with Bybit.new(public=True) as client:
   try:
-    ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+    ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
   except BadRequest:
     ...
   except RateLimited:

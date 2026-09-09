@@ -24,7 +24,7 @@ authenticated ones need `BYBIT_API_KEY`/`BYBIT_API_SECRET` — see
 
 ## Cross-Cutting
 
-- [Paginate Through Results](paginate-through-results.md) - cursor and time-window paging,
+- [Paginate Through Results](paginate-through-results.md) - cursor and time-range paging,
   across market data, orders, positions, and transfers
 
 ## Running The Examples
@@ -37,7 +37,7 @@ from typed_bybit import Bybit
 
 async def main():
   async with Bybit.new(public=True) as client:
-    server_time = await client.http.market.time()
+    server_time = await client.market.time()
     print(server_time['timeSecond'])
 
 asyncio.run(main())

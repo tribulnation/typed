@@ -5,7 +5,7 @@ Examples:
   from typed_bybit import Bybit
 
   async with Bybit.new(public=True) as client:
-    candles = await client.http.market.kline(symbol='BTCUSDT', interval='60')
+    candles = await client.market.kline(symbol='BTCUSDT', interval='60')
   ```
 
 References:
