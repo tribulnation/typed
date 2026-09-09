@@ -49,23 +49,37 @@ async with Etherscan.new() as client:
 
 ## Token Transfers
 
-ERC-20, ERC-721, and ERC-1155 transfer history. `erc20_transfers` and `erc721_transfers`
-each require a `contractaddress` to scope to one token; `erc1155_transfers` takes none and
-covers every ERC-1155 transfer for the address:
+ERC-20, ERC-721, and ERC-1155 transfer history. Each feed takes the account `address`
+and returns every transfer of that address; `erc20_transfers` and `erc721_transfers` also
+accept an optional `contractaddress` to narrow the feed to one token:
 
 ```python
 from typed_etherscan import Etherscan
 
 async with Etherscan.new() as client:
-  erc20 = await client.account.erc20_transfers(
+  erc20 = await client.account.erc20_transfers(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+  usdt = await client.account.erc20_transfers(
     address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae',
     contractaddress='0xdAC17F958D2ee523a2206206994597C13D831ec7',
   )
-  erc721 = await client.account.erc721_transfers(
-    address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae',
-    contractaddress='0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  )
+  erc721 = await client.account.erc721_transfers(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
   erc1155 = await client.account.erc1155_transfers(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+```
+
+Rows come back typed: Etherscan sends every field as a string, and the client validates
+the numeric ones to exact `int`s (`value` in the token's base units, `tokenDecimal`,
+`blockNumber`, gas fields) and `timeStamp` to a UTC `datetime`. Walk a whole feed with the
+`_paged` variant:
+
+```python
+from decimal import Decimal
+from typed_etherscan import Etherscan
+
+async with Etherscan.new() as client:
+  rows = await client.account.erc20_transfers_paged(address='0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+  for row in rows:
+    amount = Decimal(row['value']) / Decimal(10) ** row['tokenDecimal']
+    print(row['timeStamp'].isoformat(), row['tokenSymbol'], amount)
 ```
 
 ## Mined Blocks

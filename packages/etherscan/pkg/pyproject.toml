@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-etherscan"
-version = "0.3.1"
+version = "0.4.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -18,7 +18,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "lazy-loader", "httpx", "pydantic", "typed-core"
+  "lazy-loader", "httpx", "pydantic", "typed-core>=0.8.1"
 ]
 requires-python = ">=3.10"
 readme = {file="README.md", content-type="text/markdown"}
