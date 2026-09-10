@@ -3,4 +3,8 @@ from .trade_history import TradeHistory
 
 
 class Pay(TradeHistory):
-  """Binance pay endpoints."""
+  """Binance Pay's trade-history endpoint -- payments, refunds, C2C, crypto box, and other Pay order types over the past 18 months.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-pay/api/rest-api/~)
+  """

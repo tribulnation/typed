@@ -4,4 +4,8 @@ from .convertible_assets import ConvertibleAssets
 
 
 class DustConvert(Convert, ConvertibleAssets):
-  """Binance dust_convert endpoints."""
+  """Wallet Asset's Dust-Convert endpoints -- submitting a small-balance-to-BNB conversion and listing which assets are eligible for it. No page of its own -- reusing Wallet's Asset catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset)
+  """

@@ -10,4 +10,8 @@ from .sub_orders import SubOrders
 class Futures(
   CancelOrder, HistoricalOrders, NewOrderTwap, NewOrderVp, OpenOrders, SubOrders
 ):
-  """Binance futures endpoints."""
+  """USDⓈ-M Futures Algo Trading endpoints -- placing a new TWAP or Volume Participation (VP) order plus querying open orders, historical orders, and the sub-orders that make up a given algo order, and cancelling one.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-algo-trading/api/rest-api/future-algo)
+  """

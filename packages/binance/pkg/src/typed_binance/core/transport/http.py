@@ -12,7 +12,7 @@ from typed_core.http import HttpClient
 from typed_core.validation import validator
 import httpx
 
-from ..auth import Credentials, signed_params
+from ..auth import Credentials, signed_params, wire_params
 from ..endpoint.rpc import RpcClient
 from ..envelope import raise_error
 
@@ -52,11 +52,14 @@ class HttpRpcClient(RpcClient):
     path: str,
     *,
     params: Mapping[str, Any] | None = None,
+    headers: Mapping[str, str] | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
     """Send an unsigned request to `base_url + path`."""
-    response = await self.http.request(method, self.base_url + path, params=params)
+    response = await self.http.request(
+      method, self.base_url + path, params=params, headers=headers
+    )
     return self.result(response, validator=validator, validate=validate)
 
   async def authed_request(
@@ -65,6 +68,7 @@ class HttpRpcClient(RpcClient):
     path: str,
     *,
     params: Mapping[str, Any] | None = None,
+    headers: Mapping[str, str] | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
@@ -74,6 +78,10 @@ class HttpRpcClient(RpcClient):
     `recvWindow` — is form-encoded into the query string (`GET`/`DELETE`) or the request
     body (`POST`/`PUT`), and the signature covers exactly that encoded string.
 
+    Args:
+      headers: Extra headers merged in alongside `X-MBX-APIKEY` -- `lang`, for the one
+        endpoint that declares it (`RpcEndpoint.request`'s own header-routing).
+
     Raises:
       AuthError: This client was built with no credentials (`public=True` upstream).
     """
@@ -81,15 +89,15 @@ class HttpRpcClient(RpcClient):
       raise AuthError('No credentials: this client was built with `public=True`.')
     signed = signed_params(params, self.credentials, recv_window=self.recv_window)
     encoded = urllib.parse.urlencode(signed, doseq=True)
-    headers = {'X-MBX-APIKEY': self.credentials.api_key}
+    request_headers = {'X-MBX-APIKEY': self.credentials.api_key, **(headers or {})}
     if method in ('GET', 'DELETE'):
       response = await self.http.request(
-        method, f'{self.base_url}{path}?{encoded}', headers=headers
+        method, f'{self.base_url}{path}?{encoded}', headers=request_headers
       )
     else:
-      headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      request_headers['Content-Type'] = 'application/x-www-form-urlencoded'
       response = await self.http.request(
-        method, self.base_url + path, content=encoded, headers=headers
+        method, self.base_url + path, content=encoded, headers=request_headers
       )
     return self.result(response, validator=validator, validate=validate)
 
@@ -99,6 +107,7 @@ class HttpRpcClient(RpcClient):
     path: str,
     *,
     params: Mapping[str, Any] | None = None,
+    headers: Mapping[str, str] | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
@@ -111,21 +120,24 @@ class HttpRpcClient(RpcClient):
     `params` is sent through unchanged: query string for `GET`/`DELETE`, form-encoded body
     for `POST`/`PUT`, matching `authed_request`'s own verb-branching.
 
+    Args:
+      headers: Extra headers merged in alongside `X-MBX-APIKEY`.
+
     Raises:
       AuthError: This client was built with no credentials (`public=True` upstream).
     """
     if self.credentials is None:
       raise AuthError('No credentials: this client was built with `public=True`.')
-    headers = {'X-MBX-APIKEY': self.credentials.api_key}
+    request_headers = {'X-MBX-APIKEY': self.credentials.api_key, **(headers or {})}
     if method in ('GET', 'DELETE'):
-      encoded = urllib.parse.urlencode(dict(params or {}), doseq=True)
+      encoded = urllib.parse.urlencode(wire_params(params), doseq=True)
       url = f'{self.base_url}{path}?{encoded}' if encoded else self.base_url + path
-      response = await self.http.request(method, url, headers=headers)
+      response = await self.http.request(method, url, headers=request_headers)
     else:
-      headers['Content-Type'] = 'application/x-www-form-urlencoded'
-      encoded = urllib.parse.urlencode(dict(params or {}), doseq=True)
+      request_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      encoded = urllib.parse.urlencode(wire_params(params), doseq=True)
       response = await self.http.request(
-        method, self.base_url + path, content=encoded, headers=headers
+        method, self.base_url + path, content=encoded, headers=request_headers
       )
     return self.result(response, validator=validator, validate=validate)
 

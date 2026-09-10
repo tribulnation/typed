@@ -9,4 +9,8 @@ from .margin_account import MarginAccountEndpoint
 class Account(
   Bill, ListenKeyClose, ListenKeyCreate, ListenKeyKeepalive, MarginAccountEndpoint
 ):
-  """Binance account endpoints."""
+  """Options account endpoints -- funding-flow history and margin-account information -- plus the user-data-stream listen-key lifecycle.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/rest-api/account)
+  """

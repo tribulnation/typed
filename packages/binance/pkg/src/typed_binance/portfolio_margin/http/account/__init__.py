@@ -95,4 +95,8 @@ class Account(
   UserDataStreamKeepalive,
   UserDataStreamStart,
 ):
-  """Binance account endpoints."""
+  """Portfolio Margin account endpoints -- balances, UM/CM positions, leverage, margin loans and repayments, income history, and BNB transfers.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/advanced-trading-derivatives-trading-portfolio-margin/api/rest-api/account)
+  """

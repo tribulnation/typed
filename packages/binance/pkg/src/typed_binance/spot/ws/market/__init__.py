@@ -33,4 +33,8 @@ class Market(
   TradesRecent,
   UiKlines,
 ):
-  """Binance market endpoints."""
+  """Market data requests -- unsigned WebSocket API commands for order book depth, klines, tickers, average price, reference price, and recent/historical/aggregate trades.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/websocket-api/market-data-requests)
+  """

@@ -33,4 +33,8 @@ class Trading(
   SorOrder,
   SorOrderTest,
 ):
-  """Binance trading endpoints."""
+  """Spot order-placement and cancellation endpoints -- new and test orders (including Smart Order Routing), cancel and cancel-replace, keep-priority amendment, and the OCO/OTO/OTOCO/OPO/OPOCO order-list family, including the deprecated single-endpoint OCO.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints)
+  """

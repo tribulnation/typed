@@ -31,4 +31,8 @@ class Trading(
   StockContract,
   UserTrades,
 ):
-  """Binance trading endpoints."""
+  """Options order placement and account trading -- new/cancel/query orders (single and batch), open and historical orders, position information, commission rates, and exercise records for Binance's European options contracts.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/rest-api/trade)
+  """

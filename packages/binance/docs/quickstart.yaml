@@ -52,7 +52,7 @@ how_tos:
         async for update in stream:
           print(update)
 
-      async with client.spot.ws.subscribe_user_data() as events:  # this account's order/balance events
+      async with client.spot.ws.user_data.events() as events:  # this account's order/balance events
         async for event in events:
           print(event)
 
@@ -77,9 +77,11 @@ how_tos:
   - title: Query & manage earn instruments
     body: List Simple Earn products, subscribe, check your positions, and redeem.
     code: |
+      from decimal import Decimal
+
       products = await client.spot.http.simple_earn.flexible.list(asset='USDT')  # available products
       subscription = await client.spot.http.simple_earn.flexible.subscribe(
-        product_id='USDT001', amount='10',
+        product_id='USDT001', amount=Decimal('10'),
       )  # subscribe
       positions = await client.spot.http.simple_earn.flexible.position(asset='USDT')  # your positions
       await client.spot.http.simple_earn.flexible.redeem(product_id='USDT001', redeem_all=True)  # redeem

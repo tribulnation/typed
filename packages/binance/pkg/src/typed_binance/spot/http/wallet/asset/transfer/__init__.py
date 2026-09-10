@@ -4,4 +4,8 @@ from .history import History
 
 
 class Transfer(Create, History):
-  """Binance transfer endpoints."""
+  """Wallet Asset's Transfer endpoints -- submitting a universal/funding transfer between account types and fetching its history. No page of its own -- reusing Wallet's Asset catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset)
+  """

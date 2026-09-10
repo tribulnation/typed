@@ -7,7 +7,7 @@ generic `references/transport/ws.py` pattern (`Streams` + `SerialReplies`), whic
 venue whose replies carry *no* correlation id at all. Binance always echoes one.
 """
 
-from typing_extensions import Any, TypeVar, cast
+from typing_extensions import Any, TypedDict, TypeVar, cast
 from dataclasses import dataclass, field
 from datetime import timedelta
 import json
@@ -25,8 +25,17 @@ T = TypeVar('T')
 BINANCE_STREAM_URL = 'wss://stream.binance.com:9443/stream'
 
 
+class StreamAck(TypedDict):
+  """Combined-stream `SUBSCRIBE`/`UNSUBSCRIBE` reply on success — confirmed against every
+  captured example, always exactly these two keys, `result` always `null`. An error reply
+  (a `code`/`msg` pair instead) raises `BadRequest` before this type is ever returned.
+  """
+  result: None
+  id: int
+
+
 @dataclass
-class SocketStream(StreamsRpc[dict, dict, Any, None, None, None]):
+class SocketStream(StreamsRpc[dict, dict, Any, None, StreamAck, StreamAck]):
   """Raw combined-stream connection: id-correlated `SUBSCRIBE`/`UNSUBSCRIBE`, keyed
   pushes. No `ping()` override needed — Binance pings the client every 20s and the
   `websockets` library answers automatically; Binance never requires the client to ping
@@ -49,17 +58,17 @@ class SocketStream(StreamsRpc[dict, dict, Any, None, None, None]):
       'notification': obj['data'],
     }
 
-  async def request_subscription(self, channel: str, params: None = None) -> None:
+  async def request_subscription(self, channel: str, params: None = None) -> StreamAck:
     reply = await self.rpc_request({'method': 'SUBSCRIBE', 'params': [channel]})
     if 'code' in reply:
       raise BadRequest(reply)
-    return None
+    return cast(StreamAck, reply)
 
-  async def request_unsubscription(self, channel: str, params: None = None) -> None:
+  async def request_unsubscription(self, channel: str, params: None = None) -> StreamAck:
     reply = await self.rpc_request({'method': 'UNSUBSCRIBE', 'params': [channel]})
     if 'code' in reply:
       raise BadRequest(reply)
-    return None
+    return cast(StreamAck, reply)
 
 
 @dataclass(kw_only=True)

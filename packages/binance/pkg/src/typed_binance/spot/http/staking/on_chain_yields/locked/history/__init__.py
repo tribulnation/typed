@@ -5,4 +5,8 @@ from .subscription_record import SubscriptionRecord
 
 
 class History(RedemptionRecord, RewardsHistory, SubscriptionRecord):
-  """Binance history endpoints."""
+  """Locked on-chain-yield history -- subscription, redemption, and rewards history for On-chain Yields' locked tier, documented on the same On-chain Yields page as the subscribe/redeem endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/on-chain-yields)
+  """

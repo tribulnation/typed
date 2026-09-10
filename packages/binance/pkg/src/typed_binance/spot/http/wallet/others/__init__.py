@@ -4,4 +4,8 @@ from .system_status import SystemStatusEndpoint
 
 
 class Others(DelistScheduleEndpoint, SystemStatusEndpoint):
-  """Binance others endpoints."""
+  """Wallet's miscellaneous endpoints -- upcoming spot symbol delisting schedule and Binance's overall system status.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/others)
+  """

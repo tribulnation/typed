@@ -5,4 +5,8 @@ from .ticker_price import TickerPrice
 
 
 class Market(Depth, TickerBook, TickerPrice):
-  """Binance market endpoints."""
+  """USDⓈ-M Futures' WebSocket API market data requests -- unsigned commands for order book depth and symbol price/book ticker snapshots.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/market-data)
+  """

@@ -5,4 +5,8 @@ from .listen_key_stop import ListenKeyStop
 
 
 class UserData(ListenKeyPing, ListenKeyStart, ListenKeyStop):
-  """Binance user_data endpoints."""
+  """USDⓈ-M Futures' WebSocket API user-data-stream requests -- start, keepalive-ping, and stop the account's listenKey-scoped User Data Stream.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/user-data-streams)
+  """

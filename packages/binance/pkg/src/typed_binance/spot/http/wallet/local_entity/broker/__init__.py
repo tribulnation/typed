@@ -4,4 +4,8 @@ from .withdraw_apply import WithdrawApply
 
 
 class Broker(DepositProvideInfo, WithdrawApply):
-  """Binance broker endpoints."""
+  """Wallet Travel Rule's Broker endpoints -- providing deposit VASP/travel-rule information and submitting withdrawals on behalf of broker sub-accounts. No page of its own -- reusing Wallet's Travel Rule catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule)
+  """

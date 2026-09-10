@@ -5,4 +5,8 @@ from .listen_key_stop import ListenKeyStop
 
 
 class UserData(ListenKeyPing, ListenKeyStart, ListenKeyStop):
-  """Binance user_data endpoints."""
+  """COIN-M Futures' WS API listen-key lifecycle -- start, keepalive (ping), and close a user data stream, driven over the same WebSocket API connection rather than a plain REST call.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/ws-api/user-data-streams)
+  """

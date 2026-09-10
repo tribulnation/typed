@@ -3,4 +3,8 @@ from .activities import Activities
 
 
 class YieldArena(Activities):
-  """Binance yield_arena endpoints."""
+  """Binance Yield Arena -- activity subscription for Yield Arena, documented as part of Simple Earn's broader Flexible and Locked products.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/flexible-locked)
+  """

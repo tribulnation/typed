@@ -3,4 +3,8 @@ from .trade_history import TradeHistory
 
 
 class C2c(TradeHistory):
-  """Binance c2c endpoints."""
+  """C2C's trade-history endpoint -- this account's peer-to-peer buy/sell order history, queryable up to 6 months back.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/c2c/rest-api)
+  """

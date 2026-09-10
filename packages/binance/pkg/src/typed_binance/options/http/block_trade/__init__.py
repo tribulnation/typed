@@ -11,4 +11,8 @@ from .user_trades import UserTrades
 class BlockTrade(
   OrderAccept, OrderCancel, OrderDetails, OrderExtend, OrderNew, OrdersQuery, UserTrades
 ):
-  """Binance block_trade endpoints."""
+  """Options block trade negotiation -- propose, accept, extend, and cancel a block trade order against a counterparty, plus querying block trade orders and the account's own block trade history.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/rest-api/market-maker-block-trade)
+  """

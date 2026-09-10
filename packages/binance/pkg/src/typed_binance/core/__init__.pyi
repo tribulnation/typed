@@ -1,4 +1,5 @@
 from .exc import (
+  without_listen_key,
   Error,
   NetworkError,
   ValidationError,
@@ -11,6 +12,7 @@ from .exc import (
 from .types import TimestampMillis, timestamp_millis, TimestampIso, timestamp_iso
 
 __all__ = [
+  'without_listen_key',
   'Error',
   'NetworkError',
   'ValidationError',
