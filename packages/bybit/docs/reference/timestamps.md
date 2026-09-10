@@ -16,7 +16,7 @@ from typed_bybit import Bybit
 async with Bybit.new(public=True) as client:
   end = datetime.now(timezone.utc)
   start = end - timedelta(hours=24)
-  candles = await client.http.market.kline(
+  candles = await client.market.kline(
     category='spot', symbol='BTCUSDT', interval='60', start=start, end=end,
   )
   print(len(candles['list']))
@@ -36,22 +36,22 @@ comes back as a `datetime` already, no manual parsing needed:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  history = await client.http.market.funding_history(category='linear', symbol='BTCUSDT')
+  history = await client.market.funding_history(category='linear', symbol='BTCUSDT')
   print(history['list'][0]['fundingRateTimestamp'].isoformat())
 ```
 
-Not every timestamp-shaped value gets this treatment. Positional row series — `market.kline`
-and its siblings — return each candle as a plain tuple of strings, so the leading start-time
-column stays a `str` millisecond epoch. Convert it explicitly if you need a `datetime`:
+Positional row series get the same treatment too — `market.kline` and its siblings
+(`mark_price_kline`, `index_price_kline`, `premium_index_price_kline`) return each candle as
+a tuple, but the leading start-time column is still a real `TimestampMillis`, not a bare
+`str`, even though the wire itself sends it as a numeral string:
 
 ```python
-from datetime import datetime, timezone
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60')
-  start_ms = int(candles['list'][0][0])
-  print(datetime.fromtimestamp(start_ms / 1000, tz=timezone.utc))
+  candles = await client.market.kline(category='spot', symbol='BTCUSDT', interval='60')
+  start_time, open_price, *_ = candles['list'][0]
+  print(start_time.isoformat(), open_price)
 ```
 
 ## Units Vary By Field

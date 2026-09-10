@@ -15,7 +15,7 @@ retail price improvement (RPI) orders.
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
+  book = await client.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
   print(book['s'])
   for price, size in book['b']:
     print('bid', price, size)
@@ -34,14 +34,14 @@ Each level is a `(price, size)` tuple of strings.
 The top of book is just the first level of each side:
 
 ```python
-from typed_bybit import Bybit, timestamp
+from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.http.market.orderbook(category='linear', symbol='BTCUSDT', limit=1)
+  book = await client.market.orderbook(category='linear', symbol='BTCUSDT', limit=1)
   (bid, bid_size), (ask, ask_size) = book['b'][0], book['a'][0]
   spread = float(ask) - float(bid)
   print(f'{bid} x {bid_size} | {ask} x {ask_size} | spread {spread:.2f}')
-  print(timestamp.parse(book['ts']))
+  print(book['ts'])  # already a real `datetime`
 ```
 
 `market.tickers` also carries `bid1Price` and `ask1Price` if that is all you need — see
@@ -53,7 +53,7 @@ async with Bybit.new(public=True) as client:
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.http.market.full_orderbook(category='spot', symbol='BTCUSDT')
+  book = await client.market.full_orderbook(category='spot', symbol='BTCUSDT')
   print(len(book['b']), len(book['a']))
 ```
 
@@ -69,7 +69,7 @@ HTTP 404 and an empty body, which surfaces as a `BadRequest`. In practice only `
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  book = await client.http.market.rpi_orderbook(category='spot', symbol='BTCUSDT', limit=5)
+  book = await client.market.rpi_orderbook(category='spot', symbol='BTCUSDT', limit=5)
   for price, size, rpi_size in book['b']:
     print('bid', price, size, 'rpi', rpi_size)
 ```

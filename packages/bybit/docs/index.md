@@ -6,7 +6,7 @@
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  ticker = await client.http.market.tickers(category='spot', symbol='BTCUSDT')
+  ticker = await client.market.tickers(category='spot', symbol='BTCUSDT')
   print(ticker['list'][0]['lastPrice'])
 ```
 
@@ -25,25 +25,26 @@ pip install typed-bybit
 
 ## The Client
 
-`Bybit` reaches every HTTP endpoint under `client.http` and every WebSocket connection under
-`client.ws` from one object:
+`Bybit` reaches every REST product domain and every WebSocket connection directly as a
+top-level attribute — there's no `.http`/`.ws` split to go through first:
 
 ```python
 from typed_bybit import Bybit
 
 async with Bybit.new(public=True) as client:
-  candles = await client.http.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)
-  book = await client.http.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
-  trades = await client.http.market.recent_trades(category='spot', symbol='BTCUSDT', limit=3)
+  candles = await client.market.kline(category='spot', symbol='BTCUSDT', interval='60', limit=3)
+  book = await client.market.orderbook(category='spot', symbol='BTCUSDT', limit=5)
+  trades = await client.market.recent_trades(category='spot', symbol='BTCUSDT', limit=3)
   print(candles['list'][0], book['b'][0], trades['list'][0]['price'])
 ```
 
-`client.http.market` covers the public REST Market surface. Everything else under
-`client.http` — `trade`, `position`, `account`, `asset`, `finance` and the rest — needs
-credentials, as do `client.ws.private` and `client.ws.trade`. `client.ws.spot`, `.linear`,
-`.inverse`, `.option`, `.spread`, `.rfq`, and `.finance` are the public-category WebSocket
-streams. See [API Keys Setup](api-keys.md) for credentials and
-[Async Usage](reference/async-usage.md) for the full transport layout.
+`client.market` covers the public REST Market surface. Every other REST domain —
+`trade`, `position`, `account`, `asset`, `finance` and the rest — needs credentials, as do
+`client.private` and `client.trade_ws`. `client.spot`, `.linear`, `.inverse`, and `.option`
+are the public-category WebSocket streams with no REST name to share, while
+`client.spread_ws`, `.rfq_ws`, and `.finance_ws` are their `_ws`-suffixed counterparts to
+the REST `spread`, `rfq`, and `finance` domains. See [API Keys Setup](api-keys.md) for
+credentials and [Async Usage](reference/async-usage.md) for the full transport layout.
 
 ## How To
 
