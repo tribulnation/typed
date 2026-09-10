@@ -9,23 +9,23 @@ requests use Alchemy network names such as `eth-mainnet`.
 from typed_alchemy import Alchemy
 
 async with Alchemy.new() as client:
-  balances = await client.portfolio.token_balances({
-    'addresses': [
+  balances = await client.portfolio.token_balances(
+    addresses=[
       {
         'address': '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152',
         'networks': ['eth-mainnet'],
       }
     ],
-    'includeNativeTokens': True,
-    'includeErc20Tokens': True,
-    'pageSize': 2,
-  })
+    include_native_tokens=True,
+    include_erc20tokens=True,
+    page_size=2,
+  )
   print(balances['data']['tokens'])
 ```
 
 ## NFT Holdings
 
-Pass `withMetadata: True` explicitly to get full NFT metadata (name, image, collection,
+Pass `with_metadata=True` explicitly to get full NFT metadata (name, image, collection,
 etc.) in each returned item. Alchemy's own docs describe `withMetadata` as defaulting to
 `true`, but the live API actually defaults to `false`: omitting it returns a minimal row
 (just `address`, `balance`, `contractAddress`, `isSpam`, `network`, `spamClassifications`,
@@ -36,8 +36,8 @@ same real default.
 from typed_alchemy import Alchemy
 
 async with Alchemy.new() as client:
-  nfts = await client.portfolio.nfts({
-    'addresses': [
+  nfts = await client.portfolio.nfts(
+    addresses=[
       {
         'address': '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152',
         'networks': ['eth-mainnet'],
@@ -45,11 +45,11 @@ async with Alchemy.new() as client:
         'spamConfidenceLevel': 'VERY_HIGH',
       }
     ],
-    'withMetadata': True,
-    'pageSize': 2,
-    'orderBy': 'transferTime',
-    'sortOrder': 'asc',
-  })
+    with_metadata=True,
+    page_size=2,
+    order_by='transferTime',
+    sort_order='asc',
+  )
   print(nfts['data']['ownedNfts'])
 ```
 
@@ -59,14 +59,14 @@ async with Alchemy.new() as client:
 from typed_alchemy import Alchemy
 
 async with Alchemy.new() as client:
-  history = await client.portfolio.transactions.history({
-    'addresses': [
+  history = await client.portfolio.transactions.history(
+    addresses=[
       {
         'address': '0x1E6E8695FAb3Eb382534915eA8d7Cc1D1994B152',
         'networks': ['eth-mainnet'],
       }
     ],
-    'limit': 2,
-  })
+    limit=2,
+  )
   print(history['transactions'])
 ```
