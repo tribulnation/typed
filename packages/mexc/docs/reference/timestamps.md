@@ -20,13 +20,13 @@ from datetime import datetime, timedelta
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  await client.spot.market.candles(
+  await client.spot.http.market.candles(
     symbol='BTCUSDT',
     interval='1m',
     start_time=datetime.now() - timedelta(hours=1),
     end_time=datetime.now(),
   )
-  await client.futures.market.candles(
+  await client.futures.http.market.candles(
     'BTC_USDT',
     interval='Min1',
     start=datetime.now() - timedelta(hours=1),
@@ -42,12 +42,12 @@ from typed_mexc import MEXC
 from typed_mexc.core import timestamp_millis as ts, timestamp_seconds as ts_s
 
 async with MEXC.new(public=True) as client:
-  await client.spot.market.candles(
+  await client.spot.http.market.candles(
     symbol='BTCUSDT',
     interval='1m',
     start_time=ts.parse(1715200000000),
   )
-  await client.futures.market.candles(
+  await client.futures.http.market.candles(
     'BTC_USDT',
     interval='Min1',
     start=ts_s.parse(1715200000),
