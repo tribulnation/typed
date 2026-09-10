@@ -1,10 +1,10 @@
-from .main import Hyperliquid, Wallet
+from .main import Hyperliquid
 from .core import (
+  Wallet,
   Error,
   ApiError,
   AuthError,
   NetworkError,
-  RateLimited,
   ValidationError,
   BadRequest,
   LogicError,
@@ -17,7 +17,6 @@ __all__ = [
   'ApiError',
   'AuthError',
   'NetworkError',
-  'RateLimited',
   'ValidationError',
   'BadRequest',
   'LogicError',

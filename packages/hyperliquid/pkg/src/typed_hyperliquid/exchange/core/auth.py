@@ -7,6 +7,7 @@ transport, not attached generically by an `authed_request()`.
 """
 
 from typing_extensions import Any, Mapping, Sequence
+from decimal import Decimal
 
 import msgpack
 from eth_account.messages import encode_typed_data
@@ -17,6 +18,28 @@ from eth_utils import keccak, to_hex  # type: ignore (pyright bug apparently)
 def address_to_bytes(address: str) -> bytes:
   """Convert a hex EVM address to bytes."""
   return bytes.fromhex(address[2:] if address.startswith('0x') else address)
+
+
+def stringify_decimals(value: Any) -> Any:
+  """Recursively convert every `Decimal` nested in `value` to its `str` wire form.
+
+  A top-level `decimal-string`-formatted action parameter is already stringified at the
+  point its own wire dict entry is built (`client_generation.python.code.http.
+  HttpRequest.param_value`); this catches what that can't reach -- a `Decimal` nested
+  inside an array-of-objects or object-valued parameter, such as `order`'s own per-row
+  `p`/`s` fields. Left unconverted, neither `action_hash`'s `msgpack.packb` below nor the
+  JSON request body can serialize a raw `Decimal` at all -- `order`/`modify`/`modify_orders`/
+  `twap_order` all failed this way (`TypeError: can not serialize 'decimal.Decimal'
+  object`) before every generated exchange action started calling this on its own `action`
+  dict just before signing.
+  """
+  if isinstance(value, Decimal):
+    return str(value)
+  if isinstance(value, dict):
+    return {k: stringify_decimals(v) for k, v in value.items()}
+  if isinstance(value, (list, tuple)):
+    return [stringify_decimals(v) for v in value]
+  return value
 
 
 def action_hash(

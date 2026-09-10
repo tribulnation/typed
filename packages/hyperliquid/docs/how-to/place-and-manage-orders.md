@@ -1,7 +1,7 @@
 # Place & Manage Orders
 
-Use `client.exchange.http` (or `client.exchange.ws`, the same actions over the shared
-WebSocket connection) for signed trading actions, and `client.info` for read-side order
+Use `client.exchange` for signed trading actions (`transport='ws'` sends the same action
+over the shared WebSocket connection instead of HTTP), and `client.info` for read-side order
 queries.
 
 ```bash
@@ -10,7 +10,7 @@ export HYPERLIQUID_PRIVATE_KEY="your_private_key"
 
 ## Resolve The Asset Id
 
-`client.exchange.http.order()` takes one or more order wire objects, and each order uses Hyperliquid asset ids rather than coin symbols. For perps on the default dex, the asset id is the index in `perp_meta()['universe']`.
+`client.exchange.order()` takes one or more order wire objects, and each order uses Hyperliquid asset ids rather than coin symbols. For perps on the default dex, the asset id is the index in `perp_meta()['universe']`.
 
 ```python
 from typed_hyperliquid import Hyperliquid
@@ -30,6 +30,8 @@ async with Hyperliquid.new(public=True) as client:
 independent orders, or `'normalTpsl'`/`'positionTpsl'` for a take-profit/stop-loss pair.
 
 ```python
+from decimal import Decimal
+
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new() as client:
@@ -38,28 +40,32 @@ async with Hyperliquid.new() as client:
     idx for idx, asset in enumerate(meta['universe']) if asset['name'] == 'BTC'
   )
 
-  result = await client.exchange.http.order(
+  result = await client.exchange.order(
     orders=[{
       'a': btc_asset,
       'b': True,
-      'p': '90000',
-      's': '0.001',
+      'p': Decimal('90000'),
+      's': Decimal('0.001'),
       'r': False,
       't': {'limit': {'tif': 'Gtc'}},
     }],
     grouping='na',
   )
 
-  status = result['response']['data']['statuses'][0]
-  print(status)
+  response = result['response']
+  if isinstance(response, dict):
+    status = response['data']['statuses'][0]
+    print(status)
 ```
 
 Passing more than one entry in `orders` places them as a batch in one call.
 
-`client.exchange.ws` exposes the exact same methods over the shared WebSocket connection --
+`transport='ws'` sends the exact same call over the shared WebSocket connection instead --
 useful when you're already streaming and want to avoid opening a separate HTTP round trip:
 
 ```python
+from decimal import Decimal
+
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new() as client:
@@ -68,16 +74,17 @@ async with Hyperliquid.new() as client:
     idx for idx, asset in enumerate(meta['universe']) if asset['name'] == 'BTC'
   )
 
-  result = await client.exchange.ws.order(
+  result = await client.exchange.order(
     orders=[{
       'a': btc_asset,
       'b': True,
-      'p': '90000',
-      's': '0.001',
+      'p': Decimal('90000'),
+      's': Decimal('0.001'),
       'r': False,
       't': {'limit': {'tif': 'Gtc'}},
     }],
     grouping='na',
+    transport='ws',
   )
 ```
 
@@ -125,8 +132,10 @@ async with Hyperliquid.new() as client:
     idx for idx, asset in enumerate(meta['universe']) if asset['name'] == 'BTC'
   )
 
-  result = await client.exchange.http.cancel(cancels=[{'a': btc_asset, 'o': oid}])
-  print(result['response']['data']['statuses'])
+  result = await client.exchange.cancel(cancels=[{'a': btc_asset, 'o': oid}])
+  response = result['response']
+  if isinstance(response, dict):
+    print(response['data']['statuses'])
 ```
 
 ## Cancel All Open Orders
@@ -140,6 +149,6 @@ from typed_hyperliquid import Hyperliquid
 cancel_at = datetime.now(timezone.utc) + timedelta(seconds=30)
 
 async with Hyperliquid.new() as client:
-  result = await client.exchange.http.schedule_cancel(time=cancel_at)
+  result = await client.exchange.schedule_cancel(time=cancel_at)
   print(result['type'])
 ```

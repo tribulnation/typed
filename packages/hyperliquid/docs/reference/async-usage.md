@@ -78,9 +78,9 @@ transport-choice constructor:
 
 - `client.info` -- always HTTP.
 - `client.streams` -- always the shared WebSocket connection.
-- `client.exchange` -- reachable over **both** transports as sibling properties:
-  `client.exchange.http` and `client.exchange.ws` expose the exact same signed trading
-  methods, one bound to HTTP, the other posted over the same WebSocket connection
+- `client.exchange` -- reachable over **both** transports on the same object: every signed
+  trading method takes a `transport` keyword (`'http'`, the default, or `'ws'`), sending
+  the identical call either as a plain HTTP POST or over the same WebSocket connection
   `streams` uses.
 
 ```python
@@ -88,8 +88,8 @@ from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new() as client:
   mids = await client.info.all_mids()
-  http_result = await client.exchange.http.noop()
-  ws_result = await client.exchange.ws.noop()
+  http_result = await client.exchange.noop()
+  ws_result = await client.exchange.noop(transport='ws')
 ```
 
 `Hyperliquid.new()` reads `HYPERLIQUID_PRIVATE_KEY` unless you pass a wallet explicitly.
@@ -106,5 +106,5 @@ Use `async with` by default when:
 - you are opening streams
 - you want predictable cleanup
 
-Pick `client.exchange.http` or `client.exchange.ws` per call based on whether you're already
-holding the WebSocket connection open for streaming -- both sign and behave identically.
+Pick `transport='http'` (the default) or `transport='ws'` per call based on whether you're
+already holding the WebSocket connection open for streaming -- both sign and behave identically.

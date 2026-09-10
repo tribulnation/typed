@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-hyperliquid"
-version = "2.0.0"
+version = "2.1.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -18,7 +18,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "typed-core>=0.2.0",
+  "typed-core>=0.8.1",
   "lazy-loader",
   "eth-account",
   "msgpack"

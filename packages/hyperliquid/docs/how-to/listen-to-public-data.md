@@ -25,7 +25,7 @@ If you need more compact aggregation, use the optional `n_sig_figs` and `mantiss
 from typed_hyperliquid import Hyperliquid
 
 async with Hyperliquid.new(public=True) as client:
-  async with client.streams.candle('BTC', '1m') as candles:
+  async with client.streams.candle('BTC', interval='1m') as candles:
     async for candle in candles:
       print(candle['s'], candle['i'], candle['c'])
 ```

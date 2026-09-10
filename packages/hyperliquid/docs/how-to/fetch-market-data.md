@@ -71,7 +71,9 @@ async with Hyperliquid.new(public=True) as client:
   print(history[-1]['fundingRate'])
 ```
 
-For longer windows, use `funding_history_paged()`.
+For longer windows, use `funding_history_paged()`. It moves `start_time` forward to the
+latest `time` of each full page and stops on the first shorter one; `await` it for every
+entry flattened, or `async for` it to handle one page at a time.
 
 ```python
 from datetime import datetime, timedelta, timezone

@@ -1,12 +1,16 @@
 """Base endpoint class for RPC endpoints -- shared by `info` and `exchange`, the two
 surfaces reachable over either HTTP or the shared WebSocket connection, both with the
-same request/reply shape: one JSON payload in, one decoded value out.
+same low-level transport shape: one JSON payload in, one decoded value out.
 
-No `method`/`path` decomposition here: Hyperliquid has exactly one URL per surface
-(`/info`, `/exchange`) and selects the operation via a `type` field inside the payload,
-not the URL. No `authed_request` split either -- `exchange`'s "authentication" is a
-signature embedded in the payload itself (see `exchange/core/auth.py`), built one layer
-above this class, not a header a transport attaches generically.
+No `method`/`path` decomposition at the transport level here: Hyperliquid has exactly one
+URL per surface (`/info`, `/exchange`) and selects the operation via a `type` field inside
+the payload, not the URL. `RpcEndpoint` itself supplies only lifecycle (`client`,
+`validate`, `__aenter__`/`__aexit__`) -- the design §2/§7 `.request(request, *, path, ...)`
+call every generated leaf makes is defined per surface (`InfoCore`/`ExchangeCore`), not
+here, since `info`'s wire assembly and `exchange`'s (signing, nested sub-actions) genuinely
+differ. No `authed_request` split either -- `exchange`'s "authentication" is a signature
+embedded in the payload itself (see `exchange/core/auth.py`), built inside `ExchangeCore.
+request`, not a header a transport attaches generically.
 
 Not frozen, unlike the generic template: every leaf endpoint method (`info.l2_book`,
 `exchange.order`, ...) is its own single-method mixin, and `Info`/`Exchange`/`Streams`
@@ -22,7 +26,7 @@ from dataclasses import dataclass
 
 
 class RpcClient(Protocol):
-  """Structural interface a transport implements to back an `RpcEndpoint`."""
+  """Structural interface a low-level transport implements to back an `RpcEndpoint`."""
 
   async def request(self, payload: Mapping[str, Any]) -> Any:
     """Send one request payload and return the decoded response value."""
@@ -35,7 +39,8 @@ class RpcClient(Protocol):
 
 @dataclass(kw_only=True)
 class RpcEndpoint:
-  """Base class for RPC endpoints."""
+  """Base class for RPC endpoints: lifecycle only. See module docstring for why
+  `.request(...)` (design §2/§7's own generated-call shape) is not defined here."""
 
   client: RpcClient
   validate: bool = True
@@ -46,6 +51,3 @@ class RpcEndpoint:
 
   async def __aexit__(self, exc_type, exc_value, traceback):
     await self.client.__aexit__(exc_type, exc_value, traceback)
-
-  async def request(self, payload: Mapping[str, Any]) -> Any:
-    return await self.client.request(payload)
