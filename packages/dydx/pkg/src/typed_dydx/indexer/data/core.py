@@ -1,127 +1,135 @@
-"""Shared dYdX indexer transport primitives."""
+"""dYdX Indexer HTTP transport (design §2/§5/§6, 2026-08-31 codegen mechanization).
 
-from typing_extensions import Any, Mapping, Protocol, Self, TypeVar
+`IndexerHttpClient` is the shared transport every Indexer HTTP leaf's resolved core
+(`IndexerMixin`) forwards through. Indexer HTTP wraps some, but not all, of its responses
+in a small envelope (`{positions: [...]}`, `{rewards: [...]}`, ...) -- which key (if any)
+wraps the value a given call returns genuinely varies endpoint to endpoint, so it's a real
+per-call `meta` fact (`codegen/config.toml` `[cores.data].meta`), not a fixed core convention the
+way Comet's `result`/gRPC's proto envelope are.
+"""
+
+import json
 from dataclasses import dataclass, field
-import pydantic
-import httpx
+from typing_extensions import Any, NotRequired, Self, TypedDict, TypeVar, cast
+from types import UnionType
 
-from typed_core import HttpClient, ApiError
+from typed_core import ApiError
 from typed_core.exceptions import BadRequest, RateLimited
+from typed_core.http import HttpClient
 from typed_core.util import path_join
+from typed_core.validation import validator
 
 T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
-
-class ResponseParser(Protocol[T_co]):
-  """Response parser with per-call validation control."""
-
-  def __call__(self, r: httpx.Response, *, validate: bool = True) -> T_co:
-    """Parse an HTTP response."""
-    ...
-
-def response_parser(type: type[T]) -> ResponseParser[T]:
-  """Build a response parser for an indexer response type.
-
-  Args:
-    type: Response type to validate against.
-
-  Returns:
-    A parser function for the response type.
-  """
-  adapter = pydantic.TypeAdapter(type)
-  def parse_response(r: httpx.Response, *, validate: bool = True) -> T:
-    """Parse and validate an indexer HTTP response.
-  
-    Args:
-      r: HTTP response.
-      validate: Override the client response validation default for this call.
-  
-    Returns:
-      The parsed response payload.
-    """
-    if r.status_code == 200:
-      return adapter.validate_json(r.text) if validate else r.json()
-    elif r.status_code == 429:
-      raise RateLimited(r.status_code, r.json())
-    elif 400 <= r.status_code < 500:
-      raise BadRequest(r.status_code, r.json())
-    else:
-      raise ApiError(r.status_code, r.json())
-  return parse_response
 
 INDEXER_HTTP_URL = 'https://indexer.dydx.trade/'
 INDEXER_TESTNET_HTTP_URL = 'https://indexer.v4testnet.dydx.exchange'
 
-@dataclass(kw_only=True)
-class IndexerMixin:
-  """Shared HTTP indexer endpoint mixin."""
-  url: str = INDEXER_HTTP_URL
-  client: HttpClient = field(default_factory=HttpClient)
-  default_validate: bool = True
 
-  def validate(self, validate: bool | None = None) -> bool:
-    """Resolve a per-call validation override.
-  
-    Args:
-      validate: Override the client response validation default for this call.
-  
-    Returns:
-      The effective validation setting.
-    """
-    return self.default_validate if validate is None else validate
+class Meta(TypedDict):
+  """`data`'s own `meta` shape (`codegen/config.toml` `[cores.data].meta`): the dotted wire key
+  wrapping the value this call returns, when the indexer wraps one. Hand-written to match
+  that declared JSON Schema -- never code-generated (design §2/§6, S27's own precedent)."""
+
+  payload: NotRequired[str]
+  """Dotted wire key to extract from the raw JSON body before validating it against the
+  generated response type (`docs/spec/authoring.md` rule 6) -- e.g. `'positions'` for
+  `get_asset_positions`. Absent when the response schema already describes the whole
+  body."""
+
+
+@dataclass(kw_only=True, frozen=True)
+class IndexerHttpClient:
+  """Shared HTTP transport for the dYdX Indexer's REST API."""
+
+  url: str = INDEXER_HTTP_URL
+  http: HttpClient = field(default_factory=HttpClient)
+  validate: bool = True
 
   async def __aenter__(self) -> Self:
-    """Enter the indexer client context.
-  
-    Returns:
-      The configured indexer client.
-    """
+    """Open the shared HTTP transport."""
+    await self.http.__aenter__()
+    return self
+
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    """Close the shared HTTP transport."""
+    await self.http.__aexit__(exc_type, exc_value, traceback)
+
+
+def _extract(payload: Any, path: str) -> Any:
+  """Read a dotted-key path off a decoded JSON body, or return it unread for `''`."""
+  if not path:
+    return payload
+  value = payload
+  for part in path.split('.'):
+    value = value[part]
+  return value
+
+
+@dataclass(kw_only=True)
+class IndexerMixin:
+  """Base for every generated Indexer HTTP endpoint module -- the resolved `core` for the
+  `indexer/data/` subtree (`codegen/config.toml`)."""
+
+  client: IndexerHttpClient
+
+  async def __aenter__(self) -> Self:
     await self.client.__aenter__()
     return self
 
   async def __aexit__(self, exc_type, exc_value, traceback):
-    """Exit the indexer client context."""
     await self.client.__aexit__(exc_type, exc_value, traceback)
 
   async def request(
-    self, method: str, path: str,
+    self,
+    request: Any = None,
     *,
-    content: httpx._types.RequestContent | None = None,
-    data: httpx._types.RequestData | None = None,
-    files: httpx._types.RequestFiles | None = None,
-    json: Any | None = None,
-    params: Mapping[str, Any] | None = None,
-    headers: Mapping[str, str] | None = None,
-    cookies: httpx._types.CookieTypes | None = None,
-    auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
-    follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
-    timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
-    extensions: httpx._types.RequestExtensions | None = None,
-  ) -> httpx.Response:
-    """Send an HTTP request to the indexer.
-  
+    method: str,
+    path: str,
+    meta: Meta,
+    validate: bool | None = None,
+    request_type: type[Any] | UnionType | None = None,
+    response_type: type[T] | UnionType | None = None,
+  ) -> T:
+    """Perform one Indexer REST call (design §2): serialize `request` through
+    `request_type`'s validator (ADR 0020/S28) into a plain dict, substitute it into any
+    `{placeholder}` in `path` and send the rest as the query string, unwrap
+    `meta['payload']` (when declared) from the raw JSON body, and validate the result
+    through `response_type`'s validator.
+
     Args:
-      method: HTTP method.
-      path: Indexer path.
-      content: Request body content.
-      data: Form data.
-      files: Multipart files.
-      json: JSON request body.
-      params: Query parameters.
-      headers: Request headers.
-      cookies: Request cookies.
-      auth: Request authentication override.
-      follow_redirects: Redirect handling override.
-      timeout: Request timeout override.
-      extensions: Request extensions.
-  
-    Returns:
-      The raw HTTP response.
+      request: The generated `Request` value (a `TypedDict` instance, or `None` for a
+        parameterless operation).
+      method: Wire HTTP verb -- every real Indexer HTTP endpoint is `GET`.
+      path: Wire path template, e.g. `/v4/candles/perpetualMarkets/{market}`.
+      meta: This call's own quirks -- the wire envelope key to extract, if any
+        (`Meta`'s own docstring).
+      validate: Per-call override of response validation.
+      request_type: The generated request type, used to serialize `request`.
+      response_type: The generated response type, used to validate the extracted value.
     """
-    url = path_join(self.url, path)
-    return await self.client.request(
-      method, url, params=params, cookies=cookies, json=json,
-      content=content, data=data, files=files, auth=auth, follow_redirects=follow_redirects,
-      timeout=timeout, extensions=extensions,
-      headers=headers,
+    values: dict[str, Any] = (
+      json.loads(validator(cast(type, request_type)).dump(request))
+      if request_type is not None and request is not None
+      else {}
     )
+    resolved_path = path
+    query: dict[str, Any] = {}
+    for key, value in values.items():
+      placeholder = f'{{{key}}}'
+      if placeholder in resolved_path:
+        resolved_path = resolved_path.replace(placeholder, str(value))
+      else:
+        query[key] = value
+    url = path_join(self.client.url, resolved_path)
+    response = await self.client.http.request(method, url, params=query or None)
+    if response.status_code == 429:
+      raise RateLimited(response.status_code, response.json())
+    if 400 <= response.status_code < 500:
+      raise BadRequest(response.status_code, response.json())
+    if response.status_code != 200:
+      raise ApiError(response.status_code, response.json())
+    should_validate = self.client.validate if validate is None else validate
+    payload = _extract(response.json(), meta.get('payload', ''))
+    if should_validate and response_type is not None:
+      return validator(cast(type, response_type)).python(payload)
+    return cast('T', payload)

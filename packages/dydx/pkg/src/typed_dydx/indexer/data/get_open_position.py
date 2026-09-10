@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 
-from .list_positions import ListPositions, PerpetualPosition
+from typed_dydx.indexer.schemas import PerpetualPosition
+
+from .list_positions import ListPositions
 
 
 @dataclass

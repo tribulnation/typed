@@ -34,7 +34,7 @@ from typed_dydx import Dydx
 address = 'dydx1...'
 
 async with Dydx.testnet(public=True) as client:
-  fills = await client.indexer.data.get_fills(address, subaccount=0, limit=100)
+  fills = await client.indexer.data.get_fills(address=address, subaccount=0, limit=100)
   transfers = await client.indexer.data.get_transfers(address, subaccount=0, limit=100)
   positions = await client.indexer.data.list_positions(address, subaccount=0)
   print(fills, transfers, positions)
