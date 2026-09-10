@@ -7,7 +7,7 @@ from typed_bitget.schemas import MixProductType
 
 
 class MixContract(TypedDict):
-  """One futures contract."""
+  """One perpetual futures contract."""
 
   symbol: str
   """Futures symbol."""
@@ -32,7 +32,7 @@ class MixContract(TypedDict):
   minTradeNum: Decimal
   """Minimum order size, in base coin."""
   maxOrderQty: int
-  """Maximum order size per single order, in base coin. Confirmed live to always be sent as a whole number (360 distinct values across 741 captured symbols, none fractional)."""
+  """Maximum order size per single perpetual order, in base coin; sent as a whole number."""
   priceEndStep: int
   """Price step multiplier used together with `pricePlace`."""
   volumePlace: int
@@ -41,7 +41,7 @@ class MixContract(TypedDict):
   """Decimal places used for price."""
   sizeMultiplier: Decimal
   """Order size must be a multiple of this value."""
-  symbolType: Literal['perpetual', 'delivery']
+  symbolType: Literal['perpetual']
   """Contract type."""
   minTradeUSDT: Decimal
   """Minimum order value, in USDT."""
@@ -77,6 +77,77 @@ class MixContract(TypedDict):
   """Whether the symbol represents a real-world/tokenized asset."""
 
 
+class MixDeliveryContract(TypedDict):
+  """One dated delivery futures contract."""
+
+  symbol: str
+  """Futures symbol."""
+  baseCoin: str
+  """Base coin."""
+  quoteCoin: str
+  """Quote coin."""
+  buyLimitPriceRatio: Decimal
+  """Maximum ratio a buy order's price may exceed the mark price by."""
+  sellLimitPriceRatio: Decimal
+  """Maximum ratio a sell order's price may undercut the mark price by."""
+  feeRateUpRatio: Decimal
+  """Ratio by which the taker fee rate may rise under high volatility."""
+  makerFeeRate: Decimal
+  """Maker fee rate."""
+  takerFeeRate: Decimal
+  """Taker fee rate."""
+  openCostUpRatio: Decimal
+  """Ratio by which open cost may rise under high volatility."""
+  supportMarginCoins: list[str]
+  """Coins that may be used as margin for this symbol."""
+  minTradeNum: Decimal
+  """Minimum order size, in base coin."""
+  maxOrderQty: int | Literal['']
+  """Maximum order size per single order, in base coin; sent as a whole number. Empty string when not supplied for a delivery contract."""
+  priceEndStep: int
+  """Price step multiplier used together with `pricePlace`."""
+  volumePlace: int
+  """Decimal places used for size."""
+  pricePlace: int
+  """Decimal places used for price."""
+  sizeMultiplier: Decimal
+  """Order size must be a multiple of this value."""
+  symbolType: Literal['delivery']
+  """Contract type."""
+  minTradeUSDT: Decimal
+  """Minimum order value, in USDT."""
+  maxSymbolOrderNum: int
+  """Maximum open order count for this symbol."""
+  maxProductOrderNum: int
+  """Maximum open order count across the product type."""
+  maxPositionNum: int
+  """Maximum open position count."""
+  symbolStatus: str
+  """Trading status of the symbol, e.g. listed/delisted state."""
+  offTime: TimestampMillis
+  """Scheduled delisting time, or `"-1"` when not scheduled."""
+  limitOpenTime: TimestampMillis
+  """Time trading limits were applied, or `"-1"` when none apply."""
+  deliveryTime: str
+  """Delivery settlement time, for delivery contracts; empty string for perpetuals (confirmed live: not `"-1"` as originally documented, so no timestamp format is declared -- an empty string isn't a valid epoch-millis value)."""
+  deliveryStartTime: str
+  """Delivery countdown start time, for delivery contracts; empty string for perpetuals (confirmed live: not `"-1"` as originally documented, so no timestamp format is declared -- an empty string isn't a valid epoch-millis value)."""
+  launchTime: str
+  """Symbol launch time, or empty string when not applicable (confirmed live -- no timestamp format is declared, since an empty string isn't a valid epoch-millis value)."""
+  fundInterval: int | Literal['']
+  """Funding interval, in hours. Empty string when not supplied for a delivery contract."""
+  minLever: Decimal
+  """Minimum leverage."""
+  maxLever: Decimal
+  """Maximum leverage."""
+  posLimit: Decimal | Literal['']
+  """Position limit ratio relative to open interest. Empty string when not supplied for a delivery contract."""
+  maintainTime: str
+  """Scheduled maintenance time, or empty string when none scheduled (confirmed live: not `"-1"` as originally documented, so no timestamp format is declared -- an empty string isn't a valid epoch-millis value)."""
+  isRwa: str
+  """Whether the symbol represents a real-world/tokenized asset."""
+
+
 class Request(TypedDict):
   productType: MixProductType
   """Which futures product family this request concerns."""
@@ -84,7 +155,7 @@ class Request(TypedDict):
   """Restrict to a single symbol, e.g. "BTCUSDT"."""
 
 
-Response = list[MixContract]
+Response = list[MixContract | MixDeliveryContract]
 
 
 class Contracts(RpcEndpoint):
