@@ -8,7 +8,7 @@
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  summary = await client.http.account.get_account_summary(currency='BTC')
+  summary = await client.account.get_account_summary(currency='BTC')
   print(summary['balance'], summary['equity'], summary['available_funds'])
 ```
 
@@ -18,7 +18,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  positions = await client.http.account.get_positions(currency='BTC', kind='future')
+  positions = await client.account.get_positions(currency='BTC', kind='future')
   for position in positions:
     print(position['instrument_name'], position['size'], position['direction'])
 ```
@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  log = await client.http.account.get_transaction_log(
+  log = await client.account.get_transaction_log(
     currency='BTC',
     start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
     end_timestamp=datetime(2023, 11, 15, 22, 13, 20, tzinfo=timezone.utc),

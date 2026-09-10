@@ -8,7 +8,7 @@
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  address = await client.http.wallet.address_book.get_current_deposit_address(
+  address = await client.wallet.address_book.get_current_deposit_address(
     currency='BTC',
   )
   print(address)
@@ -22,7 +22,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  deposits = await client.http.wallet.deposits.get_deposits(currency='BTC', count=10)
+  deposits = await client.wallet.deposits.get_deposits(currency='BTC', count=10)
   for deposit in deposits['data']:
     print(deposit['transaction_id'], deposit['amount'], deposit['state'])
 ```
@@ -35,7 +35,7 @@ The destination address must already be in this account's address book.
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  withdrawal = await client.http.wallet.withdrawals.withdraw(
+  withdrawal = await client.wallet.withdrawals.withdraw(
     currency='BTC', address='some-address-book-address', amount=0.001,
   )
   print(withdrawal['state'], withdrawal.get('fee'))
@@ -47,7 +47,7 @@ async with Deribit.new(testnet=True) as client:
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  withdrawals = await client.http.wallet.withdrawals.get_withdrawals(
+  withdrawals = await client.wallet.withdrawals.get_withdrawals(
     currency='BTC', count=10,
   )
   for withdrawal in withdrawals['data']:

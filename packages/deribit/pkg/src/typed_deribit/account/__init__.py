@@ -85,4 +85,8 @@ class Account(
   ToggleNotificationsFromSubaccount,
   ToggleSubaccountLogin,
 ):
-  """Account endpoints."""
+  """Account, sub-account, and API-key management -- credential lifecycle, sub-account creation and administration, account summaries, positions, and portfolio simulation.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/account-management)
+  """

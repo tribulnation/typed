@@ -6,11 +6,9 @@ from .get_combos import GetCombos
 from .get_leg_prices import GetLegPrices
 
 
-class ComboBooks(
-  CreateCombo,
-  GetComboDetails,
-  GetComboIds,
-  GetCombos,
-  GetLegPrices,
-):
-  """ComboBooks endpoints."""
+class ComboBooks(CreateCombo, GetComboDetails, GetComboIds, GetCombos, GetLegPrices):
+  """Multi-leg combo instrument books -- creating combos, listing combo ids, and pricing individual legs.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/combo-books)
+  """

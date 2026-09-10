@@ -4,9 +4,9 @@ from .simulate_block_trade import SimulateBlockTrade
 from .verify_block_trade import VerifyBlockTrade
 
 
-class MatchingEngine(
-  ExecuteBlockTrade,
-  SimulateBlockTrade,
-  VerifyBlockTrade,
-):
-  """MatchingEngine endpoints."""
+class MatchingEngine(ExecuteBlockTrade, SimulateBlockTrade, VerifyBlockTrade):
+  """Two-sided block trade verification and execution against the matching engine -- the signature exchange step of the block trade workflow. The venue documents these methods as part of its wider Block Trade API rather than as their own category, and this grouping's own endpoints (execute/simulate/verify_block_trade) are cross-tagged 'Block Trade' there too.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/block-trade)
+  """

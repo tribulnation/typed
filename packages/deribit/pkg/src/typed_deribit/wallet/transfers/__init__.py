@@ -13,4 +13,8 @@ class Transfers(
   SubmitTransferToSubaccount,
   SubmitTransferToUser,
 ):
-  """Transfers endpoints."""
+  """Internal transfers of funds between a Deribit main account and its subaccounts, or to another Deribit user — submitting, cancelling, and listing transfer history.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/articles/managing-transfers-api)
+  """

@@ -1,63 +1,66 @@
 # Paginate Through Results
 
-Endpoints the venue paginates get a `<method>_paged` async-iterator sibling beside the
-single-request method, on the same router.
+Endpoints the venue paginates get a `<method>_paged` sibling beside the single-request
+method, on the same router. Every one returns a `PaginatedResponse`: `async for` yields one
+page's rows at a time (empty pages are skipped), and `await` flattens every page into one
+list. The single-request method itself is always still there for a one-shot call.
 
-## Window Pagination
+## Seek Pagination
 
-`market_data.get_mark_price_history` walks a `start_timestamp`/`end_timestamp` window
-forward by its own width until a page comes back empty:
+`market_data.get_funding_rate_history` takes a time range and returns at most the newest
+744 hourly rows of it. Its `_paged` sibling therefore walks backwards: it moves
+`end_timestamp` down to the earliest row timestamp of each full page, never past the
+caller's own `start_timestamp`, and stops on the first page shorter than 744 rows. Pages
+arrive newest-first; each row carries `timestamp`, `index_price`, `prev_index_price`,
+`interest_8h` and `interest_1h`:
 
 ```python
 from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  async for page in client.http.market_data.get_mark_price_history_paged(
+  async for rows in client.market_data.get_funding_rate_history_paged(
     instrument_name='BTC-PERPETUAL',
-    start_timestamp=datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc),
-    end_timestamp=datetime(2023, 11, 14, 23, 13, 20, tzinfo=timezone.utc),
-    max_pages=5,
+    start_timestamp=datetime(2026, 6, 1, tzinfo=timezone.utc),
+    end_timestamp=datetime(2026, 9, 1, tzinfo=timezone.utc),
   ):
-    for mark_price, timestamp in page:
-      print(timestamp, mark_price)
+    for row in rows:
+      print(row['timestamp'], row['interest_8h'])
 ```
 
-`max_pages` stops the walk early; omit it to walk the whole range.
+`market_data.get_mark_price_history` is not paginated: the venue only holds the most recent
+few minutes of mark prices for an instrument, so a single call returns everything there is.
 
 ## Offset Pagination
 
-`wallet.deposits.get_deposits` pages by `count`/`offset`:
+`wallet.deposits.get_deposits` pages by `count`/`offset`. The `_paged` sibling advances
+`offset` by the rows it received and stops once it has covered the `records_total` the
+venue reports, yielding the `data` rows of each page rather than the whole response:
 
 ```python
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  async for page in client.http.wallet.deposits.get_deposits_paged(
+  async for deposits in client.wallet.deposits.get_deposits_paged(
     currency='BTC', count=10,
   ):
-    for deposit in page['data']:
+    for deposit in deposits:
       print(deposit['transaction_id'], deposit['amount'])
 ```
-
-Both variants yield exactly what the single-request method returns, one page at a time —
-the single-request method itself is always still there for a one-shot call.
 
 ## Token Pagination
 
 `account.get_transaction_log` and seven other endpoints (`get_block_rfq_trades`,
 `get_apr_history`, `get_last_settlements_by_currency`/`_by_instrument`,
 `list_address_beneficiaries`, ...) walk a `continuation` token until the venue stops sending
-one. Their `_paged` sibling returns a `PaginatedResponse` rather than a plain async
-iterator — usable either as `async for` (one page's *rows* at a time, not the whole
-response) or as an `await`, which flattens every page into a single list:
+one:
 
 ```python
 from datetime import datetime, timezone
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  paged = client.http.account.get_transaction_log_paged(
+  paged = client.account.get_transaction_log_paged(
     currency='BTC',
     start_timestamp=datetime(2025, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
     end_timestamp=datetime(2026, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
@@ -70,7 +73,7 @@ async with Deribit.new(testnet=True) as client:
       print(entry['id'], entry['timestamp'], entry.get('cashflow'))
 
   # or flatten every page into one list:
-  all_entries = await client.http.account.get_transaction_log_paged(
+  all_entries = await client.account.get_transaction_log_paged(
     currency='BTC',
     start_timestamp=datetime(2025, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
     end_timestamp=datetime(2026, 8, 8, 20, 15, 12, tzinfo=timezone.utc),
@@ -78,5 +81,24 @@ async with Deribit.new(testnet=True) as client:
   )
 ```
 
-Unlike Window/Offset pagination, there's no `max_pages` — the walk stops on its own once
-the venue sends no further `continuation` token.
+## Stopping Early, Checkpointing, Resuming
+
+There is no page cap keyword: `break` out of `async for` to stop early. For a long walk,
+`.pages()` yields each page with the state it was fetched with and the state of the page
+after it, and `.resume(state)` restarts the same walk from a saved one:
+
+```python
+from typed_deribit import Deribit
+
+async with Deribit.new(public=True) as client:
+  paged = client.market_data.get_delivery_prices_paged(index_name='btc_usd', count=100)
+  checkpoint: int | None = None
+  async for page in paged.pages():
+    print(len(page.rows), 'rows, next offset', page.next)
+    if page.next is not None and page.next >= 200:
+      checkpoint = page.next
+      break
+
+  if checkpoint is not None:
+    remaining = await paged.resume(checkpoint)
+```

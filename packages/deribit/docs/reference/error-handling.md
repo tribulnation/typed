@@ -22,7 +22,7 @@ from typed_deribit import (
 
 async with Deribit.new(testnet=True) as client:
   try:
-    summary = await client.http.account.get_account_summary(currency='BTC')
+    summary = await client.account.get_account_summary(currency='BTC')
   except AuthError:
     ...  # missing or rejected credentials
   except RateLimited:

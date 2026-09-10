@@ -13,4 +13,8 @@ class Session(
   GetCancelOnDisconnect,
   SetHeartbeat,
 ):
-  """Session endpoints."""
+  """Per-connection session controls -- heartbeat and cancel-on-disconnect configuration.
+
+  References:
+    - [Upstream docs](https://docs.deribit.com/api-reference/session-management)
+  """

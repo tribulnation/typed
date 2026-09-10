@@ -33,7 +33,7 @@ export TEST_DERIBIT_CLIENT_SECRET="your_testnet_client_secret"
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True) as client:
-  summary = await client.http.account.get_account_summary(currency='BTC')
+  summary = await client.account.get_account_summary(currency='BTC')
   print(summary)
 ```
 
@@ -45,7 +45,7 @@ from typed_deribit import Deribit
 async with Deribit.new(
   client_id='your_client_id', client_secret='your_client_secret', testnet=True,
 ) as client:
-  summary = await client.http.account.get_account_summary(currency='BTC')
+  summary = await client.account.get_account_summary(currency='BTC')
 ```
 
 A client built with `public=True` skips credential resolution entirely and can only reach
@@ -55,23 +55,24 @@ public methods and public channels:
 from typed_deribit import Deribit
 
 async with Deribit.new(public=True) as client:
-  ticker = await client.http.market_data.ticker(instrument_name='BTC-PERPETUAL')
+  ticker = await client.market_data.ticker(instrument_name='BTC-PERPETUAL')
 ```
 
 ## HTTP Auth Scheme
 
-`.http` defaults to Bearer-token auth (`public/auth` token exchange, cached and refreshed
-automatically). Pass `http_auth='hmac'` to sign every request individually instead
-(`client_signature` grant, no token exchange):
+The HTTP connection defaults to Bearer-token auth (`public/auth` token exchange, cached
+and refreshed automatically). Pass `http_auth='hmac'` to sign every request individually
+instead (`client_signature` grant, no token exchange):
 
 ```python
 from typed_deribit import Deribit
 
 async with Deribit.new(testnet=True, http_auth='hmac') as client:
-  summary = await client.http.account.get_account_summary(currency='BTC')
+  summary = await client.account.get_account_summary(currency='BTC')
 ```
 
-`.ws` and `.streams` always use token auth; `http_auth` has no effect on them.
+The WebSocket connection (`transport='ws'`) and `.streams` always use token auth;
+`http_auth` only affects the HTTP connection.
 
 See [Environment Variables](reference/env-vars.md) for the full variable list and
 [Error Handling](reference/error-handling.md) for what a missing or rejected credential

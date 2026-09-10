@@ -90,7 +90,7 @@ class SubscriptionParams(TypedDict, total=False):
 
 @dataclass
 class SocketConnection(
-  StreamsRpc[Request, Any, Notification, SubscriptionParams, Any, Any]
+  StreamsRpc[Request, Any, Notification, SubscriptionParams, list[str], list[str]]
 ):
   """Deribit's single WebSocket connection: raw JSON-RPC request/reply (any method,
   including the 10 WS-only ones) plus subscription push routing. No envelope unwrapping
@@ -209,7 +209,14 @@ class SocketConnection(
     self,
     channel: str,
     params: SubscriptionParams | None = None,
-  ) -> Any:
+  ) -> list[str]:
+    """Subscribe to `channel` and return the channels this call actually subscribed to.
+
+    Deribit's `{public,private}/subscribe` reply `result` is always a bare list of
+    channel names (confirmed against captured examples and upstream docs), never a
+    dict — never `None` either, despite the base class's own `SubscriptionReply`
+    default.
+    """
     private = (params or {}).get('private', False)
     req_params: dict[str, Any] = {'channels': [channel]}
     if private:
@@ -227,7 +234,12 @@ class SocketConnection(
     self,
     channel: str,
     params: SubscriptionParams | None = None,
-  ) -> Any:
+  ) -> list[str]:
+    """Unsubscribe from `channel` and return the channels this call actually
+    unsubscribed from.
+
+    Same wire shape as `request_subscription` — see its docstring.
+    """
     private = (params or {}).get('private', False)
     req_params: dict[str, Any] = {'channels': [channel]}
     if private and self.tokens is not None:
