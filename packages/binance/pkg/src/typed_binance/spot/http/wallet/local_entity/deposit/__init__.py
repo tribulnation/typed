@@ -6,4 +6,8 @@ from .provide_info_v2 import ProvideInfoV2
 
 
 class Deposit(History, HistoryV2, ProvideInfo, ProvideInfoV2):
-  """Binance deposit endpoints."""
+  """Wallet Travel Rule's Deposit endpoints -- deposit history and submitting the required travel-rule questionnaire/VASP info for a deposit, across both API versions. No page of its own -- reusing Wallet's Travel Rule catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/travel-rule)
+  """

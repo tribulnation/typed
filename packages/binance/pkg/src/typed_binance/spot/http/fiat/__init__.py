@@ -7,4 +7,8 @@ from .withdraw import Withdraw
 
 
 class Fiat(Deposit, OrderDetail, Orders, Payments, Withdraw):
-  """Binance fiat endpoints."""
+  """Fiat deposit/withdrawal endpoints -- submitting a fiat deposit or withdrawal, plus order and payments history lookups.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-fiat/api/rest-api/~)
+  """

@@ -6,4 +6,8 @@ from .subscribe import Subscribe
 
 
 class DiscountBuy(Account, Positions, ProductList, Subscribe):
-  """Binance discount_buy endpoints."""
+  """Discount Buy endpoints -- subscribing to a Discount Buy (accumulator) product, plus account, position, and product-list lookups. No dedicated catalog page exists for Discount Buy on Binance's current developer docs; closest available citation is the Spot REST API's own umbrella page, reused from `spot/http/router.json`.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

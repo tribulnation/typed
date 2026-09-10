@@ -18,11 +18,12 @@ async with Binance.new() as client:
 ## Subscribe
 
 ```python
+from decimal import Decimal
 from typed_binance import Binance
 
 async with Binance.new() as client:
   subscription = await client.spot.http.simple_earn.flexible.subscribe(
-    product_id='USDT001', amount='10',
+    product_id='USDT001', amount=Decimal('10'),
   )
   print(subscription.get('purchaseId'))
 ```

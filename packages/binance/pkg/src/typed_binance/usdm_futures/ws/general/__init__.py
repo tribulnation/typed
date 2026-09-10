@@ -5,4 +5,8 @@ from .session_status import SessionStatus
 
 
 class General(SessionLogon, SessionLogout, SessionStatus):
-  """Binance general endpoints."""
+  """USDⓈ-M Futures' WebSocket API session commands -- log on, check status, and log out of the Ed25519-signed session.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-api-general-info)
+  """

@@ -27,4 +27,8 @@ class Market(
   Time,
   Trades,
 ):
-  """Binance market endpoints."""
+  """Options public market data -- exchange info, order book depth, klines, recent and block trades, mark price, index price, open interest, and exercise history for Binance's European options contracts.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-options/api/rest-api/market-data)
+  """

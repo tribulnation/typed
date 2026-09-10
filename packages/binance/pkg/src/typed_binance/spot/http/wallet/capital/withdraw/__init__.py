@@ -6,4 +6,8 @@ from .quota import Quota
 
 
 class Withdraw(AddressList, Apply, History, Quota):
-  """Binance withdraw endpoints."""
+  """Wallet Capital's Withdraw endpoints -- submitting a withdrawal, listing saved withdrawal addresses, checking remaining daily quota, and withdrawal history. No page of its own -- reusing Wallet's Capital catalog page, which covers these endpoints too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital)
+  """

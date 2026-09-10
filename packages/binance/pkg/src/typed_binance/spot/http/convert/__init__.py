@@ -21,4 +21,8 @@ class Convert(
   QueryLimitOpenOrders,
   TradeFlow,
 ):
-  """Binance convert endpoints."""
+  """Convert endpoints -- requesting and accepting a quote, placing/cancelling/querying a limit order, and trade-flow history, plus the two Market Data endpoints (asset info, exchange info) that live in this same directory. Cites the Trade page, which covers the majority of these.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-convert/api/rest-api/trade)
+  """

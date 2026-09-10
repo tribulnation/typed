@@ -75,4 +75,8 @@ class Broker(
   UniversalTransferHistory,
   UpdateSubAccountApiIpRestrictionV2,
 ):
-  """Binance broker endpoints."""
+  """Exchange Link (Binance Broker) endpoints for a brokerage master account -- creating and managing sub-accounts and their API keys, permissions, and IP restrictions, plus commission rates, BNB-burn settings, transfers, and rebate/summary reporting. Spans three catalog pages (Account, Asset, Fee); this cites Account, the largest of the three.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-exchange-link/api/rest-api/account)
+  """

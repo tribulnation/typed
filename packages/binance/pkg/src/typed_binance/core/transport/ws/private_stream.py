@@ -18,6 +18,8 @@ from typed_core.util import Stream, StreamManager
 from typed_core.validation import validator
 from typed_core.ws import Socket
 
+from typed_binance.core.exc import NetworkError, without_listen_key
+
 
 @dataclass
 class PrivateStreamSocket(Socket):
@@ -77,7 +79,10 @@ class PrivateStreamSocketClient:
       socket = PrivateStreamSocket(
         url=f'{self.base_url}/{listen_key}', on_event=queue.put_nowait
       )
-      await socket.open()
+      try:
+        await socket.open()
+      except NetworkError as e:
+        raise without_listen_key(e, listen_key) from e.__cause__
 
       async def events():
         while True:

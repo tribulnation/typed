@@ -6,4 +6,8 @@ from .query_order import QueryOrder
 
 
 class Trading(CancelOrder, ModifyOrder, NewOrder, QueryOrder):
-  """Binance trading endpoints."""
+  """COIN-M Futures' WS API trading requests -- place, modify, cancel, and query an order over the same persistent connection used for session auth and account queries.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/ws-api/trade)
+  """

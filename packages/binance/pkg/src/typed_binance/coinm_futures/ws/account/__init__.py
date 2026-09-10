@@ -5,4 +5,8 @@ from .status import Status
 
 
 class Account(Balance, Position, Status):
-  """Binance account endpoints."""
+  """COIN-M Futures' WS API account queries -- balance and account-status snapshots, plus position information (Binance documents the latter on the WS API's Trade page; this client groups it here as account data).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-coin-m-futures/api/ws-api/account)
+  """

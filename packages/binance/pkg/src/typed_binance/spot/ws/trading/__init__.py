@@ -33,4 +33,8 @@ class Trading(
   SorOrderPlace,
   SorOrderTest,
 ):
-  """Binance trading endpoints."""
+  """Trading requests -- signed WebSocket API commands to place, test, amend, cancel, and cancel-replace spot orders and order lists (OCO, OTO, OTOCO and their one-cancels variants), including Smart Order Routing.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/websocket-api/trading-requests)
+  """

@@ -3,4 +3,8 @@ from .get_all import GetAll
 
 
 class Config(GetAll):
-  """Binance config endpoints."""
+  """Wallet Capital's Config endpoints -- fetching all coins' network configuration (deposit/withdraw enablement, fees, confirmations). No page of its own -- reusing Wallet's Capital catalog page, which covers this endpoint too.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital)
+  """

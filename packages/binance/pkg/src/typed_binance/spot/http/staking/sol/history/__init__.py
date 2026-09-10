@@ -15,4 +15,8 @@ class History(
   StakingHistory,
   UnclaimedRewards,
 ):
-  """Binance history endpoints."""
+  """SOL Staking history -- staking, redemption, rate, boost-rewards, and BNSOL-rewards history, plus unclaimed rewards, documented on the same SOL Staking page as the stake/redeem/claim endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-staking/api/rest-api/sol-staking)
+  """

@@ -6,4 +6,8 @@ from .subscription_history import SubscriptionHistory
 
 
 class History(RateHistory, RedemptionHistory, RewardsHistory, SubscriptionHistory):
-  """Binance history endpoints."""
+  """BFUSD history -- subscription, redemption, rewards, and rate history for holding BFUSD, documented on the same BFUSD upstream page as the subscribe/redeem endpoints above it.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-simple-earn/api/rest-api/bfusd)
+  """

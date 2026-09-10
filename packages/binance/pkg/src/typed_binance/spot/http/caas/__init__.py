@@ -23,4 +23,8 @@ class Caas(
   MarkupTradeDetails,
   MemberFeeGroup,
 ):
-  """Binance caas endpoints."""
+  """CaaS (Commission-as-a-Service) endpoints for a VIP master account -- creating, updating, and deleting commission fee groups, assigning/unassigning members, and querying group membership and markup-trade details. No dedicated catalog page exists for CaaS on Binance's current developer docs; closest available citation is the Spot REST API's own umbrella page, reused from `spot/http/router.json`.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api)
+  """

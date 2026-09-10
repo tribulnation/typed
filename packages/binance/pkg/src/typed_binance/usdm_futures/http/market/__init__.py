@@ -71,4 +71,8 @@ class Market(
   Trades,
   TradingScheduleEndpoint,
 ):
-  """Binance market endpoints."""
+  """USDⓈ-M Futures' Market Data endpoints -- klines, order book, recent/historical/aggregate trades, funding rate and mark price data, open interest, long/short ratios, index/premium data, and exchange/server info.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data)
+  """

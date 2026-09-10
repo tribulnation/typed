@@ -8,4 +8,8 @@ from .status_v2 import StatusV2
 
 
 class Account(Balance, BalanceV2, Position, PositionV2, Status, StatusV2):
-  """Binance account endpoints."""
+  """USDⓈ-M Futures' WebSocket API account requests -- signed commands querying account balance, account status, and open position information (V1/V2 of each).
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/ws-api/account)
+  """

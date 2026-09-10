@@ -55,6 +55,24 @@ def resolve_credentials(
   return Credentials(api_key, secret_key)
 
 
+def wire_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
+  """Convert `params` into Binance's wire form ahead of `urlencode` -- maps a Python `bool`
+  to the lowercase `'true'`/`'false'` string Binance's `^(true|false)$` validation requires.
+
+  `urllib.parse.urlencode` stringifies a bool with plain `str()` (`'True'`/`'False'`), which
+  Binance rejects with `-1100 Illegal characters found`. httpx's own `params=` handling
+  already does this conversion, which is why only the hand-rolled signed/keyed request paths
+  (`signed_params` below, and `HttpRpcClient.keyed_request`) need to call this.
+
+  Args:
+    params: Request params to convert; not mutated.
+  """
+  return {
+    k: ('true' if v is True else 'false' if v is False else v)
+    for k, v in (params or {}).items()
+  }
+
+
 def sign(payload: str, credentials: Credentials) -> str:
   """Hex-encoded HMAC-SHA256 of `payload`, keyed by `credentials.secret_key` --
   case-insensitive on Binance's side, unlike RSA/Ed25519 signatures.
@@ -104,7 +122,7 @@ def signed_params(
     part of the signed payload there, while the WS API signs it alongside everything
     else. Add it to `params` before calling this when signing a WS API request.
   """
-  query = dict(params or {})
+  query = wire_params(params)
   query['timestamp'] = timestamp_millis.now()
   if recv_window is not None:
     query['recvWindow'] = recv_window

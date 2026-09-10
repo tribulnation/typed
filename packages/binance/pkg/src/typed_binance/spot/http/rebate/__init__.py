@@ -3,4 +3,8 @@ from .tax_query import TaxQuery
 
 
 class Rebate(TaxQuery):
-  """Binance rebate endpoints."""
+  """Rebate's tax-query endpoint -- this account's spot commission-rebate and referral-kickback history.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/investment-and-services-rebate/api/rest-api/~)
+  """

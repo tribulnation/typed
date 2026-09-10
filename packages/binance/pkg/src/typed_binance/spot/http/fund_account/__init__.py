@@ -8,4 +8,8 @@ from .redemption_calendar import RedemptionCalendarEndpoint
 class FundAccount(
   FundInfo, FundNavHistoryEndpoint, InvestorHistory, RedemptionCalendarEndpoint
 ):
-  """Binance fund_account endpoints."""
+  """Fund Account endpoints -- fund info, NAV history, investor operation history, and the redemption calendar for a VIP fund-manager master account.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/en/docs/catalog/vip-and-institutional-fund-account/api/rest-api/~)
+  """

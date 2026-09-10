@@ -31,4 +31,8 @@ class Account(
   OrderList,
   RateLimitOrder,
 ):
-  """Binance account endpoints."""
+  """Spot Account/Trade info endpoints -- account balances and permissions, order and order-list history/lookup, trade history, allocations, prevented matches, commission rates, order amendments, and unfilled-order-count rate-limit usage.
+
+  References:
+    - [Upstream docs](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints)
+  """
