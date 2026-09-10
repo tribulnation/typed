@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/kraken">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-light.svg">
-      <img alt="Typed Kraken" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kraken/media/kraken-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/kraken-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/kraken-light.svg">
+      <img alt="Typed Kraken" src="https://tribulnation.com/media/lockups/kraken-light.svg" width="520">
     </picture>
   </a>
 </p>
