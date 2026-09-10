@@ -1,9 +1,10 @@
 # Listen To Streams
 
-`client.streams.spot_margin` carries both public and private Spot/Margin topics over one
-connection; `client.streams.futures` carries the Futures connection. Every subscription
-returns a `StreamManager` — connect it with `async with` and it unsubscribes
-automatically when the block exits.
+`client.streams.spot_margin_public`/`.spot_margin_private` carry Spot/Margin topics, split
+by visibility but sharing one physical connection; `client.streams.futures_public`/
+`.futures_private` carry the Futures connection the same way. Every subscription returns a
+`StreamManager` — connect it with `async with` and it unsubscribes automatically when the
+block exits.
 
 ## Public Topics
 
@@ -13,7 +14,7 @@ No credentials needed:
 from typed_kucoin import KuCoin
 
 async with KuCoin.new(public=True) as client:
-  async with client.streams.spot_margin.ticker('BTC-USDT') as stream:
+  async with client.streams.spot_margin_public.ticker('BTC-USDT') as stream:
     async for update in stream:
       print(update['price'], update['bestBid'], update['bestAsk'])
 ```
@@ -27,13 +28,13 @@ Private topics need a client built with real credentials — `public=True` raise
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
-  async with client.streams.spot_margin.balance() as stream:
+  async with client.streams.spot_margin_private.balance() as stream:
     async for update in stream:
       print(update['currency'], update['available'])
 ```
 
-One connection serves both public and private topics once it opens with real
-credentials — there's no separate "private" socket to reach for.
+One physical connection serves both `spot_margin_public` and `spot_margin_private` once it
+opens with real credentials — there's no separate socket behind the two attributes.
 
 ## Reconnection
 

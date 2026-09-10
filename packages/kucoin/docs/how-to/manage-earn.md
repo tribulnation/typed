@@ -39,15 +39,16 @@ Use `earn.account_holding_paged` to walk every page automatically — see
 ## Subscribe To A Product
 
 ```python
+from decimal import Decimal
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   savings = await client.earn.savings_products(currency='USDT')
-  result = await client.earn.purchase({
-    'productId': savings[0]['id'],
-    'amount': '10',
-    'accountType': 'TRADE',
-  })
+  result = await client.earn.purchase(
+    savings[0]['id'],
+    amount=Decimal('10'),
+    account_type='TRADE',
+  )
   print(result['orderId'])
 ```
 
@@ -57,6 +58,7 @@ Preview a redemption before submitting it — early redemption of a fixed-term h
 can carry an interest penalty:
 
 ```python
+from decimal import Decimal
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
@@ -64,6 +66,6 @@ async with KuCoin.new() as client:
   preview = await client.earn.redeem_preview(order_id=order_id)
   print(preview['redeemAmount'], preview['penaltyInterestAmount'])
 
-  redeemed = await client.earn.redeem(order_id=order_id, amount='10')
+  redeemed = await client.earn.redeem(order_id=order_id, amount=Decimal('10'))
   print(redeemed['status'])
 ```

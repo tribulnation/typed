@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/kucoin">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kucoin/media/kucoin-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kucoin/media/kucoin-light.svg">
-      <img alt="Typed KuCoin" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/kucoin/media/kucoin-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/kucoin-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/kucoin-light.svg">
+      <img alt="Typed KuCoin" src="https://tribulnation.com/media/lockups/kucoin-light.svg" width="520">
     </picture>
   </a>
 </p>

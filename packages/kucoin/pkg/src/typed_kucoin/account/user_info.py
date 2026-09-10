@@ -1,7 +1,7 @@
 """`GET /api/v2/user-info` — Get Account Summary Info."""
 
 from typed_core.validation import TypedDict, validator
-from typed_kucoin.core import RpcEndpoint
+from typed_kucoin.core.endpoint.rpc import RpcEndpoint
 
 
 class UserInfoResult(TypedDict):
@@ -49,6 +49,6 @@ class UserInfo(RpcEndpoint):
     References:
       - [KuCoin API docs](https://www.kucoin.com/docs-new)
     """
-    return await self.authed_request(
+    return await self.client.authed_request(
       'GET', '/api/v2/user-info', validator=adapter, validate=validate
     )

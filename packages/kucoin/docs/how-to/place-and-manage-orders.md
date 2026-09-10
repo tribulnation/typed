@@ -7,6 +7,7 @@ with `Trade` permission — see [API Keys Setup](../api-keys.md).
 ## Place a Limit Order
 
 ```python
+from decimal import Decimal
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
@@ -14,8 +15,8 @@ async with KuCoin.new() as client:
     'symbol': 'BTC-USDT',
     'type': 'limit',
     'side': 'buy',
-    'price': '10000',
-    'size': '0.0001',
+    'price': Decimal('10000'),
+    'size': Decimal('0.0001'),
   })
   print(result['orderId'])
 ```
@@ -24,11 +25,12 @@ A market order takes `size` (base currency) or `funds` (quote currency) instead 
 `price`:
 
 ```python
+from decimal import Decimal
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   result = await client.spot.orders_hf.add({
-    'symbol': 'BTC-USDT', 'type': 'market', 'side': 'buy', 'funds': '10',
+    'symbol': 'BTC-USDT', 'type': 'market', 'side': 'buy', 'funds': Decimal('10'),
   })
 ```
 
@@ -38,7 +40,7 @@ async with KuCoin.new() as client:
 from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
-  order = await client.spot.orders_hf.get_by_order_id('order-id', symbol='BTC-USDT')
+  order = await client.spot.orders_hf.get_by_order_id(order_id='order-id', symbol='BTC-USDT')
   print(order['id'], order['active'])
 ```
 
@@ -60,7 +62,7 @@ from typed_kucoin import KuCoin
 
 async with KuCoin.new() as client:
   cancelled = await client.spot.orders_hf.cancel_by_order_id(
-    'order-id', symbol='BTC-USDT',
+    order_id='order-id', symbol='BTC-USDT',
   )
   print(cancelled['orderId'])
 ```
