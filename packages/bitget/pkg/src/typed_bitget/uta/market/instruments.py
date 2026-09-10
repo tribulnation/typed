@@ -5,8 +5,105 @@ from typed_bitget.core import TimestampMillis
 from typed_bitget.core.endpoint.rpc import RpcEndpoint
 
 
+class DeliveryInstrument(TypedDict):
+  """One dated delivery instrument's trading rules and metadata."""
+
+  symbol: str
+  """Trading symbol."""
+  category: Literal['USDT-FUTURES', 'COIN-FUTURES', 'USDC-FUTURES']
+  """Product family."""
+  baseCoin: str
+  """Base coin."""
+  quoteCoin: str
+  """Quote coin."""
+  buyLimitPriceRatio: Decimal
+  """Maximum ratio above the last price a buy limit order may be placed at."""
+  sellLimitPriceRatio: Decimal
+  """Maximum ratio below the last price a sell limit order may be placed at."""
+  feeRateUpRatio: NotRequired[Decimal]
+  """Fee rate markup ratio applied under certain conditions."""
+  minOrderQty: Decimal
+  """Minimum order quantity, in base coin."""
+  maxOrderQty: Decimal
+  """Maximum order quantity, in base coin."""
+  maxMarketOrderQty: NotRequired[Decimal]
+  """Maximum market order quantity, in base coin."""
+  pricePrecision: int
+  """Number of decimal places allowed for price."""
+  quantityPrecision: int
+  """Number of decimal places allowed for quantity."""
+  quotePrecision: str
+  """Number of decimal places allowed for quote amount."""
+  minOrderAmount: Decimal
+  """Minimum order amount, in quote coin."""
+  maxSymbolOrderNum: str
+  """Maximum number of open orders allowed per symbol."""
+  maxProductOrderNum: int
+  """Maximum number of open orders allowed per product family."""
+  status: Literal[
+    'listed', 'online', 'limit_open', 'limit_close', 'offline', 'restrictedAPI'
+  ]
+  """Symbol trading status."""
+  offTime: NotRequired[TimestampMillis]
+  """Scheduled offline time, Unix millisecond timestamp. `0` when not scheduled."""
+  limitOpenTime: NotRequired[TimestampMillis]
+  """Scheduled open-restriction time, Unix millisecond timestamp. `0` when not scheduled."""
+  maintainTime: TimestampMillis | Literal['']
+  """Scheduled maintenance time, Unix millisecond timestamp. `0` when not scheduled. Empty string when not applicable (confirmed live)."""
+  areaSymbol: NotRequired[str]
+  """Region restriction flag for the symbol, when applicable. Documented casing/values are unconfirmed against a live response for this pass; left as a bare string."""
+  isRwa: NotRequired[Literal['YES', 'NO']]
+  """Whether this is a real-world-asset (tokenized stock) symbol."""
+  isReality: NotRequired[Literal['yes', 'no']]
+  """Whether this is a Reality-stock token symbol (note the lowercase values, unlike the sibling `isRwa` field)."""
+  makerFeeRate: NotRequired[Decimal]
+  """Maker fee rate. Futures symbols only."""
+  takerFeeRate: NotRequired[Decimal]
+  """Taker fee rate. Futures symbols only."""
+  openCostUpRatio: NotRequired[Decimal]
+  """Open-cost markup ratio. Futures symbols only."""
+  priceMultiplier: NotRequired[Decimal]
+  """Contract price multiplier. Futures symbols only."""
+  quantityMultiplier: NotRequired[Decimal]
+  """Contract quantity multiplier. Futures symbols only."""
+  type: Literal['delivery']
+  """Dated delivery contract type."""
+  symbolType: Literal['crypto', 'metal', 'stock', 'commodity']
+  """Underlying asset class. Futures symbols only."""
+  maxPositionNum: NotRequired[int]
+  """Maximum number of concurrent open positions. Futures symbols only."""
+  deliveryTime: NotRequired[TimestampMillis | Literal['']]
+  """Delivery time, Unix millisecond timestamp. Delivery contracts only. Empty string when not applicable (confirmed live)."""
+  deliveryStartTime: NotRequired[TimestampMillis | Literal['']]
+  """Delivery settlement start time, Unix millisecond timestamp. Delivery contracts only. Empty string when not applicable (confirmed live)."""
+  deliveryPeriod: NotRequired[str]
+  """Delivery period/cadence. Delivery contracts only."""
+  fundInterval: NotRequired[int | Literal['']]
+  """Funding interval in hours when supplied; empty string for delivery contracts without funding."""
+  minLeverage: NotRequired[Decimal]
+  """Minimum leverage. Futures symbols only."""
+  maxLeverage: NotRequired[Decimal]
+  """Maximum leverage. Futures symbols only."""
+  isIsolatedBaseBorrowable: NotRequired[Literal['YES', 'NO']]
+  """Whether the base coin is borrowable in isolated margin. Margin symbols only."""
+  isIsolatedQuotedBorrowable: NotRequired[Literal['YES', 'NO']]
+  """Whether the quote coin is borrowable in isolated margin. Margin symbols only."""
+  warningRiskRatio: NotRequired[Decimal]
+  """Risk ratio at which a margin warning is issued. Margin symbols only."""
+  liquidationRiskRatio: NotRequired[Decimal]
+  """Risk ratio at which margin liquidation is triggered. Margin symbols only."""
+  maxCrossedLeverage: NotRequired[Decimal]
+  """Maximum cross-margin leverage. Margin symbols only."""
+  maxIsolatedLeverage: NotRequired[Decimal]
+  """Maximum isolated-margin leverage. Margin symbols only."""
+  userMinBorrow: NotRequired[Decimal]
+  """Minimum amount a user may borrow. Margin symbols only."""
+  launchTime: TimestampMillis | None
+  """Symbol launch time, Unix millisecond timestamp. `null` for some margin pairs."""
+
+
 class Instrument(TypedDict):
-  """One tradable instrument's trading rules and metadata."""
+  """One spot, margin, or perpetual instrument's trading rules and metadata."""
 
   symbol: str
   """Trading symbol."""
@@ -66,8 +163,8 @@ class Instrument(TypedDict):
   """Contract price multiplier. Futures symbols only."""
   quantityMultiplier: NotRequired[Decimal]
   """Contract quantity multiplier. Futures symbols only."""
-  type: NotRequired[Literal['perpetual', 'delivery']]
-  """Contract type. Futures symbols only."""
+  type: NotRequired[Literal['perpetual']]
+  """Perpetual contract type; absent on spot and margin instruments."""
   symbolType: Literal['crypto', 'metal', 'stock', 'commodity']
   """Underlying asset class. Futures symbols only."""
   maxPositionNum: NotRequired[int]
@@ -109,7 +206,7 @@ class Request(TypedDict):
   """Restrict to a single symbol, e.g. `BTCUSDT`."""
 
 
-Response = list[Instrument]
+Response = list[Instrument | DeliveryInstrument]
 
 
 class Instruments(RpcEndpoint):
