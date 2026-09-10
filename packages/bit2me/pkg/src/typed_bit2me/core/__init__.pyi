@@ -5,6 +5,8 @@ from .types import (
   timestamp_iso,
   TimestampSeconds,
   timestamp_seconds,
+  DateIso,
+  date_iso,
 )
 from .exc import (
   Error,
@@ -16,6 +18,8 @@ from .exc import (
   RateLimited,
   LogicError,
   raise_http_status,
+  ProformaShortfall,
+  not_enough_funds,
 )
 from .auth import Credentials, resolve_credentials, sign, auth_headers, mint_ws_token
 
@@ -26,6 +30,8 @@ __all__ = [
   'timestamp_iso',
   'TimestampSeconds',
   'timestamp_seconds',
+  'DateIso',
+  'date_iso',
   'Error',
   'NetworkError',
   'ValidationError',
@@ -35,6 +41,8 @@ __all__ = [
   'RateLimited',
   'LogicError',
   'raise_http_status',
+  'ProformaShortfall',
+  'not_enough_funds',
   'Credentials',
   'resolve_credentials',
   'sign',

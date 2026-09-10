@@ -16,7 +16,7 @@ async with Bit2Me.new(public=True) as client:
 
 A smaller set of endpoints — the Trading Spot WebSocket pushes' `nonce`/`timestamp` fields,
 and `v2`'s order book and ticker `timestamp` — carry Bit2Me's other wire format,
-Unix-epoch-milliseconds, and are typed `typed_bit2me.types.MillisTimestamp`. They validate into a
+Unix-epoch-milliseconds, and are typed `typed_bit2me.schemas.MillisTimestamp`. They validate into a
 `datetime` the same way; the difference is invisible once you have the value.
 
 Request-side, `client.v1.trading.candles()`'s time-range parameters take that same

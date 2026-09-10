@@ -43,10 +43,30 @@ async with Bit2Me.new(public=True) as client:
     end_time=end_time,
     limit=60,
   )
-  print(candles[-1])
+  open_time, open_price, high, low, close, volume = candles[-1]
 ```
 
-Each row is `[time, open, high, low, close, volume]`; the last row is the current, still-forming candle.
+Each row is a `(open_time, open, high, low, close, volume)` tuple: `open_time` is a
+`datetime`, the rest are the numbers Bit2Me sends. The last row is the current,
+still-forming candle. `limit` counts `interval` slots from `start_time`, not rows, so one
+call covers at most `limit` candles; `candles_paged()` walks a wider range for you, moving
+`start_time` forwards page by page:
+
+```python
+from datetime import datetime, timezone
+from typed_bit2me import Bit2Me
+
+async with Bit2Me.new(public=True) as client:
+  candles = await client.v1.trading.candles_paged(
+    symbol='BTC/EUR',
+    interval=60,
+    start_time=datetime(2026, 6, 1, tzinfo=timezone.utc),
+    end_time=datetime(2026, 9, 1, tzinfo=timezone.utc),
+    limit=1000,
+  )
+```
+
+`await` flattens every page into one list; `async for` yields one page's rows at a time.
 
 ## Currency Prices, Rates, And Charts
 

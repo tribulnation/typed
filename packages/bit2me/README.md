@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/bit2me">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-light.svg">
-      <img alt="Typed Bit2Me" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/bit2me/media/bit2me-light.svg" width="520">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/bit2me-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/bit2me-light.svg">
+      <img alt="Typed Bit2Me" src="https://tribulnation.com/media/lockups/bit2me-light.svg" width="520">
     </picture>
   </a>
 </p>

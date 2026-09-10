@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-bit2me"
-version = "0.3.0"
+version = "0.4.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -18,7 +18,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "typed-core>=0.2.0", "lazy-loader", "httpx", "pydantic", "orjson", "typing-extensions",
+  "typed-core>=0.8.1", "lazy-loader", "httpx", "pydantic", "orjson", "typing-extensions",
   "websockets",
 ]
 requires-python = ">=3.10"
