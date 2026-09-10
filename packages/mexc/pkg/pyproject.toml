@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typed-mexc"
-version = "2.0.0"
+version = "2.1.0"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
@@ -17,7 +17,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "typed-core>=0.2.0",
+  "typed-core>=0.8.1",
   "betterproto2==0.9.*",
   "httpx",
   "lazy-loader",

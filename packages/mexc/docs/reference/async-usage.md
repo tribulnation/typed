@@ -13,7 +13,7 @@ For short request-response flows, plain construction is fine — the underlying 
 from typed_mexc import MEXC
 
 client = MEXC.new(public=True)
-candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
+candles = await client.spot.http.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
 print(candles[-1][4])
 ```
 
@@ -25,13 +25,16 @@ Use `async with` when you want the client to open up front and close cleanly at 
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
-  contract_candles = await client.futures.market.candles('BTC_USDT', interval='Min1')
+  candles = await client.spot.http.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
+  contract_candles = await client.futures.http.market.candles('BTC_USDT', interval='Min1')
 ```
 
 Entering the top-level client is the only thing you do. `MEXC.__aenter__` opens `client.spot`
-and `client.futures` concurrently, and each of those opens its own `auth_http` and `streams`
-the same way underneath — you never enter a sub-client yourself.
+and `client.futures` concurrently, and each of those opens its own REST transport and public
+streams connection the same way underneath — you never enter a sub-client yourself. Each
+product's own private (listen-key or login-gated) stream connection stays lazy either way,
+opening only on the first real subscribe call, since opening it does real, credentialed
+network work rather than the cheap no-op every other transport's own `__aenter__` is.
 
 This is the recommended style for:
 
@@ -77,9 +80,9 @@ async with MEXC.new(public=True) as client:
 ## Composite/Multi-Surface Client
 
 `MEXC.new()` bundles two fully independent surfaces: `spot` and `futures`.
-Each has its own `AuthHttpClient`, its own base URL, its own WebSocket URL, its own product
-groups (`account`, `market`, `rebate`, `sub_accounts`, `trade`, `wallet` on spot;
-`account`, `market`, `position`, `trade` on futures), and its own `streams`. Nothing is
+Each has its own REST transport, its own base URL, its own WebSocket URL, its own product
+groups (`account`, `listen_keys`, `market`, `rebate`, `sub_accounts`, `trade`, `wallet` on
+spot; `account`, `market`, `position`, `trade` on futures), and its own `streams`. Nothing is
 shared between them — a spot API key and a futures API key are the same MEXC credentials,
 but the two surfaces authenticate, connect, and disconnect independently.
 
@@ -87,8 +90,8 @@ but the two surfaces authenticate, connect, and disconnect independently.
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  spot_candles = await client.spot.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
-  futures_candles = await client.futures.market.candles('BTC_USDT', interval='Min1')
+  spot_candles = await client.spot.http.market.candles(symbol='BTCUSDT', interval='1m', limit=5)
+  futures_candles = await client.futures.http.market.candles('BTC_USDT', interval='Min1')
 ```
 
 ## Guidance

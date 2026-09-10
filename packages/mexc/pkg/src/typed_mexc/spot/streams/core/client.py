@@ -1,3 +1,9 @@
+"""Spot's public WebSocket connection: unauthenticated, protobuf-framed market
+pushes. Also the physical socket a private (listen-key-authenticated) connection
+reuses (see `.auth`): MEXC's private feed is the same endpoint with `?listenKey=...`
+appended to the URL, so one `Streams` implementation serves both.
+"""
+
 from typing_extensions import TypedDict, Any
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -6,19 +12,29 @@ import orjson
 import pydantic
 
 from typed_core.ws.streams import Streams, Subscription
-from typed_mexc.spot.streams.core.proto import PushDataV3ApiWrapper
+from .proto import PushDataV3ApiWrapper
 
 MEXC_SPOT_SOCKET_URL = 'wss://wbs-api.mexc.com/ws'
 
+
 class Reply(TypedDict):
+  """A command reply frame (subscribe/unsubscribe acknowledgement)."""
+
   id: int
   code: int
   msg: str
 
+
 reply_adapter = pydantic.TypeAdapter(Reply)
 
+
 @dataclass
-class StreamsClient(Streams[PushDataV3ApiWrapper, Any, Reply, Reply]):
+class SpotPublicStreamsClient(Streams[PushDataV3ApiWrapper, Any, Reply, Reply]):
+  """One physical Spot WebSocket v3 connection. Every push is a protobuf-encoded
+  `PushDataV3ApiWrapper` frame; every reply to a subscribe/unsubscribe command is a
+  small JSON frame instead -- `parse_msg` tells the two apart by attempting the JSON
+  decode first."""
+
   url: str = field(default=MEXC_SPOT_SOCKET_URL, kw_only=True)
   ping_interval: timedelta = field(default=timedelta(seconds=15), kw_only=True)
   lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
@@ -41,10 +57,10 @@ class StreamsClient(Streams[PushDataV3ApiWrapper, Any, Reply, Reply]):
   async def ping(self, ws):
     await ws.send(orjson.dumps({'method': 'PING'}), text=True)
 
-  async def request_subscription(self, channel: str, params=None):
+  async def request_subscription(self, channel: str, params=None) -> Reply:
     return await self.request('SUBSCRIPTION', [channel])
 
-  async def request_unsubscription(self, channel: str, params=None):
+  async def request_unsubscription(self, channel: str, params=None) -> Reply:
     return await self.request('UNSUBSCRIPTION', [channel])
 
   def parse_msg(self, msg: str | bytes) -> Subscription[PushDataV3ApiWrapper] | None:
@@ -52,20 +68,5 @@ class StreamsClient(Streams[PushDataV3ApiWrapper, Any, Reply, Reply]):
       data = reply_adapter.validate_json(msg)
       self.replies.put_nowait(data)
     except pydantic.ValidationError:
-      proto = PushDataV3ApiWrapper.parse(msg) # type: ignore
+      proto = PushDataV3ApiWrapper.parse(msg)  # type: ignore
       return {'channel': proto.channel, 'notification': proto}
-
-
-@dataclass
-class StreamsMixin:
-  ws: StreamsClient = field(default_factory=StreamsClient, kw_only=True)
-
-  async def __aenter__(self):
-    await self.ws.__aenter__()
-    return self
-  
-  async def __aexit__(self, exc_type, exc_value, traceback):
-    await self.ws.__aexit__(exc_type, exc_value, traceback)
-
-  def subscribe(self, channel: str):
-    return self.ws.subscribe(channel)

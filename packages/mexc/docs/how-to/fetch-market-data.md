@@ -10,9 +10,9 @@ For time windows, pass `datetime` objects directly. See [Timestamps](../referenc
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  server_time = await client.spot.market.time()
-  depth = await client.spot.market.depth(symbol='BTCUSDT', limit=5)
-  trades = await client.spot.market.trades(symbol='BTCUSDT', limit=10)
+  server_time = await client.spot.http.market.time()
+  depth = await client.spot.http.market.depth(symbol='BTCUSDT', limit=5)
+  trades = await client.spot.http.market.trades(symbol='BTCUSDT', limit=10)
   print(server_time['serverTime'], depth['bids'][0], trades[0]['price'])
 ```
 
@@ -25,7 +25,7 @@ from typed_mexc import MEXC
 async with MEXC.new(public=True) as client:
   end_time = datetime.now()
   start_time = end_time - timedelta(hours=1)
-  candles = await client.spot.market.candles(
+  candles = await client.spot.http.market.candles(
     symbol='BTCUSDT',
     interval='1m',
     start_time=start_time,
@@ -37,9 +37,10 @@ async with MEXC.new(public=True) as client:
 
 ### Walk A Longer Range
 
-`candles_paged` and `agg_trades_paged` repeat the window you pass until one comes back empty.
-Choose a window the endpoint answers in one response — at most `limit` rows — because a wider
-one is capped by MEXC and the walk moves on to the next window:
+`candles_paged` and `agg_trades_paged` cover the whole range you pass, however many requests
+that takes. Each page that comes back full at `limit` moves one bound to the last row seen and
+the walk asks again from there; a page shorter than `limit` means the range is exhausted. Iterate
+it for one page of rows at a time, or `await` it for every row in one list:
 
 ```python
 from datetime import datetime, timedelta
@@ -48,21 +49,29 @@ from typed_mexc import MEXC
 async with MEXC.new(public=True) as client:
   start_time = datetime.now() - timedelta(hours=6)
   closes = []
-  async for page in client.spot.market.candles_paged(
+  async for rows in client.spot.http.market.candles_paged(
     symbol='BTCUSDT',
     interval='1m',
     start_time=start_time,
-    end_time=start_time + timedelta(hours=1),
-    limit=1000,
-    max_pages=6,
+    end_time=start_time + timedelta(hours=3),
+    limit=500,
   ):
-    closes += [row[4] for row in page]
+    closes += [row[4] for row in rows]
   print(len(closes))
+
+  trades = await client.spot.http.market.agg_trades_paged(
+    symbol='BTCUSDT',
+    start_time=start_time,
+    end_time=start_time + timedelta(minutes=30),
+  )
+  print(len(trades))
 ```
 
-Spot candles walk **forwards** because MEXC returns them oldest first, and aggregate trades walk
-**backwards** because it returns those newest first. Both bounds are required: the width you
-pass is the step the walk takes.
+Spot candles walk **forwards**, moving `start_time`, because MEXC keeps the oldest candles when
+a range holds more than `limit`; aggregate trades walk **backwards**, moving `end_time`, because
+it keeps the newest trades. A row sitting on the moved bound is served twice by MEXC and dropped
+once by the walk, so no row is duplicated or skipped. Nothing is ever requested outside the
+bounds you pass; leave one out and the walk runs from MEXC's own default for it.
 
 ## Fetch Futures Candles
 
@@ -73,7 +82,7 @@ from typed_mexc import MEXC
 async with MEXC.new(public=True) as client:
   end = datetime.now()
   start = end - timedelta(hours=1)
-  candles = await client.futures.market.candles(
+  candles = await client.futures.http.market.candles(
     'BTC_USDT',
     interval='Min1',
     start=start,
@@ -89,7 +98,7 @@ async with MEXC.new(public=True) as client:
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  info = await client.spot.market.exchange_info(symbol='BTCUSDT')
+  info = await client.spot.http.market.exchange_info(symbol='BTCUSDT')
   print(info['symbols'][0]['symbol'])
 ```
 
@@ -99,9 +108,9 @@ async with MEXC.new(public=True) as client:
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  contract = await client.futures.market.contract_info(symbol='BTC_USDT')
-  depth = await client.futures.market.depth('BTC_USDT', limit=20)
-  rate = await client.futures.market.funding_rate('BTC_USDT')
+  contract = await client.futures.http.market.contract_info(symbol='BTC_USDT')
+  depth = await client.futures.http.market.depth('BTC_USDT', limit=20)
+  rate = await client.futures.http.market.funding_rate('BTC_USDT')
   if 'data' in contract:
     print(contract['data'])
   if 'data' in depth and 'data' in rate:
@@ -114,7 +123,7 @@ async with MEXC.new(public=True) as client:
 from typed_mexc import MEXC
 
 async with MEXC.new(public=True) as client:
-  history = await client.futures.market.funding_rate_history(
+  history = await client.futures.http.market.funding_rate_history(
     symbol='BTC_USDT',
     page_num=1,
     page_size=20,

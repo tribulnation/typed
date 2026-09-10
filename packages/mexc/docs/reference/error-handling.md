@@ -16,12 +16,12 @@ MEXC distinguishes transport failures, authentication failures, validation failu
 ## Recommended Pattern
 
 ```python
-from typed_mexc import ApiError, AuthError, NetworkError, RateLimited, ValidationError
+from typed_mexc.core import ApiError, AuthError, NetworkError, RateLimited, ValidationError
 from typed_mexc import MEXC
 
 async with MEXC.new() as client:
   try:
-    positions = await client.futures.position.open()
+    positions = await client.futures.http.position.open()
   except ValidationError:
     ...
   except AuthError:

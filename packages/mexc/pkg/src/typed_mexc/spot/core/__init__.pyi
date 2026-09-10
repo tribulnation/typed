@@ -1,10 +1,15 @@
-from .auth import AuthHttpMixin, AuthHttpClient
-from .util import SpotMixin, AuthSpotMixin, MEXC_SPOT_API_BASE, ErrorResponse
+from .client import MEXC_SPOT_API_BASE, SpotHttpClient
+from .endpoint import Meta, RpcClient, SpotHttpEndpoint
+from .base import SpotClients, SpotBase
+from .envelope import ErrorEnvelope
 
 __all__ = [
-  'AuthHttpMixin', 'AuthHttpClient',
-  'SpotMixin',
-  'AuthSpotMixin',
   'MEXC_SPOT_API_BASE',
-  'ErrorResponse',
+  'SpotHttpClient',
+  'Meta',
+  'RpcClient',
+  'SpotHttpEndpoint',
+  'SpotClients',
+  'SpotBase',
+  'ErrorEnvelope',
 ]
