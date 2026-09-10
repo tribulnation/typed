@@ -4,4 +4,8 @@ from .wallet_swaps import WalletSwaps
 
 
 class Swaps(TokenSwaps, WalletSwaps):
-  """Grouped Moralis Swaps endpoints."""
+  """Swap transaction history, by wallet address or by SPL token address.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """

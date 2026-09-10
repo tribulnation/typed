@@ -7,7 +7,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   balances = await client.evm.wallet.token_balances(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(balances['result'])
 ```

@@ -4,4 +4,8 @@ from .transaction import Transaction
 
 
 class Blockchain(Block, Transaction):
-  """Grouped Moralis Blockchain endpoints."""
+  """Raw Bitcoin blocks and transactions — block headers, full transaction payloads, inputs, outputs, and UTXO-level detail.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/bitcoin/blockchain/overview)
+  """

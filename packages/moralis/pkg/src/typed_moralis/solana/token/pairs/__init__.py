@@ -5,4 +5,8 @@ from .token_pairs import TokenPairs
 
 
 class Pairs(PairStats, PairSwaps, TokenPairs):
-  """Grouped Moralis Pairs endpoints."""
+  """Trading pairs, pair statistics, and swap history for an SPL token or a specific pair address.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """

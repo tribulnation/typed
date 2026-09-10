@@ -7,4 +7,8 @@ from .wallet_swaps import WalletSwaps
 
 
 class Swaps(PairStats, PairSwaps, TokenPairs, TokenSwaps, WalletSwaps):
-  """Grouped Moralis Swaps endpoints."""
+  """Swap transaction history and pair statistics for ERC20 tokens, wallets, and trading pairs.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

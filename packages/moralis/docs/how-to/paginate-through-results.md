@@ -13,7 +13,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   pages = client.evm.wallet.token_balances_paged(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   async for balances in pages:
     print(balances)
@@ -26,7 +26,7 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   balances = await client.evm.wallet.token_balances_paged(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
   print(balances)
 ```
@@ -43,10 +43,10 @@ from typed_moralis import Moralis
 
 async with Moralis.new() as client:
   history = await client.evm.wallet.history_paged(
-    '0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
+    address='0xd8dA6BF26964aF9D7eed9e03E53415D37aA96045', chain='eth',
   )
-  btc = await client.bitcoin.wallet.btc_balances_paged('bc1...')
-  streams = await client.streams.evm.all_streams_paged(limit=100)
+  btc = await client.bitcoin.wallet.btc_balances_paged(wallet_address_or_public_key='bc1...')
+  streams = await client.streams.evm.all_streams_paged(100)
 ```
 
 An endpoint with no natural cursor to walk -- `evm.token.metadata.token_metadata`,

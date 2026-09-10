@@ -6,4 +6,8 @@ from .top_losers import TopLosers
 
 
 class Discovery(FilteredTokens, TokenCategories, TopGainers, TopLosers):
-  """Grouped Moralis Discovery endpoints."""
+  """ERC20 token discovery: category listings, top gainers and losers, and filtered token search.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/evm/token/overview)
+  """

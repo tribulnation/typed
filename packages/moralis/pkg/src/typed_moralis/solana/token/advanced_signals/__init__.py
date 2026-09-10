@@ -3,4 +3,8 @@ from .snipers import Snipers
 
 
 class AdvancedSignals(Snipers):
-  """Grouped Moralis AdvancedSignals endpoints."""
+  """Sniper detection for a Solana trading pair.
+
+  References:
+    - [Upstream docs](https://docs.moralis.com/data-api/solana/token/overview)
+  """
