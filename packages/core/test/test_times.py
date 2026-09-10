@@ -6,6 +6,7 @@ from no fractional digits to nanoseconds (kraken's `post_trade`: `...123456789Z`
 `datetime.fromisoformat` only understands `Z` and arbitrary fraction lengths from Python
 3.11 on, one minor version above this package's declared floor (`>=3.10`).
 """
+
 from datetime import date, datetime, timezone, timedelta
 from pydantic import TypeAdapter
 import pytest
@@ -40,7 +41,9 @@ class TestIsoConverterParse:
 class TestIsoConverterDump:
   def test_naive_datetime_treated_as_already_utc(self):
     """Not converted through the process's local timezone -- attached, not shifted."""
-    assert IsoConverter().dump(datetime(2024, 5, 30, 12, 34, 56)) == '2024-05-30T12:34:56Z'
+    assert (
+      IsoConverter().dump(datetime(2024, 5, 30, 12, 34, 56)) == '2024-05-30T12:34:56Z'
+    )
 
   def test_aware_non_utc_datetime_is_converted(self):
     aware = datetime(2024, 5, 30, 14, 34, 56, tzinfo=timezone(timedelta(hours=2)))
@@ -49,16 +52,21 @@ class TestIsoConverterDump:
   def test_bit2me_shape_round_trips(self):
     """Confirmed-working shape from the bit2me handoff: `isoformat().replace('+00:00', 'Z')`."""
     conv = IsoConverter()
-    assert conv.dump(conv.parse('2024-05-07T14:08:30.961Z')) == '2024-05-07T14:08:30.961000Z'
+    assert (
+      conv.dump(conv.parse('2024-05-07T14:08:30.961Z')) == '2024-05-07T14:08:30.961000Z'
+    )
 
 
 class TestIsoConverterPydantic:
   def test_validates_through_annotated_type(self):
     from typing_extensions import Annotated
     from pydantic import BeforeValidator
+
     converter = IsoConverter()
     TimestampIso = Annotated[datetime, BeforeValidator(converter.parse)]
-    validated = TypeAdapter(TimestampIso).validate_python('2024-05-30T12:34:56.123456789Z')
+    validated = TypeAdapter(TimestampIso).validate_python(
+      '2024-05-30T12:34:56.123456789Z'
+    )
     assert validated == datetime(2024, 5, 30, 12, 34, 56, 123456, tzinfo=timezone.utc)
 
 
@@ -77,7 +85,7 @@ class TestEpochConverterNanoseconds:
     no factory -- `EpochConverter` was already generic on `unit`, just missing this one."""
     conv = EpochConverter.nanoseconds(tz=timezone.utc)
     dt = datetime(2024, 5, 30, 12, 34, 56, 123456, tzinfo=timezone.utc)
-    assert conv.dump(dt) == int(dt.timestamp() * 1_000_000_000)
+    assert conv.dump(dt) == 1717072496123456000
     assert conv.parse(conv.dump(dt)) == dt
 
 
@@ -99,6 +107,7 @@ class TestDateConverterPydantic:
   def test_validates_through_annotated_type(self):
     from typing_extensions import Annotated
     from pydantic import BeforeValidator
+
     converter = DateConverter()
     DateIso = Annotated[date, BeforeValidator(converter.parse)]
     validated = TypeAdapter(DateIso).validate_python('2026-08-03')
@@ -159,6 +168,7 @@ class TestConvertersRejectNonStrings:
   def test_null_on_a_non_nullable_field_is_a_validation_error(self):
     from typing_extensions import Annotated
     from pydantic import BeforeValidator, ValidationError
+
     TimestampIso = Annotated[datetime, BeforeValidator(IsoConverter().parse)]
     with pytest.raises(ValidationError):
       TypeAdapter(TimestampIso).validate_python(None)
@@ -178,3 +188,53 @@ class TestEpochConverterFractions:
   def test_fractional_string_parses(self):
     dt = EpochConverter.seconds(tz=timezone.utc).parse('1688669597.5')
     assert dt.microsecond == 500000
+
+
+@pytest.mark.parametrize(
+  'unit, epoch',
+  [
+    (1000, 1080444014843),
+    (1000, -1080444014843),
+    (1_000_000, 4102444800123456),
+    (1_000_000_000, 4102444800123456000),
+  ],
+)
+@pytest.mark.parametrize('tz', [timezone.utc, timezone(timedelta(hours=2))])
+def test_epoch_round_trip_does_not_lose_representable_ticks(
+  unit: int,
+  epoch: int,
+  tz: timezone,
+):
+  """Milliseconds and microseconds survive conversion even outside float precision."""
+  converter = EpochConverter(unit=unit, tz=tz)
+  assert converter.dump(converter.parse(epoch)) == epoch
+  assert converter.parse(str(epoch)) == converter.parse(epoch)
+
+
+@pytest.mark.parametrize(
+  'epoch, microsecond',
+  [
+    ('1688669597000000499', 0),
+    ('1688669597000000500', 0),
+    ('1688669597000001500', 2),
+  ],
+)
+def test_nanoseconds_round_to_datetime_precision(epoch: str, microsecond: int):
+  """Unrepresentable submicroseconds round deterministically, never through float."""
+  parsed = EpochConverter.nanoseconds(tz=timezone.utc).parse(epoch)
+  assert parsed == datetime(2023, 7, 6, 18, 53, 17, microsecond, tzinfo=timezone.utc)
+
+
+def test_dump_fractional_seconds_keeps_truncation_toward_zero():
+  """Negative pre-epoch fractions retain the existing integer conversion rule."""
+  converter = EpochConverter.seconds(tz=timezone.utc)
+  assert (
+    converter.dump(datetime(1969, 12, 31, 23, 59, 59, 500000, tzinfo=timezone.utc)) == 0
+  )
+
+
+@pytest.mark.parametrize('value', ['1/2', '', 'not-a-number'])
+def test_epoch_strings_must_be_decimal_numerals(value: str):
+  """Exact internal fractions must not widen the accepted wire syntax."""
+  with pytest.raises(ValueError):
+    EpochConverter.milliseconds().parse(value)

@@ -48,7 +48,7 @@ class HttpClient:
     files: httpx._types.RequestFiles | None = None,
     json: Any | None = None,
     params: Mapping[str, Any] | None = None,
-    headers: Mapping | None = None,
+    headers: httpx._types.HeaderTypes | None = None,
     cookies: httpx._types.CookieTypes | None = None,
     auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
     follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
@@ -64,5 +64,9 @@ class HttpClient:
         headers=headers,
       )
     except httpx.HTTPError as e:
-      req = f'{method} {url}'
-      raise NetworkError(f'Error sending request to {req}', *e.args) from e
+      target = httpx.URL(url).copy_with(userinfo=b'', query=None, fragment=None)
+      # Transport messages can repeat the signed URL; don't copy their arguments
+      # or include their traceback in ordinary exception logging.
+      raise NetworkError(
+        f'Error sending request to {method} {target} ({type(e).__name__})'
+      ) from None

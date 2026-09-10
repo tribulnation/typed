@@ -123,14 +123,17 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
 
     async def stream() -> AsyncIterable[Notification]:
       while True:
+        queue_get = asyncio.create_task(queue.get())
         try:
-          queue_get = asyncio.create_task(queue.get())
           done, _ = await self.wait(
             asyncio.wait([unsubscribed, queue_get], return_when='FIRST_COMPLETED')
           )
         except BaseException:
           self.subscriptions.pop(channel, None)
           raise
+        finally:
+          queue_get.cancel()
+          await asyncio.gather(queue_get, return_exceptions=True)
         if queue_get in done:
           yield queue_get.result()
         else: # unsubscribed

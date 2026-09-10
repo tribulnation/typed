@@ -1,7 +1,6 @@
 from typing_extensions import Awaitable, TypeVar
 from abc import ABC, abstractmethod
 import asyncio
-import contextlib
 from dataclasses import dataclass, field
 from datetime import timedelta
 import logging
@@ -216,15 +215,15 @@ class Socket(ABC):
     async def coro():
       return await fut
     task = asyncio.create_task(coro())
-    done, _ = await asyncio.wait([task, ctx.listener, ctx.pinger], return_when='FIRST_COMPLETED')
-    if task not in done:
-      # The listener/pinger won the race instead -- `task` is still pending
-      # and nothing else will ever await or cancel it, so it would otherwise
-      # be silently garbage-collected mid-flight ("Task was destroyed but it
-      # is pending!").
+    try:
+      done, _ = await asyncio.wait(
+        [task, ctx.listener, ctx.pinger], return_when='FIRST_COMPLETED'
+      )
+    finally:
+      # The request wrapper belongs to this wait, including when its caller is
+      # cancelled. The shared listener/pinger belong to the socket, not this call.
       task.cancel()
-      with contextlib.suppress(asyncio.CancelledError):
-        await task
+      await asyncio.gather(task, return_exceptions=True)
     if ctx.listener in done:
       if (exc := ctx.listener.exception()) is not None:
         raise exc

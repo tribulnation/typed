@@ -3,7 +3,6 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
-    paths: ['packages/etherscan/**']
 permissions:
   id-token: write
   contents: write

@@ -3,7 +3,6 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
-    paths: ['packages/binance/**']
 permissions:
   id-token: write
   contents: write

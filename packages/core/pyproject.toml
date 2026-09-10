@@ -27,6 +27,9 @@ readme = {file="README.md", content-type="text/markdown"}
 [project.optional-dependencies]
 grpc = ["grpclib"]
 
+[tool.setuptools.package-data]
+typed_core = ["py.typed", "*.pyi", "**/*.pyi"]
+
 [project.urls]
 Repository = "https://github.com/tribulnation/typed"
 Website = "https://tribulnation.com/typed"

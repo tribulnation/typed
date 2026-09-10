@@ -15,7 +15,6 @@ from typing_extensions import Any, ClassVar
 import pytest
 import httpx
 
-import typed_core.http as http_module
 from typed_core.http import HttpClient
 
 @dataclass
@@ -45,7 +44,7 @@ class FakeHttpxClient:
 def fake_httpx_client(monkeypatch: pytest.MonkeyPatch):
   """Replace `httpx.AsyncClient` inside `typed_core.http` with the call-recorder above."""
   FakeHttpxClient.instances = []
-  monkeypatch.setattr(http_module.httpx, 'AsyncClient', lambda **kwargs: FakeHttpxClient())
+  monkeypatch.setattr(httpx, 'AsyncClient', lambda **kwargs: FakeHttpxClient())
   yield
 
 @pytest.mark.asyncio
