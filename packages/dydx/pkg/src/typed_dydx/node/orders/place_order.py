@@ -6,11 +6,10 @@ from dataclasses import dataclass
 from typed_core.exceptions import BadRequest
 from typing_extensions import Sequence
 
+from typed_dydx.indexer.schemas import PerpetualMarket
 from typed_dydx.node.constants import SHORT_BLOCK_WINDOW, STATEFUL_ORDER_TIME_WINDOW
 from typed_dydx.node.context import NodeContext
-from typed_dydx.indexer.types.market import PerpetualMarket
 from typed_dydx.node.market import Market
-from typed_dydx.node.tx import Tx
 from typed_dydx.node.orders.types import (
   ConditionType,
   Flags,
@@ -19,8 +18,10 @@ from typed_dydx.node.orders.types import (
   Side,
   TimeInForce,
 )
+from typed_dydx.node.tx import Tx
 from typed_dydx.protos.cosmos.tx import v1beta1 as tx_proto
 from typed_dydx.protos.dydxprotocol import clob
+
 
 def random_client_id() -> int:
   """Generate a dYdX client order ID.

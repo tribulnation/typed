@@ -9,8 +9,8 @@ from typing_extensions import TYPE_CHECKING, Self, Sequence
 
 from typed_dydx.chain import Chain
 from typed_dydx.chain.comet.core import CometOptions
-from typed_dydx.chain.modules import GrpcOptions
-from typed_dydx.indexer.types.market import PerpetualMarket
+from typed_dydx.chain.core import GrpcOptions
+from typed_dydx.indexer.schemas import PerpetualMarket
 from typed_dydx.node.constants import (
   DYDX_MAINNET_CHAIN_ID,
   DYDX_MAINNET_USDC_DENOM,

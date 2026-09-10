@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing_extensions import Annotated
+
 from typed_core.exceptions import (
   ApiError,
   AuthError,
@@ -8,6 +11,12 @@ from typed_core.exceptions import (
   RateLimited,
   ValidationError,
 )
+from typed_core.times import EpochConverter, IsoConverter
+
+timestamp_iso: IsoConverter
+TimestampIso = Annotated[datetime, ...]
+timestamp_seconds: EpochConverter
+TimestampSeconds = Annotated[datetime, ...]
 
 __all__ = [
   'ApiError',
@@ -18,4 +27,8 @@ __all__ = [
   'NetworkError',
   'RateLimited',
   'ValidationError',
+  'TimestampIso',
+  'timestamp_iso',
+  'TimestampSeconds',
+  'timestamp_seconds',
 ]

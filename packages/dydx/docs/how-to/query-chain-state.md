@@ -53,7 +53,7 @@ async with Dydx.testnet(public=True) as client:
   all_pairs = await client.chain.clob.clob_pairs()
   price = await client.chain.prices.market_price(0)
   perpetual = await client.chain.perpetuals.perpetual(0)
-  assets = await client.chain.assets.assets()
+  assets = await client.chain.assets.all()
   print(clob_pair, all_pairs, price, perpetual, assets)
 ```
 

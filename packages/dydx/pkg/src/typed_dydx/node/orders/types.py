@@ -1,9 +1,10 @@
 """Typed dYdX order parameters."""
 
 from decimal import Decimal
+
 from typing_extensions import Literal, NotRequired, TypedDict
 
-from typed_dydx.indexer.types.market import PerpetualMarket
+from typed_dydx.indexer.schemas import PerpetualMarket
 from typed_dydx.node.market import Market
 
 DecimalValue = Decimal | str | int

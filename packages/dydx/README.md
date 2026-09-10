@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://tribulnation.com/typed/dydx">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/dydx/media/dydx-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/dydx/media/dydx-light.svg">
-      <img alt="Typed dYdX" src="https://raw.githubusercontent.com/tribulnation/typed/refs/heads/main/packages/dydx/media/dydx-light.svg" width="360">
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/dydx-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/dydx-light.svg">
+      <img alt="Typed dYdX" src="https://tribulnation.com/media/lockups/dydx-light.svg" width="360">
     </picture>
   </a>
 </p>
