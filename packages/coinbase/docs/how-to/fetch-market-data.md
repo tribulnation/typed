@@ -3,7 +3,7 @@
 Advanced Trade's public product catalog, under `app.advanced_trade.http.products.public`, needs no credentials — safe to call from a `public=True` client.
 
 ```python
-import time
+from datetime import datetime, timedelta, timezone
 
 from typed_coinbase import Coinbase
 
@@ -13,13 +13,13 @@ async with Coinbase.new(public=True) as client:
   book = await client.app.advanced_trade.http.products.public.book(product_id='BTC-USD', limit=50)  # order book snapshot
   trades = await client.app.advanced_trade.http.products.public.market_trades('BTC-USD', limit=50)  # recent trades
 
-  now = int(time.time())
+  now = datetime.now(timezone.utc)
   candles = await client.app.advanced_trade.http.products.public.candles(
-    'BTC-USD', start=now - 3600, end=now, granularity='ONE_MINUTE',
+    'BTC-USD', start=now - timedelta(hours=1), end=now, granularity='ONE_MINUTE',
   )
 ```
 
-`start`/`end` on `candles` are UNIX timestamps; `granularity` accepts `ONE_MINUTE` through `ONE_DAY`.
+`start`/`end` on `candles` are real `datetime` values (`TimestampSeconds`, converted to/from Coinbase's own UNIX-second wire format); `granularity` accepts `ONE_MINUTE` through `ONE_DAY`.
 
 ## Authenticated Market Data
 
