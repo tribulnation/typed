@@ -23,11 +23,9 @@ from typed_bitget import Bitget
 async with Bitget.new() as client:
   products = await client.uta.earn.elite.products()
   info = await client.uta.earn.elite.subscribe_info(product_id=products[0]['productId'])
-  result = await client.uta.earn.elite.subscribe({
-    'productSubId': info['productSubId'],
-    'amount': 10.0,
-    'paymentAccount': 'unified',
-  })
+  result = await client.uta.earn.elite.subscribe(
+    product_sub_id=info['productSubId'], amount=10.0, payment_accounts='unified',
+  )
 ```
 
 ## Redeem
@@ -40,13 +38,13 @@ from typed_bitget import Bitget
 async with Bitget.new() as client:
   products = await client.uta.earn.elite.products()
   info = await client.uta.earn.elite.redeem_info(product_id=products[0]['productId'])
-  await client.uta.earn.elite.redeem({
-    'productId': info['productId'],
-    'productSubId': info['productSubId'],
-    'redeemType': 'fast',
-    'amount': 10.0,
-    'receiveAccount': 'unified',
-  })
+  await client.uta.earn.elite.redeem(
+    product_id=info['productId'],
+    product_sub_id=info['productSubId'],
+    redeem_type='fast',
+    amount=10.0,
+    receive_account='unified',
+  )
 ```
 
 ## Subscription / Redemption / Interest Records

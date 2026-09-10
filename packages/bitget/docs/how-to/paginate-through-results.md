@@ -1,12 +1,11 @@
 # Paginate Through Results
 
 Endpoints that return a page carry a `_paged` sibling that walks every page automatically, with
-no manual cursor bookkeeping. Most of these are a plain async iterator; a cursor-paged endpoint
-whose response is just `{rows, cursor}` -- nothing else worth keeping per page -- is instead
-`PaginatedResponse`-shaped: usable both as `async for` (one page of rows at a time) and as a
-single `await` (every page flattened into one list).
+no manual cursor bookkeeping. Every `_paged` method is a `PaginatedResponse`: iterate it with
+`async for` to get one page of rows at a time (empty pages are skipped), or `await` it to get
+every page flattened into one list. To stop early, `break` out of the `async for`.
 
-## Cursor-Paged, `PaginatedResponse`-Shaped: Order History
+## Cursor-Paged: Order History
 
 ```python
 from typed_bitget import Bitget
@@ -20,14 +19,14 @@ async with Bitget.new() as client:
   every_order = await client.uta.trade.order.history_paged(category='SPOT', symbol='BTCUSDT')
 ```
 
-`history_orders_paged` follows the response's `cursor` and stops once a page carries none --
-`async for` yields each page's rows directly (no `{list, cursor}` envelope to unwrap), and
-`await` walks every page for you. `elite_records`, `move_position_history`,
-`current_track_orders`/`history_track_orders`/`profit_share_history` (and their Classic Spot
-counterparts), `order_fills`, `position_history`, `virtual_subaccount_list`,
-`current_followers`/`history_followers`/`profit_details`, `all_orders`/`my_ads`/`pending_orders`,
-`sub_transfer_records`, `withdraw_address_book`, `sub_api_list`, and market data's `liquidations`
-follow the same shape.
+`history_paged` follows the response's `cursor` and stops once a page carries none. `async for`
+yields each page's rows directly, with no `{list, cursor}` envelope to unwrap. `elite_records`,
+`move_position_history`, `current_track_orders`/`history_track_orders`/`profit_share_history`
+(and their Classic Spot counterparts), `order_fills`, `position_history`,
+`virtual_subaccount_list`, `current_followers`/`history_followers`/`profit_details`,
+`all_orders`/`my_ads`/`pending_orders`, `sub_transfer_records`, `withdraw_address_book`,
+`sub_api_list`, market data's `liquidations`, and UTA's
+`financial_records`/`order_fills`/`unfilled_orders` follow the same shape.
 
 The one-shot form returns a single page directly, with its own `cursor` for manual paging:
 
@@ -38,25 +37,24 @@ async with Bitget.new() as client:
   page = await client.uta.trade.order.history(category='SPOT', symbol='BTCUSDT')
 ```
 
-## Cursor-Paged, Plain Async Iterator: Financial Records
+## Cursor-Paged, Stopping On An Empty Page: Cross Margin Order Fills
 
-A cursor-paged endpoint whose page also carries something worth keeping alongside the rows --
-`financial_records`/`fills`/`unfilled_orders`'s own `{list, cursor}` page object, say -- stays a
-plain async iterator instead, yielding the whole response per page:
+A cursor-paged endpoint that stops on an empty page rather than an absent cursor, Classic
+Margin's `fills` endpoints, say, has the same shape: each page's rows, one page at a time.
 
 ```python
+from datetime import datetime, timezone
 from typed_bitget import Bitget
 
 async with Bitget.new() as client:
-  async for page in client.uta.account.financial_records_paged(category='SPOT', coin='USDT'):
-    for record in page['list'] or []:  # `list` is `null`, not `[]`, on an empty page
-      print(record['amount'])
+  async for fills in client.classic.margin.cross.order.fills_paged(
+    symbol='BTCUSDT', start_time=datetime(2024, 1, 1, tzinfo=timezone.utc),
+  ):
+    for fill in fills:
+      print(fill.get('orderId'), fill.get('tradeId'))
 ```
 
-Pass `max_pages` to cap how many pages a plain async-iterator `_paged` method walks -- unlike the
-`PaginatedResponse`-shaped form above, which has no such parameter.
-
-## Window-Paged: Candles
+## Time-Range Paged: Candles
 
 ```python
 from datetime import datetime, timezone
@@ -71,8 +69,11 @@ async with Bitget.new(public=True) as client:
     print(page)
 ```
 
-`candles_paged` walks the `start_time` to `end_time` window backwards by its own width and stops
-on the first empty window. A page that comes back full (as many rows as requested) may be
-hiding more candles the venue truncated. In that case `candles_paged` raises `LogicError`
-rather than silently skipping rows; pass `allow_truncation=True` to accept the loss and
-continue.
+Bitget answers a range it cannot cover in one response with the newest `limit` rows, so
+`candles_paged` walks newest first: it keeps your `start_time` fixed and moves `end_time` back
+to the oldest candle of each page that came back full, until a page comes back short. Nothing
+outside your own `start_time`/`end_time` range is ever requested, and the candle re-served at
+each moved bound is dropped, so every candle appears exactly once. Pass `limit` to change the
+page size; without it the walk uses the venue's default of 100 rows per page. The seven candle
+endpoints (`uta.market.candles.recent`/`history`, `classic.spot.candles`, and
+`classic.mix.market.candles.recent`/`history`/`history_mark`/`history_index`) all walk this way.
