@@ -48,22 +48,26 @@ how_tos:
   - title: Place & manage orders
     body: Submit, query, list, and cancel orders. Needs credentials.
     code: |
+      from decimal import Decimal
+
       meta = await client.info.perp_meta()
       btc_asset = next(i for i, a in enumerate(meta['universe']) if a['name'] == 'BTC')  # resolve asset id
 
-      result = await client.exchange.http.order(
-        orders=[{'a': btc_asset, 'b': True, 'p': '90000', 's': '0.001', 'r': False, 't': {'limit': {'tif': 'Gtc'}}}],
+      result = await client.exchange.order(
+        orders=[{'a': btc_asset, 'b': True, 'p': Decimal('90000'), 's': Decimal('0.001'), 'r': False, 't': {'limit': {'tif': 'Gtc'}}}],
         grouping='na',
-      )                                                                    # place an order (or client.exchange.ws.order over WS)
-      user = client.exchange.http.wallet.address
+      )                                                                    # place an order (pass transport='ws' to send it over WS)
+      assert client.exchange.wallet is not None
+      user = client.exchange.wallet.address
       order = await client.info.order_status(user=user, oid=123456789)    # check an order's status
       open_orders = await client.info.open_orders(user=user)              # list open orders
-      await client.exchange.http.cancel(cancels=[{'a': btc_asset, 'o': 123456789}])  # cancel it
+      await client.exchange.cancel(cancels=[{'a': btc_asset, 'o': 123456789}])  # cancel it
 
   - title: Fetch balances & positions
     body: Spot balances, perp positions and margin, and portfolio history.
     code: |
-      user = client.exchange.http.wallet.address
+      assert client.exchange.wallet is not None
+      user = client.exchange.wallet.address
 
       spot = await client.info.spot_clearinghouse_state(user=user)  # spot balances
       state = await client.info.clearinghouse_state(user=user)      # perp positions & margin
@@ -74,7 +78,8 @@ how_tos:
     code: |
       from datetime import datetime, timedelta, timezone
 
-      user = client.exchange.http.wallet.address
+      assert client.exchange.wallet is not None
+      user = client.exchange.wallet.address
       start_time = datetime.now(timezone.utc) - timedelta(days=7)
 
       fills = await client.info.user_fills_by_time(user=user, start_time=start_time)          # fills
@@ -95,7 +100,8 @@ how_tos:
   - title: Listen to your trades
     body: Stream your own fills as they happen.
     code: |
-      user = client.exchange.http.wallet.address
+      assert client.exchange.wallet is not None
+      user = client.exchange.wallet.address
 
       async with client.streams.user_fills(user) as fills:  # your fills, as they happen
         async for update in fills:

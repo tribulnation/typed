@@ -20,7 +20,23 @@ async with Hyperliquid.new(public=True) as client:
     print(fill['coin'], fill['side'], fill['px'], fill['sz'])
 ```
 
-For large windows, use `user_fills_by_time_paged()`.
+For large windows, use `user_fills_by_time_paged()`. Hyperliquid returns at most 2000
+fills per response, oldest first; the pager moves `start_time` forward to the latest fill
+time of each full page, re-reads that millisecond and drops the fills it already returned,
+and stops on the first page shorter than 2000. `await` it for every fill in one list:
+
+```python
+from datetime import datetime, timedelta, timezone
+from typed_hyperliquid import Hyperliquid
+
+user = '0xYourAccountAddress'
+end_time = datetime.now(timezone.utc)
+start_time = end_time - timedelta(days=90)
+
+async with Hyperliquid.new(public=True) as client:
+  fills = await client.info.user_fills_by_time_paged(user=user, start_time=start_time, end_time=end_time)
+  print(len(fills))
+```
 
 ## Fetch Funding Payments
 
@@ -39,7 +55,9 @@ async with Hyperliquid.new(public=True) as client:
     print(delta['coin'], delta['usdc'], delta['fundingRate'])
 ```
 
-For long ranges, use `user_funding_paged()`.
+For long ranges, use `user_funding_paged()`. It moves `start_time` forward to the latest
+`time` of each full page and stops on the first shorter one; `await` it for every entry
+flattened, or `async for` it to handle one page at a time.
 
 ```python
 from datetime import datetime, timedelta, timezone

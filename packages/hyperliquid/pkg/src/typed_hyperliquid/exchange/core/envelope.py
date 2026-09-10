@@ -19,6 +19,13 @@ per-item results (S9, `docs/production_standards.md`):
   contradicting -- so their generated methods call `raise_on_error` below instead, which
   raises `typed_core.exceptions.ApiError` on `status: "err"` and otherwise returns just
   the unwrapped `response`, narrowing the return type from `ExchangeResponse[T]` to `T`.
+
+Since 2026-09-07 the four batched actions declare that same union in their own specs, as a
+discriminated `anyOf` of an `ok` variant carrying the action result and the shared
+`ExchangeError` variant carrying the rejection string, so their generated response types
+are the spec-declared equivalent of `ExchangeResponse[T]` rather than a flat
+`{status: Literal['ok', 'err'], response: T | str}` that narrows nothing. `OkResponse`/
+`ErrorResponse` below stay the runtime shape this module validates and unwraps against.
 """
 
 from typing_extensions import Any, Generic, Literal, Mapping, TypeVar

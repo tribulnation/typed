@@ -6,6 +6,8 @@ The client distinguishes between failure modes through explicit exception types.
 
 - `NetworkError`: connection failures, timeouts, and transport errors
 - `AuthError`: authentication or signing failures
+- `RateLimited`: HTTP 429 from either the info or exchange endpoint; a subclass of
+  `ApiError`, with the status and response text preserved
 - `ApiError`: the remote API returned an application-level error
 - `ValidationError`: the response shape did not match the expected schema
 - `LogicError`: incorrect local usage of the client, or a `*_paged` sweep that could not
@@ -14,13 +16,15 @@ The client distinguishes between failure modes through explicit exception types.
 ## Pagination
 
 Hyperliquid pages history by time, and its millisecond timestamps are not unique.
-The `*_paged` helpers therefore re-read the millisecond a page ends on and drop the
-overlap by position, so entries sharing a timestamp are never skipped at a page
-boundary.
+Each `*_paged` helper walks forward by moving `start_time` to the latest `time` of every
+page that came back full, and stops on the first shorter page. It re-reads the
+millisecond a page ends on and drops the rows it already returned by content, so entries
+sharing a timestamp are never skipped or duplicated at a page boundary.
 
-A millisecond holding a whole page of entries cannot be read past, because the
-endpoint has no cursor finer than time. The helpers raise `LogicError` rather
-than skipping it:
+Two situations cannot be walked through safely, and the helpers raise `LogicError`
+rather than guessing: a millisecond holding a whole page of entries (the endpoint has no
+cursor finer than time, so the rest of it is unreachable), and a row returned on one
+page that the venue no longer returns when the boundary millisecond is re-read:
 
 ```python
 from datetime import datetime, timezone
@@ -35,9 +39,13 @@ async with Hyperliquid.new(public=True) as client:
       ...
   except LogicError:
     # the sweep stopped rather than dropping entries; the message names the
-    # timestamp to resume from if the loss is acceptable
+    # timestamp it was reading from
     ...
 ```
+
+Each helper returns a `PaginatedResponse`: `await` it for every entry in one list, or
+`async for` it to handle one page at a time, as above. It stops on its own, so there is
+nothing to cap; `break` out of the loop to stop early.
 
 ## Recommended Pattern
 

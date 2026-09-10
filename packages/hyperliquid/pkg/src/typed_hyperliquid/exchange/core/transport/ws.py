@@ -9,7 +9,6 @@ from typed_core.exceptions import ApiError
 
 from typed_hyperliquid.core.endpoint.rpc import RpcClient
 from typed_hyperliquid.core.ws import SocketClient
-from ..envelope import response_adapter
 
 
 @dataclass(kw_only=True)
@@ -17,17 +16,17 @@ class ExchangeSocketClient(RpcClient):
   """WebSocket transport for Hyperliquid exchange (signed) requests.
 
   `payload` is an `ExchangeRequest` in practice -- see `transport/http.py` for why the
-  parameter is kept as the wider `Mapping[str, Any]` instead.
+  parameter is kept as the wider `Mapping[str, Any]` instead. Returns the decoded
+  `{status, response}` envelope verbatim, unvalidated -- see `transport/http.py`'s own
+  docstring for why: `ExchangeCore.request` is the one place that validates now.
   """
 
   ws: SocketClient
-  validate: bool = True
 
   async def request(self, payload: Mapping[str, Any]) -> Any:
     reply = await self.ws.rpc_request({'type': 'action', 'payload': payload})
     if reply['type'] == 'action':
-      msg = reply['payload']
-      return response_adapter.validate_python(msg) if self.validate else msg
+      return reply['payload']
     elif reply['type'] == 'error':
       raise ApiError(reply['payload'])
     else:
