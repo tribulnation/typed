@@ -17,22 +17,22 @@ class CoinChainInfo(TypedDict):
   """Fixed withdrawal fee; empty when withdrawals are unsupported."""
   depositMin: Literal[''] | Decimal
   """Minimum deposit amount. Empty string on the same disabled-deposit chains that send an empty `confirmation`."""
-  withdrawMin: Decimal
-  """Minimum withdrawal amount."""
+  withdrawMin: Literal[''] | Decimal
+  """Minimum withdrawal amount; empty when withdrawal metadata is unavailable on a disabled chain."""
   minAccuracy: int
   """Decimal precision for amounts on this chain."""
   chainDeposit: Literal['0', '1']
   """Deposit status."""
   chainWithdraw: Literal['0', '1']
   """Withdrawal status."""
-  withdrawPercentageFee: Decimal
-  """Percentage-based withdrawal fee, for example `"0.022"` for 2.2%."""
+  withdrawPercentageFee: Literal[''] | Decimal
+  """Percentage-based withdrawal fee, for example `"0.022"` for 2.2%; empty when withdrawal metadata is unavailable on a disabled chain."""
   contractAddress: str
   """Smart contract address; empty when this coin/chain has none."""
   safeConfirmNumber: Literal[''] | int
   """Confirmations required before funds unlock, beyond `confirmation`. Empty string on the same disabled-deposit chains that send an empty `confirmation`."""
-  withdrawMax: Decimal
-  """Maximum withdrawal per transaction; `-1` means no limit."""
+  withdrawMax: Literal[''] | Decimal
+  """Maximum withdrawal per transaction; `-1` means no limit, while empty means withdrawal metadata is unavailable on a disabled chain."""
 
 
 class Request(TypedDict):
