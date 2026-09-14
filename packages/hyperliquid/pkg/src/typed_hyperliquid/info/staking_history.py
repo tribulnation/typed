@@ -16,6 +16,22 @@ class DelegatorHistoryDelegateDelta(TypedDict):
   """Address of the validator this event's delegation change applies to, in 42-character hexadecimal format."""
 
 
+class DelegatorHistoryDepositDelta(TypedDict):
+  """A transfer of HYPE from spot into staking."""
+
+  amount: Decimal
+  """Amount of HYPE moved between spot and staking, as a decimal string."""
+
+
+class DelegatorHistoryWithdrawalDelta(TypedDict):
+  """An initiated or finalized transfer of HYPE out of staking."""
+
+  amount: Decimal
+  """Amount of HYPE moved between spot and staking, as a decimal string."""
+  phase: str
+  """Withdrawal phase; observed values include initiated and finalized."""
+
+
 class Request(TypedDict):
   user: str
   """Address to query staking history for, in 42-character hexadecimal format."""
@@ -27,10 +43,27 @@ class DelegatorHistoryDelta(TypedDict):
   delegate: DelegatorHistoryDelegateDelta
 
 
+class DelegatorHistoryDepositChange(TypedDict):
+  """A transfer of HYPE from spot into staking."""
+
+  cDeposit: DelegatorHistoryDepositDelta
+
+
+class DelegatorHistoryWithdrawalChange(TypedDict):
+  """An initiated or finalized transfer of HYPE out of staking."""
+
+  withdrawal: DelegatorHistoryWithdrawalDelta
+
+
 class DelegatorHistoryEvent(TypedDict):
   """A single staking-delegation event in a user's history."""
 
-  delta: DelegatorHistoryDelta
+  delta: (
+    DelegatorHistoryDelta
+    | DelegatorHistoryDepositChange
+    | DelegatorHistoryWithdrawalChange
+  )
+  """A delegation change, staking deposit, or staking withdrawal event."""
   hash: str
   """Transaction hash of the on-chain action that produced this event."""
   time: TimestampMillis
