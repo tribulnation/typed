@@ -5,9 +5,18 @@ from typed_hyperliquid.core import TimestampIso
 from typed_hyperliquid.info.core import InfoCore
 
 
+class PerpDexHip3StarGrant(TypedDict):
+  """Grant for a HIP-3* (testnet-only) proxy operation, keyed as `{"hip3Star": operation}`."""
+
+  hip3Star: str
+  """HIP-3* proxy operation this grant authorizes (e.g. `modifyApproval`, `cancel`, `cancelAll`, `order`, `sendAsset`)."""
+
+
 class PerpDex(TypedDict):
   """A builder-deployed (HIP-3) perp dex's metadata and per-coin overrides."""
 
+  assetToFundingClamp: NotRequired[list[tuple[str, Decimal]]]
+  """Per-coin funding clamp overrides, as `[coin, clamp]` pairs."""
   assetToFundingInterestRate: NotRequired[list[tuple[str, Decimal]]]
   """Per-coin funding interest rate overrides, as `[coin, rate]` pairs."""
   assetToFundingMultiplier: list[tuple[str, Decimal]]
@@ -28,7 +37,7 @@ class PerpDex(TypedDict):
   """Short name of the perp dex."""
   oracleUpdater: str | None
   """Address authorized to push oracle price updates for this dex, or `null` if unset."""
-  subDeployers: NotRequired[list[tuple[str, list[str]]]]
+  subDeployers: NotRequired[list[tuple[str | PerpDexHip3StarGrant, list[str]]]]
   """Sub-deployer permission grants, as `[action, addresses]` pairs."""
 
 
