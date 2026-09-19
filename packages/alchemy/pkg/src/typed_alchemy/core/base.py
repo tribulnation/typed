@@ -10,7 +10,7 @@ also a resolved core (design §4) -- `Alchemy` itself declares no direct endpoin
 """
 
 from typing_extensions import Literal, Self, TypeAliasType
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from typed_core.http import HttpClient
 
@@ -28,11 +28,13 @@ Network = TypeAliasType(
     'arbitrum',
     'gnosis',
     'celo',
+    'hyperevm',
   ],
 )
 """EVM chains this client wires a base URL for. Alchemy documents 100+ chains total
-(`spec/discovery.md`'s Domains section); this is the pre-existing, already-wired subset,
-carried over unchanged from the client's original hand-written core.
+(`spec/discovery.md`'s Domains section); product and method availability vary by chain.
+A wired RPC URL does not imply that every enhanced method or the NFT API is available
+on that chain.
 
 Declared via `TypeAliasType` rather than a plain assignment so the alias name survives
 `typing_extensions.get_type_hints()` -- a plain `Network = Literal[...]` assignment is
@@ -50,14 +52,14 @@ class AlchemyTransport:
   every field a resolved `core` might need regardless of which one it is.
   """
 
-  http: HttpClient
-  api_key: str
+  http: HttpClient = field(repr=False)
+  api_key: str = field(repr=False)
   validate: bool = True
-  data_base_url: str | None = None
+  data_base_url: str | None = field(default=None, repr=False)
   """Fully-qualified Portfolio API base URL override, used as-is (bypassing the usual
   `api_key_url(portfolio_url(), api_key)` computation) when given -- mirrors the
   pre-migration `Alchemy.new(data_url=...)` parameter."""
-  prices_base_url: str | None = None
+  prices_base_url: str | None = field(default=None, repr=False)
   """Fully-qualified Prices API base URL override, used as-is when given -- mirrors the
   pre-migration `Alchemy.new(prices_url=...)` parameter."""
 

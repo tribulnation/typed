@@ -14,7 +14,7 @@ worked example -- see `_get_token_balances_params`).
 
 from typing_extensions import Any, Self, TypeVar, cast
 from types import UnionType
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 
 from typed_core.validation import validator
@@ -22,7 +22,7 @@ from typed_core.validation import validator
 from .auth import api_key_url
 from .base import AlchemyTransport, Network
 from .envelope import unwrap_rpc
-from .exc import NetworkError, without_api_key
+from .privacy import protect_request
 
 T = TypeVar('T')
 
@@ -36,6 +36,7 @@ CHAIN_RPC_HOSTS: dict[Network, str] = {
   'arbitrum': 'https://arb-mainnet.g.alchemy.com/v2',
   'gnosis': 'https://gnosis-mainnet.g.alchemy.com/v2',
   'celo': 'https://celo-mainnet.g.alchemy.com/v2',
+  'hyperevm': 'https://hyperliquid-mainnet.g.alchemy.com/v2',
 }
 """Per-chain host for Chain APIs and the enhanced `alchemy_*` JSON-RPC methods."""
 
@@ -46,21 +47,25 @@ def chain_rpc_url(network: Network) -> str:
   return CHAIN_RPC_HOSTS[network]
 
 
-_UNWRAP: frozenset[str] = frozenset({
-  'alchemy_getTokenMetadata',
-  'alchemy_simulateExecution',
-  'alchemy_simulateAssetChanges',
-})
+_UNWRAP: frozenset[str] = frozenset(
+  {
+    'alchemy_getTokenMetadata',
+    'alchemy_simulateExecution',
+    'alchemy_simulateAssetChanges',
+  }
+)
 """Methods whose `request` has exactly one property, sent as that one property's own
 value -- never wrapped in an enclosing object -- as the sole JSON-RPC positional
 argument. `alchemy_getTokenMetadata`'s `contractAddress` is a scalar; `simulateExecution`/
 `simulateAssetChanges`'s `transaction` is itself an object (`SimulationCallTransaction`/
 `SimulationTransaction`), still sent unwrapped rather than nested one level deeper."""
 
-_ARRAY: frozenset[str] = frozenset({
-  'alchemy_simulateExecutionBundle',
-  'alchemy_simulateAssetChangesBundle',
-})
+_ARRAY: frozenset[str] = frozenset(
+  {
+    'alchemy_simulateExecutionBundle',
+    'alchemy_simulateAssetChangesBundle',
+  }
+)
 """Methods whose `request` has exactly one, array-valued property (`transactions`), sent
 as that array directly -- each element becomes its own positional slot, not wrapped in a
 further enclosing list."""
@@ -121,11 +126,15 @@ class ChainRpc:
   """JSON-RPC core scoped to one EVM network -- threads `network` into `base_url`."""
 
   client: AlchemyTransport
-  base_url: str
+  base_url: str = field(repr=False)
 
   @classmethod
   def new(
-    cls, client: AlchemyTransport, *, network: Network | None = None, base_url: str | None = None,
+    cls,
+    client: AlchemyTransport,
+    *,
+    network: Network | None = None,
+    base_url: str | None = None,
   ) -> Self:
     """Build a chain-scoped JSON-RPC core sharing `client`'s already-built transport.
 
@@ -138,7 +147,8 @@ class ChainRpc:
     """
     return cls(
       client=client,
-      base_url=base_url or api_key_url(chain_rpc_url(network or 'ethereum'), client.api_key),
+      base_url=base_url
+      or api_key_url(chain_rpc_url(network or 'ethereum'), client.api_key),
     )
 
   async def request(
@@ -188,13 +198,11 @@ class ChainRpc:
       else _json_rpc_params(path, values)
     )
     body = {'jsonrpc': '2.0', 'id': 1, 'method': path, 'params': params}
-    try:
+    with protect_request(api_key=self.client.api_key, base_url=self.base_url):
       response = await self.client.http.request('POST', self.base_url, json=body)
-    except NetworkError as e:
-      raise without_api_key(e, self.client.api_key) from e.__cause__
-    payload = unwrap_rpc(response)
-    if response_type is None:
-      return None  # type: ignore[return-value]
-    if not self.client.should_validate(validate):
-      return payload  # type: ignore[return-value]
-    return validator(cast(type, response_type)).python(payload)
+      payload = unwrap_rpc(response)
+      if response_type is None:
+        return None  # type: ignore[return-value]
+      if not self.client.should_validate(validate):
+        return payload  # type: ignore[return-value]
+      return validator(cast(type, response_type)).python(payload)

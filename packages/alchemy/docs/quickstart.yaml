@@ -87,7 +87,7 @@ how_tos:
         print(tokens)  # walk portfolio token pages, one page's rows at a time
 
   - title: Advanced RPC methods
-    body: Token metadata/balances, transaction receipts, and simulated asset changes via `alchemy_*` JSON-RPC methods, per chain.
+    body: Token metadata/balances, receipts, and simulation via `alchemy_*` methods. For standard node calls, see [Web3.py usage](/typed/alchemy/how-to/advanced-rpc-methods#standard-node-rpc-with-web3py).
     code: |
       metadata = await client.token(network='ethereum').get_token_metadata(
         '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
