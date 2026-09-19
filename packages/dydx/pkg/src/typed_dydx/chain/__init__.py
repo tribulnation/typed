@@ -17,6 +17,7 @@ from .staking import Staking
 from .subaccounts import Subaccounts
 from .tendermint import Tendermint
 from .tx import Tx
+from .vault import Vault
 from typed_dydx.chain.core import ChainBase
 
 
@@ -179,3 +180,12 @@ class Chain(ChainBase):
       - [Upstream docs](https://github.com/cosmos/cosmos-sdk/blob/main/proto/cosmos/tx/v1beta1/service.proto)
     """
     return Tx(client=self.grpc_client)
+
+  @cached_property
+  def vault(self) -> Vault:
+    """dYdX vault queries: market vault state and quoting parameters, MegaVault total and owner shares, and read-only withdrawal estimates.
+
+    References:
+      - [Upstream docs](https://github.com/dydxprotocol/v4-chain/blob/protocol/v9.6.1/proto/dydxprotocol/vault/query.proto)
+    """
+    return Vault(client=self.grpc_client)

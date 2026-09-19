@@ -38,3 +38,15 @@ except NetworkError:
 - back off on rate limits according to the provider's documented policy
 - log validation failures because they often signal upstream API changes
 - include request identifiers from the provider when available
+
+
+## ABCI Queries
+
+`chain.comet.abci_query` raises `ApiError` when the application returns a nonzero
+result code, even if the HTTP response is successful or response validation is disabled.
+The exception's arguments contain the HTTP status and the raw ABCI response, including
+`code`, `codespace`, and `log`.
+
+This applies to the query itself failing. A transaction inspection endpoint can still
+return a transaction that failed on-chain; that transaction's execution code remains
+part of the returned data.

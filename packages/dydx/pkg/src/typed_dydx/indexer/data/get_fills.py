@@ -15,9 +15,9 @@ class Request(TypedDict):
   """Market ticker filter."""
   marketType: NotRequired[MarketType]
   createdBeforeOrAtHeight: NotRequired[int]
-  """Latest block height to include."""
+  """Latest block height to include. Keep this filter fixed while advancing page."""
   createdBeforeOrAt: NotRequired[TimestampIso]
-  """Latest timestamp to include."""
+  """Latest timestamp to include. A filter, not a pagination cursor; use page or get_fills_paged to traverse history."""
   limit: NotRequired[int]
   """Maximum number of fills to return."""
   page: NotRequired[int]
@@ -25,7 +25,7 @@ class Request(TypedDict):
 
 
 class GetFills(IndexerMixin):
-  """Retrieve fill records for a subaccount."""
+  """Retrieve fill records for a subaccount. Use page or get_fills_paged to traverse the complete history; createdBeforeOrAt and createdBeforeOrAtHeight are filters, not pagination cursors."""
 
   def get_fills_paged(
     self,
@@ -39,7 +39,7 @@ class GetFills(IndexerMixin):
     limit: int | None = None,
     validate: bool | None = None,
   ) -> PaginatedResponse[Fill, int]:
-    """Retrieve fill records for a subaccount.
+    """Retrieve fill records for a subaccount. Use page or get_fills_paged to traverse the complete history; createdBeforeOrAt and createdBeforeOrAtHeight are filters, not pagination cursors.
 
     Paged variant of `get_fills`: Requests `page` from 1 upwards and stops on the first empty page. Awaitable (flattens every page) or async-iterable (one page at a time).
 
@@ -48,8 +48,8 @@ class GetFills(IndexerMixin):
       subaccount: Subaccount number.
       market: Market ticker filter.
       market_type:
-      created_before_or_at_height: Latest block height to include.
-      created_before_or_at: Latest timestamp to include.
+      created_before_or_at_height: Latest block height to include. Keep this filter fixed while advancing page.
+      created_before_or_at: Latest timestamp to include. A filter, not a pagination cursor; use page or get_fills_paged to traverse history.
       limit: Maximum number of fills to return.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
 
@@ -90,15 +90,15 @@ class GetFills(IndexerMixin):
     page: int | None = None,
     validate: bool | None = None,
   ) -> FillsResponse:
-    """Retrieve fill records for a subaccount.
+    """Retrieve fill records for a subaccount. Use page or get_fills_paged to traverse the complete history; createdBeforeOrAt and createdBeforeOrAtHeight are filters, not pagination cursors.
 
     Args:
       address: Wallet address that owns the subaccount.
       subaccount: Subaccount number.
       market: Market ticker filter.
       market_type:
-      created_before_or_at_height: Latest block height to include.
-      created_before_or_at: Latest timestamp to include.
+      created_before_or_at_height: Latest block height to include. Keep this filter fixed while advancing page.
+      created_before_or_at: Latest timestamp to include. A filter, not a pagination cursor; use page or get_fills_paged to traverse history.
       limit: Maximum number of fills to return.
       page: Page number for paginated results.
       validate: Override this call's response validation; falls back to the client-level default when omitted.

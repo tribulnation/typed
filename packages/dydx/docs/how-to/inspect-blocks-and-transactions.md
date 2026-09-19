@@ -55,3 +55,36 @@ async with Dydx.testnet(public=True) as client:
 For historical backfills, prefer archive constructors such as
 `Dydx.polkachu_archive(public=True)` or `Dydx.kingnodes_archive(public=True)`
 when the requested height may be pruned from regular nodes.
+
+Use `abci_query` to query application state through Comet, including protobuf
+query routes when gRPC is unavailable:
+
+```python
+import base64
+
+from typed_dydx import Dydx
+from typed_dydx.protos.dydxprotocol.vault import QueryMegavaultTotalSharesRequest
+
+request = QueryMegavaultTotalSharesRequest()
+
+async with Dydx.kingnodes_archive(public=True) as client:
+  result = await client.chain.comet.abci_query(
+    path='/dydxprotocol.vault.Query/MegavaultTotalShares',
+    data='0x' + bytes(request).hex(),
+    height=100_000_000,
+    prove=False,
+  )
+  response = result['response']
+  if response['value'] is not None:
+    response_bytes = base64.b64decode(response['value'])
+    print(response['height'], response_bytes)
+```
+
+Pass an ordinary path; the client adds the JSON quotes required by Comet HTTP.
+Request `data` is hex with a `0x` prefix, while response `value`, `key`, and proof
+bytes are base64. Decode protobuf response bytes with the corresponding generated
+response message. `prove=True` requests proofs only where the application route
+supports them, such as `/store/vault/key`; `response['proofOps']` can be `None`.
+A nonzero ABCI code raises `ApiError`, including when `validate=False`. The exception
+retains the application's `code`, `codespace`, `log`, and other response fields.
+HTTP and outer JSON-RPC errors raise the usual client exceptions.
