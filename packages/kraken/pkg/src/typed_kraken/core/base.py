@@ -2,6 +2,7 @@
 
 from typing_extensions import Self
 from dataclasses import dataclass, field
+from typed_core.http import HttpClient
 from contextlib import AsyncExitStack
 
 from ..futures.core import FuturesHttpClient
@@ -66,6 +67,7 @@ class KrakenBase:
     private_key: str | None = None,
     public: bool = False,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Build a Kraken client with Spot and public Futures market data.
 
@@ -74,10 +76,14 @@ class KrakenBase:
       private_key: Kraken private key; read from `KRAKEN_PRIVATE_KEY` when omitted.
       public: Build a credential-free client, usable only for public endpoints/channels.
       validate: Validate responses by default.
+      http: HTTP transport override; closed when this client exits.
     """
     credentials = resolve_credentials(api_key, private_key, public=public)
     spot_client = HttpRpcClient(
-      base_url=SPOT_API_URL, credentials=credentials, validate=validate
+      base_url=SPOT_API_URL,
+      credentials=credentials,
+      validate=validate,
+      http=http if http is not None else HttpClient(),
     )
     market_client = KrakenSocketClient.new(SPOT_WS_URL, validate=validate)
     private_client = KrakenSocketClient.new(
@@ -90,8 +96,12 @@ class KrakenBase:
       spot_client=spot_client,
       market_client=market_client,
       private_client=private_client,
-      futures_client=FuturesHttpClient(validate=validate),
-      charts_client=ChartsHttpClient(validate=validate),
+      futures_client=FuturesHttpClient(
+        validate=validate, http=http if http is not None else HttpClient()
+      ),
+      charts_client=ChartsHttpClient(
+        validate=validate, http=http if http is not None else HttpClient()
+      ),
     )
 
   async def __aenter__(self) -> Self:
