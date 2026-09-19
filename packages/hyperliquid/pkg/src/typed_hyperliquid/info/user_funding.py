@@ -29,9 +29,9 @@ class Request(TypedDict):
   user: str
   """Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result."""
   startTime: TimestampMillis
-  """Start of the time range, in milliseconds since epoch, inclusive."""
+  """Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
   endTime: NotRequired[TimestampMillis]
-  """End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time."""
+  """End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
 
 
 class UserFundingEntry(TypedDict):
@@ -69,8 +69,8 @@ class UserFunding(InfoCore):
 
     Args:
       user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
@@ -145,8 +145,8 @@ class UserFunding(InfoCore):
 
     Args:
       user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 

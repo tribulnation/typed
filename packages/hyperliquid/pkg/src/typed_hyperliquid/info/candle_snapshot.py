@@ -50,7 +50,7 @@ class Request(TypedDict):
   coin: str
   """Coin to fetch candles for."""
   endTime: TimestampMillis
-  """End of the time range, in milliseconds since epoch."""
+  """End of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
   interval: Literal[
     '1m',
     '3m',
@@ -69,7 +69,7 @@ class Request(TypedDict):
   ]
   """Candle interval."""
   startTime: TimestampMillis
-  """Start of the time range, in milliseconds since epoch."""
+  """Start of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
 
 
 Response = list[Candle]
@@ -111,9 +111,9 @@ class CandleSnapshot(InfoCore):
 
     Args:
       coin: Coin to fetch candles for.
-      end_time: End of the time range, in milliseconds since epoch.
+      end_time: End of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       interval: Candle interval.
-      start_time: Start of the time range, in milliseconds since epoch.
+      start_time: Start of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
@@ -198,9 +198,9 @@ class CandleSnapshot(InfoCore):
 
     Args:
       coin: Coin to fetch candles for.
-      end_time: End of the time range, in milliseconds since epoch.
+      end_time: End of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       interval: Candle interval.
-      start_time: Start of the time range, in milliseconds since epoch.
+      start_time: Start of the time range. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
