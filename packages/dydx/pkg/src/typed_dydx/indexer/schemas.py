@@ -282,6 +282,8 @@ class Order(TypedDict):
     'HARD_TRADE',
     'FAILED_HARD_TRADE',
     'TRANSFER_PLACEHOLDER',
+    'TWAP',
+    'TWAP_SUBORDER',
   ]
   updatedAt: NotRequired[TimestampIso | None]
   updatedAtHeight: NotRequired[int | None]
@@ -344,6 +346,8 @@ class OrderSubaccountMessage(TypedDict):
     'HARD_TRADE',
     'FAILED_HARD_TRADE',
     'TRANSFER_PLACEHOLDER',
+    'TWAP',
+    'TWAP_SUBORDER',
   ]
   updatedAt: NotRequired[TimestampIso | None]
   updatedAtHeight: NotRequired[int | None]
@@ -360,6 +364,8 @@ OrderType = Literal[
   'HARD_TRADE',
   'FAILED_HARD_TRADE',
   'TRANSFER_PLACEHOLDER',
+  'TWAP',
+  'TWAP_SUBORDER',
 ]
 
 
@@ -512,6 +518,69 @@ class Trade(TypedDict):
   size: Decimal
   """Trade size."""
   type: Literal['LIMIT', 'LIQUIDATED', 'DELEVERAGED']
+
+
+class TradeHistory(TypedDict):
+  """One position lifecycle action computed from fills, with cumulative fees and realized PnL."""
+
+  id: str
+  """Opaque row identifier; can include a block height and an open/close suffix."""
+  subaccountNumber: int
+  """Child subaccount whose position changed."""
+  action: Literal[
+    'OPEN',
+    'EXTEND',
+    'PARTIAL_CLOSE',
+    'CLOSE',
+    'LIQUIDATION_PARTIAL_CLOSE',
+    'LIQUIDATION_CLOSE',
+  ]
+  """Position lifecycle action."""
+  executionPrice: Decimal
+  """Size-weighted execution price of the grouped fills."""
+  entryPrice: Decimal
+  """Average position entry price, retained when reducing or closing."""
+  side: Literal['BUY', 'SELL']
+  positionSide: Literal['LONG', 'SHORT'] | None
+  """Position side after this action; null when fully closed."""
+  prevSize: Decimal
+  """Absolute position size before this action."""
+  additionalSize: Decimal
+  """Signed execution size: positive for BUY, negative for SELL, including closes."""
+  value: Decimal
+  """Absolute execution size multiplied by execution price."""
+  orderType: (
+    Literal[
+      'LIMIT',
+      'MARKET',
+      'STOP_LIMIT',
+      'STOP_MARKET',
+      'TRAILING_STOP',
+      'TAKE_PROFIT',
+      'TAKE_PROFIT_MARKET',
+      'HARD_TRADE',
+      'FAILED_HARD_TRADE',
+      'TRANSFER_PLACEHOLDER',
+      'TWAP',
+      'TWAP_SUBORDER',
+    ]
+    | None
+  )
+  """Order type when available; null for fills without an associated order."""
+  netFee: Decimal
+  """Cumulative trading fees within this position lifecycle; do not sum across rows."""
+  netRealizedPnl: Decimal
+  """Cumulative realized price PnL within this position lifecycle, excluding fees and funding."""
+  netRealizedPnlPercent: Decimal | None
+  """Cumulative realized PnL divided by cumulative closing cost basis: 0.01 means 1%. Null before a positive closing cost basis exists."""
+  time: TimestampIso
+  """Timestamp of the latest fill included in this action."""
+  orderId: str | None
+  """Associated order identifier, or null when no order exists."""
+  marketId: str
+  """Market ticker, such as BTC-USD."""
+  marginMode: Literal['CROSS', 'ISOLATED']
+  """Market margin mode."""
 
 
 TradeType = Literal['LIMIT', 'LIQUIDATED', 'DELEVERAGED']
@@ -711,6 +780,19 @@ class Subaccount(TypedDict):
   """Subaccount number."""
   updatedAtHeight: int
   """Block height at which the subaccount was last updated."""
+
+
+class TradeHistoryResponse(TypedDict):
+  """A newest-first page of position lifecycle actions."""
+
+  tradeHistory: list[TradeHistory]
+  """Position actions, newest first; matching timestamps are ordered by descending row ID."""
+  pageSize: NotRequired[int]
+  """Requested page size, even when fewer rows are returned."""
+  totalResults: NotRequired[int]
+  """Total computed actions matching the query."""
+  offset: NotRequired[int]
+  """Zero-based row offset for this page."""
 
 
 class TradesMessageContents(TypedDict):

@@ -34,6 +34,7 @@ from .get_vaults_historical_pnl import GetVaultsHistoricalPnl
 from .list_orders import ListOrders
 from .list_parent_orders import ListParentOrders
 from .list_parent_positions import ListParentPositions
+from .trade_history import ParentTradeHistoryMethods, TradeHistoryMethods
 
 
 class Data(
@@ -54,6 +55,7 @@ class Data(
   GetParentFills,
   GetParentHistoricalPnl,
   GetParentSubaccount,
+  ParentTradeHistoryMethods,
   GetParentTransfers,
   GetRewards,
   GetRewardsAggregated,
@@ -62,6 +64,7 @@ class Data(
   GetSubaccount,
   GetSubaccounts,
   GetTime,
+  TradeHistoryMethods,
   GetTrades,
   GetTransfers,
   GetTransfersBetween,
