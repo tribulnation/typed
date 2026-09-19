@@ -108,3 +108,33 @@ Use `async with` by default when:
 
 Pick `transport='http'` (the default) or `transport='ws'` per call based on whether you're
 already holding the WebSocket connection open for streaming -- both sign and behave identically.
+
+## HTTP Timeouts and Proxies
+
+Pass a configured `typed_core.http.HttpClient` to control HTTP requests:
+
+```python
+from typed_core.http import HttpClient
+from typed_hyperliquid import Hyperliquid
+
+http = HttpClient(timeout=30, proxy="http://localhost:8080")
+client = Hyperliquid.new(public=True, http=http)
+```
+
+Use the resulting client with `async with client:`; exiting closes its HTTP transport,
+including a supplied transport. Share it among surfaces within one client, and give
+independently managed clients separate transports.
+
+`timeout` defaults to five seconds of network inactivity. Pass `None` to disable it,
+or an `httpx.Timeout` to configure connect, read, write, and pool timeouts separately.
+Direct `HttpClient.request(..., timeout=...)` calls can override the default per request.
+Requests are single-attempt; callers decide whether and when to retry.
+
+Without an explicit `proxy`, HTTPX reads `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and
+`NO_PROXY` from the environment. An explicit `proxy` overrides that environment routing,
+including `NO_PROXY`. `HttpClient(trust_env=False)` disables HTTPX environment settings
+(including certificate settings); an explicit proxy still applies. For HTTPS destinations,
+a proxy URL commonly starts with `http://` because the proxy tunnels the TLS connection.
+
+These settings configure HTTP requests, including HTTP-based authentication, and do not
+configure WebSocket connections or gRPC calls.
