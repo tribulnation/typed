@@ -10,6 +10,8 @@ own further `streams_client` bundles do one level deeper.
 """
 
 from typing_extensions import Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 from contextlib import AsyncExitStack
 import asyncio
@@ -55,6 +57,7 @@ class MexcBase:
     *,
     public: bool = False,
     validate: bool = True,
+    http: HttpClient | None = None,
     spot_base_url: str = MEXC_SPOT_API_BASE,
     spot_ws_url: str = MEXC_SPOT_SOCKET_URL,
     futures_base_url: str = MEXC_FUTURES_API_BASE,
@@ -67,6 +70,7 @@ class MexcBase:
       api_secret: MEXC secret key; read from `MEXC_SECRET_KEY` when omitted.
       public: Build a public-only client with no credentials.
       validate: Validate responses by default.
+      http: HTTP transport override; closed when this client exits.
       spot_base_url: Spot REST base URL, overridable for tests.
       spot_ws_url: Spot WebSocket URL, overridable for tests.
       futures_base_url: Futures REST base URL, overridable for tests.
@@ -74,9 +78,13 @@ class MexcBase:
     """
     credentials = resolve_credentials(api_key, api_secret, public=public)
     spot_http = SpotHttpClient(
-      base_url=spot_base_url, credentials=credentials, validate=validate
+      http=http if http is not None else HttpClient(),
+      base_url=spot_base_url,
+      credentials=credentials,
+      validate=validate,
     )
     futures_http = FuturesHttpClient(
+      http=http if http is not None else HttpClient(),
       base_url=futures_base_url,
       credentials=credentials,
       validate=validate,
