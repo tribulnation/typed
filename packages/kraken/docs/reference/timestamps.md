@@ -77,3 +77,10 @@ separate, tracked issue, not a regression of the filtering fix above.
 
 `spot.market_data.pre_trade` takes only `symbol` today -- it has no time-range parameters at
 all, native `datetime` or otherwise.
+
+## Futures and Charts
+
+Futures REST `serverTime` and funding-history `timestamp` fields become timezone-aware
+`datetime` values. Chart `from_` and `to` parameters accept `datetime` and serialize to
+Unix seconds. Chart candle `time` values arrive in Unix milliseconds and become
+timezone-aware `datetime` values when validation is enabled.

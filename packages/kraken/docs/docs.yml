@@ -6,6 +6,7 @@
 - api-keys.md
 - how-to:
     - fetch-market-data.md
+    - fetch-futures-market-data.md
     - listen-to-streams.md
     - place-and-manage-orders.md
     - fetch-account-data.md

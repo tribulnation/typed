@@ -1,25 +1,11 @@
-"""Kraken client root and streams composition bases (design §5c): hand-written classes
-holding each heterogeneous child's already-built transport, wrapped by the generated
-`Kraken`/`Streams` composites.
-
-`Kraken` composes three genuinely different children -- `spot` (HTTP), `streams` (two
-WebSocket v2 connections), `trading_ws` (one of those same two connections, reached as
-its own top-level surface rather than a `streams.*` subsection) -- so its own resolved
-`core` (`KrakenBase`) is a *Base* holding one field per child, built once in `.new()`,
-never a single shared transport every child forwards unchanged (design §5c, kraken's own
-real, shipped shape being the section's own worked example).
-
-`streams` itself further composes two children (`market_data`, `private`) that share one
-of the two sockets `KrakenBase` already built and need the other one *additionally* --
-`StreamsBase` is design §5a's own "extra caller-supplied value" forwarding mechanism,
-layered on top of §5c's explicit `children` mapping (the two mechanisms "answer
-independent questions" and compose without conflict, per design §5c's own text).
-"""
+"""Root ownership for Spot HTTP, Spot sockets, public Futures REST and Charts."""
 
 from typing_extensions import Self
-from dataclasses import dataclass
-import asyncio
+from dataclasses import dataclass, field
+from contextlib import AsyncExitStack
 
+from ..futures.core import FuturesHttpClient
+from ..charts.core import ChartsHttpClient
 from .auth import TokenCache, resolve_credentials
 from .transport.http import SPOT_API_URL, HttpRpcClient
 from .transport.ws import SPOT_WS_AUTH_URL, SPOT_WS_URL, KrakenSocketClient
@@ -36,7 +22,9 @@ class StreamsBase:
   market_client: KrakenSocketClient
 
   @classmethod
-  def new(cls, client: KrakenSocketClient, *, market_client: KrakenSocketClient) -> Self:
+  def new(
+    cls, client: KrakenSocketClient, *, market_client: KrakenSocketClient
+  ) -> Self:
     """Build from the two already-connected sockets `KrakenBase.new` constructs.
 
     Args:
@@ -57,17 +45,18 @@ class StreamsBase:
 
 @dataclass(kw_only=True)
 class KrakenBase:
-  """Kraken client root: builds and owns the three physical transports every generated
-  composite (`Spot`, `Streams`, `TradingWs`) forwards unchanged -- one HTTP client, two
-  WebSocket v2 sockets (public market data, private token-authenticated). `streams` and
-  `trading_ws` share the same `private_client`: `streams.private`'s account-update
-  channels and `trading_ws`'s order-entry methods both reach Kraken over the one
-  authenticated connection.
+  """Build and own the transports backing every Kraken namespace.
+
+  Spot private streams and WebSocket trading share the authenticated socket.
+  Public Futures and Charts have independent HTTP transports and no credentials.
   """
 
   spot_client: HttpRpcClient
   market_client: KrakenSocketClient
   private_client: KrakenSocketClient
+  futures_client: FuturesHttpClient = field(default_factory=FuturesHttpClient)
+  charts_client: ChartsHttpClient = field(default_factory=ChartsHttpClient)
+  _stack: AsyncExitStack | None = field(default=None, init=False, repr=False)
 
   @classmethod
   def new(
@@ -78,7 +67,7 @@ class KrakenBase:
     public: bool = False,
     validate: bool = True,
   ) -> Self:
-    """Build a Kraken Spot client.
+    """Build a Kraken client with Spot and public Futures market data.
 
     Args:
       api_key: Kraken API key; read from `KRAKEN_API_KEY` when omitted.
@@ -98,20 +87,27 @@ class KrakenBase:
       validate=validate,
     )
     return cls(
-      spot_client=spot_client, market_client=market_client, private_client=private_client,
+      spot_client=spot_client,
+      market_client=market_client,
+      private_client=private_client,
+      futures_client=FuturesHttpClient(validate=validate),
+      charts_client=ChartsHttpClient(validate=validate),
     )
 
   async def __aenter__(self) -> Self:
-    await asyncio.gather(
-      self.spot_client.__aenter__(),
-      self.market_client.__aenter__(),
-      self.private_client.__aenter__(),
-    )
+    """Acquire owned transports and roll back partial acquisition on failure."""
+    stack = AsyncExitStack()
+    async with stack:
+      await stack.enter_async_context(self.spot_client)
+      await stack.enter_async_context(self.market_client)
+      await stack.enter_async_context(self.private_client)
+      await stack.enter_async_context(self.futures_client)
+      await stack.enter_async_context(self.charts_client)
+      self._stack = stack.pop_all()
     return self
 
   async def __aexit__(self, exc_type, exc_value, traceback):
-    await asyncio.gather(
-      self.spot_client.__aexit__(exc_type, exc_value, traceback),
-      self.market_client.__aexit__(exc_type, exc_value, traceback),
-      self.private_client.__aexit__(exc_type, exc_value, traceback),
-    )
+    """Close acquired transports in reverse order, including after a request failure."""
+    if self._stack is not None:
+      stack, self._stack = self._stack, None
+      return await stack.__aexit__(exc_type, exc_value, traceback)

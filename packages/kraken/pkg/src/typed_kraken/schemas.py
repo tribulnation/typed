@@ -2,6 +2,7 @@
 """Shapes shared by two or more endpoints under the client root, generated from `spec/schemas.json`."""
 
 from typing_extensions import Literal, NotRequired, TypedDict
+from typed_kraken.core import TimestampIso
 
 
 class ConditionalCloseOrder(TypedDict):
@@ -24,6 +25,56 @@ class ConditionalCloseOrder(TypedDict):
   """Conditional close order price."""
   price2: NotRequired[str]
   """Conditional close order secondary price."""
+
+
+class FuturesIndexTicker(TypedDict):
+  symbol: str
+  """The symbol of the index."""
+  last: NotRequired[float]
+  """The last calculated value."""
+  lastTime: NotRequired[TimestampIso]
+  """The date and time at which `last` was observed."""
+
+
+class FuturesMarginLevel(TypedDict):
+  contracts: NotRequired[int | None]
+  """For futures: The lower limit of the number of contracts to which this margin level applies
+
+For indices: Not returned because N/A"""
+  numNonContractUnits: NotRequired[float | None]
+  """For futures: The lower limit of the number of non-contract units (i.e. quote currency
+units for linear futures) to which this margin level applies
+
+For indices: Not returned because N/A."""
+  initialMargin: float
+  """For futures: The initial margin requirement for this level
+
+For indices: Not returned because N/A"""
+  maintenanceMargin: float
+  """For futures: The maintenance margin requirement for this level
+
+For indices: Not returned because N/A"""
+
+
+class FuturesOptionGreeks(TypedDict):
+  """Current greeks.
+
+  Only returned for options markets.
+
+  Note: This is currently available exclusively in the Kraken pre-prod environments."""
+
+  iv: float
+  """The implied volatility. Displays an IV of -1.0 whenever the IV is impossible to calculate or outside of the bounds allowed."""
+  delta: float
+  """Option delta."""
+  gamma: float | None
+  """Option gamma."""
+  vega: float | None
+  """Option vega."""
+  theta: float | None
+  """Option theta."""
+  rho: float | None
+  """Option rho."""
 
 
 class OrderTriggers(TypedDict):
@@ -62,3 +113,90 @@ class WsConditionalCloseOrder(TypedDict):
   """Units for `trigger_price` on the secondary order."""
   stop_price: NotRequired[float]
   """Deprecated -- use `trigger_price`. Trigger price on the secondary close order, for triggered secondary order types."""
+
+
+class FuturesMarginSchedule(TypedDict):
+  retail: list[FuturesMarginLevel]
+  """Margin levels for retail clients."""
+  professional: list[FuturesMarginLevel]
+  """Margin levels for professional clients."""
+
+
+class FuturesMarketTicker(TypedDict):
+  symbol: str
+  """Market symbol"""
+  last: NotRequired[float]
+  """The price of the last fill."""
+  lastTime: NotRequired[TimestampIso]
+  """The date and time at which `last` was observed."""
+  lastSize: NotRequired[float]
+  """The size of the last fill."""
+  tag: Literal['perpetual', 'month', 'quarter', 'semiannual', 'week']
+  """Expiry-related grouping.
+
+Currently can be 'perpetual', 'month', 'quarter', or 'semiannual'. Other tags may be
+added without notice."""
+  pair: str
+  """The currency pair of the instrument."""
+  markPrice: float
+  """The price to which Kraken Futures currently marks the Futures for margining purposes."""
+  bid: NotRequired[float]
+  """The price of the current best bid."""
+  bidSize: NotRequired[float]
+  """The size of the current best bid."""
+  ask: NotRequired[float]
+  """The price of the current best ask."""
+  askSize: NotRequired[float]
+  """The size of the current best ask."""
+  vol24h: float
+  """The sum of the sizes of all fills observed in the last 24 hours."""
+  volumeQuote: float
+  """The sum of the `size * price` of all fills observed in the last 24 hours."""
+  openInterest: float
+  """The current open interest of the market."""
+  open24h: NotRequired[float]
+  """The price of the fill observed 24 hours ago."""
+  high24h: NotRequired[float]
+  """The highest fill price observed in the last 24 hours."""
+  low24h: NotRequired[float]
+  """The lowest fill price observed in the last 24 hours."""
+  extrinsicValue: NotRequired[float]
+  """The mark price less the how much the option would be worth if exercised now, i.e.:
+  - For a call: `markPrice - ( max ( Underlying - StrikePrice , 0) )`
+  - For a put: `markPrice - ( max ( StrikePrice - Underlying , 0) )`
+
+Only returned for options markets."""
+  fundingRate: NotRequired[float]
+  """The current absolute funding rate.
+
+Only returned for perpetual markets."""
+  fundingRatePrediction: NotRequired[float]
+  """The estimated next absolute funding rate.
+
+Only returned for perpetual markets."""
+  relativeFundingRate: NotRequired[float]
+  """The current relative funding rate.
+
+Only returned for perpetual markets when available."""
+  relativeFundingRatePrediction: NotRequired[float]
+  """The estimated next relative funding rate.
+
+Only returned for perpetual markets when available."""
+  suspended: bool
+  """True if the market is suspended."""
+  indexPrice: float
+  """Current underlying index price."""
+  postOnly: bool
+  """Whether the contract is restricted to post-only orders."""
+  change24h: float
+  """The 24h change in price (%)."""
+  greeks: NotRequired[FuturesOptionGreeks]
+  isUnderlyingMarketClosed: NotRequired[bool]
+  """True if the underlying market/index is closed.
+
+Only returned for tradfi markets."""
+  vwap24h: NotRequired[float]
+  """Volume-weighted average traded price over the last 24 hours."""
+
+
+FuturesTicker = FuturesMarketTicker | FuturesIndexTicker

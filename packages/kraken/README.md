@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <em>A fully typed, validated async client for the Kraken Spot API -- REST and WebSocket v2.</em>
+  <em>A typed, validated async client for Kraken Spot REST and WebSocket v2, plus public Futures REST and Charts.</em>
 </p>
 
 <p align="center">
@@ -44,7 +44,7 @@ async with Kraken.new(public=True) as client:
 
 ## Why Typed Kraken?
 
-- **🎯 Precise Types**: every `client.spot`, `client.streams`, and `client.trading_ws`
+- **🎯 Precise Types**: every `client.spot`, `client.streams`, `client.trading_ws`, `client.futures`, and `client.charts`
   parameter and response is typed, down to `TypedDict`s and `Literal`s for Kraken's own
   field names.
 - **✅ Runtime Validation**: REST and WebSocket v2 responses are validated against their
@@ -61,6 +61,8 @@ pip install typed-kraken
 ```
 
 ## How To
+
+- [Fetch Futures Market Data](https://tribulnation.com/typed/kraken/how-to/fetch-futures-market-data)
 
 - [Fetch Market Data](https://tribulnation.com/typed/kraken/how-to/fetch-market-data)
 - [Listen To Streams](https://tribulnation.com/typed/kraken/how-to/listen-to-streams)

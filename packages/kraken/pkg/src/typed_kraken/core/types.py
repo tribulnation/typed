@@ -43,3 +43,12 @@ TimestampNanos = Annotated[
 """An `epoch-nanos` timestamp field, to use directly in a generated `TypedDict`'s
 annotations. Request-side (`spot.market_data.trades`'s `since`), same reasoning as
 `TimestampSeconds` above."""
+
+
+timestamp_millis = EpochConverter.milliseconds(tz=timezone.utc)
+TimestampMillis = Annotated[
+  datetime,
+  BeforeValidator(timestamp_millis.parse),
+  PlainSerializer(timestamp_millis.dump, when_used='json'),
+]
+"""An aware timestamp serialized as epoch milliseconds for Futures chart rows."""
