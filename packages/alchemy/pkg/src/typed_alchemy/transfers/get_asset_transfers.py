@@ -42,7 +42,7 @@ class Request(TypedDict):
   category: list[
     Literal['external', 'internal', 'erc20', 'erc721', 'erc1155', 'specialnft']
   ]
-  """Transfer categories to include."""
+  """Transfer categories to include. `internal` is supported on Ethereum, Polygon and Base mainnets among the named networks in this client. Alchemy also documents Arc Mainnet and Testnet support. Other networks reject `internal`; see the Transfers guide for network restrictions."""
   excludeZeroValue: NotRequired[bool]
   """Exclude transfers whose value is zero."""
   maxCount: NotRequired[int | str]
@@ -124,7 +124,7 @@ class GetAssetTransfers(ChainRpc):
       from_address: Filter transfers by sender address.
       to_address: Filter transfers by recipient address.
       contract_addresses: Filter by contract address. Alchemy documents this as applying to token transfers (`erc20`, `erc721`, and `erc1155`).
-      category: Transfer categories to include.
+      category: Transfer categories to include. `internal` is supported on Ethereum, Polygon and Base mainnets among the named networks in this client. Alchemy also documents Arc Mainnet and Testnet support. Other networks reject `internal`; see the Transfers guide for network restrictions.
       exclude_zero_value: Exclude transfers whose value is zero.
       max_count: Maximum number of results to return. The docs state that 1000 (0x3e8) is the maximum per request.
       with_metadata: Include transfer metadata such as the block timestamp.
@@ -183,7 +183,7 @@ class GetAssetTransfers(ChainRpc):
       from_address: Filter transfers by sender address.
       to_address: Filter transfers by recipient address.
       contract_addresses: Filter by contract address. Alchemy documents this as applying to token transfers (`erc20`, `erc721`, and `erc1155`).
-      category: Transfer categories to include.
+      category: Transfer categories to include. `internal` is supported on Ethereum, Polygon and Base mainnets among the named networks in this client. Alchemy also documents Arc Mainnet and Testnet support. Other networks reject `internal`; see the Transfers guide for network restrictions.
       exclude_zero_value: Exclude transfers whose value is zero.
       max_count: Maximum number of results to return. The docs state that 1000 (0x3e8) is the maximum per request.
       page_key: Pagination cursor returned by a previous response.

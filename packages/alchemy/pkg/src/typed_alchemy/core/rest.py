@@ -16,7 +16,7 @@ example applied to a REST surface instead of a JSON-RPC one.
 
 from typing_extensions import Any, Self, TypeVar, cast
 from types import UnionType
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 
 from typed_core.validation import validator
@@ -24,7 +24,7 @@ from typed_core.validation import validator
 from .auth import api_key_url
 from .base import AlchemyTransport, Network
 from .envelope import unwrap_rest
-from .exc import NetworkError, without_api_key
+from .privacy import protect_request
 
 T = TypeVar('T')
 
@@ -57,6 +57,10 @@ def prices_url() -> str:
 
 def chain_nft_url(network: Network) -> str:
   """Base URL for NFT API v3 on `network`, without the API key segment."""
+  if network not in CHAIN_NFT_HOSTS:
+    raise ValueError(
+      f'No NFT API URL configured for network {network!r}; use a supported network or an explicit base_url.'
+    )
   return CHAIN_NFT_HOSTS[network]
 
 
@@ -112,21 +116,20 @@ class RestEndpoint:
       if request_type is not None and request is not None
       else None
     )
-    try:
+    base_url = self._base_url()
+    with protect_request(api_key=self.client.api_key, base_url=base_url):
       response = await self.client.http.request(
         method,
-        self._base_url() + path,
+        base_url + path,
         params=values if method == 'GET' else None,
         json=values if method != 'GET' else None,
       )
-    except NetworkError as e:
-      raise without_api_key(e, self.client.api_key) from e.__cause__
-    payload = unwrap_rest(response)
-    if response_type is None:
-      return None  # type: ignore[return-value]
-    if not self.client.should_validate(validate):
-      return payload  # type: ignore[return-value]
-    return validator(cast(type, response_type)).python(payload)
+      payload = unwrap_rest(response)
+      if response_type is None:
+        return None  # type: ignore[return-value]
+      if not self.client.should_validate(validate):
+        return payload  # type: ignore[return-value]
+      return validator(cast(type, response_type)).python(payload)
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -135,7 +138,9 @@ class PortfolioEndpoint(RestEndpoint):
   chain-agnostic host, no per-call network parameter."""
 
   def _base_url(self) -> str:
-    return self.client.data_base_url or api_key_url(portfolio_url(), self.client.api_key)
+    return self.client.data_base_url or api_key_url(
+      portfolio_url(), self.client.api_key
+    )
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -150,11 +155,15 @@ class PricesEndpoint(RestEndpoint):
 class ChainNft(RestEndpoint):
   """NFT API v3, scoped to one EVM network."""
 
-  base_url: str
+  base_url: str = field(repr=False)
 
   @classmethod
   def new(
-    cls, client: AlchemyTransport, *, network: Network | None = None, base_url: str | None = None,
+    cls,
+    client: AlchemyTransport,
+    *,
+    network: Network | None = None,
+    base_url: str | None = None,
   ) -> Self:
     """Build a chain-scoped NFT core sharing `client`'s already-built transport.
 
@@ -167,7 +176,8 @@ class ChainNft(RestEndpoint):
     """
     return cls(
       client=client,
-      base_url=base_url or api_key_url(chain_nft_url(network or 'ethereum'), client.api_key),
+      base_url=base_url
+      or api_key_url(chain_nft_url(network or 'ethereum'), client.api_key),
     )
 
   def _base_url(self) -> str:

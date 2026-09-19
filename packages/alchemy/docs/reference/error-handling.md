@@ -48,3 +48,15 @@ async with Alchemy.new() as client:
 - retry transient network failures carefully
 - do not blindly retry authentication failures — check `ALCHEMY_API_KEY` first
 - log validation failures because they often signal an upstream Alchemy API change
+
+## Credential privacy
+
+API keys are embedded in Alchemy URL paths. Client and endpoint reprs omit credentials
+and base URLs. Requests redact the configured key and the key in a base-URL override
+from HTTPX/HTTPcore logs and raised error messages, including echoed error payloads.
+Exception types and status arguments are preserved; original exception chains are
+suppressed because they may contain credentials.
+
+The actual `base_url` remains authenticated for sending requests. Avoid logging that
+attribute directly. Applications that dump raw responses, inspect traceback locals,
+or supply their own logging transport must protect those diagnostics themselves.
