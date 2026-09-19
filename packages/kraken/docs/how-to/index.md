@@ -1,6 +1,6 @@
 # How To
 
-Task-focused guides for the most common Kraken Spot workflows.
+Task-focused guides for the most common Kraken market data and Spot account workflows.
 
 - [Fetch Market Data](fetch-market-data.md) -- tickers, order books, candles, trades
 - [Listen To Streams](listen-to-streams.md) -- subscribe to public and private WebSocket channels
@@ -8,3 +8,5 @@ Task-focused guides for the most common Kraken Spot workflows.
 - [Fetch Account Data](fetch-account-data.md) -- balances, positions, trade & ledger history
 - [Query & Manage Earn Instruments](query-and-manage-earn.md) -- Earn strategies and allocations
 - [Deposits & Withdrawals](deposits-and-withdrawals.md) -- funding methods, addresses, and transfers
+
+- [Fetch Futures Market Data](fetch-futures-market-data.md) -- instruments, tickers, funding rates, and chart candles
