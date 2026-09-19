@@ -17,6 +17,8 @@ conflict, per design §5c's own text).
 """
 
 from typing_extensions import Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 from contextlib import AsyncExitStack
 
@@ -92,6 +94,7 @@ class KuCoinBase:
     api_passphrase: str | None = None,
     public: bool = False,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Create a KuCoin client.
 
@@ -115,6 +118,7 @@ class KuCoinBase:
       api_passphrase: KuCoin API passphrase; read from `KUCOIN_API_PASSPHRASE` when omitted.
       public: Build a credential-free client instead of requiring credentials.
       validate: Validate responses/pushed payloads by default.
+      http: HTTP transport override; closed when this client exits.
 
     Raises:
       AuthError: `public` is false and any credential was not passed or found in the
@@ -127,13 +131,22 @@ class KuCoinBase:
       api_key, api_secret, api_passphrase, public=public
     )
     default_client = HttpRpcClient(
-      base_url=DEFAULT_API_URL, credentials=credentials, validate=validate
+      http=http if http is not None else HttpClient(),
+      base_url=DEFAULT_API_URL,
+      credentials=credentials,
+      validate=validate,
     )
     futures_rest_client = HttpRpcClient(
-      base_url=FUTURES_API_URL, credentials=credentials, validate=validate
+      http=http if http is not None else HttpClient(),
+      base_url=FUTURES_API_URL,
+      credentials=credentials,
+      validate=validate,
     )
     broker_client = HttpRpcClient(
-      base_url=BROKER_API_URL, credentials=credentials, validate=validate
+      http=http if http is not None else HttpClient(),
+      base_url=BROKER_API_URL,
+      credentials=credentials,
+      validate=validate,
     )
     private = credentials is not None
     spot_margin_stream_client = SocketStreamClient.new(
