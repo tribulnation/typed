@@ -13,6 +13,8 @@ class Request(TypedDict):
 
 
 class UserFill(TypedDict):
+  """A user fill. For HIP-3 fills, deployer fees are included in `fee`; do not add the node archive's `deployerFee` separately."""
+
   coin: str
   """Traded asset: a perp coin name, a HIP-3 perp prefixed with its dex name (e.g. `xyz:XYZ100`), or a spot pair (`PURR/USDC`, or `@{index}` for any other spot pair)."""
   px: Decimal
@@ -36,7 +38,7 @@ class UserFill(TypedDict):
   crossed: bool
   """Whether this fill was the taker side of the trade (crossed the book)."""
   fee: Decimal
-  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string."""
+  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string. For HIP-3 fills, deployer fees are included in `fee`; do not add the node archive's `deployerFee` separately."""
   tid: int
   """Trade id. Not a unique key: every `Spot Dust Conversion` fill carries the sentinel value `0`."""
   feeToken: str

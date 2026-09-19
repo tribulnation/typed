@@ -14,7 +14,7 @@ Response = Literal[
 
 
 class UserAbstraction(InfoCore):
-  """Query a user's account abstraction state, through Hyperliquid POST /info using request type `userAbstraction`. Abstraction state controls how the user's margin and balances are aggregated across accounts and perp dexes."""
+  """Query a user's account abstraction state, through Hyperliquid POST /info using request type `userAbstraction`. Abstraction state controls how the user's margin and balances are aggregated across accounts and perp dexes. DEX abstraction is discontinued; the legacy `dexAbstraction` response remains accepted for compatibility."""
 
   async def user_abstraction(
     self,
@@ -23,7 +23,7 @@ class UserAbstraction(InfoCore):
     validate: bool | None = None,
     transport: Literal['http', 'ws'] = 'http',
   ) -> Response:
-    """Query a user's account abstraction state, through Hyperliquid POST /info using request type `userAbstraction`. Abstraction state controls how the user's margin and balances are aggregated across accounts and perp dexes.
+    """Query a user's account abstraction state, through Hyperliquid POST /info using request type `userAbstraction`. Abstraction state controls how the user's margin and balances are aggregated across accounts and perp dexes. DEX abstraction is discontinued; the legacy `dexAbstraction` response remains accepted for compatibility.
 
     Args:
       user: User address in 42-character hexadecimal format, e.g. 0x0000000000000000000000000000000000000000.

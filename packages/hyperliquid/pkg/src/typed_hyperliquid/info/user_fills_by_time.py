@@ -12,14 +12,16 @@ class Request(TypedDict):
   user: str
   """Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result."""
   startTime: TimestampMillis
-  """Start of the time range, in milliseconds since epoch, inclusive."""
+  """Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
   endTime: NotRequired[TimestampMillis]
-  """End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time."""
+  """End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
   aggregateByTime: NotRequired[bool]
   """When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders are only aggregated if in the same block."""
 
 
 class UserFill(TypedDict):
+  """A user fill. For HIP-3 fills, deployer fees are included in `fee`; do not add the node archive's `deployerFee` separately."""
+
   coin: str
   """Traded asset: a perp coin name, a HIP-3 perp prefixed with its dex name (e.g. `xyz:XYZ100`), or a spot pair (`PURR/USDC`, or `@{index}` for any other spot pair)."""
   px: Decimal
@@ -43,7 +45,7 @@ class UserFill(TypedDict):
   crossed: bool
   """Whether this fill was the taker side of the trade (crossed the book)."""
   fee: Decimal
-  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string."""
+  """Total fee charged for the fill, inclusive of `builderFee`, as a decimal string. For HIP-3 fills, deployer fees are included in `fee`; do not add the node archive's `deployerFee` separately."""
   tid: int
   """Trade id. Not a unique key: every `Spot Dust Conversion` fill carries the sentinel value `0`."""
   feeToken: str
@@ -78,8 +80,8 @@ class UserFillsByTime(InfoCore):
 
     Args:
       user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       aggregate_by_time: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders are only aggregated if in the same block.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
@@ -159,8 +161,8 @@ class UserFillsByTime(InfoCore):
 
     Args:
       user: Account address to query, in 42-character hexadecimal format; e.g. 0x0000000000000000000000000000000000000000. Must be the actual account address of the master or sub-account being queried -- an agent wallet's address returns an empty result.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       aggregate_by_time: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders are only aggregated if in the same block.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.

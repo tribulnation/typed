@@ -1,6 +1,6 @@
 # Fetch Your Transactions
 
-Use `client.info` for account history reads. These methods take a user address and time windows in UTC milliseconds where applicable.
+Use `client.info` for account history reads. These methods take a user address and Python `datetime` bounds where applicable. Use timezone-aware values; the client converts them to wire milliseconds automatically. See [Timestamps](../reference/timestamps.md).
 
 ## Fetch Trades
 
@@ -123,8 +123,8 @@ async with Hyperliquid.new(public=True) as client:
       print('vault withdrawal', delta['netWithdrawnUsd'], 'from', delta['vault'])
 ```
 
-All monetary amounts are decimal strings straight off the wire, so no precision is lost
-parsing them. Never convert them to `float` for arithmetic; use `decimal.Decimal` instead.
+With response validation enabled, monetary amounts are parsed into `decimal.Decimal`.
+Keep them as decimals when doing arithmetic to preserve precision.
 
 Hyperliquid adds ledger types over time, and an unrecognized `type` raises a
 `ValidationError` rather than validating as an opaque value. This is deliberate: ledger
@@ -156,23 +156,24 @@ for raw in await info.user_non_funding_ledger_updates(user=address, start_time=s
 
 ## Pagination
 
-This endpoint returns **at most 2000 entries**, keeping the oldest and silently dropping
-the rest -- no error, no indicator. Accounts with more history must be paginated:
+The ledger endpoint returns at most **500 entries** per response. Use the generated
+pager to fetch a larger range. It re-fetches the boundary timestamp and removes only
+previously returned occurrences, preserving other events at that same timestamp.
 
 ```python
-from datetime import datetime, timedelta
+from datetime import datetime
 from typed_hyperliquid.info import Info
 
 async def all_ledger_updates(info: Info, address: str, start_time: datetime):
-  while True:
-    page = await info.user_non_funding_ledger_updates(user=address, start_time=start_time)
-    if not page:
-      return
+  async for page in info.user_non_funding_ledger_updates_paged(
+    user=address, start_time=start_time,
+  ):
     yield page
-    if len(page) < 2000:
-      return
-    start_time = max(entry['time'] for entry in page) + timedelta(milliseconds=1)
 ```
 
-Note that `hash` is **not** unique: one transaction can emit several deltas, so `(time,
-hash)` is not a primary key. Deduplicating on it will silently drop rows.
+You can also `await info.user_non_funding_ledger_updates_paged(...)` to collect the
+entries in one list. Both forms accept an inclusive `end_time` bound.
+
+`hash` is **not** unique: one transaction can emit several deltas, so `(time, hash)`
+is not a primary key. The pager preserves duplicate occurrences. If a full page shares
+one timestamp and the remaining events cannot be reached, it raises `LogicError`.

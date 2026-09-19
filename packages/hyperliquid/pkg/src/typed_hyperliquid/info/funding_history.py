@@ -23,9 +23,9 @@ class Request(TypedDict):
   coin: str
   """Coin to fetch funding history for."""
   endTime: NotRequired[TimestampMillis]
-  """End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time."""
+  """End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
   startTime: TimestampMillis
-  """Start of the time range, in milliseconds since epoch, inclusive."""
+  """Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch."""
 
 
 Response = list[FundingHistoryEvent]
@@ -53,8 +53,8 @@ class FundingHistory(InfoCore):
 
     Args:
       coin: Coin to fetch funding history for.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
@@ -130,8 +130,8 @@ class FundingHistory(InfoCore):
 
     Args:
       coin: Coin to fetch funding history for.
-      end_time: End of the time range, in milliseconds since epoch, inclusive. Defaults to the current time.
-      start_time: Start of the time range, in milliseconds since epoch, inclusive.
+      end_time: End of the time range, inclusive. Defaults to the current time. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
+      start_time: Start of the time range, inclusive. Pass a datetime in Python; the client serializes it as milliseconds since epoch.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
