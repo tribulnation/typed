@@ -161,7 +161,9 @@ class CometEndpoint:
     """Perform one Comet JSON-RPC-over-HTTP GET call (design §2): serialize `request`
     through `request_type`'s validator into a plain query-parameter dict -- JSON-string-
     quoting whichever fields `meta['json_string_params']` names -- unwrap the JSON-RPC
-    `result` envelope, and validate it through `response_type`'s validator.
+    `result` envelope, raise on ABCI query application failures, and validate the
+    successful result through `response_type`'s validator. Error handling also applies
+    when response validation is disabled.
 
     Args:
       request: The generated `Request` value (a `TypedDict` instance, or `None` for a
@@ -191,6 +193,10 @@ class CometEndpoint:
     if not isinstance(payload, dict) or 'result' not in payload:
       raise ApiError(response.status_code, payload)
     result = payload['result']
+    if path == '/abci_query' and isinstance(result, dict):
+      abci_response = result.get('response')
+      if isinstance(abci_response, dict) and abci_response.get('code', 0) != 0:
+        raise ApiError(response.status_code, abci_response)
     should_validate = self.client.validate if validate is None else validate
     if should_validate and response_type is not None:
       return validator(cast(type, response_type)).python(result)

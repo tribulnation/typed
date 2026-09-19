@@ -31,6 +31,10 @@ async with Dydx.testnet(public=True) as client:
   )
 ```
 
+For fills, `created_before_or_at` and `created_before_or_at_height` are filters. Keep
+them fixed while advancing `page`, or use `get_fills_paged`; moving the time filter
+does not reliably traverse the complete history.
+
 ## Trade History
 
 Both trade-history helpers start at page 1 and stop on an empty `tradeHistory` page.
@@ -82,6 +86,24 @@ async with Dydx.testnet(public=True) as client:
   )
   for candle in reversed(candles):  # oldest first
     print(candle['startedAt'], candle['close'])
+```
+
+## Trading Rewards
+
+`get_rewards_paged` walks rewards newest-first using `createdAtHeight`. It re-fetches
+and removes the inclusive boundary reward before continuing to older heights.
+
+```python
+from typed_dydx import Indexer
+
+async with Indexer.mainnet() as indexer:
+  rewards = await indexer.data.get_rewards_paged(
+    'dydx1...',
+    starting_before_or_at_height=100_000_000,
+    limit=100,
+  )
+  for reward in rewards:
+    print(reward['createdAtHeight'], reward['tradingReward'])
 ```
 
 ## Stopping Early, Checkpointing, Resuming
