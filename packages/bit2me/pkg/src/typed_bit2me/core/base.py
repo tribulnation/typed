@@ -8,6 +8,8 @@ via `codegen/config.toml`'s `children` mapping, through ordinary Python inherita
 hand-written surface left on this base.
 """
 
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 from typing_extensions import Self
 
@@ -37,6 +39,7 @@ class Bit2MeBase:
     crypto_ws_url: str = BIT2ME_CRYPTO_WS_URL,
     public: bool = False,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Build an authenticated client.
 
@@ -48,11 +51,18 @@ class Bit2MeBase:
       crypto_ws_url: `crypto_ws` surface URL, overridable for tests.
       public: Build a public-only client with no credentials.
       validate: Validate responses by default.
+      http: HTTP transport override; closed when this client exits.
     """
     credentials = resolve_credentials(api_key, api_secret, public=public)
     return cls(
-      http_client=HttpRpcClient(base_url=base_url, credentials=credentials, validate=validate),
+      http_client=HttpRpcClient(
+        http=http if http is not None else HttpClient(),
+        base_url=base_url,
+        credentials=credentials,
+        validate=validate,
+      ),
       trading_ws_client=TradingWsClient.new(
+        http=http,
         credentials=credentials,
         url=trading_ws_url,
         base_url=base_url,
