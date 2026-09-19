@@ -6,10 +6,12 @@ import httpx
 
 from typed_core.exceptions import NetworkError
 
+
 def _default_limits() -> httpx.Limits:
   if os.environ.get('HTTPS_PROXY') or os.environ.get('HTTP_PROXY'):
     return httpx.Limits(max_keepalive_connections=0)
   return httpx.Limits()
+
 
 @dataclass
 class HttpClient:
@@ -19,7 +21,14 @@ class HttpClient:
   1. Connection: single owner via `async with`, also supports lazy no-owner use
   2. Requests: many concurrent callers OK
   """
+
   limits: httpx.Limits = field(default_factory=_default_limits)
+  timeout: float | httpx.Timeout | None = field(default=5.0, kw_only=True)
+  """Default request timeout; `None` disables timeouts."""
+  proxy: str | httpx.Proxy | None = field(default=None, kw_only=True, repr=False)
+  """Explicit proxy for HTTP and HTTPS, overriding environment proxy routing."""
+  trust_env: bool = field(default=True, kw_only=True)
+  """Read HTTPX environment settings, including proxies and certificate locations."""
   lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
   _client: httpx.AsyncClient | None = None
 
@@ -27,7 +36,12 @@ class HttpClient:
   async def client(self) -> httpx.AsyncClient:
     async with self.lock:
       if self._client is None:
-        self._client = await httpx.AsyncClient(limits=self.limits).__aenter__()
+        self._client = await httpx.AsyncClient(
+          limits=self.limits,
+          timeout=self.timeout,
+          proxy=self.proxy,
+          trust_env=self.trust_env,
+        ).__aenter__()
       return self._client
 
   async def __aenter__(self):
@@ -41,7 +55,9 @@ class HttpClient:
         self._client = None
 
   async def request(
-    self, method: str, url: str,
+    self,
+    method: str,
+    url: str,
     *,
     content: httpx._types.RequestContent | None = None,
     data: httpx._types.RequestData | None = None,
@@ -50,17 +66,29 @@ class HttpClient:
     params: Mapping[str, Any] | None = None,
     headers: httpx._types.HeaderTypes | None = None,
     cookies: httpx._types.CookieTypes | None = None,
-    auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
+    auth: httpx._types.AuthTypes
+    | httpx._client.UseClientDefault
+    | None = httpx.USE_CLIENT_DEFAULT,
     follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
-    timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
+    timeout: httpx._types.TimeoutTypes
+    | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
     extensions: httpx._types.RequestExtensions | None = None,
   ):
     try:
       client = await self.client
       return await client.request(
-        method, url, params=params, cookies=cookies, json=json,
-        content=content, data=data, files=files, auth=auth, follow_redirects=follow_redirects,
-        timeout=timeout, extensions=extensions,
+        method,
+        url,
+        params=params,
+        cookies=cookies,
+        json=json,
+        content=content,
+        data=data,
+        files=files,
+        auth=auth,
+        follow_redirects=follow_redirects,
+        timeout=timeout,
+        extensions=extensions,
         headers=headers,
       )
     except httpx.HTTPError as e:

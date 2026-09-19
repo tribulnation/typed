@@ -38,6 +38,37 @@ naive `datetime`; pass `tz=None` to keep it naive instead. Every converter raise
 `ValueError` on a value of the wrong kind, so a `null` on a non-nullable field arrives as
 an ordinary validation error rather than an `AttributeError`.
 
+### HTTP configuration
+
+```python
+from typed_core.http import HttpClient
+
+async with HttpClient(timeout=30, proxy="http://localhost:8080") as http:
+  response = await http.request("GET", "https://example.com")
+  response = await http.request("GET", "https://example.com", timeout=120)
+```
+
+`timeout` defaults to five seconds of network inactivity; `None` disables timeouts.
+Use `httpx.Timeout` for separate connect, read, write, and pool limits. Per-request
+`timeout` overrides the client default. Requests are single-attempt, with retries left
+to the caller.
+
+`proxy` accepts a URL or an `httpx.Proxy`, including authenticated proxies. When omitted,
+HTTPX uses `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY` from the environment.
+An explicit proxy overrides environment proxy routing, including `NO_PROXY`. For an HTTPS
+destination, an `http://` proxy URL commonly works by tunneling the TLS connection.
+`trust_env=False` ignores HTTPX environment settings (proxies and certificate locations),
+but still uses an explicit `proxy`. See [HTTPX environment variables](https://www.python-httpx.org/environment_variables/).
+
+`limits` continues to control connection pooling. The existing default disables keepalive
+when uppercase `HTTP_PROXY` or `HTTPS_PROXY` is present; pass explicit `httpx.Limits` to
+override it, including when using `trust_env=False`.
+
+All construction settings apply when the underlying HTTPX client is lazily created. An
+existing client supplied through the legacy `_client` field keeps its own configuration.
+A Typed client accepting `http=...` manages that transport's cleanup when its context exits;
+use separate transports for independently managed client lifetimes.
+
 ### Paging
 
 Every generated `<method>_paged` returns a `PaginatedResponse`: awaitable (every row,
