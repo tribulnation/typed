@@ -31,6 +31,35 @@ async with Dydx.testnet(public=True) as client:
   )
 ```
 
+## Trade History
+
+Both trade-history helpers start at page 1 and stop on an empty `tradeHistory` page.
+They yield individual position-action rows within each page, preserving the cumulative
+accounting values described in [Position Trade History](manage-account-data.md#position-trade-history).
+
+```python
+from typed_dydx import Indexer
+
+async with Indexer.mainnet() as indexer:
+  async for trades in indexer.data.get_trade_history_paged(
+    address='dydx1...',
+    subaccount=0,
+    market='BTC-USD',
+    market_type='PERPETUAL',
+    limit=100,
+  ):
+    for trade in trades:
+      print(trade['id'], trade['action'])
+
+  parent_trades = await indexer.data.get_parent_trade_history_paged(
+    address='dydx1...',
+    parent_subaccount=0,
+    market='BTC-USD',
+    market_type='PERPETUAL',
+    limit=100,
+  )
+```
+
 ## Time And Height Ranges
 
 `indexer.data.get_candles` and `get_historical_funding` are walked newest-first: the paged
