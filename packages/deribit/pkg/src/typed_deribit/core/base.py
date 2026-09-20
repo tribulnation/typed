@@ -7,6 +7,8 @@ subscription surface.
 """
 
 from typing_extensions import Literal, Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 from contextlib import AsyncExitStack
 
@@ -35,6 +37,7 @@ class ClientBase:
     testnet: bool = False,
     http_auth: HttpAuth = 'token',
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Create a Deribit client. Connects nothing yet -- both transports connect lazily,
     on first real use.
@@ -53,6 +56,7 @@ class ClientBase:
         instead (Deribit's `client_signature` grant) -- see `core.auth`. The WebSocket
         transport always uses token auth; `http_auth` has no effect on it.
       validate: Validate responses by default.
+      http: HTTP transport override; closed when this client exits.
 
     Raises:
       AuthError: `public` is false and no credentials were passed or found in the
@@ -67,11 +71,17 @@ class ClientBase:
     http_base_url = resolve_http_base_url(testnet)
     rpc_client = (
       HmacHttpRpcClient(
-        base_url=http_base_url, credentials=credentials, validate=validate
+        http=http if http is not None else HttpClient(),
+        base_url=http_base_url,
+        credentials=credentials,
+        validate=validate,
       )
       if http_auth == 'hmac'
       else OAuthHttpRpcClient(
-        base_url=http_base_url, credentials=credentials, validate=validate
+        http=http if http is not None else HttpClient(),
+        base_url=http_base_url,
+        credentials=credentials,
+        validate=validate,
       )
     )
     ws_client = SocketRpcStreamClient.new(
