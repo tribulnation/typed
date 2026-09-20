@@ -11,6 +11,8 @@ never a single shared transport every child forwards unchanged (design §5c).
 """
 
 from typing_extensions import Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 import asyncio
 
@@ -43,6 +45,7 @@ class BitgetBase:
     passphrase: str | None = None,
     public: bool = False,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Build a Bitget client.
 
@@ -53,14 +56,22 @@ class BitgetBase:
       public: Skip credential resolution for a credential-free client that can only call
         public endpoints.
       validate: Validate responses by default.
+      http: HTTP transport override; closed when this client exits.
     """
     credentials = resolve_credentials(access_key, secret_key, passphrase, public=public)
     return cls(
-      http_client=HttpRpcClient(credentials=credentials, validate=validate),
-      classic_streams_client=ClassicSocketStreamClient.new(
-        credentials=credentials, validate=validate,
+      http_client=HttpRpcClient(
+        http=http if http is not None else HttpClient(),
+        credentials=credentials,
+        validate=validate,
       ),
-      uta_streams_client=UtaSocketStreamClient.new(credentials=credentials, validate=validate),
+      classic_streams_client=ClassicSocketStreamClient.new(
+        credentials=credentials,
+        validate=validate,
+      ),
+      uta_streams_client=UtaSocketStreamClient.new(
+        credentials=credentials, validate=validate
+      ),
     )
 
   async def __aenter__(self) -> Self:
