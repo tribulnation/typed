@@ -13,6 +13,8 @@ AdvancedTradeBase` for that deeper split.
 """
 
 from typing_extensions import Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass, field
 import asyncio
 
@@ -24,11 +26,12 @@ from ..exchange.core.transport.http import ExchangeHttpRpcClient
 from ..exchange.core.transport.ws import ExchangeSocketClient
 
 
-def international_http() -> HttpRpcClient:
+def international_http(*, http: HttpClient | None = None) -> HttpRpcClient:
   """Build an unsigned INTX transport with no access to either account credential."""
   return HttpRpcClient(
     base_url='https://api.international.coinbase.com',
     host='api.international.coinbase.com',
+    http=http if http is not None else HttpClient(),
   )
 
 
@@ -59,6 +62,7 @@ class CoinbaseBase:
     exchange_passphrase: str | None = None,
     exchange_public: bool = True,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Build a Coinbase client.
 
@@ -83,21 +87,32 @@ class CoinbaseBase:
         `client.toml`), so building an authenticated `exchange` needs this explicitly
         set to `False` in addition to real credentials.
       validate: Validate responses against their declared schema by default.
+      http: HTTP transport override; closed when this client exits.
     """
     credentials = resolve_credentials(key_name, private_key, public=public)
     exchange_credentials = resolve_exchange_credentials(
       exchange_key, exchange_secret, exchange_passphrase, public=exchange_public
     )
-    international_client = international_http()
+    international_client = international_http(http=http)
     international_client.validate = validate
     return cls(
-      app_client=HttpRpcClient(credentials=credentials, validate=validate),
+      app_client=HttpRpcClient(
+        http=http if http is not None else HttpClient(),
+        credentials=credentials,
+        validate=validate,
+      ),
       market_client=CoinbaseSocketClient.new(MARKET_DATA_URL, validate=validate),
       user_client=CoinbaseSocketClient.new(
         USER_URL, credentials=credentials, validate=validate
       ),
-      exchange_client=ExchangeHttpRpcClient(credentials=exchange_credentials, validate=validate),
-      feed_client=ExchangeSocketClient.new(credentials=exchange_credentials, validate=validate),
+      exchange_client=ExchangeHttpRpcClient(
+        http=http if http is not None else HttpClient(),
+        credentials=exchange_credentials,
+        validate=validate,
+      ),
+      feed_client=ExchangeSocketClient.new(
+        credentials=exchange_credentials, validate=validate
+      ),
       international_client=international_client,
     )
 
