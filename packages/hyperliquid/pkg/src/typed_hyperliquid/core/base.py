@@ -37,7 +37,9 @@ def _env_wallet(mainnet: bool = True) -> LocalAccount | None:
     return _Account.from_key(pk)
 
 
-def _parse_wallet(wallet: Wallet | None, *, mainnet: bool = True) -> LocalAccount | None:
+def _parse_wallet(
+  wallet: Wallet | None, *, mainnet: bool = True
+) -> LocalAccount | None:
   """Parse an explicit wallet or load the network-specific environment wallet."""
   if wallet is None:
     return _env_wallet(mainnet=mainnet)
@@ -76,6 +78,7 @@ class ClientBase:
     public: bool = False,
     base_url: str | None = None,
     ws_url: str | None = None,
+    http: HttpClient | None = None,
   ) -> Self:
     """Create a new Hyperliquid client, reachable over both HTTP and WebSocket.
 
@@ -88,6 +91,7 @@ class ClientBase:
         authenticated `exchange` methods are available; without one, `exchange` still
         constructs, but every call raises `AuthError` until a wallet is provided.
       base_url: Custom HTTP API root. If provided, takes precedence over `mainnet`.
+      http: Shared HTTP transport override; closed when this client exits.
       ws_url: Custom WebSocket URL. If provided, takes precedence over `mainnet`.
     """
     parsed_wallet = _parse_wallet(wallet, mainnet=mainnet)
@@ -95,7 +99,7 @@ class ClientBase:
       raise ValueError(
         'Either provide a `wallet` argument or set `public=True` to use public endpoints.'
       )
-    http = HttpClient()
+    http = http if http is not None else HttpClient()
     ws = SocketClient(url=ws_url or resolve_ws_url(mainnet))
     resolved_base_url = base_url or http_base_url(mainnet)
     return cls(
