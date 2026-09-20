@@ -9,14 +9,25 @@ from dataclasses import dataclass
 from types import TracebackType
 
 from typing_extensions import Self, TypedDict
+from typed_core.http import HttpClient
 
-from typed_dydx.indexer.data.core import INDEXER_HTTP_URL, INDEXER_TESTNET_HTTP_URL, IndexerHttpClient
-from typed_dydx.indexer.streams.core import INDEXER_TESTNET_WS_URL, INDEXER_WS_URL, IndexerWsClient
+from typed_dydx.indexer.data.core import (
+  INDEXER_HTTP_URL,
+  INDEXER_TESTNET_HTTP_URL,
+  IndexerHttpClient,
+)
+from typed_dydx.indexer.streams.core import (
+  INDEXER_TESTNET_WS_URL,
+  INDEXER_WS_URL,
+  IndexerWsClient,
+)
 
 
 class IndexerOptions(TypedDict, total=False):
   """Options for constructing dYdX indexer transports."""
 
+  http: HttpClient
+  """HTTP transport override, shared by all indexer HTTP endpoints."""
   http_url: str
   """HTTP indexer base URL."""
   ws_url: str
@@ -55,7 +66,10 @@ class IndexerBase:
 
   @classmethod
   def new(
-    cls, client: IndexerHttpClient, *, indexer_ws_client: IndexerWsClient,
+    cls,
+    client: IndexerHttpClient,
+    *,
+    indexer_ws_client: IndexerWsClient,
   ) -> Self:
     """Build an Indexer core forwarding a root client's already-built transports
     (design §5a) -- not meant to be called directly; `client.indexer`'s generated
@@ -70,23 +84,37 @@ class IndexerBase:
     return cls(http_client=client, ws_client=indexer_ws_client)
 
   @classmethod
-  def mainnet(cls, *, http_url: str = INDEXER_HTTP_URL, ws_url: str = INDEXER_WS_URL, validate: bool = True) -> Self:
+  def mainnet(
+    cls,
+    *,
+    http_url: str = INDEXER_HTTP_URL,
+    ws_url: str = INDEXER_WS_URL,
+    validate: bool = True,
+    http: HttpClient | None = None,
+  ) -> Self:
     """Create a mainnet Indexer client.
 
     Args:
       http_url: HTTP indexer base URL.
       ws_url: WebSocket indexer URL.
       validate: Default response validation setting.
+      http: HTTP transport override; closed when this client exits.
     """
     return cls(
-      http_client=IndexerHttpClient(url=http_url, validate=validate),
+      http_client=IndexerHttpClient(
+        url=http_url, validate=validate, http=http if http is not None else HttpClient()
+      ),
       ws_client=IndexerWsClient(url=ws_url, validate=validate),
     )
 
   @classmethod
   def testnet(
-    cls, *, http_url: str = INDEXER_TESTNET_HTTP_URL, ws_url: str = INDEXER_TESTNET_WS_URL,
+    cls,
+    *,
+    http_url: str = INDEXER_TESTNET_HTTP_URL,
+    ws_url: str = INDEXER_TESTNET_WS_URL,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Create a testnet Indexer client.
 
@@ -94,8 +122,11 @@ class IndexerBase:
       http_url: HTTP indexer base URL.
       ws_url: WebSocket indexer URL.
       validate: Default response validation setting.
+      http: HTTP transport override; closed when this client exits.
     """
     return cls(
-      http_client=IndexerHttpClient(url=http_url, validate=validate),
+      http_client=IndexerHttpClient(
+        url=http_url, validate=validate, http=http if http is not None else HttpClient()
+      ),
       ws_client=IndexerWsClient(url=ws_url, validate=validate),
     )
