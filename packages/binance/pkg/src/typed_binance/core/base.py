@@ -10,6 +10,8 @@ share.
 """
 
 from typing_extensions import Self
+from typed_core.http import HttpClient
+
 from dataclasses import dataclass
 import asyncio
 
@@ -48,7 +50,9 @@ class SpotClients:
 
   async def __aenter__(self) -> Self:
     await asyncio.gather(
-      self.http_client.__aenter__(), self.streams_client.__aenter__(), self.ws_client.__aenter__(),
+      self.http_client.__aenter__(),
+      self.streams_client.__aenter__(),
+      self.ws_client.__aenter__(),
     )
     return self
 
@@ -73,8 +77,10 @@ class UsdMFuturesClients:
 
   async def __aenter__(self) -> Self:
     await asyncio.gather(
-      self.http_client.__aenter__(), self.streams_client.__aenter__(),
-      self.public_streams_client.__aenter__(), self.private_streams_client.__aenter__(),
+      self.http_client.__aenter__(),
+      self.streams_client.__aenter__(),
+      self.public_streams_client.__aenter__(),
+      self.private_streams_client.__aenter__(),
       self.ws_client.__aenter__(),
     )
     return self
@@ -101,8 +107,10 @@ class CoinMFuturesClients:
 
   async def __aenter__(self) -> Self:
     await asyncio.gather(
-      self.http_client.__aenter__(), self.streams_client.__aenter__(),
-      self.private_streams_client.__aenter__(), self.ws_client.__aenter__(),
+      self.http_client.__aenter__(),
+      self.streams_client.__aenter__(),
+      self.private_streams_client.__aenter__(),
+      self.ws_client.__aenter__(),
     )
     return self
 
@@ -126,7 +134,8 @@ class OptionsClients:
 
   async def __aenter__(self) -> Self:
     await asyncio.gather(
-      self.http_client.__aenter__(), self.streams_client.__aenter__(),
+      self.http_client.__aenter__(),
+      self.streams_client.__aenter__(),
       self.private_streams_client.__aenter__(),
     )
     return self
@@ -149,7 +158,8 @@ class PortfolioMarginClients:
 
   async def __aenter__(self) -> Self:
     await asyncio.gather(
-      self.http_client.__aenter__(), self.private_streams_client.__aenter__(),
+      self.http_client.__aenter__(),
+      self.private_streams_client.__aenter__(),
     )
     return self
 
@@ -182,6 +192,7 @@ class BinanceBase:
     public: bool = False,
     recv_window: int | None = None,
     validate: bool = True,
+    http: HttpClient | None = None,
   ) -> Self:
     """Build a Binance client. Every surface shares one set of credentials -- Binance's
     HMAC signing scheme is uniform across REST hosts and, per docs (confirmed live), the
@@ -194,63 +205,103 @@ class BinanceBase:
       recv_window: `recvWindow` (ms) sent with every signed request; `None` uses
         Binance's own 5000ms default.
       validate: Validate responses.
+      http: HTTP transport override; closed when this client exits.
     """
-    credentials: Credentials | None = resolve_credentials(api_key, secret_key, public=public)
+    credentials: Credentials | None = resolve_credentials(
+      api_key, secret_key, public=public
+    )
     return cls(
       spot_clients=SpotClients(
         http_client=HttpRpcClient(
-          base_url=SPOT_URL, credentials=credentials, recv_window=recv_window, validate=validate,
+          http=http if http is not None else HttpClient(),
+          base_url=SPOT_URL,
+          credentials=credentials,
+          recv_window=recv_window,
+          validate=validate,
         ),
         streams_client=SocketStreamClient.new(url=STREAM_URL, validate=validate),
         ws_client=SocketRpcClient.new(
-          url=WS_API_URL, credentials=credentials, recv_window=recv_window, validate=validate,
+          url=WS_API_URL,
+          credentials=credentials,
+          recv_window=recv_window,
+          validate=validate,
         ),
       ),
       usdm_futures_clients=UsdMFuturesClients(
         http_client=HttpRpcClient(
-          base_url=USDM_FUTURES_URL, credentials=credentials, recv_window=recv_window, validate=validate,
+          http=http if http is not None else HttpClient(),
+          base_url=USDM_FUTURES_URL,
+          credentials=credentials,
+          recv_window=recv_window,
+          validate=validate,
         ),
-        streams_client=SocketStreamClient.new(url=USDM_FUTURES_STREAM_URL, validate=validate),
+        streams_client=SocketStreamClient.new(
+          url=USDM_FUTURES_STREAM_URL, validate=validate
+        ),
         public_streams_client=SocketStreamClient.new(
-          url=USDM_FUTURES_PUBLIC_STREAM_URL, validate=validate,
+          url=USDM_FUTURES_PUBLIC_STREAM_URL,
+          validate=validate,
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=USDM_FUTURES_PRIVATE_STREAM_URL, validate=validate,
+          base_url=USDM_FUTURES_PRIVATE_STREAM_URL,
+          validate=validate,
         ),
         ws_client=SocketRpcClient.new(
-          url=USDM_FUTURES_WS_API_URL, credentials=credentials, recv_window=recv_window,
+          url=USDM_FUTURES_WS_API_URL,
+          credentials=credentials,
+          recv_window=recv_window,
           validate=validate,
         ),
       ),
       coinm_futures_clients=CoinMFuturesClients(
         http_client=HttpRpcClient(
-          base_url=COINM_FUTURES_URL, credentials=credentials, recv_window=recv_window, validate=validate,
+          http=http if http is not None else HttpClient(),
+          base_url=COINM_FUTURES_URL,
+          credentials=credentials,
+          recv_window=recv_window,
+          validate=validate,
         ),
-        streams_client=SocketStreamClient.new(url=COINM_FUTURES_STREAM_URL, validate=validate),
+        streams_client=SocketStreamClient.new(
+          url=COINM_FUTURES_STREAM_URL, validate=validate
+        ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=COINM_FUTURES_PRIVATE_STREAM_URL, validate=validate,
+          base_url=COINM_FUTURES_PRIVATE_STREAM_URL,
+          validate=validate,
         ),
         ws_client=SocketRpcClient.new(
-          url=COINM_FUTURES_WS_API_URL, credentials=credentials, recv_window=recv_window,
+          url=COINM_FUTURES_WS_API_URL,
+          credentials=credentials,
+          recv_window=recv_window,
           validate=validate,
         ),
       ),
       options_clients=OptionsClients(
         http_client=HttpRpcClient(
-          base_url=OPTIONS_URL, credentials=credentials, recv_window=recv_window, validate=validate,
+          http=http if http is not None else HttpClient(),
+          base_url=OPTIONS_URL,
+          credentials=credentials,
+          recv_window=recv_window,
+          validate=validate,
         ),
-        streams_client=SocketStreamClient.new(url=OPTIONS_STREAM_URL, validate=validate),
+        streams_client=SocketStreamClient.new(
+          url=OPTIONS_STREAM_URL, validate=validate
+        ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=OPTIONS_PRIVATE_STREAM_URL, validate=validate,
+          base_url=OPTIONS_PRIVATE_STREAM_URL,
+          validate=validate,
         ),
       ),
       portfolio_margin_clients=PortfolioMarginClients(
         http_client=HttpRpcClient(
-          base_url=PORTFOLIO_MARGIN_URL, credentials=credentials, recv_window=recv_window,
+          http=http if http is not None else HttpClient(),
+          base_url=PORTFOLIO_MARGIN_URL,
+          credentials=credentials,
+          recv_window=recv_window,
           validate=validate,
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=PORTFOLIO_MARGIN_PRIVATE_STREAM_URL, validate=validate,
+          base_url=PORTFOLIO_MARGIN_PRIVATE_STREAM_URL,
+          validate=validate,
         ),
       ),
     )
