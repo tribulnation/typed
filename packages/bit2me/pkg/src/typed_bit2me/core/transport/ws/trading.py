@@ -10,6 +10,7 @@ from typing_extensions import Any, Awaitable, Mapping, Self, TypeVar
 import orjson
 
 from typed_core.exceptions import AuthError, BadRequest
+from typed_core.http import HttpClient
 from typed_core.util import StreamManager
 from typed_core.validation import validator, TypedDict as CoreTypedDict
 from typed_core.ws import Streams, SerialReplies
@@ -122,6 +123,8 @@ class TradingWsClient:
 
   conn: TradingWsConnection = field(default_factory=TradingWsConnection)
   credentials: Credentials | None = None
+  http: HttpClient | None = None
+  """Borrowed HTTP transport for token minting; its owner manages cleanup."""
   base_url: str = BIT2ME_API_URL
   """REST base URL the WS auth token is minted from — see `auth.mint_ws_token`."""
   validate: bool = True
@@ -131,6 +134,7 @@ class TradingWsClient:
     cls,
     *,
     credentials: Credentials | None = None,
+    http: HttpClient | None = None,
     url: str = BIT2ME_TRADING_WS_URL,
     base_url: str = BIT2ME_API_URL,
     validate: bool = True,
@@ -140,6 +144,7 @@ class TradingWsClient:
     return cls(
       conn=TradingWsConnection(url=url, timeout=timeout, ping_interval=ping_interval),
       credentials=credentials,
+      http=http,
       base_url=base_url,
       validate=validate,
     )
@@ -150,7 +155,9 @@ class TradingWsClient:
   async def __aenter__(self) -> Self:
     await self.conn.__aenter__()
     if self.credentials is not None:
-      token = await mint_ws_token(self.credentials, base_url=self.base_url)
+      token = await mint_ws_token(
+        self.credentials, base_url=self.base_url, http=self.http
+      )
       await self.conn.authenticate(token)
     return self
 

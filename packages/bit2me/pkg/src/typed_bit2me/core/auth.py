@@ -100,22 +100,30 @@ def auth_headers(
   }
 
 
-async def mint_ws_token(credentials: Credentials, *, base_url: str) -> str:
+async def mint_ws_token(
+  credentials: Credentials,
+  *,
+  base_url: str,
+  http: HttpClient | None = None,
+) -> str:
   """Mint the one-minute token `trading_ws` authenticates with, via an `http`-signed
   `POST /v1/signin/apikey`.
 
-  A bare `HttpClient` is used directly rather than the full `HttpRpcClient` transport,
+  A supplied `http` is borrowed without closing it; otherwise a temporary client is
+  opened and closed for this call. A bare `HttpClient` is used rather than `HttpRpcClient`,
   since this is one self-contained signed call with nothing to unwrap beyond
   `accessToken.token` — building a whole transport for it would be circular (the
   `trading_ws` transport needs this before it has anything else).
   """
+  if http is None:
+    async with HttpClient() as owned:
+      return await mint_ws_token(credentials, base_url=base_url, http=owned)
   nonce = str(int(time.time() * 1000))
   path = '/v1/signin/apikey'
   body = '{}'
   headers = auth_headers(credentials, nonce=nonce, path=path, body=body)
   headers['Content-Type'] = 'application/json'
-  async with HttpClient() as http:
-    response = await http.request('POST', base_url + path, content=body, headers=headers)
-    if not response.is_success:
-      raise_http_status(response)
-    return response.json()['accessToken']['token']
+  response = await http.request('POST', base_url + path, content=body, headers=headers)
+  if not response.is_success:
+    raise_http_status(response)
+  return response.json()['accessToken']['token']
