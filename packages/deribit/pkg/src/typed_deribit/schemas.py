@@ -241,8 +241,8 @@ class BookSummary(TypedDict):
   """Optional (only for derivatives). The total amount of outstanding contracts in the corresponding amount units. For perpetual and inverse futures the amount is in USD units. For options and linear futures it is the underlying base currency coin."""
   creation_timestamp: TimestampMillis
   """The timestamp (milliseconds since the Unix epoch)"""
-  estimated_delivery_price: NotRequired[float]
-  """Optional (only for derivatives). Estimated delivery price for the market."""
+  estimated_delivery_price: NotRequired[float | None]
+  """Estimated delivery price for the market. May be null; observed for expired, inactive instruments in unfiltered currency summaries."""
   volume_usd: NotRequired[float]
   """Volume in USD"""
   volume_notional: NotRequired[float]
