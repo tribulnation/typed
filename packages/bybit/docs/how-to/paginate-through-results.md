@@ -90,6 +90,11 @@ Both bounds are optional. Omit `end` and the walk starts from the newest row Byb
 `start` and it keeps going until Bybit runs out of history. Pages arrive newest first, so a
 caller who wants the oldest row first reverses the result.
 
+For `funding_history_paged`, supplying `start_time` without `end_time` captures UTC now as
+the upper bound when constructing the pager. Retries and resumed pages reuse their stored
+bounds. The single-request `funding_history` method requires `end_time` alongside
+`start_time`.
+
 ```python
 from datetime import datetime, timedelta, timezone
 from typed_bybit import Bybit
@@ -98,7 +103,7 @@ async with Bybit.new(public=True) as client:
   end = datetime.now(timezone.utc)
   rates = await client.market.funding_history_paged(
     category='linear', symbol='BTCUSDT',
-    start_time=end - timedelta(days=90), end_time=end, limit=200,
+    start_time=end - timedelta(days=90), limit=200,
   )
   print(len(rates), rates[0]['fundingRateTimestamp'], rates[-1]['fundingRateTimestamp'])
 ```
