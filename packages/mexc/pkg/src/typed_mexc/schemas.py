@@ -618,20 +618,20 @@ class ContractTicker(TypedDict):
   """Rise/fall rate."""
   riseFallValue: float
   """Rise/fall value."""
-  indexPrice: float
-  """Index price."""
-  fairPrice: float
-  """Fair price."""
-  fundingRate: float
-  """Funding rate."""
+  indexPrice: NotRequired[float]
+  """Index price; may be absent for an unpriced contract."""
+  fairPrice: NotRequired[float]
+  """Fair price; may be absent for an unpriced contract."""
+  fundingRate: NotRequired[float]
+  """Funding rate; may be absent for an unpriced contract."""
   timestamp: TimestampMillis
   """Ticker timestamp in milliseconds."""
   contractId: int
   """contractId identifier."""
-  maxBidPrice: float
-  """Returned maxBidPrice field."""
-  minAskPrice: float
-  """Returned minAskPrice field."""
+  maxBidPrice: NotRequired[float]
+  """Maximum bid price; may be absent for an unpriced contract."""
+  minAskPrice: NotRequired[float]
+  """Minimum ask price; may be absent for an unpriced contract."""
   riseFallRates: RiseFallRates
   riseFallRatesOfTimezone: list[float]
   """Rise/fall rates for configured timezone windows."""
