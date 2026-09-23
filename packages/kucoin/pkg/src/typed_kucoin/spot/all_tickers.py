@@ -12,14 +12,14 @@ class SpotTickerSummary(TypedDict):
   """Trading pair identifier."""
   symbolName: str
   """Alternative display name for the pair (differs from `symbol` if the venue renames a currency)."""
-  buy: Decimal
-  """Current best bid price."""
-  bestBidSize: Decimal
-  """Size at the best bid."""
-  sell: Decimal
-  """Current best ask price."""
-  bestAskSize: Decimal
-  """Size at the best ask."""
+  buy: Decimal | None
+  """Current best bid price; null when no bid is available."""
+  bestBidSize: Decimal | None
+  """Size at the best bid; null when no bid is available."""
+  sell: Decimal | None
+  """Current best ask price; null when no ask is available."""
+  bestAskSize: Decimal | None
+  """Size at the best ask; null when no ask is available."""
   changeRate: Decimal
   """24h price change rate (fraction)."""
   changePrice: Decimal | None
@@ -34,10 +34,10 @@ class SpotTickerSummary(TypedDict):
   """24h volume, base currency."""
   volValue: Decimal
   """24h volume, quote currency."""
-  last: Decimal
-  """Last traded price."""
-  lastSize: Decimal
-  """Last traded size. Undocumented, observed live."""
+  last: Decimal | None
+  """Last traded price; null when no last trade is available."""
+  lastSize: Decimal | None
+  """Last traded size; null when no last trade is available. Undocumented, observed live."""
   averagePrice: Decimal | None
   """24h average trade price. `null` for a pair with no trade history yet."""
   takerFeeRate: Decimal
