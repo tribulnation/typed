@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import pytest
 import websockets
 
+from typed_core.exceptions import NetworkError
 from typed_core.ws.socket import Context
 from typed_core.ws.streams import Streams
 from typed_core.ws.streams_rpc import StreamsRpc
@@ -101,8 +102,9 @@ async def test_ending_stream_read_finishes_pending_queue_get(
       await stream.unsubscribe()
       expected = StopAsyncIteration
     else:
+      # A closed connection is a network failure, not a cancellation of the reader.
       ctx.listener.cancel()
-      expected = asyncio.CancelledError
+      expected = NetworkError
     with pytest.raises(expected):
       await receiver
     assert getter is not None and getter.done()

@@ -42,6 +42,13 @@ class SerialReplies(Generic[Reply]):
   async def send(self, msg: object):
     ...
 
+  def connection_closed(self, ctx: Any):
+    """Discard replies left over from a closed connection, so none answers a later request."""
+    while not self.replies.empty():
+      self.replies.get_nowait()
+    if (parent := getattr(super(), 'connection_closed', None)) is not None:
+      parent(ctx)
+
   async def request(self, msg: object) -> Reply:
     """Send `msg` and return the next reply, serialized against concurrent callers.
 
