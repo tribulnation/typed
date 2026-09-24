@@ -1,0 +1,112 @@
+env_setup:
+  body: >-
+    Create a `.env` with your main wallet address and your API wallet — see
+    [Authenticated setup](/typed/aster/authenticated-setup) for how to create one.
+  code: |
+    # .env
+    ASTER_USER="0x...main-wallet-address"
+    ASTER_SIGNER="0x...api-wallet-address"
+    ASTER_SIGNER_PRIVATE_KEY="0x...api-wallet-private-key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-aster python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_aster import Aster
+
+    load_dotenv()
+
+    async with Aster.new() as client:
+      balances = await client.futures.account.balance()
+      print(balances)
+
+how_tos:
+  - title: Fetch market data
+    body: Symbols, order books, candles, tickers, trades and funding. Public, no credentials needed.
+    code: |
+      info = await client.futures.market.exchange_info()  # symbols and trading rules
+      book = await client.futures.market.depth('BTCUSDT', limit=10)  # order book
+      candles = await client.spot.market.klines('BTCUSDT', interval='1h')  # candles
+      ticker = await client.futures.market.ticker_24hr('BTCUSDT')  # 24h ticker
+      trades = await client.futures.market.trades('BTCUSDT')  # recent trades
+      funding = await client.futures.market.funding_rate('BTCUSDT')  # funding rates
+
+  - title: Fetch account data
+    body: Balances, positions, settings and history, signed by your API wallet.
+    code: |
+      balances = await client.futures.account.balance()  # futures balances
+      spot = await client.spot.account.info()  # spot balances
+      positions = await client.futures.position.risk('BTCUSDT')  # open positions
+      await client.futures.account.set_leverage('BTCUSDT', leverage=5)  # change leverage
+      fills = await client.futures.trade.user_trades('BTCUSDT')  # your trades
+      income = await client.futures.account.income(income_type='FUNDING_FEE')  # funding paid
+
+  - title: Place & manage orders
+    body: >-
+      Place, query, modify and cancel orders. Choose a `nonce` on placement to cancel an order
+      while it is still queued.
+    code: |
+      from decimal import Decimal
+      order = await client.futures.trade.place_order({'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT', 'timeInForce': 'GTC', 'quantity': Decimal('0.001'), 'price': Decimal('50000'), 'nonce': 1790000000000000})  # place an order
+      state = await client.futures.trade.order({'symbol': 'BTCUSDT', 'orderId': order['orderId']})  # query it
+      open_orders = await client.futures.trade.open_orders('BTCUSDT')  # list open orders
+      await client.futures.trade.cancel_order({'symbol': 'BTCUSDT', 'orderId': order['orderId']})  # cancel it
+      await client.futures.trade.cancel_all_open_orders('BTCUSDT')  # cancel all
+      await client.futures.trade.noop(1790000000000000)  # drop a still-queued request by its nonce
+
+  - title: Paginate through results
+    body: Walk long histories and candle ranges. Await for every row, or iterate page by page.
+    code: |
+      fills = await client.futures.trade.user_trades_paged('BTCUSDT')  # every fill
+      orders = await client.spot.trade.all_orders_paged('ASTERUSDT')  # every spot order
+      async for page in client.futures.market.klines_paged('BTCUSDT', interval='1m'):
+        print(len(page))  # one page of candles at a time
+
+  - title: Listen to live streams
+    body: Public market streams, and your account's user stream through a listenKey.
+    code: |
+      async with client.futures.streams.book_ticker('btcusdt') as stream:
+        async for update in stream:
+          print(update['b'], update['a'])  # best bid and ask
+      key = await client.futures.listen_key.start()  # listenKey for your account
+      async with client.futures.user_stream.events(key['listenKey']) as events:
+        async for event in events:
+          print(event['e'])  # order, account and margin events
+
+  - title: Trade prediction markets
+    body: Outcome tokens trade like spot, plus mint, burn, split and merge.
+    code: |
+      from decimal import Decimal
+      info = await client.prediction.market.exchange_info()  # events and outcome symbols
+      order = await client.prediction.trade.place_order({'symbol': 'BTC_UP_DOWN_5M_1790237100_YUSDT', 'side': 'BUY', 'type': 'MARKET', 'quoteOrderQty': Decimal('10')})  # buy an outcome
+      await client.prediction.outcomes.mint(symbol='BTC_UP_DOWN_5M_1790237100_YUSDT', quantity=Decimal('5'))  # mint YES+NO
+      positions = await client.prediction.positions.list()  # current positions
+      settled = await client.prediction.positions.settlements()  # settlement records
+
+  - title: Stake ASTER
+    body: >-
+      Stake on Aster Chain (mainnet). Changes are signed by your main wallet, set as
+      `ASTER_USER_PRIVATE_KEY`.
+    code: |
+      from decimal import Decimal
+      position = await client.chain.staking.my_staking()  # your staking position
+      rewards = await client.chain.staking.claimable_rewards()  # claimable rewards
+      await client.chain.staking.create('0x...validator', stake_amount=Decimal('100'), period_code='52_WEEKS')  # stake
+      await client.chain.staking.claim_rewards(Decimal('1.5'))  # claim rewards
+
+  - title: Manage deposits & withdrawals
+    body: >-
+      Deposit addresses, withdrawal limits and fees, withdrawals and wallet transfers. EVM
+      withdrawals also need your main wallet key.
+    code: |
+      from decimal import Decimal
+      address = await client.spot.wallet.deposit_address('SUI')  # SUI deposit address
+      limits = await client.futures.wallet.withdraw_info()  # withdrawal limits
+      fee = await client.spot.wallet.estimate_withdraw_fee(chain_id='56', asset='USDT')  # fee estimate
+      await client.futures.wallet.withdraw(amount=Decimal('25'), chain_id=56, asset='USDT', fee=Decimal('0.5'), receiver='0x...')  # withdraw
+      await client.futures.wallet.transfer(Decimal('10'), asset='USDT', client_tran_id='move-1', kind_type='FUTURE_SPOT')  # futures to spot
+      history = await client.futures.wallet.deposit_withdraw_history()  # history
