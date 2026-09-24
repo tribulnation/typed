@@ -3,7 +3,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 import asyncio
 
-from .socket import Socket
+from .socket import Context, Socket, fail_replies
 
 Request = TypeVar('Request', default=Any)
 Reply = TypeVar('Reply', default=Any)
@@ -41,14 +41,28 @@ class Rpc(Socket, Generic[Request, Reply]):
 
   def on_msg(self, msg: str | bytes):
     response = self.parse_response(msg)
-    if response is not None:
-      self.replies[response['id']].set_result(response['reply'])
+    # A reply nobody waits for anymore (its request was cancelled) is dropped.
+    if response is not None and (reply := self.replies.get(response['id'])) is not None and not reply.done():
+      reply.set_result(response['reply'])
+
+  def connection_closed(self, ctx: Context):
+    """Fail the closed connection's pending replies."""
+    fail_replies(self.replies)
+    super().connection_closed(ctx)
 
   async def rpc_request(self, request: Request) -> Reply:
+    """Send `request` and await its reply, both on one connection.
+
+    Raises:
+      NetworkError: The connection dropped or was closed before the reply arrived.
+    """
+    ctx = await self.ctx
     id = self.counter
     self.counter += 1
-    self.replies[id] = asyncio.Future()
-    await self.rpc_send(id, request)
-    response = await self.wait(self.replies[id])
-    del self.replies[id]
-    return response
+    self.replies[id] = reply = asyncio.Future[Reply]()
+    try:
+      await self.wait(self.rpc_send(id, request), ctx=ctx)
+      return await self.wait(reply, ctx=ctx)
+    finally:
+      if self.replies.get(id) is reply:
+        del self.replies[id]

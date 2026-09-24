@@ -90,6 +90,32 @@ paging.via(retried)                          # route every page fetch through a 
 `via(call)` hands each page fetch to `call` as one zero-argument coroutine function, so a
 retry or logging layer wraps a page without unrolling the loop by hand.
 
+### WebSocket connection drops
+
+Streams and requests are bound to the connection they were made on. When it drops, or the
+client is closed, everything bound to it raises `NetworkError`:
+
+- a stream raises right away if it is being iterated, otherwise on its next read (after any
+  message it had already received); it never reconnects on its own
+- a request waiting for its reply raises
+
+Leaving a stream whose connection is gone (`async with` exit or `unsubscribe()`) does
+nothing: no frame, no reconnect, no exception, so the stream's own `NetworkError` is what
+surfaces. A new subscription or request after a drop simply opens a fresh connection.
+Resubscribing is up to the caller:
+
+```python
+from typed_core.exceptions import NetworkError
+
+while True:
+  try:
+    async with socket.subscribe('trades') as trades:
+      async for trade in trades:
+        ...
+  except NetworkError:
+    await asyncio.sleep(1)  # then subscribe again, on a fresh connection
+```
+
 Clients re-export the exceptions users are expected to catch from their own package root, so
 `from kraken import AuthError` works while implementation imports still come from
 `typed_core`. Route those re-exports through `lazy_loader.attach_stub`, not a plain

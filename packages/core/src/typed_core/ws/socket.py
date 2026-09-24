@@ -1,8 +1,10 @@
 from typing_extensions import Awaitable, TypeVar
 from abc import ABC, abstractmethod
 import asyncio
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import timedelta
+import inspect
 import logging
 import websockets
 
@@ -14,9 +16,51 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Context:
+  """One connection and the background tasks serving it."""
   ws: websockets.ClientConnection
   listener: asyncio.Task
   pinger: asyncio.Task
+  closed: bool = False
+  """Set once `Socket.close` has started closing this connection."""
+
+  @property
+  def alive(self) -> bool:
+    """Whether this connection can still carry work: open, served and not being closed."""
+    return (
+      not self.closed and not self.listener.done() and not self.pinger.done()
+      and self.ws.state is websockets.State.OPEN
+    )
+
+  def failure(self) -> BaseException:
+    """The error to raise for work bound to this connection once it is no longer alive."""
+    for task, name in ((self.listener, 'Listener'), (self.pinger, 'Pinger')):
+      if task.done():
+        if task.cancelled():
+          return NetworkError('WebSocket connection closed')
+        if (exc := task.exception()) is not None:
+          return exc
+        return RuntimeError(f'{name} task ended unexpectedly')
+    return NetworkError('WebSocket connection closed')
+
+BOUND: 'ContextVar[tuple[Socket, Context] | None]' = ContextVar('typed_core.ws.bound', default=None)
+"""The socket and connection that the work started by `Socket.wait` runs on.
+
+Inside that work, resolving `Socket.ctx` (or `Socket.ws`) returns this connection, or
+raises once it is gone: work bound to a connection never opens a new one.
+"""
+
+def fail_replies(replies: 'dict[int, asyncio.Future]'):
+  """Fail and forget every pending reply of a connection being closed."""
+  for reply in replies.values():
+    if not reply.done():
+      reply.set_exception(NetworkError('WebSocket connection closed'))
+      reply.exception() # retrieved by its waiter, if any; never logged as unretrieved
+  replies.clear()
+
+def close_coroutine(fut: Awaitable):
+  """Close `fut` if it is a coroutine that will never be awaited, so it doesn't warn."""
+  if inspect.iscoroutine(fut):
+    fut.close()
 
 @dataclass
 class Socket(ABC):
@@ -57,6 +101,12 @@ class Socket(ABC):
   If you awaited directly and an exception happened, you would wait forever.
   
   This way, if an error happens, a `NetworkError` will be raised.
+
+  ### Dropped Connections
+
+  Work is bound to the connection it started on. When that connection drops or is
+  closed, the work in `.wait(...)` on it raises `NetworkError` and never moves to a new
+  connection. New work reconnects transparently.
   """
   url: str
   timeout: timedelta = field(kw_only=True, default=timedelta(seconds=10))
@@ -65,6 +115,7 @@ class Socket(ABC):
   """Backing store for `ctx_future`, `None` until something first reaches for it."""
   open_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
   close_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
+  """Unused: kept for compatibility. Closing is idempotent per connection (`Context.closed`)."""
 
   @property
   def ctx_future(self) -> 'asyncio.Future[Context]':
@@ -103,6 +154,8 @@ class Socket(ABC):
         await self.ping(ws)
       except NotImplementedError:
         ...
+      except websockets.exceptions.WebSocketException as e:
+        raise NetworkError('Error sending ping') from e
 
   @property
   async def ctx(self) -> Context:
@@ -110,7 +163,8 @@ class Socket(ABC):
 
     Reading this property is itself a connect-on-demand: it is right for any caller that
     wants to *use* the socket, but wrong for `__aexit__`, which must be able to close
-    without ever opening.
+    without ever opening. Inside work started by `wait(...)`, it is that work's own
+    connection instead (see `open`).
     """
     return await self.open()
 
@@ -164,19 +218,53 @@ class Socket(ABC):
     )
   
   async def open(self):
+    """The live connection, connecting first if there is none or the last one is gone.
+
+    Inside work started by `wait(...)`, returns that work's own connection and never
+    opens a new one.
+
+    Raises:
+      NetworkError: Connecting failed, or the bound connection is gone.
+    """
+    bound = BOUND.get()
+    if bound is not None and bound[0] is self:
+      ctx = bound[1]
+      if not ctx.alive:
+        raise ctx.failure()
+      return ctx
+
     if self.open_lock.locked() or self.ctx_future.done():
       ctx = await self.ctx_future
-      if ctx.ws.state == websockets.State.CLOSED:
-        await self.close(ctx)
-        return await self.open()
-      else:
+      if ctx.alive:
         return ctx
+      await self.close(ctx)
+      return await self.open()
 
     async with self.open_lock:
       logger.info('Connecting...')
-      ctx = await self.force_open()
-      self.ctx_future.set_result(ctx)
+      future = self.ctx_future
+      try:
+        ctx = await self.force_open()
+      except BaseException as e:
+        # Callers waiting on this attempt share its failure instead of waiting forever;
+        # the next call starts a fresh attempt.
+        if self._ctx_future is future:
+          self._ctx_future = None
+        if not future.done():
+          future.set_exception(e if isinstance(e, Exception) else NetworkError('Connecting was cancelled'))
+          future.exception() # nobody may be waiting on it; never logged as unretrieved
+        raise
+      future.set_result(ctx)
       return ctx
+
+  def connection_closed(self, ctx: Context):
+    """Forget the state bound to a connection being closed.
+
+    Called by `close` before the connection goes down, whether it dropped or the owner is
+    closing it. Override to fail or discard per-connection state, calling `super()`.
+    """
+    if (parent := getattr(super(), 'connection_closed', None)) is not None:
+      parent(ctx)
 
   async def force_close(self, ctx: Context, exc_type=None, exc_value=None, traceback=None):
     ctx.listener.cancel()
@@ -184,10 +272,18 @@ class Socket(ABC):
     await ctx.ws.__aexit__(exc_type, exc_value, traceback)
 
   async def close(self, ctx: Context, exc_type=None, exc_value=None, traceback=None):
-    if not self.close_lock.locked():
-      async with self.close_lock:
-        self._ctx_future = None
-        await self.force_close(ctx, exc_type, exc_value, traceback)
+    """Close `ctx` once, detaching it first so new work opens a fresh connection."""
+    if ctx.closed:
+      return
+    ctx.closed = True
+    future = self._ctx_future
+    if future is not None and future.done() and future.result() is ctx:
+      self._ctx_future = None
+    self.connection_closed(ctx)
+    for task in (ctx.listener, ctx.pinger):
+      if task.done() and not task.cancelled():
+        task.exception() # a drop is reported through the work bound to it, not logged here
+    await self.force_close(ctx, exc_type, exc_value, traceback)
 
   async def listener(self, ws: websockets.ClientConnection):
     while True:
@@ -202,36 +298,51 @@ class Socket(ABC):
   async def wait(self, fut: Awaitable[T], *, ctx: Context | None = None) -> T:
     """Wait for a future to complete, propagating any exceptions in the background tasks.
 
+    `fut` runs bound to `ctx`: resolving `self.ctx`/`self.ws` inside it returns `ctx`, and
+    never opens a new connection once `ctx` is gone. A coroutine that never gets to run is
+    closed, not left unawaited.
+
     Args:
       fut: Future to wait for.
       ctx: Connection context to race against, if already held. Defaults to resolving
         `self.ctx` -- the only exception is a `force_open` override waiting on its own
         bootstrap reply, where `self.ctx` isn't resolved yet (it resolves through this
         same `force_open` call, still in progress) but the override already has the
-        `Context` it just built, from `ctx = await super().force_open()` (see ADR 0005).
+        `Context` it just built, from `ctx = await super().force_open()`.
+
+    Raises:
+      NetworkError: The connection dropped or was closed before `fut` completed.
     """
-    if ctx is None:
-      ctx = await self.ctx
-    async def coro():
-      return await fut
-    task = asyncio.create_task(coro())
+    try:
+      if ctx is None:
+        ctx = await self.ctx
+      if not ctx.alive:
+        raise ctx.failure()
+    except BaseException:
+      close_coroutine(fut)
+      raise
+
+    token = BOUND.set((self, ctx))
+    try:
+      if inspect.iscoroutine(fut):
+        task = asyncio.ensure_future(fut)
+      else:
+        async def forward():
+          """Await `fut` from a task this wait owns."""
+          return await fut
+        task = asyncio.ensure_future(forward())
+    finally:
+      BOUND.reset(token)
+
     try:
       done, _ = await asyncio.wait(
         [task, ctx.listener, ctx.pinger], return_when='FIRST_COMPLETED'
       )
     finally:
-      # The request wrapper belongs to this wait, including when its caller is
+      # The request task belongs to this wait, including when its caller is
       # cancelled. The shared listener/pinger belong to the socket, not this call.
       task.cancel()
       await asyncio.gather(task, return_exceptions=True)
-    if ctx.listener in done:
-      if (exc := ctx.listener.exception()) is not None:
-        raise exc
-      else:
-        raise RuntimeError('Listener task ended unexpectedly')
-    elif ctx.pinger in done:
-      if (exc := ctx.pinger.exception()) is not None:
-        raise exc
-      else:
-        raise RuntimeError('Pinger task ended unexpectedly')
+    if ctx.listener in done or ctx.pinger in done:
+      raise ctx.failure()
     return task.result()
