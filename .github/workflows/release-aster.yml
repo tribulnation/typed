@@ -44,7 +44,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/aster/pkg
-      - run: pip install ruff pyright pytest build
+      - run: pip install ruff pyright pytest pytest-asyncio build
       - run: ruff check --select TID251 packages/aster/pkg
       - run: pyright packages/aster/pkg
       - run: cp packages/aster/README.md packages/aster/LICENSE packages/aster/pkg/

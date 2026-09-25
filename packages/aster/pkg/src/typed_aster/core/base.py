@@ -2,11 +2,12 @@
 classes subclass.
 
 Each trading surface (futures, spot, prediction) owns three transports — REST, market
-streams and the user-data stream — and Aster Chain owns two — REST and JSON-RPC. They are
-built once here, from resolved credentials and the selected network, and forwarded
-field by field: a surface's REST routers take `client`, its `streams` child takes
-`streams_client`, its `user_stream` child takes `user_stream_client`, and Aster Chain's
-`rpc` child takes `rpc_client`.
+streams and the user-data stream — Aster Chain owns two — REST and JSON-RPC — and BAPI,
+the web backend's public API, owns one. They are built once here, from resolved
+credentials and the selected network, and forwarded field by field: a surface's REST
+routers take `client`, its `streams` child takes `streams_client`, its `user_stream`
+child takes `user_stream_client`, Aster Chain's `rpc` child takes `rpc_client`, and
+`bapi` takes `bapi_client`.
 """
 
 from typing_extensions import Self
@@ -14,6 +15,7 @@ from dataclasses import dataclass
 import asyncio
 
 from .auth import Credentials, Wallet, resolve_credentials
+from .transport.bapi import BapiClient
 from .transport.http import HttpRpcClient
 from .transport.jsonrpc import HttpJsonRpcClient
 from .transport.ws.streams import SocketStreamClient
@@ -142,6 +144,7 @@ class AsterBase:
   spot_clients: SurfaceClients
   prediction_clients: SurfaceClients
   chain_clients: ChainClients
+  bapi_client: BapiClient
 
   @classmethod
   def new(
@@ -166,7 +169,8 @@ class AsterBase:
         management, Aster Chain transfers and staking, and withdrawals.
       public: Build a client for public calls only, reading no credentials.
       mainnet: Use mainnet when true, testnet when false. Aster Chain has no testnet:
-        with `mainnet=False` it serves public calls only.
+        with `mainnet=False` it serves public calls only. BAPI has none either, and
+        always calls mainnet.
       validate: Validate responses by default.
 
     Raises:
@@ -188,6 +192,7 @@ class AsterBase:
       chain_clients=ChainClients.build(
         credentials=credentials if mainnet else None, validate=validate
       ),
+      bapi_client=BapiClient(validate=validate),
     )
 
   async def __aenter__(self) -> Self:
@@ -196,6 +201,7 @@ class AsterBase:
       self.spot_clients.__aenter__(),
       self.prediction_clients.__aenter__(),
       self.chain_clients.__aenter__(),
+      self.bapi_client.__aenter__(),
     )
     return self
 
@@ -205,4 +211,5 @@ class AsterBase:
       self.spot_clients.__aexit__(exc_type, exc_value, traceback),
       self.prediction_clients.__aexit__(exc_type, exc_value, traceback),
       self.chain_clients.__aexit__(exc_type, exc_value, traceback),
+      self.bapi_client.__aexit__(exc_type, exc_value, traceback),
     )

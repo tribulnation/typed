@@ -61,9 +61,11 @@ how_tos:
   - title: Paginate through results
     body: Walk long histories and candle ranges. Await for every row, or iterate page by page.
     code: |
-      fills = await client.futures.trade.user_trades_paged('BTCUSDT')  # every fill
-      orders = await client.spot.trade.all_orders_paged('ASTERUSDT')  # every spot order
-      async for page in client.futures.market.klines_paged('BTCUSDT', interval='1m'):
+      from datetime import datetime, timedelta, timezone
+      since = datetime.now(timezone.utc) - timedelta(days=1)
+      fills = await client.futures.trade.user_trades_paged('BTCUSDT', start_time=since)  # every fill since then
+      orders = await client.spot.trade.all_orders_paged('ASTERUSDT', start_time=since)  # every spot order since then
+      async for page in client.futures.market.klines_paged('BTCUSDT', interval='1m', start_time=since):
         print(len(page))  # one page of candles at a time
 
   - title: Listen to live streams

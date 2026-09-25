@@ -1,7 +1,25 @@
 # Manage Deposits & Withdrawals
 
 Each trading surface has a `wallet` router, and Aster Chain has its own under `client.chain`.
-Reads are signed by your API wallet. See [Authenticated Setup](../authenticated-setup.md).
+Their reads are signed by your API wallet; the asset lists under `client.bapi` are public. See [Authenticated Setup](../authenticated-setup.md).
+
+## Supported Assets
+
+`client.bapi.wallet` lists every asset that can be deposited or withdrawn, per chain, for the
+spot or the perp account. It is public and always answers from mainnet:
+
+```python
+from typed_aster import Aster
+
+async with Aster.new(public=True) as client:
+  deposits = await client.bapi.wallet.deposit_assets(account_type='perp')
+  withdrawals = await client.bapi.wallet.withdraw_assets(chain_ids='56,42161', account_type='spot')
+  for asset in deposits:
+    print(asset['chainId'], asset['name'], asset['contractAddress'], asset['decimals'])
+```
+
+Leave out `chain_ids` to list every chain. Solana assets (`chainId` 101) also carry the
+program accounts a deposit goes through, such as `tokenMint`.
 
 ## Deposit Addresses
 
