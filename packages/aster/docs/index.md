@@ -10,12 +10,13 @@ async with Aster.new(public=True) as client:
   print(book['bids'][0])
 ```
 
-One `Aster` client covers four surfaces:
+One `Aster` client covers five surfaces:
 
 - `client.futures`: perpetual futures
 - `client.spot`: spot trading
 - `client.prediction`: prediction markets
 - `client.chain`: Aster Chain (staking, transfers, withdrawals, and on-chain reads by address)
+- `client.bapi`: the web app's public API (every asset that can be deposited or withdrawn)
 
 Public market data needs no credentials. Everything signed uses Aster's Pro API wallets. See
 [Authenticated Setup](authenticated-setup.md).

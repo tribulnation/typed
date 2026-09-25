@@ -14,12 +14,12 @@ class FundingInfo(TypedDict):
   """Interest rate."""
   time: TimestampMillis
   """Data time."""
-  fundingIntervalHours: int
-  """Funding interval in hours."""
-  fundingFeeCap: float
-  """Maximum funding rate."""
-  fundingFeeFloor: float
-  """Minimum funding rate."""
+  fundingIntervalHours: int | None
+  """Funding interval in hours. `null` for some symbols on testnet."""
+  fundingFeeCap: float | None
+  """Maximum funding rate. `null` for some symbols on testnet."""
+  fundingFeeFloor: float | None
+  """Minimum funding rate. `null` for some symbols on testnet."""
 
 
 class Request(TypedDict):

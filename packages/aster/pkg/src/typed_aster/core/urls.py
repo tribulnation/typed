@@ -1,6 +1,6 @@
 """Base URLs of every Aster surface, per network.
 
-Aster Chain REST and JSON-RPC have no testnet: they always resolve to mainnet.
+Aster Chain REST, its JSON-RPC and BAPI have no testnet: they always resolve to mainnet.
 """
 
 from typing_extensions import Literal
@@ -29,6 +29,7 @@ STREAM_HOSTS: dict[Surface, tuple[str, str]] = {
 
 CHAIN_REST_URL = 'https://chainapi.asterdex.com/aster-chain/v3'
 CHAIN_RPC_URL = 'https://tapi.asterdex.com/info'
+BAPI_URL = 'https://www.asterdex.com/bapi'
 
 
 def rest_url(surface: Surface, *, mainnet: bool) -> str:
