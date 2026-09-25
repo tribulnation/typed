@@ -116,6 +116,13 @@ while True:
     await asyncio.sleep(1)  # then subscribe again, on a fresh connection
 ```
 
+Closing is cancellation-safe. Cancelling one caller waiting for a connection never affects
+the other callers or the connect itself. The owner's exit never waits for a connect in
+flight. Instead, that connect closes its own connection once it completes, and the work that
+joined it before the exit raises `NetworkError`. Work that joined only after the exit
+reconnects once. An exit cancelled mid-close aborts the connection instead of leaving it
+half-open, and an `HttpClient` exit that is cancelled still closes its client.
+
 Clients re-export the exceptions users are expected to catch from their own package root, so
 `from kraken import AuthError` works while implementation imports still come from
 `typed_core`. Route those re-exports through `lazy_loader.attach_stub`, not a plain

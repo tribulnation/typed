@@ -49,10 +49,19 @@ class HttpClient:
     return self
 
   async def __aexit__(self, exc_type, exc_value, traceback):
-    async with self.lock:
-      if self._client is not None:
-        await self._client.__aexit__(exc_type, exc_value, traceback)
-        self._client = None
+    """Close the underlying client if one was opened.
+
+    Shielded, so an exit cancelled while waiting for the lock (a request is opening the
+    client) still closes it once the lock is free, instead of leaving it open.
+    """
+    async def close():
+      """Close and forget the underlying client, under the lock."""
+      async with self.lock:
+        if self._client is not None:
+          client, self._client = self._client, None
+          await client.__aexit__(exc_type, exc_value, traceback)
+
+    await asyncio.shield(close())
 
   async def request(
     self,
