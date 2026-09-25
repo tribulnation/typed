@@ -23,9 +23,9 @@ class AccountLimits(TypedDict):
   can_create_public_pool: bool
   """Whether the account may create a public pool."""
   current_maker_fee_tick: int
-  """Current maker fee tier."""
+  """Current maker fee rate, in parts per million of notional (`40` = 0.004%)."""
   current_taker_fee_tick: int
-  """Current taker fee tier."""
+  """Current taker fee rate, in parts per million of notional (`280` = 0.028%)."""
   leased_lit: Decimal
   """Total actively leased LIT."""
   effective_lit_stakes: Decimal

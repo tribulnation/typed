@@ -33,9 +33,8 @@ async with Lighter.new() as client:
 
 ## Time Ranges
 
-`candles_paged`, `mark_price_candles_paged` and `fundings_paged` cover a range wider than one
-response (500 rows for candles, 749 for fundings) by moving `end_timestamp` back to the
-earliest row of each full page.
+`fundings_paged` covers a range wider than one response (749 fundings) by moving
+`end_timestamp` back to the earliest row of each full page.
 Pages therefore arrive **newest first**; rows inside a page stay oldest first.
 
 ```python
@@ -45,15 +44,18 @@ from typed_lighter import Lighter
 
 async with Lighter.new(public=True) as client:
   end = datetime(2026, 9, 1, tzinfo=timezone.utc)
-  candles = await client.api.markets.candles_paged(
+  fundings = await client.api.markets.fundings_paged(
     market_id=0,
-    resolution='1m',
-    start_timestamp=end - timedelta(days=2),
+    resolution='1h',
+    start_timestamp=end - timedelta(days=60),
     end_timestamp=end,
-    count_back=1,
+    count_back=0,
   )
-  candles = sorted(candles, key=lambda candle: candle['t'])
+  fundings = sorted(fundings, key=lambda funding: funding['timestamp'])
 ```
+
+Candles and mark-price candles have no paged method: walk them in windows instead
+([Fetch Market Data](fetch-market-data.md#candles)).
 
 ## Pools And Leaderboards
 

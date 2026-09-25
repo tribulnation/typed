@@ -233,10 +233,10 @@ class OrderBookDetails(TypedDict):
   """`200` on success."""
   message: NotRequired[str]
   """Extra detail from the server, when it sends any."""
-  order_book_details: list[PerpsOrderBookDetail]
-  """Perpetual markets."""
-  spot_order_book_details: list[SpotOrderBookDetail]
-  """Spot markets."""
+  order_book_details: list[PerpsOrderBookDetail] | None
+  """Perpetual markets; `null` when `filter` is `spot`."""
+  spot_order_book_details: list[SpotOrderBookDetail] | None
+  """Spot markets; `null` when `filter` is `perp`."""
 
 
 class OrderBookDetailsEndpoint(RpcEndpoint):

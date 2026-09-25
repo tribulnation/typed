@@ -1191,11 +1191,11 @@ class Trade(TypedDict):
   block_height: int
   """L2 block containing the trade."""
   timestamp: TimestampMillis
-  """When the trade happened."""
+  """Time of the L2 block holding the trade (the clock `Order.timestamp` uses too). It precedes `transaction_time`, by up to about 20 seconds, and can precede the order's own submission."""
   taker_fee: NotRequired[int]
-  """Taker fee rate, as the venue's integer fee value (unit undocumented); absent when zero."""
+  """Taker fee rate, in parts per million of the trade's notional (`280` = 0.028%); absent when zero."""
   maker_fee: NotRequired[int]
-  """Maker fee rate, as the venue's integer fee value (unit undocumented); absent when zero."""
+  """Maker fee rate, in parts per million of the trade's notional (`40` = 0.004%); absent when zero."""
   taker_position_size_before: Decimal
   """Taker's position size in this market before the trade (only for trades the queried account is part of; zero otherwise)."""
   taker_entry_quote_before: Decimal
