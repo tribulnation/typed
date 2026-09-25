@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-lighter"
+version = "0.1.0"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the Lighter API."
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core>=0.9.2", "lazy-loader", "httpx", "pydantic", "websockets",
+  "eth-account>=0.13",
+]
+
+[tool.setuptools.package-data]
+"typed_lighter" = ["py.typed", "*.pyi", "**/*.pyi"]
+
+[project.urls]
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/lighter"
+Website = "https://tribulnation.com/typed"
