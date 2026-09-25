@@ -18,7 +18,7 @@ class CancelAllNow(TypedDict):
   mode: Literal['immediate']
   """Cancel now."""
   market_index: NotRequired[int]
-  """Cancel only this market's orders. Defaults to every market."""
+  """Cancel only this perp market's orders; a spot market is rejected (`21619 invalid market type`). Defaults to every market."""
 
 
 class ScheduleCancelAll(TypedDict):

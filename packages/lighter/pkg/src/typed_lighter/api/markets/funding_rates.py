@@ -13,7 +13,7 @@ class FundingRate(TypedDict):
   symbol: str
   """Market symbol."""
   rate: float
-  """Funding rate of the venue's funding interval, as a fraction."""
+  """Funding rate over 8 hours, as a fraction, whatever the venue's own funding interval: hourly venues (Lighter, Hyperliquid) are scaled by 8."""
 
 
 class Request(TypedDict): ...

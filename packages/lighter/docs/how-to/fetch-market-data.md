@@ -24,17 +24,18 @@ async with Lighter.new(public=True) as client:
 ## Market Details And Decimals
 
 `order_book_details` adds live figures (last price, open interest, 24h volume, margin
-fractions). Perps and spot come back in separate lists:
+fractions). Perps and spot come back in separate lists; with a `filter`, the list of the other
+market type can be `null`:
 
 ```python
 from typed_lighter import Lighter
 
 async with Lighter.new(public=True) as client:
   details = await client.api.markets.order_book_details(0)
-  for perp in details['order_book_details']:
+  for perp in details['order_book_details'] or []:
     print(perp['symbol'], perp['last_trade_price'], perp['open_interest'])
     print(perp['supported_price_decimals'], perp['supported_size_decimals'])
-  for spot in details['spot_order_book_details']:
+  for spot in details['spot_order_book_details'] or []:
     print(spot['symbol'], spot['last_trade_price'])
 ```
 
@@ -102,8 +103,37 @@ Lighter leaves zero values out of a candle, so every field but `t` is optional: 
 with `.get(..., 0.0)`. Candle prices and volumes are JSON numbers and come back as `float`
 ([Numbers](../reference/numbers.md)).
 
-For wider ranges use `candles_paged`, which walks past the 500-row cap
-([Paginate Through Results](paginate-through-results.md)).
+One response holds at most 500 candles, the newest of the range. Lighter caches candle
+responses by market, resolution, `end_timestamp` and `count_back`, but not by
+`start_timestamp`: two requests sharing an end and a `count_back` get the same rows, whatever
+their start. So always send the number of candles in `[start_timestamp, end_timestamp)` as
+`count_back`, as above. For a wider range, request consecutive windows of at most 500
+candles each, with their boundaries on the resolution's grid (a range holding no candle open
+is rejected with `22400 invalid timestamps`):
+
+```python
+from datetime import datetime, timedelta, timezone
+
+from typed_lighter import Lighter
+
+async with Lighter.new(public=True) as client:
+  step = timedelta(hours=1)
+  start = datetime(2026, 8, 1, tzinfo=timezone.utc)
+  end = datetime(2026, 9, 1, tzinfo=timezone.utc)
+  rows = []
+  window_end = end
+  while window_end > start:
+    window_start = max(start, window_end - 500 * step)
+    page = await client.api.markets.candles(
+      market_id=0,
+      resolution='1h',
+      start_timestamp=window_start,
+      end_timestamp=window_end,
+      count_back=(window_end - window_start) // step,
+    )
+    rows = page['c'] + rows
+    window_end = window_start
+```
 
 ## Funding
 

@@ -140,7 +140,9 @@ class Scaler:
     details = await OrderBookDetailsEndpoint(client=client).order_book_details(
       market_id, validate=validate
     )
-    for entry in [*details['order_book_details'], *details['spot_order_book_details']]:
+    perps = details['order_book_details'] or []
+    spots = details['spot_order_book_details'] or []
+    for entry in [*perps, *spots]:
       if entry['market_id'] == market_id:
         return cls.from_details(entry)
     raise BadRequest(f'Unknown market: {market_id}')
