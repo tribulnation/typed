@@ -1,0 +1,131 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline combobox view.
+# Mirrors docs/index.md and docs/how-to/*.md, kept in sync by hand.
+#
+# `body` fields are markdown (inline subset -- links, code spans, emphasis; no block-level
+# content). Links are absolute native-route paths (`/typed/lighter/...`), not relative
+# doc-tree paths.
+
+env_setup:
+  body: >-
+    Create a `.env` with your account index and a registered API key -- see
+    [Authenticated Setup](/typed/lighter/authenticated-setup) for how Lighter's accounts,
+    API keys and auth tokens work.
+  code: |
+    # .env
+    LIGHTER_ACCOUNT_INDEX="123"
+    LIGHTER_API_KEY_INDEX="4"
+    LIGHTER_API_PRIVATE_KEY="your_api_private_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-lighter python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_lighter import Lighter
+
+    load_dotenv()
+
+    async with Lighter.new() as client:
+      account = client.signer.account_index
+      books = await client.api.markets.order_books(filter='perp')
+      print(books['order_books'][0]['symbol'])
+
+how_tos:
+  - title: Fetch market data
+    body: Markets and their decimals, order books, trades, candles and funding -- all public.
+    code: |
+      from datetime import datetime, timedelta, timezone
+
+      details = await client.api.markets.order_book_details(0)           # market details and decimals
+      book = await client.api.markets.order_book_orders(market_id=0, limit=20)  # order book
+      trades = await client.api.markets.recent_trades(market_id=0, limit=50)    # recent trades
+      end = datetime.now(timezone.utc)
+      candles = await client.api.markets.candles(
+        market_id=0, resolution='1h', start_timestamp=end - timedelta(days=1), end_timestamp=end, count_back=24,
+      )                                                                    # candles
+      rates = await client.api.markets.funding_rates()                    # funding rates
+
+  - title: Fetch account data
+    body: Balances, positions, open orders and history of your account.
+    code: |
+      found = await client.api.account.get({'by': 'index', 'value': account})    # balances and positions
+      active = await client.api.account.orders.active(account_index=account)      # open orders
+      closed = await client.api.account.orders.inactive(account_index=account, limit=50)  # closed orders
+      trades = await client.api.account.orders.trades('timestamp', limit=50, account_index=account)  # trades
+
+  - title: Paginate through results
+    body: >-
+      Every paged endpoint has a `_paged` twin: await it for every row, or iterate it page by
+      page.
+    code: |
+      trades = await client.api.account.orders.trades_paged('timestamp', limit=100, account_index=account)  # every trade
+      async for page in client.api.account.orders.inactive_paged(account_index=account, limit=100):  # page by page
+        print(len(page))
+      transfers = await client.api.account.transfers.history_paged(account)  # transfer history
+
+  - title: Place & manage orders
+    body: >-
+      Signed transactions over HTTP or WebSocket. Prices and sizes are integers scaled by the
+      market's decimals; acceptance is not execution. Market `0` is mainnet's ETH perp; on
+      testnet it is `4095`.
+    code: |
+      await client.tx.create_order({
+        'order_type': 'limit', 'market_index': 0, 'client_order_index': 1001,
+        'base_amount': 500, 'is_ask': False, 'price': 200_000, 'time_in_force': 'post-only',
+      })                                                                    # place a limit order
+      await client.tx.modify_order(market_index=0, order_index=1001, base_amount=600, price=199_500)  # modify it
+      await client.tx.cancel_order(market_index=0, order_index=1001, transport='ws')  # cancel it over WebSocket
+      await client.tx.cancel_all_orders({'mode': 'immediate'})             # cancel everything
+
+  - title: Listen to streams
+    body: Public market channels and your private account channels over one WebSocket connection.
+    code: |
+      async with client.streams.order_book(0) as book:                     # order book snapshot, then deltas
+        async for frame in book:
+          print(frame['order_book']['bids'][:1])
+          break
+      async with client.streams.account_all_orders(account) as orders:     # your orders, as they change
+        async for frame in orders:
+          print(frame['orders'])
+          break
+
+  - title: Batch transactions
+    body: Reserve consecutive nonces, sign locally, and submit several transactions in one go.
+    code: |
+      async with client.tx.reserve_nonces(2) as reservation:              # hold two nonces of one key
+        key = reservation.api_key_index
+        batch = [
+          client.signer.cancel_order(market_index=0, order_index=index, nonce=nonce, api_key_index=key)
+          for index, nonce in zip([1001, 1002], reservation.nonces)
+        ]                                                                  # sign each cancel
+        await client.tx.batch(batch)                                       # submit them together
+
+  - title: Transfers & sub-accounts
+    body: >-
+      Create sub-accounts, move funds between accounts, and withdraw. A transfer to an account
+      outside your master account also needs the Ethereum key (`LIGHTER_ETH_PRIVATE_KEY`).
+    code: |
+      await client.tx.create_sub_account()                                 # new sub-account
+      fee = await client.api.account.transfers.fee_info(account_index=account, to_account_index=281474976710578)  # quoted fee
+      await client.tx.transfer(
+        to_account_index=281474976710578, amount=50_000_000, usdc_fee=fee['transfer_fee_usdc'],
+      )                                                                    # 50 USDC to another account
+      await client.tx.withdraw(amount=10_000_000)                          # 10 USDC to your wallet
+      history = await client.api.account.transfers.history_paged(account)  # transfer history
+
+  - title: Sign offline
+    body: >-
+      Sign transactions and auth tokens locally, then submit them yourself. A signed
+      transaction takes the key's next nonce and expires 10 minutes after signing by default
+      (`expires_at`).
+    code: |
+      async with client.tx.reserve_nonces(1) as reservation:              # the key's next nonce
+        signed = client.signer.cancel_all_orders(
+          {'mode': 'immediate'}, nonce=reservation.nonces[0], api_key_index=reservation.api_key_index,
+        )                                                                  # sign locally
+        print(signed.tx_hash)                                               # its hash, known up front
+        await client.tx.send(signed)                                        # submit before it expires
+      token = client.signer.auth_token()                                    # a 10-minute auth token
