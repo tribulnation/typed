@@ -72,8 +72,11 @@ async with Lighter.new() as client:  # reads LIGHTER_ACCOUNT_INDEX, LIGHTER_API_
     print(order['market_index'], order['order_index'], order['price'], order['status'])
 ```
 
-See [Authenticated Setup](https://tribulnation.com/typed/lighter/authenticated-setup) for how
-accounts, API keys and auth tokens work on Lighter.
+Create the API key on Lighter's [API keys page](https://app.lighter.xyz/apikeys): connect
+your wallet, click **Generate API Key**, pick an index from `4` to `254`, and copy the private
+key (it is shown once). The same page shows your account index. See
+[Authenticated Setup](https://tribulnation.com/typed/lighter/authenticated-setup) for the
+full walkthrough, read-only tokens and registering keys from code.
 
 ## Why Typed Lighter?
 
