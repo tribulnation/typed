@@ -36,12 +36,15 @@ signs. See [Authenticated Setup](../authenticated-setup.md).
 
 ```python
 from typed_aster import Aster
+from typed_aster.futures.user_stream.events import is_known_futures_user_event
 
 async with Aster.new() as client:
   key = await client.futures.listen_key.start()
   async with client.futures.user_stream.events(key['listenKey']) as events:
     async for event in events:
-      if event['e'] == 'ORDER_TRADE_UPDATE':
+      if not is_known_futures_user_event(event):
+        print('unmodelled event', event)
+      elif event['e'] == 'ORDER_TRADE_UPDATE':
         print(event['o'])
       elif event['e'] == 'ACCOUNT_UPDATE':
         print(event['a'])
@@ -49,6 +52,12 @@ async with Aster.new() as client:
 
 Futures pushes order, account, margin-call, configuration and announcement events. Spot
 pushes `executionReport` and `outboundAccountPosition`.
+
+Aster also pushes event types it doesn't document. Those arrive as
+`UnknownFuturesUserEvent` (or `UnknownSpotUserEvent`/`UnknownPredictionUserEvent`) with
+every pushed key kept, rather than ending the stream. Check `is_known_futures_user_event`
+(`is_known_spot_user_event`, `is_known_prediction_user_event`) before switching on `e`:
+it narrows the event to the modelled types.
 
 A listenKey lives 60 minutes. Keep it alive every 30 minutes or so:
 
