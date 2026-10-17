@@ -117,6 +117,26 @@ while True:
     await asyncio.sleep(1)  # then subscribe again, on a fresh connection
 ```
 
+### Keep-latest subscriptions
+
+By default a stream delivers every message, in order. For a channel whose every message is
+a full snapshot (best bid/ask, partial depth, mark price), `subscribe(..., keep_latest=True)`
+delivers only the newest one: a message arriving before the previous one was read replaces
+it, and `stream.skipped` counts the replaced ones. Never use it for diffs, trades, fills or
+account events.
+
+A transport that can tell which subscription a frame belongs to without decoding it
+implements `route_raw`; such frames are kept raw and only parsed (and validated) if they are
+still the newest when read. Otherwise frames are decoded to route them as usual, and only
+validation is skipped for the replaced ones.
+
+```python
+async with socket.subscribe('btcusdt@bookTicker', keep_latest=True) as book:
+  async for ticker in book:
+    ...
+    log.debug('skipped %d stale tickers so far', book.skipped)
+```
+
 Closing is cancellation-safe. Cancelling one caller waiting for a connection never affects
 the other callers or the connect itself. The owner's exit never waits for a connect in
 flight. Instead, that connect closes its own connection once it completes, and the work that

@@ -22,6 +22,13 @@ class Stream(AsyncIterable[Notification], Generic[Notification, SubscriptionRepl
   reply: SubscriptionReply
   stream: AsyncIterable[Notification]
   unsubscribe: Callable[[], Awaitable[UnsubscriptionReply | None]]
+  skipped_count: Callable[[], int] = field(default=lambda: 0, repr=False)
+  """Reads the number of messages skipped so far; always 0 unless subscribed with `keep_latest`."""
+
+  @property
+  def skipped(self) -> int:
+    """Messages replaced by a newer one before being read (keep-latest subscriptions only)."""
+    return self.skipped_count()
 
   def __aiter__(self):
     return self.stream.__aiter__()
@@ -92,4 +99,4 @@ class StreamManager(AsyncIterable[Notification], Generic[Notification, Subscript
     async def connect() -> Stream[Notification, SubscriptionReply, UnsubscriptionReply]:
       stream = await self.connect()
       return stream.filter(f)
-    return StreamManager(connect=connect)
+    return StreamManager(connect=connect)
