@@ -5,6 +5,7 @@ import asyncio
 
 from typed_core.util import Stream, StreamManager
 from typed_core.exceptions import NetworkError
+from .latest import Latest
 from .socket import Context, Socket, fail_replies
 
 Request = TypeVar('Request', default=Any)
@@ -48,8 +49,10 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
   """
   replies: dict[int, asyncio.Future[Reply]] = field(default_factory=dict, init=False, repr=False)
   counter: int = field(default=0, init=False, repr=False)
-  subscriptions: dict[str, asyncio.Queue[Notification]] = field(default_factory=dict, init=False, repr=False)
+  subscriptions: dict[str, asyncio.Queue[Notification] | Latest[Notification]] = field(default_factory=dict, init=False, repr=False)
   """Subscription queues, keyed by the local channel identifier."""
+  latest: dict[str, Latest[Notification]] = field(default_factory=dict, init=False, repr=False)
+  """The keep-latest subscriptions among `subscriptions`, for raw routing via `route_raw`."""
   message_keys: dict[str, Callable[[Notification], str]] = field(default_factory=dict, init=False, repr=False)
   """Functions to determine the local channel identifier for an incoming notification."""
 
@@ -69,6 +72,29 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
   def parse_msg(self, msg: str | bytes, /) -> Message[Reply, Notification] | None:
     ...
 
+  def route_raw(self, msg: str | bytes, /) -> str | None:
+    """Name the keep-latest subscription a frame belongs to without decoding it, if that is cheap.
+
+    Only called while a `keep_latest` subscription exists. Return the *local* channel
+    identifier (what `subscribe` was given as `channel`, after any `message_key`), and
+    only when sure: the frame is then kept raw and parsed by `parse_msg` only if it is
+    still the newest when the consumer reads it. Return `None` to route by `parse_msg`
+    as usual -- always correct, but skipped frames then still pay the decode (never the
+    validation, which runs on read). The default never routes raw.
+    """
+
+  def parse_notification(self, msg: str | bytes, /) -> Notification:
+    """Parse a frame `route_raw` routed, read from a keep-latest subscription.
+
+    Raises:
+      ValueError: `parse_msg` does not read the frame as a subscription notification.
+    """
+    res = self.parse_msg(msg)
+    if res is not None and res['kind'] == 'subscription':
+      return res['notification']
+    else:
+      raise ValueError(f'Frame routed raw is not a subscription notification: {msg!r}')
+
   async def __aexit__(self, exc_type, exc_value, traceback):
     await super().__aexit__(exc_type, exc_value, traceback)
     self.subscriptions.clear()
@@ -77,6 +103,7 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
   def connection_closed(self, ctx: Context):
     """Forget the closed connection's subscriptions and fail its pending replies."""
     self.subscriptions.clear()
+    self.latest.clear()
     self.message_keys.clear()
     fail_replies(self.replies)
     super().connection_closed(ctx)
@@ -99,6 +126,9 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
         del self.replies[id]
 
   def on_msg(self, msg: str | bytes):
+    if self.latest and (channel := self.route_raw(msg)) is not None and (slot := self.latest.get(channel)) is not None:
+      slot.put_raw(msg)
+      return
     res = self.parse_msg(msg)
     if res is None:
       return
@@ -122,6 +152,7 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
     *,
     request_channel: str | None = None,
     message_key: Callable[[Notification], str] | None = None,
+    keep_latest: bool = False,
   ) -> Stream[Notification, SubscriptionReply, UnsubscriptionReply]:
     subscription_channel = request_channel or channel
     # Resolved first: a dead connection is discarded here, with its subscriptions.
@@ -132,12 +163,19 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
     if message_key is not None:
       self.message_keys[subscription_channel] = message_key
 
-    self.subscriptions[channel] = queue = asyncio.Queue[Notification]()
+    queue: asyncio.Queue[Notification] | Latest[Notification]
+    if keep_latest:
+      queue = self.latest[channel] = Latest(self.parse_notification)
+    else:
+      queue = asyncio.Queue[Notification]()
+    self.subscriptions[channel] = queue
 
     def forget():
       """Drop this stream's queue, unless the channel was since subscribed anew."""
       if self.subscriptions.get(channel) is queue:
         del self.subscriptions[channel]
+      if self.latest.get(channel) is queue:
+        del self.latest[channel]
 
     try:
       reply = await self.wait(self.request_subscription(subscription_channel, params), ctx=ctx)
@@ -189,7 +227,10 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
           unsubscribed.set_result(reply)
         forget()
 
-    return Stream(reply, stream(), unsubscribe)
+    if isinstance(queue, Latest):
+      return Stream(reply, stream(), unsubscribe, skipped_count=lambda: queue.skipped)
+    else:
+      return Stream(reply, stream(), unsubscribe)
 
   def subscribe(
     self,
@@ -198,6 +239,7 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
     *,
     request_channel: str | None = None,
     message_key: Callable[[Notification], str] | None = None,
+    keep_latest: bool = False,
   ) -> StreamManager[Notification, SubscriptionReply, UnsubscriptionReply]:
     """Subscribe to a channel.
 
@@ -206,7 +248,9 @@ class StreamsRpc(Socket, Generic[Request, Reply, Notification, SubscriptionParam
       params: optional subscription parameters
       request_channel: optional channel identifier to use for the subscription request, if different from `channel`
       message_key: optional function to derive the local channel identifier from an incoming notification. If not provided, `channel` is used to match instead
+      keep_latest: deliver only the newest message: one arriving before the previous was read replaces it, counted in the stream's `skipped`. Only for channels whose every message is a full snapshot (best bid/ask, partial depth, mark price), never for diffs, trades, fills or account events. Frames `route_raw` can route are kept raw and parsed on read; a frame that then fails to parse raises from the read (ending that stream) instead of failing the connection. The default delivers every message, in order
     """
     return StreamManager(lambda: self._subscribe_impl(
-      channel, params, request_channel=request_channel, message_key=message_key
+      channel, params, request_channel=request_channel, message_key=message_key,
+      keep_latest=keep_latest,
     ))
