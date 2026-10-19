@@ -64,3 +64,8 @@ async def test_replaced_headers_apply_to_the_next_connection():
   socket = QuietSocket('ws://unused', headers={'Cookie': 'gravity=old'})
   await run(socket, seen, reconnect={'Cookie': 'gravity=new'})
   assert [request.headers['Cookie'] for request in seen] == ['gravity=old', 'gravity=new']
+
+def test_headers_stay_out_of_repr():
+  """A credential carried in `headers` never shows up in the socket's repr."""
+  socket = QuietSocket('ws://unused', headers={'Cookie': 'gravity=secret-token'})
+  assert 'secret-token' not in repr(socket)

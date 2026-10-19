@@ -121,11 +121,11 @@ class Socket(ABC):
   url: str
   timeout: timedelta = field(kw_only=True, default=timedelta(seconds=10))
   ping_interval: timedelta = field(kw_only=True, default=timedelta(hours=24))
-  headers: Mapping[str, str] | None = field(kw_only=True, default=None)
+  headers: Mapping[str, str] | None = field(kw_only=True, default=None, repr=False)
   """Extra HTTP headers sent with the opening handshake (a session cookie, say).
 
   Read on every connect, so replacing it applies to the next connection, never to the one
-  already open.
+  already open. Kept out of `repr`, since it usually carries a credential.
   """
   _ctx_future: 'asyncio.Future[Context] | None' = field(default=None, init=False, repr=False)
   """Backing store for `ctx_future`, `None` until something first reaches for it."""
