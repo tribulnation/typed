@@ -26,11 +26,13 @@ class TradingSession(StreamEndpoint):
   def trading_session(
     self,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[TradingSessionEvent, Any, Any]:
     """Pushes trading-session state (pre-market/regular/after-market/overnight/no-trading) for the underlying markets of TradFi Perpetual contracts -- U.S. equities, Korean equities, Hong Kong equities, and commodities -- updated every second, one message per underlying market.
 
     Args:
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -39,6 +41,7 @@ class TradingSession(StreamEndpoint):
     return self.subscribe(
       'tradingSession',
       None,
+      keep_latest=keep_latest,
       validate=validate,
       response_type=TradingSessionEvent,
     )

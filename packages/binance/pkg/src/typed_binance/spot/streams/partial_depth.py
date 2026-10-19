@@ -24,6 +24,7 @@ class PartialDepth(StreamEndpoint):
     symbol: str,
     *,
     levels: Literal[5, 10, 20],
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[PartialDepthEvent, Any, Any]:
     """Pushes the top `levels` bids and asks for one symbol, every 1000ms.
@@ -31,6 +32,7 @@ class PartialDepth(StreamEndpoint):
     Args:
       symbol: Trading pair symbol, e.g. `btcusdt`. The venue requires stream names to use lowercase symbols on the wire, and this value is used as-is with no casing transform.
       levels: Number of bid/ask levels to push.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -38,6 +40,7 @@ class PartialDepth(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@depth{levels}',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=PartialDepthEvent,
     )

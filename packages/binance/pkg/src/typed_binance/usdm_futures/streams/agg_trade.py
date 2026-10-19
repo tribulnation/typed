@@ -41,12 +41,14 @@ class AggTrade(StreamEndpoint):
     self,
     symbol: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[AggTradeEvent, Any, Any]:
     """Pushes market trade information aggregated for fills with the same price and taking side, every 100ms. Only market trades are aggregated -- insurance fund and ADL trades are not.
 
     Args:
       symbol: Trading pair symbol, e.g. `btcusdt`. The venue requires stream names to use lowercase symbols on the wire, and this value is used as-is with no casing transform.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -54,6 +56,7 @@ class AggTrade(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@aggTrade',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=AggTradeEvent,
     )

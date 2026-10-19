@@ -101,6 +101,7 @@ class ContinuousKlineEndpoint(StreamEndpoint):
       '1w',
       '1M',
     ],
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[ContinuousKlineEvent, Any, Any]:
     """Pushes updates to the current kline/candlestick for a continuous contract (a pair + contract type, rather than a single expiring symbol), every 250ms.
@@ -109,6 +110,7 @@ class ContinuousKlineEndpoint(StreamEndpoint):
       pair: Underlying trading pair, e.g. `BTCUSDT`.
       contract_type: Contract type.
       interval: Kline interval.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -116,6 +118,7 @@ class ContinuousKlineEndpoint(StreamEndpoint):
     """
     return self.subscribe(
       f'{pair}_{contract_type}@continuousKline_{interval}',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=ContinuousKlineEvent,
     )

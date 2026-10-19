@@ -14,11 +14,13 @@ class MiniTickerArr(StreamEndpoint):
   def mini_ticker_arr(
     self,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[Payload, Any, Any]:
     """Pushes 24hr rolling-window mini-ticker statistics for every symbol that changed, as an array, every 1000ms.
 
     Args:
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -27,6 +29,7 @@ class MiniTickerArr(StreamEndpoint):
     return self.subscribe(
       '!miniTicker@arr',
       None,
+      keep_latest=keep_latest,
       validate=validate,
       response_type=Payload,
     )

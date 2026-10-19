@@ -38,11 +38,13 @@ class BookTickerArr(StreamEndpoint):
   def book_ticker_arr(
     self,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[BookTickerEvent, Any, Any]:
     """Pushes any change to the best bid or ask price or quantity, in real time, for all symbols, every 5 seconds.
 
     Args:
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -51,6 +53,7 @@ class BookTickerArr(StreamEndpoint):
     return self.subscribe(
       '!bookTicker',
       None,
+      keep_latest=keep_latest,
       validate=validate,
       response_type=BookTickerEvent,
     )
