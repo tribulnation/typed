@@ -27,6 +27,10 @@ from ...endpoint.stream import StreamClient
 
 T = TypeVar('T')
 
+STREAM_PREFIX = '{"stream":"'
+"""How every combined-stream push starts on the wire: `{"stream":"<name>","data":{...}}`,
+compact, `stream` first (checked against live `fstream` frames)."""
+
 
 class StreamAck(TypedDict):
   """A successful `SUBSCRIBE`/`UNSUBSCRIBE` reply."""
@@ -56,6 +60,17 @@ class SocketStream(StreamsRpc[dict, dict, Any, None, StreamAck, StreamAck]):
   async def rpc_send(self, id: int, req: dict, /):
     ws = await self.ws
     await ws.send(json.dumps({**req, 'id': id}))
+
+  def route_raw(self, msg: str | bytes, /) -> str | None:
+    """Read a push's stream name off its exact wire prefix, without decoding the frame.
+
+    Only a text frame starting with `STREAM_PREFIX` and a name free of escapes is routed
+    raw; anything else (a reply, another shape) falls back to `parse_msg`.
+    """
+    if isinstance(msg, str) and msg.startswith(STREAM_PREFIX):
+      end = msg.find('"', len(STREAM_PREFIX))
+      if end != -1 and '\\' not in (name := msg[len(STREAM_PREFIX) : end]):
+        return name
 
   def parse_msg(self, msg: str | bytes, /) -> Message[dict, Any] | None:
     obj = json.loads(msg)
@@ -124,8 +139,9 @@ class SocketStreamClient(StreamClient):
     *,
     validator: validator[T] | None = None,
     validate: bool | None = None,
+    keep_latest: bool = False,
   ) -> StreamManager[T, Any, Any]:
-    manager = self.conn.subscribe(stream_name(channel))
+    manager = self.conn.subscribe(stream_name(channel), keep_latest=keep_latest)
     if validator is None or not self.should_validate(validate):
       return cast(StreamManager[T, Any, Any], manager)
     return manager.map(validator)

@@ -12,12 +12,14 @@ class TradePro(StreamEndpoint):
     self,
     symbol: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[TradeProEvent, Any, Any]:
     """Every trade for one symbol with its on-chain transaction hash and participant addresses.
 
     Args:
       symbol: Symbol, lowercase, e.g. `btcusdt`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -25,6 +27,7 @@ class TradePro(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@tradepro',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=TradeProEvent,
     )

@@ -23,8 +23,10 @@ class StreamClient(Protocol):
     *,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
+    keep_latest: bool = False,
   ) -> 'StreamManager[T, Any, Any]':
-    """Subscribe to one stream, validating each push against `validator` if given."""
+    """Subscribe to one stream, validating each push against `validator` if given; with
+    `keep_latest`, deliver only the newest push."""
     ...
 
   async def __aenter__(self) -> Self: ...
@@ -51,6 +53,7 @@ class StreamEndpoint:
     parameters: Any = None,
     *,
     validate: bool | None = None,
+    keep_latest: bool = False,
     request_type: type[Any] | UnionType | None = None,
     response_type: type[T] | UnionType | None = None,
   ) -> 'StreamManager[T, Any, Any]':
@@ -61,6 +64,8 @@ class StreamEndpoint:
         symbols lowercase in stream names.
       parameters: The generated value filling the placeholders, or `None`.
       validate: Per-call override of push validation.
+      keep_latest: Deliver only the newest push. Every generated method forwards the
+        caller's choice; it is safe only where each push is the full state.
       request_type: The generated parameters type, used to serialize `parameters`.
       response_type: The generated payload type, used to validate each push.
     """
@@ -68,5 +73,8 @@ class StreamEndpoint:
     resolved = channel.format(**values) if values else channel
     response_validator = validator(response_type) if response_type is not None else None  # type: ignore[type-var]
     return self.client.subscribe(
-      resolved, validator=response_validator, validate=validate
+      resolved,
+      validator=response_validator,
+      validate=validate,
+      keep_latest=keep_latest,
     )

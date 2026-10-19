@@ -29,6 +29,28 @@ Available channels, per surface:
 
 All market streams of a surface share one connection.
 
+### Only The Newest Frame
+
+Every market stream method takes `keep_latest`, off by default. With `keep_latest=True`, a
+push arriving before you read the previous one replaces it, and `stream.skipped` counts the
+replaced ones; replaced pushes are never parsed or validated.
+
+You decide when that is safe: only when each push is the full state for that subscription,
+such as `book_ticker`, `partial_depth`/`partial_depth_speed` or the per-symbol
+`mark_price`/`mark_price_1s`. It is wrong for `diff_depth`, trades, klines, liquidations,
+and `all_book_tickers` (`!bookTicker`), whose frames each carry a different symbol: dropping
+a frame there loses data. Don't rely on it for `all_mark_price`/`all_mark_price_1s` either,
+unless you know every push carries every symbol.
+
+```python
+from typed_aster import Aster
+
+async with Aster.new(public=True) as client:
+  async with client.futures.streams.book_ticker('btcusdt', keep_latest=True) as stream:
+    async for update in stream:
+      print(update['b'], update['a'], stream.skipped)
+```
+
 ## Your Account Events
 
 The user stream needs a listenKey from the REST `listen_key` router, which your API wallet
