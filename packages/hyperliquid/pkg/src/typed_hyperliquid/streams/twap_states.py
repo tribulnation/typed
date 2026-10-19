@@ -59,6 +59,7 @@ class TwapStatesEndpoint(StreamsCore):
     *,
     dex: str,
     user: str,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[TwapStates, Any, Any]:
     """Subscribe to Hyperliquid `twapStates` updates.
@@ -66,6 +67,7 @@ class TwapStatesEndpoint(StreamsCore):
     Args:
       dex: Perp dex name; the empty string names the default (first) perp dex.
       user: Address whose TWAP states to subscribe to.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -74,6 +76,7 @@ class TwapStatesEndpoint(StreamsCore):
     return self.subscribe(
       'twapStates',
       Parameters(dex=dex, user=user),
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=TwapStates,

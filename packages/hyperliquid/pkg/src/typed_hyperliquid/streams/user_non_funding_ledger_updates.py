@@ -220,12 +220,14 @@ class UserNonFundingLedgerUpdates(StreamsCore):
     self,
     user: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[UserNonFundingLedgerUpdatesUpdate, Any, Any]:
     """Subscribe to a user's non-funding ledger updates: deposits, withdrawals, transfers, and liquidations, as an initial snapshot followed by streamed events.
 
     Args:
       user: The account address whose activity this subscription tracks.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -234,6 +236,7 @@ class UserNonFundingLedgerUpdates(StreamsCore):
     return self.subscribe(
       'userNonFundingLedgerUpdates',
       Parameters(user=user),
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=UserNonFundingLedgerUpdatesUpdate,
