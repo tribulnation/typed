@@ -117,6 +117,18 @@ while True:
     await asyncio.sleep(1)  # then subscribe again, on a fresh connection
 ```
 
+### WebSocket handshake headers
+
+A venue that authenticates a socket only when it opens (a session cookie, an account id)
+takes them as `headers`, sent with the opening handshake. They are read on every connect,
+so replacing them applies to the next connection, not to the one already open:
+
+```python
+socket = MyStreams(url, headers={'Cookie': f'session={token}'})
+...
+socket.headers = {'Cookie': f'session={new_token}'}  # used from the next connect on
+```
+
 ### Keep-latest subscriptions
 
 By default a stream delivers every message, in order. For a channel whose every message is

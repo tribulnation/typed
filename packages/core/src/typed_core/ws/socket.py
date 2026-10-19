@@ -1,4 +1,4 @@
-from typing_extensions import Awaitable, TypeVar
+from typing_extensions import Awaitable, Mapping, TypeVar
 from abc import ABC, abstractmethod
 import asyncio
 from contextvars import ContextVar
@@ -121,6 +121,12 @@ class Socket(ABC):
   url: str
   timeout: timedelta = field(kw_only=True, default=timedelta(seconds=10))
   ping_interval: timedelta = field(kw_only=True, default=timedelta(hours=24))
+  headers: Mapping[str, str] | None = field(kw_only=True, default=None)
+  """Extra HTTP headers sent with the opening handshake (a session cookie, say).
+
+  Read on every connect, so replacing it applies to the next connection, never to the one
+  already open.
+  """
   _ctx_future: 'asyncio.Future[Context] | None' = field(default=None, init=False, repr=False)
   """Backing store for `ctx_future`, `None` until something first reaches for it."""
   open_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
@@ -224,7 +230,9 @@ class Socket(ABC):
       # refused connection, escape as a raw `OSError` a caller's `except NetworkError`
       # never saw.
       try:
-        return await websockets.connect(self.url, open_timeout=self.timeout.total_seconds())
+        return await websockets.connect(
+          self.url, additional_headers=self.headers, open_timeout=self.timeout.total_seconds(),
+        )
       except (websockets.exceptions.WebSocketException, OSError, EOFError, TimeoutError) as e:
         raise NetworkError(f'Failed to connect to {self.url}') from e
 
