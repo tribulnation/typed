@@ -54,12 +54,14 @@ class Event(StreamEndpoint):
     self,
     event_name: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[Payload, Any, Any]:
     """Round start prices and TWAP settlement samples of an up/down prediction event.
 
     Args:
       event_name: Event name, lowercase, e.g. `btc_up_down_5m`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -67,6 +69,7 @@ class Event(StreamEndpoint):
     """
     return self.subscribe(
       f'{event_name}@event',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=Payload,
     )
