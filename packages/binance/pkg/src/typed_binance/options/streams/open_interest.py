@@ -31,6 +31,7 @@ class OpenInterest(StreamEndpoint):
     *,
     underlying: str,
     expiration_date: str,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[Payload, Any, Any]:
     """Pushes open interest, one entry per option symbol, for one underlying asset on one expiration date, every 60s.
@@ -38,6 +39,7 @@ class OpenInterest(StreamEndpoint):
     Args:
       underlying: Underlying asset, e.g. `BTCUSDT`.
       expiration_date: Expiration date, formatted `YYMMDD`, e.g. `220930`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -45,6 +47,7 @@ class OpenInterest(StreamEndpoint):
     """
     return self.subscribe(
       f'{underlying}@openInterest@{expiration_date}',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=Payload,
     )

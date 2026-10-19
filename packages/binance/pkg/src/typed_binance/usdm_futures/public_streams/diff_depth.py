@@ -40,6 +40,7 @@ class DiffDepth(StreamEndpoint):
     symbol: str,
     *,
     speed: Literal[100, 250, 500],
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[DiffDepthEvent, Any, Any]:
     """Pushes incremental bid/ask updates for one symbol, at the given update speed.
@@ -47,6 +48,7 @@ class DiffDepth(StreamEndpoint):
     Args:
       symbol: Trading pair symbol, e.g. `btcusdt`. The venue requires stream names to use lowercase symbols on the wire, and this value is used as-is with no casing transform.
       speed: Update speed, in milliseconds.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -54,6 +56,7 @@ class DiffDepth(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@depth@{speed}ms',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=DiffDepthEvent,
     )

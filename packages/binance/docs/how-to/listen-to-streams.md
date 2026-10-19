@@ -21,6 +21,29 @@ futures, and options each have their own streams client with the equivalent chan
 plus `client.usdm_futures.public_streams` for USD-M's order-book channels specifically
 (`book_ticker`, `diff_depth`, `partial_depth`), which live on a second connection there.
 
+### Only The Newest Frame
+
+Every public stream method takes `keep_latest`, off by default. With `keep_latest=True`, a
+push arriving before you read the previous one replaces it, and `stream.skipped` counts the
+replaced ones; replaced pushes are never parsed or validated.
+
+You decide when that is safe: only when each push is the full state for that subscription,
+such as `book_ticker`, `partial_depth` (`depth` on options) or the per-symbol `mark_price`.
+It is wrong for `diff_depth`, trades, klines, liquidations, and the all-symbol streams whose
+frames carry different symbols: `book_ticker_arr` (`!bookTicker`, one symbol per frame) and
+`mark_price_arr` (`!markPrice@arr`, crypto and TradFi symbols in separate frames). Dropping
+a frame there loses data.
+
+```python
+from typed_binance import Binance
+
+async with Binance.new(public=True) as client:
+  streams = client.usdm_futures.public_streams
+  async with streams.book_ticker('btcusdt', keep_latest=True) as stream:
+    async for ticker in stream:
+      print(ticker['b'], ticker['a'], stream.skipped)
+```
+
 ## Account Events (Spot)
 
 Signed. Subscribing on Spot's WS API connection also pushes this account's order and

@@ -54,6 +54,7 @@ class TickerByExpiration(StreamEndpoint):
     *,
     symbol: str,
     expiration_date: str,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[Ticker24hrEvent, Any, Any]:
     """Pushes 24hr rolling-window ticker statistics for one option symbol, scoped to a specific expiration date, every 1000ms.
@@ -61,6 +62,7 @@ class TickerByExpiration(StreamEndpoint):
     Args:
       symbol: Option symbol, e.g. `BTC-250627-50000-C`.
       expiration_date: Expiration date, formatted `YYMMDD`, e.g. `221225`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -68,6 +70,7 @@ class TickerByExpiration(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@optionTicker{expiration_date}',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=Ticker24hrEvent,
     )

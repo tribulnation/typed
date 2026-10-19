@@ -41,8 +41,10 @@ class StreamClient(Protocol):
     *,
     validator: 'validator[T] | None' = None,
     validate: bool | None = None,
+    keep_latest: bool = False,
   ) -> 'StreamManager[T, Any, Any]':
-    """Subscribe to a public channel, validating each notification against `validator` if given."""
+    """Subscribe to a public channel, validating each notification against `validator` if
+    given; with `keep_latest`, deliver only the newest notification."""
     ...
 
   async def __aenter__(self) -> Self: ...
@@ -70,6 +72,7 @@ class StreamEndpoint:
     *,
     meta: dict[str, Any] | None = None,
     validate: bool | None = None,
+    keep_latest: bool = False,
     request_type: type[Any] | UnionType | None = None,
     response_type: type[T] | UnionType | None = None,
   ) -> 'StreamManager[T, Any, Any]':
@@ -93,10 +96,17 @@ class StreamEndpoint:
       meta: Unused -- this core declares no `meta` schema (every endpoint resolving here
         is unauthenticated with no other per-call quirk).
       validate: Per-call override of pushed-payload validation.
+      keep_latest: Deliver only the newest push. Every generated method forwards the
+        caller's choice; it is safe only where each push is the full state.
       request_type: The generated parameters type, used to serialize `parameters`.
       response_type: The generated payload type, used to validate each push.
     """
     values = dump_request(parameters, request_type) or {}
     resolved_channel = channel.format(**values) if values else channel
     response_validator = validator(response_type) if response_type is not None else None  # type: ignore[type-var]
-    return self.client.subscribe(resolved_channel, validator=response_validator, validate=validate)
+    return self.client.subscribe(
+      resolved_channel,
+      validator=response_validator,
+      validate=validate,
+      keep_latest=keep_latest,
+    )

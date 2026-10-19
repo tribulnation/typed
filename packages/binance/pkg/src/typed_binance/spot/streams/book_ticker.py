@@ -28,12 +28,14 @@ class BookTicker(StreamEndpoint):
     self,
     symbol: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[BookTickerEvent, Any, Any]:
     """Pushes any update to the best bid or ask price or quantity, in real time, for one symbol. Multiple `<symbol>@bookTicker` streams can be subscribed to over one connection.
 
     Args:
       symbol: Trading pair symbol, e.g. `btcusdt`. The venue requires stream names to use lowercase symbols on the wire, and this value is used as-is with no casing transform.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -41,6 +43,7 @@ class BookTicker(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@bookTicker',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=BookTickerEvent,
     )

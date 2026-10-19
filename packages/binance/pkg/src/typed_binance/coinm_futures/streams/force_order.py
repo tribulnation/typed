@@ -59,12 +59,14 @@ class ForceOrder(StreamEndpoint):
     self,
     symbol: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[CoinMForceOrderEvent, Any, Any]:
     """Pushes forced-liquidation ("force order") information for one symbol -- at most one order per second, even if multiple were force-liquidated within that window.
 
     Args:
       symbol: Contract symbol, e.g. `btcusd_perp`. The venue requires stream names to use lowercase symbols on the wire, and this value is used as-is with no casing transform.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -72,6 +74,7 @@ class ForceOrder(StreamEndpoint):
     """
     return self.subscribe(
       f'{symbol}@forceOrder',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=CoinMForceOrderEvent,
     )
