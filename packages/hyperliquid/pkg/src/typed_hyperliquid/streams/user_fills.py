@@ -85,6 +85,7 @@ class UserFillsEndpoint(StreamsCore):
     user: str,
     *,
     aggregate_by_time: bool | None = None,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[UserFills, Any, Any]:
     """Subscribe to Hyperliquid `userFills` updates: a fills snapshot followed by streaming fills.
@@ -92,6 +93,7 @@ class UserFillsEndpoint(StreamsCore):
     Args:
       user: Address whose fills to subscribe to.
       aggregate_by_time: Optional. When true, fills that are part of the same order are aggregated into one record.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -103,6 +105,7 @@ class UserFillsEndpoint(StreamsCore):
     return self.subscribe(
       'userFills',
       parameters,
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=UserFills,

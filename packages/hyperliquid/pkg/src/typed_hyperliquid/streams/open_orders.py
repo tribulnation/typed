@@ -32,6 +32,7 @@ class OpenOrders(StreamsCore):
     *,
     dex: str,
     user: str,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[OpenOrdersUpdate, Any, Any]:
     """Subscribe to Hyperliquid `openOrders` updates.
@@ -39,6 +40,7 @@ class OpenOrders(StreamsCore):
     Args:
       dex: Perp dex to subscribe on; the empty string names the default (first) perp dex.
       user: Wallet address to subscribe to open orders for.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -47,6 +49,7 @@ class OpenOrders(StreamsCore):
     return self.subscribe(
       'openOrders',
       Parameters(dex=dex, user=user),
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=OpenOrdersUpdate,

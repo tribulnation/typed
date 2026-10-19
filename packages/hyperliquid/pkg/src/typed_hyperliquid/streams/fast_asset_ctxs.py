@@ -13,11 +13,13 @@ class FastAssetCtxs(StreamsCore):
   def fast_asset_ctxs(
     self,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[FastAssetCtxsCompressedPayload, Any, Any]:
     """Subscribe to Hyperliquid `fastAssetCtxs` updates: a low-latency mark/mid price feed across every asset on the venue, pushed as a base64-encoded, raw-DEFLATE-compressed JSON payload rather than plain JSON. See this endpoint's `notes` for the full decode recipe and the structural mismatch with this client's usual stream envelope.
 
     Args:
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -25,6 +27,7 @@ class FastAssetCtxs(StreamsCore):
     """
     return self.subscribe(
       'fastAssetCtxs',
+      keep_latest=keep_latest,
       validate=validate,
       response_type=FastAssetCtxsCompressedPayload,
     )

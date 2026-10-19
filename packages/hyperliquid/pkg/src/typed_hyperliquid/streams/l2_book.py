@@ -62,6 +62,7 @@ class L2Book(StreamsCore):
     fast: bool | None = None,
     mantissa: int | None = None,
     n_sig_figs: int | None = None,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[L2BookUpdate, Any, Any]:
     """Subscribe to Hyperliquid `l2Book` updates.
@@ -71,6 +72,7 @@ class L2Book(StreamsCore):
       fast: Optional depth cap: 5 price levels per side when true, 20 when false or omitted.
       mantissa: Optional mantissa restriction on aggregated price levels; only meaningful together with `nSigFigs`. Omit or null for the default.
       n_sig_figs: Optional price-level aggregation: round book prices to this many significant figures. Omit or null for full precision.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -86,6 +88,7 @@ class L2Book(StreamsCore):
     return self.subscribe(
       'l2Book',
       parameters,
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=L2BookUpdate,

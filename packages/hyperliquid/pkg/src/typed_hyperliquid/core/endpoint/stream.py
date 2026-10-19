@@ -39,12 +39,15 @@ class StreamClient(Protocol):
     *,
     request_channel: str | None = None,
     message_key: Callable[[Any], str] | None = None,
+    keep_latest: bool = False,
   ) -> StreamManager[Any, Any, Any]:
     """Subscribe to a channel, optionally separating request and message channels.
 
     `message_key`: for channels shared across multiple concurrent subscriptions (e.g.
     `l2Book`, tagged identically for every coin), a function deriving the local
     subscription key from an incoming notification.
+
+    `keep_latest`: deliver only the newest notification.
     """
     ...
 

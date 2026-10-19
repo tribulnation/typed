@@ -66,6 +66,7 @@ class StreamsCore(StreamEndpoint):
     parameters: Any = None,
     *,
     validate: bool | None = None,
+    keep_latest: bool = False,
     request_type: type[Any] | UnionType | None = None,
     response_type: type[T] | UnionType | None = None,
   ) -> StreamManager[T, Any, Any]:
@@ -84,13 +85,17 @@ class StreamsCore(StreamEndpoint):
       parameters: The generated `Parameters` value, or `None` for a parameterless
         subscription.
       validate: Per-call override of pushed-message validation.
+      keep_latest: Deliver only the newest push. Every generated method forwards the
+        caller's choice; it is safe only where each push is the full state. Routing still
+        decodes each frame (the push tag alone does not name the coin); only validation
+        is skipped for replaced pushes.
       request_type: The generated parameters type, used to serialize `parameters`.
       response_type: The generated payload type, used to validate each pushed message.
     """
     values = dump_request(parameters, request_type)
     scope = _SCOPE_FIELDS.get(channel)
     list_shaped = channel in _LIST_SHAPED
-    subscribe_kwargs: dict[str, Any] = {}
+    subscribe_kwargs: dict[str, Any] = {'keep_latest': keep_latest}
 
     if scope is not None:
       key = ':'.join(str(values.get(sub, '')).lower() for sub, _ in scope)

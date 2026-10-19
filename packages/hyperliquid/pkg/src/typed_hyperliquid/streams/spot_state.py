@@ -51,6 +51,7 @@ class SpotStateEndpoint(StreamsCore):
     user: str,
     *,
     ignore_portfolio_margin: bool | None = None,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[WsSpotStateUpdate, Any, Any]:
     """Subscribe to Hyperliquid `spotState` updates: a user's spot token balances.
@@ -58,6 +59,7 @@ class SpotStateEndpoint(StreamsCore):
     Args:
       user: Wallet address to subscribe to spot state updates for.
       ignore_portfolio_margin: Optional: exclude portfolio-margin balances from this subscription. Defaults to `false` when omitted. Named `isPortfolioMargin` in upstream docs -- see `notes`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -69,6 +71,7 @@ class SpotStateEndpoint(StreamsCore):
     return self.subscribe(
       'spotState',
       parameters,
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=WsSpotStateUpdate,

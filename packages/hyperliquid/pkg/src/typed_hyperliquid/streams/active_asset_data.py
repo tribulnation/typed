@@ -47,6 +47,7 @@ class ActiveAssetData(StreamsCore):
     *,
     coin: str,
     user: str,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[WsActiveAssetData, Any, Any]:
     """Subscribe to Hyperliquid `activeAssetData` updates: one user's leverage and tradable size for one perp coin. Perps only.
@@ -54,6 +55,7 @@ class ActiveAssetData(StreamsCore):
     Args:
       coin: Coin symbol to subscribe to, e.g. `BTC`.
       user: Wallet address to subscribe to.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -62,6 +64,7 @@ class ActiveAssetData(StreamsCore):
     return self.subscribe(
       'activeAssetData',
       Parameters(coin=coin, user=user),
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=WsActiveAssetData,

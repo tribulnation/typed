@@ -78,12 +78,14 @@ class ActiveAssetCtx(StreamsCore):
     self,
     coin: str,
     *,
+    keep_latest: bool = False,
     validate: bool | None = None,
   ) -> StreamManager[Payload, Any, Any]:
     """Subscribe to Hyperliquid `activeAssetCtx` updates: the live market context (prices, funding, volume) for one coin.
 
     Args:
       coin: Coin symbol to subscribe to, e.g. `BTC`.
+      keep_latest: Keep only the newest frame per subscription: older unread frames are dropped, counted in the stream's `skipped`, and never decoded where the transport can route raw frames. Suitable only when each frame is the full state for this subscription; wrong for diffs or incremental depth, trades, fills, account events, or streams carrying different symbols in different frames (e.g. the all-symbol `!bookTicker`).
       validate: Override this call's pushed-payload validation; falls back to the client-level default when omitted.
 
     References:
@@ -92,6 +94,7 @@ class ActiveAssetCtx(StreamsCore):
     return self.subscribe(
       'activeAssetCtx',
       Parameters(coin=coin),
+      keep_latest=keep_latest,
       validate=validate,
       request_type=Parameters,
       response_type=Payload,
