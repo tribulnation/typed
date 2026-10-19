@@ -3,7 +3,7 @@
 Aster Chain REST, its JSON-RPC and BAPI have no testnet: they always resolve to mainnet.
 """
 
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 Surface = Literal['futures', 'spot', 'prediction']
 
@@ -46,3 +46,36 @@ def streams_url(surface: Surface, *, mainnet: bool) -> str:
 def user_stream_url(surface: Surface, *, mainnet: bool) -> str:
   """User-data stream base URL of `surface`; the listenKey is appended as a path segment."""
   return STREAM_HOSTS[surface][0 if mainnet else 1] + '/ws'
+
+
+class SurfaceUrls(TypedDict, total=False):
+  """URL overrides of one trading surface; a missing key keeps the network's default."""
+
+  rest: str
+  """REST base URL, version prefix included, e.g. `https://fapi.asterdex.com/fapi/v3`."""
+  streams: str
+  """Combined market-data stream URL, e.g. `wss://fstream.asterdex.com/stream`."""
+  user_stream: str
+  """User-data stream base URL, e.g. `wss://fstream.asterdex.com/ws`; the listenKey is
+  appended as a path segment."""
+
+
+class ChainUrls(TypedDict, total=False):
+  """URL overrides of Aster Chain; a missing key keeps the default."""
+
+  rest: str
+  """REST base URL, e.g. `https://chainapi.asterdex.com/aster-chain/v3`."""
+  rpc: str
+  """JSON-RPC URL, e.g. `https://tapi.asterdex.com/info`."""
+
+
+class Urls(TypedDict, total=False):
+  """Base URL overrides, per surface. Each one takes precedence over the URL the
+  `mainnet` flag selects; a missing key keeps it."""
+
+  futures: SurfaceUrls
+  spot: SurfaceUrls
+  prediction: SurfaceUrls
+  chain: ChainUrls
+  bapi: str
+  """BAPI base URL, e.g. `https://www.asterdex.com/bapi`."""

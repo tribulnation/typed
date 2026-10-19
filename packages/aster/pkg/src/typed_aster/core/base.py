@@ -21,9 +21,13 @@ from .transport.jsonrpc import HttpJsonRpcClient
 from .transport.ws.streams import SocketStreamClient
 from .transport.ws.user_stream import UserStreamSocketClient
 from .urls import (
+  BAPI_URL,
   CHAIN_REST_URL,
   CHAIN_RPC_URL,
+  ChainUrls,
   Surface,
+  SurfaceUrls,
+  Urls,
   rest_url,
   streams_url,
   user_stream_url,
@@ -46,20 +50,32 @@ class SurfaceClients:
     credentials: Credentials | None,
     mainnet: bool,
     validate: bool,
+    urls: SurfaceUrls | None = None,
   ) -> Self:
-    """Build the transports of `surface` for one network."""
+    """Build the transports of `surface` for one network.
+
+    Args:
+      surface: The trading surface.
+      credentials: Resolved credentials, or `None` for public calls only.
+      mainnet: Use mainnet when true, testnet when false.
+      validate: Validate responses.
+      urls: URL overrides, each taking precedence over the network's default.
+    """
+    urls = urls or {}
     return cls(
       client=HttpRpcClient(
-        base_url=rest_url(surface, mainnet=mainnet),
+        base_url=urls.get('rest') or rest_url(surface, mainnet=mainnet),
         credentials=credentials,
         mainnet=mainnet,
         validate=validate,
       ),
       streams_client=SocketStreamClient.new(
-        streams_url(surface, mainnet=mainnet), validate=validate
+        urls.get('streams') or streams_url(surface, mainnet=mainnet),
+        validate=validate,
       ),
       user_stream_client=UserStreamSocketClient(
-        base_url=user_stream_url(surface, mainnet=mainnet), validate=validate
+        base_url=urls.get('user_stream') or user_stream_url(surface, mainnet=mainnet),
+        validate=validate,
       ),
     )
 
@@ -102,16 +118,31 @@ class ChainClients:
   rpc_client: HttpJsonRpcClient
 
   @classmethod
-  def build(cls, *, credentials: Credentials | None, validate: bool) -> Self:
-    """Build the Aster Chain transports. Signed calls always sign for mainnet."""
+  def build(
+    cls,
+    *,
+    credentials: Credentials | None,
+    validate: bool,
+    urls: ChainUrls | None = None,
+  ) -> Self:
+    """Build the Aster Chain transports. Signed calls always sign for mainnet.
+
+    Args:
+      credentials: Resolved credentials, or `None` for public calls only.
+      validate: Validate responses.
+      urls: URL overrides, each taking precedence over the mainnet default.
+    """
+    urls = urls or {}
     return cls(
       client=HttpRpcClient(
-        base_url=CHAIN_REST_URL,
+        base_url=urls.get('rest') or CHAIN_REST_URL,
         credentials=credentials,
         mainnet=True,
         validate=validate,
       ),
-      rpc_client=HttpJsonRpcClient(url=CHAIN_RPC_URL, validate=validate),
+      rpc_client=HttpJsonRpcClient(
+        url=urls.get('rpc') or CHAIN_RPC_URL, validate=validate
+      ),
     )
 
   async def __aenter__(self) -> Self:
@@ -156,6 +187,7 @@ class AsterBase:
     public: bool = False,
     mainnet: bool = True,
     validate: bool = True,
+    urls: Urls | None = None,
   ) -> Self:
     """Create an Aster client.
 
@@ -172,6 +204,9 @@ class AsterBase:
         with `mainnet=False` it serves public calls only. BAPI has none either, and
         always calls mainnet.
       validate: Validate responses by default.
+      urls: Base URL overrides per surface (REST, market streams, user-data stream;
+        Aster Chain REST and JSON-RPC; BAPI). Each takes precedence over the URL
+        `mainnet` selects; omitted ones keep it.
 
     Raises:
       AuthError: No usable credentials, or they are inconsistent.
@@ -179,10 +214,15 @@ class AsterBase:
     credentials = resolve_credentials(
       user=user, signer=signer, main=main, public=public
     )
+    urls = urls or {}
 
     def surface(name: Surface) -> SurfaceClients:
       return SurfaceClients.build(
-        name, credentials=credentials, mainnet=mainnet, validate=validate
+        name,
+        credentials=credentials,
+        mainnet=mainnet,
+        validate=validate,
+        urls=urls.get(name),
       )
 
     return cls(
@@ -190,9 +230,11 @@ class AsterBase:
       spot_clients=surface('spot'),
       prediction_clients=surface('prediction'),
       chain_clients=ChainClients.build(
-        credentials=credentials if mainnet else None, validate=validate
+        credentials=credentials if mainnet else None,
+        validate=validate,
+        urls=urls.get('chain'),
       ),
-      bapi_client=BapiClient(validate=validate),
+      bapi_client=BapiClient(base_url=urls.get('bapi') or BAPI_URL, validate=validate),
     )
 
   async def __aenter__(self) -> Self:
