@@ -1,0 +1,103 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API key, Stark private key and vault — see
+    [Authenticated setup](/typed/extended/authenticated-setup) for where to find them.
+    Market data needs none of them.
+  code: |
+    # .env
+    EXTENDED_API_KEY="your_api_key"
+    EXTENDED_STARK_PRIVATE_KEY="0x..."
+    EXTENDED_VAULT="123456"
+
+install:
+  body: >-
+    Install the client and `python-dotenv` to load the `.env` file. The `fast` extra adds
+    native Stark signing.
+  code: pip install "typed-extended[fast]" python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_extended import Extended
+
+    load_dotenv()
+
+    async with Extended.new() as client:
+      balance = await client.account.balance()
+      print(balance['equity'], balance['availableForTrade'])
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Markets, prices, order books, trades and candles. Public, no credentials needed — see
+      [Fetch market data](/typed/extended/how-to/fetch-market-data).
+    code: |
+      markets = await client.info.markets(['BTC-USD'])  # market config and trading rules
+      stats = await client.info.market_stats('BTC-USD')  # last, mark, index price, funding
+      book = await client.info.orderbook('BTC-USD')  # order book
+      trades = await client.info.trades('BTC-USD')  # recent trades
+      candles = await client.info.candles('BTC-USD', candle_type='trades', interval='PT1H', limit=24)  # candles
+
+  - title: Listen to live streams
+    body: >-
+      Public order book, trade and price streams, plus your own account updates — see
+      [Listen to live streams](/typed/extended/how-to/listen-to-live-streams).
+    code: |
+      # order book: a snapshot, then deltas (public)
+      async with client.streams.orderbooks('BTC-USD') as stream:
+        async for message in stream:
+          print(message['type'], message['data']['b'][:1], message['data']['a'][:1])
+      # your orders, trades, balance and positions (API key)
+      async with client.streams.account() as stream:
+        async for message in stream:
+          print(message['type'], message.get('data'))
+
+  - title: Place & manage orders
+    body: >-
+      Signed limit orders with take-profit and stop-loss, cancels and mass cancel. Needs the
+      Stark key — see [Place & manage orders](/typed/extended/how-to/place-and-manage-orders).
+    code: |
+      from decimal import Decimal
+      placed = await client.orders.create({
+        'type': 'LIMIT', 'market': 'BTC-USD', 'side': 'BUY',
+        'qty': Decimal('0.001'), 'price': Decimal('80000'),
+        'timeInForce': 'GTT', 'selfTradeProtectionLevel': 'ACCOUNT', 'tpSlType': 'ORDER',
+        'takeProfit': {'triggerPrice': Decimal('90000'), 'triggerPriceType': 'MARK', 'price': Decimal('90000'), 'priceType': 'LIMIT'},
+      })  # place a signed limit order with TP
+      order = await client.account.order(placed['id'])  # check its status
+      orders = await client.account.open_orders(['BTC-USD'])  # list open orders
+      await client.orders.cancel(placed['id'])  # cancel it
+      await client.orders.mass_cancel(cancel_all=True)  # cancel every open order
+
+  - title: Fetch account data
+    body: >-
+      Balances, positions, history and fees. An API key is enough — see
+      [Fetch account data](/typed/extended/how-to/fetch-account-data).
+    code: |
+      balance = await client.account.balance()  # equity and margin
+      positions = await client.account.positions()  # open positions
+      trades = await client.account.trades(['BTC-USD'], limit=50)  # one page of fills
+      fees = await client.account.fees(['BTC-USD'])  # maker and taker rates
+
+  - title: Paginate through results
+    body: >-
+      Every history endpoint has a `_paged` variant that follows the cursor — see
+      [Paginate through results](/typed/extended/how-to/paginate-through-results).
+    code: |
+      trades = await client.account.trades_paged(['BTC-USD'], limit=100)  # every page, flattened
+      async for page in client.account.orders_history_paged(limit=100):
+        print(len(page))  # one page at a time
+
+  - title: Transfer & withdraw
+    body: >-
+      Move funds between sub-accounts and withdraw to Starknet or EVM chains, signed with the
+      Stark key — see [Transfer & withdraw](/typed/extended/how-to/transfer-and-withdraw).
+    code: |
+      from decimal import Decimal
+      await client.funds.transfer(from_account=1, to_account=2, amount=Decimal('10'), transferred_asset='USD')  # between sub-accounts
+      config = await client.funds.bridge_config()  # supported EVM chains
+      quote = await client.funds.bridge_quote(chain_in='STRK', chain_out='ARB', amount=Decimal('25'))  # bridge quote
+      await client.funds.commit_quote(quote['id'])  # commit it
+      await client.funds.withdraw({'chainId': 'ARB', 'amount': Decimal('25'), 'asset': 'USD', 'quoteId': quote['id']})  # withdraw
+      history = await client.account.asset_operations_paged()  # deposits, withdrawals, transfers
