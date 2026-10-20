@@ -1,0 +1,152 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline combobox.
+# Mirrors docs/index.md and docs/how-to/*.md; `body` fields are inline markdown, and links
+# are absolute native routes (`/typed/grvt/...`).
+
+env_setup:
+  body: >-
+    Create a `.env` with your GRVT testnet API key and its signer private key — see
+    [API keys setup](/typed/grvt/api-keys). For production, drop `TESTNET_` from the names.
+  code: |
+    # .env
+    GRVT_TESTNET_API_KEY="your_testnet_api_key"
+    GRVT_TESTNET_PRIVATE_KEY="0xyour_testnet_signer_private_key"
+    GRVT_TESTNET_TRADING_ACCOUNT_ID="your_testnet_sub_account_id"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-grvt python-dotenv
+
+first_call:
+  body: >-
+    Load the environment, then make your first call. Every example here runs on testnet;
+    `Grvt.new()` without `env='testnet'` connects to production, where orders, transfers and
+    withdrawals move real funds.
+  code: |
+    from dotenv import load_dotenv
+    from typed_grvt import Grvt
+
+    load_dotenv()
+
+    async with Grvt.new(env='testnet') as client:
+      summary = await client.trading.account_summary()
+      print(summary['total_equity'])
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Instruments, tickers, order books, trades, candles and funding rates. Public, no
+      credentials needed. See [Fetch Market Data](/typed/grvt/how-to/fetch-market-data).
+    code: |
+      btc = 'BTC_USDT_Perp'
+      perps = await client.market.instruments(kind=['PERPETUAL'])  # instruments
+      ticker = await client.market.ticker(btc)  # ticker
+      book = await client.market.orderbook(btc, depth=10)  # order book
+      trades = await client.market.trades(btc, limit=100)  # recent trades
+      # hourly candles
+      candles = await client.market.candlesticks(btc, interval='CI_1_H', type='TRADE')
+      funding = await client.market.funding_rate(instrument=btc)  # funding rates
+
+  - title: Fetch account data
+    body: >-
+      Balances, positions and history of your trading sub-account. See
+      [Fetch Account Data](/typed/grvt/how-to/fetch-account-data).
+    code: |
+      summary = await client.trading.account_summary()  # equity and balances
+      funding = await client.trading.funding_account_summary()  # funding account
+      positions = await client.trading.positions()  # open positions
+      fills = await client.trading.fill_history(limit=100)  # your fills
+      orders = await client.trading.order_history(limit=100)  # past orders
+      payments = await client.trading.funding_payment_history()  # funding payments
+
+  - title: Place & manage orders
+    body: >-
+      Orders are signed locally. Track them by your own `client_order_id`, in `[2**63, 2**64)`.
+      Size them above the instrument's `min_notional`. See
+      [Place & Manage Orders](/typed/grvt/how-to/place-and-manage-orders).
+    code: |
+      from decimal import Decimal
+      from typed_grvt.schemas import LimitOrder
+      from typed_grvt.trading.bulk_orders import BulkCancelByClientOrderIds
+
+      cid = str(2**63 + 1)  # your client order id
+      order: LimitOrder = {
+        'time_in_force': 'GOOD_TILL_TIME',
+        'post_only': True,
+        'legs': [
+          {
+            'instrument': 'BTC_USDT_Perp',
+            'size': Decimal('0.002'),  # 120 USDT at this price, above min_notional
+            'limit_price': Decimal('60000'),  # far below the market: rests on the book
+            'is_buying_asset': True,
+          }
+        ],
+        'metadata': {'client_order_id': cid},
+      }
+      await client.trading.create_order(order)  # place a post-only limit order
+      state = await client.trading.order({'client_order_id': cid})  # look it up
+      open_orders = await client.trading.open_orders(base=['BTC'])  # list open orders
+      await client.trading.cancel_order({'client_order_id': cid})  # cancel it
+      await client.trading.cancel_all_orders(base=['BTC'])  # cancel every open BTC order
+      batch: BulkCancelByClientOrderIds = {'client_order_i_ds': [cid]}
+      await client.trading.bulk_orders(batch)  # bulk cancel, up to 100 orders per call
+
+  - title: Paginate through results
+    body: >-
+      Paginated history (fills, orders, positions, payments, funding movements, public
+      trades, funding rates, candles, referrals) has a `_paged` variant that walks the whole
+      range. See
+      [Paginate Through Results](/typed/grvt/how-to/paginate-through-results).
+    code: |
+      fills = await client.trading.fill_history_paged(limit=1000)  # every fill
+      async for page in client.market.trade_history_paged(instrument='BTC_USDT_Perp'):
+        print(len(page))  # one page at a time
+        break
+
+  - title: Listen to live streams
+    body: >-
+      Public market feeds and your own order, fill and position updates over WebSocket. See
+      [Listen To Live Streams](/typed/grvt/how-to/listen-to-live-streams).
+    code: |
+      async with client.market_streams.mini_ticker('BTC_USDT_Perp', rate=500) as stream:
+        async for mini in stream:
+          print(mini.get('mark_price'))  # live prices (public)
+          break
+      async with client.trading_streams.fills() as stream:
+        async for fill in stream:
+          print(fill['price'], fill['size'])  # your fills
+          break
+
+  - title: Manage transfers & withdrawals
+    body: >-
+      Deposit addresses, signed transfers and withdrawals, and their history. Transfers and
+      withdrawals need an API key with the matching permission. See
+      [Manage Transfers & Withdrawals](/typed/grvt/how-to/manage-transfers-and-withdrawals).
+    code: |
+      from decimal import Decimal
+
+      addresses = await client.edge.deposit_addresses()  # deposit address per chain
+      funding = await client.trading.funding_account_summary()
+      main = funding['result']['main_account_id']
+      subs = await client.trading.sub_accounts()  # your trading sub-accounts
+      await client.trading.transfer(  # fund one of them
+        from_account_id=main,
+        from_sub_account_id='0',
+        to_account_id=main,
+        to_sub_account_id=subs['sub_account_ids'][0],
+        currency='USDT',
+        num_tokens=Decimal('100'),
+        transfer_type='STANDARD',
+        transfer_metadata='',
+        from_wallet_type='FUNDING',
+        to_wallet_type='FUTURES',
+      )
+      currencies = await client.market.currency()
+      usdt = next(c for c in currencies if c['symbol'] == 'USDT')
+      fee = await client.trading.withdrawal_fee(usdt['id'])  # withdrawal fee
+      await client.trading.withdrawal(  # withdraw to Ethereum
+        from_account_id=main,
+        to_eth_address='0xYourEthereumAddress',
+        currency='USDT',
+        num_tokens=Decimal('50'),
+      )
+      transfers = await client.trading.transfer_history()  # transfer history
