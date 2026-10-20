@@ -20,24 +20,26 @@ from .transport.http import HttpRpcClient
 from .transport.ws.api import SocketRpcClient
 from .transport.ws.private_stream import PrivateStreamSocketClient
 from .transport.ws.streams import SocketStreamClient
-
-SPOT_URL = 'https://api.binance.com'
-USDM_FUTURES_URL = 'https://fapi.binance.com'
-COINM_FUTURES_URL = 'https://dapi.binance.com'
-OPTIONS_URL = 'https://eapi.binance.com'
-PORTFOLIO_MARGIN_URL = 'https://papi.binance.com'
-STREAM_URL = 'wss://stream.binance.com:9443/stream'
-USDM_FUTURES_STREAM_URL = 'wss://fstream.binance.com/market/stream'
-USDM_FUTURES_PUBLIC_STREAM_URL = 'wss://fstream.binance.com/public/stream'
-COINM_FUTURES_STREAM_URL = 'wss://dstream.binance.com/stream'
-OPTIONS_STREAM_URL = 'wss://nbstream.binance.com/eoptions/stream'
-WS_API_URL = 'wss://ws-api.binance.com:443/ws-api/v3'
-USDM_FUTURES_WS_API_URL = 'wss://ws-fapi.binance.com/ws-fapi/v1'
-COINM_FUTURES_WS_API_URL = 'wss://ws-dapi.binance.com/ws-dapi/v1'
-USDM_FUTURES_PRIVATE_STREAM_URL = 'wss://fstream.binance.com/private/ws'
-COINM_FUTURES_PRIVATE_STREAM_URL = 'wss://dstream.binance.com/ws'
-OPTIONS_PRIVATE_STREAM_URL = 'wss://fstream.binance.com/private/ws'
-PORTFOLIO_MARGIN_PRIVATE_STREAM_URL = 'wss://fstream.binance.com/pm/ws'
+from .urls import (
+  COINM_FUTURES_PRIVATE_STREAM_URL,
+  COINM_FUTURES_STREAM_URL,
+  COINM_FUTURES_URL,
+  COINM_FUTURES_WS_API_URL,
+  OPTIONS_PRIVATE_STREAM_URL,
+  OPTIONS_STREAM_URL,
+  OPTIONS_URL,
+  PORTFOLIO_MARGIN_PRIVATE_STREAM_URL,
+  PORTFOLIO_MARGIN_URL,
+  SPOT_URL,
+  STREAM_URL,
+  USDM_FUTURES_PRIVATE_STREAM_URL,
+  USDM_FUTURES_PUBLIC_STREAM_URL,
+  USDM_FUTURES_STREAM_URL,
+  USDM_FUTURES_URL,
+  USDM_FUTURES_WS_API_URL,
+  WS_API_URL,
+  Urls,
+)
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -193,6 +195,7 @@ class BinanceBase:
     recv_window: int | None = None,
     validate: bool = True,
     http: HttpClient | None = None,
+    urls: Urls | None = None,
   ) -> Self:
     """Build a Binance client. Every surface shares one set of credentials -- Binance's
     HMAC signing scheme is uniform across REST hosts and, per docs (confirmed live), the
@@ -206,22 +209,32 @@ class BinanceBase:
         Binance's own 5000ms default.
       validate: Validate responses.
       http: HTTP transport override; closed when this client exits.
+      urls: Base URL overrides per product (REST, market/public streams, user-data
+        stream, WS API). Each takes precedence over the default; omitted ones keep it.
     """
     credentials: Credentials | None = resolve_credentials(
       api_key, secret_key, public=public
     )
+    urls = urls or {}
+    spot = urls.get('spot', {})
+    usdm = urls.get('usdm_futures', {})
+    coinm = urls.get('coinm_futures', {})
+    options = urls.get('options', {})
+    pm = urls.get('portfolio_margin', {})
     return cls(
       spot_clients=SpotClients(
         http_client=HttpRpcClient(
           http=http if http is not None else HttpClient(),
-          base_url=SPOT_URL,
+          base_url=spot.get('http') or SPOT_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
         ),
-        streams_client=SocketStreamClient.new(url=STREAM_URL, validate=validate),
+        streams_client=SocketStreamClient.new(
+          url=spot.get('streams') or STREAM_URL, validate=validate
+        ),
         ws_client=SocketRpcClient.new(
-          url=WS_API_URL,
+          url=spot.get('ws') or WS_API_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
@@ -230,24 +243,24 @@ class BinanceBase:
       usdm_futures_clients=UsdMFuturesClients(
         http_client=HttpRpcClient(
           http=http if http is not None else HttpClient(),
-          base_url=USDM_FUTURES_URL,
+          base_url=usdm.get('http') or USDM_FUTURES_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
         ),
         streams_client=SocketStreamClient.new(
-          url=USDM_FUTURES_STREAM_URL, validate=validate
+          url=usdm.get('streams') or USDM_FUTURES_STREAM_URL, validate=validate
         ),
         public_streams_client=SocketStreamClient.new(
-          url=USDM_FUTURES_PUBLIC_STREAM_URL,
+          url=usdm.get('public_streams') or USDM_FUTURES_PUBLIC_STREAM_URL,
           validate=validate,
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=USDM_FUTURES_PRIVATE_STREAM_URL,
+          base_url=usdm.get('private_streams') or USDM_FUTURES_PRIVATE_STREAM_URL,
           validate=validate,
         ),
         ws_client=SocketRpcClient.new(
-          url=USDM_FUTURES_WS_API_URL,
+          url=usdm.get('ws') or USDM_FUTURES_WS_API_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
@@ -256,20 +269,20 @@ class BinanceBase:
       coinm_futures_clients=CoinMFuturesClients(
         http_client=HttpRpcClient(
           http=http if http is not None else HttpClient(),
-          base_url=COINM_FUTURES_URL,
+          base_url=coinm.get('http') or COINM_FUTURES_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
         ),
         streams_client=SocketStreamClient.new(
-          url=COINM_FUTURES_STREAM_URL, validate=validate
+          url=coinm.get('streams') or COINM_FUTURES_STREAM_URL, validate=validate
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=COINM_FUTURES_PRIVATE_STREAM_URL,
+          base_url=coinm.get('private_streams') or COINM_FUTURES_PRIVATE_STREAM_URL,
           validate=validate,
         ),
         ws_client=SocketRpcClient.new(
-          url=COINM_FUTURES_WS_API_URL,
+          url=coinm.get('ws') or COINM_FUTURES_WS_API_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
@@ -278,29 +291,29 @@ class BinanceBase:
       options_clients=OptionsClients(
         http_client=HttpRpcClient(
           http=http if http is not None else HttpClient(),
-          base_url=OPTIONS_URL,
+          base_url=options.get('http') or OPTIONS_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
         ),
         streams_client=SocketStreamClient.new(
-          url=OPTIONS_STREAM_URL, validate=validate
+          url=options.get('streams') or OPTIONS_STREAM_URL, validate=validate
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=OPTIONS_PRIVATE_STREAM_URL,
+          base_url=options.get('private_streams') or OPTIONS_PRIVATE_STREAM_URL,
           validate=validate,
         ),
       ),
       portfolio_margin_clients=PortfolioMarginClients(
         http_client=HttpRpcClient(
           http=http if http is not None else HttpClient(),
-          base_url=PORTFOLIO_MARGIN_URL,
+          base_url=pm.get('http') or PORTFOLIO_MARGIN_URL,
           credentials=credentials,
           recv_window=recv_window,
           validate=validate,
         ),
         private_streams_client=PrivateStreamSocketClient(
-          base_url=PORTFOLIO_MARGIN_PRIVATE_STREAM_URL,
+          base_url=pm.get('private_streams') or PORTFOLIO_MARGIN_PRIVATE_STREAM_URL,
           validate=validate,
         ),
       ),
