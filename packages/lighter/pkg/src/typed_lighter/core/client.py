@@ -9,7 +9,7 @@ share them, so a surface's own `async with` opens and closes nothing.
 
 from typing_extensions import Awaitable, Mapping, Self, TypeVar
 from contextlib import AsyncExitStack
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import asyncio
 import os
 
@@ -27,7 +27,7 @@ from .auth import (
   resolve_api_keys,
 )
 from .exc import AuthError, BadRequest
-from .networks import NETWORKS, Network, NetworkProfile
+from .networks import BRIDGE_URL, NETWORKS, Network, NetworkProfile
 from .signer.account import AccountSigner
 from .signer.key import Signer
 from .transport.http import HttpRpcClient
@@ -156,6 +156,10 @@ class ClientBase:
     bridge_api_key: str | None = None,
     public: bool = False,
     validate: bool = True,
+    api_url: str | None = None,
+    ws_url: str | None = None,
+    explorer_url: str | None = None,
+    bridge_url: str | None = None,
   ) -> Self:
     """Build a client. Three credential modes: full (API keys: every surface), read-only
     (an auth token: private reads and streams, no transactions) and `public=True`.
@@ -176,6 +180,13 @@ class ClientBase:
       bridge_api_key: Deposit bridge key (`{prefix}_BRIDGE_API_KEY`).
       public: Skip credentials entirely: public reads and streams only.
       validate: Validate responses by default.
+      api_url: Main REST API base URL. If provided, takes precedence over `network`'s;
+        the chain id and credential variables still come from `network`.
+      ws_url: WebSocket stream URL. If provided, takes precedence over `network`'s.
+      explorer_url: Explorer API base URL. If provided, takes precedence over
+        `network`'s.
+      bridge_url: Deposit bridge base URL. If provided, takes precedence over the
+        default.
 
     Raises:
       AuthError: No usable credentials were found (and `public` is false), or an API
@@ -187,6 +198,12 @@ class ClientBase:
       raise BadRequest(
         f'Unknown network {network!r}: one of {", ".join(map(repr, NETWORKS))}'
       )
+    profile = replace(
+      profile,
+      api_url=api_url or profile.api_url,
+      ws_url=ws_url or profile.ws_url,
+      explorer_url=explorer_url or profile.explorer_url,
+    )
     bridge_variable = f'{profile.env_prefix}_BRIDGE_API_KEY'
     credentials = resolve_credentials(
       profile=profile,
@@ -209,6 +226,7 @@ class ClientBase:
       ws=SocketClient.new(profile.ws_url, tokens=credentials.tokens, validate=validate),
       explorer_client=ExplorerClient(base_url=profile.explorer_url, validate=validate),
       bridge_client=BridgeClient(
+        base_url=bridge_url or BRIDGE_URL,
         api_key=bridge_api_key or os.environ.get(bridge_variable) or None,
         api_key_variable=bridge_variable,
         validate=validate,
