@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-margin_trade"
+version = "0.1.0"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the Margin Trade API."
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core>=0.11", "lazy-loader", "httpx", "pydantic", "websockets",
+  "cryptography", "base58", "rfc8785",
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[tool.setuptools.package-data]
+"typed_margin_trade" = ["py.typed", "*.pyi", "**/*.pyi"]
+
+[project.urls]
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/margin_trade"
+Website = "https://tribulnation.com/typed"

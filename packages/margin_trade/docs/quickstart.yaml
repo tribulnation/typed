@@ -1,0 +1,103 @@
+env_setup:
+  body: >-
+    Create a `.env` with your account's Ed25519 private key; market data needs none. These
+    examples use testnet (`mainnet=False`, with a testnet key in
+    `MARGIN_TRADE_TESTNET_PRIVATE_KEY`); leave `mainnet` out and use a mainnet key for
+    mainnet. See [Authenticated Setup](https://tribulnation.com/typed/margin_trade/authenticated-setup) for keys and
+    agent wallets.
+  code: |
+    # .env
+    MARGIN_TRADE_TESTNET_PRIVATE_KEY="your_private_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-margin_trade python-dotenv
+
+first_call:
+  body: Load the environment, pass the key to a testnet client, then make your first call.
+  code: |
+    import os
+    from dotenv import load_dotenv
+    from typed_margin_trade import MarginTrade, Wallet
+
+    load_dotenv()
+    wallet = Wallet.parse(os.environ['MARGIN_TRADE_TESTNET_PRIVATE_KEY'])
+
+    async with MarginTrade.new(wallet, mainnet=False) as client:
+      book = await client.info.l2_book('BTC')
+      bids = book['levels'][0] if book['levels'] else []  # an empty book has no levels
+      print(bids[0]['px'] if bids else 'no bids')
+
+how_tos:
+  - title: Fetch market data
+    body: Markets, order books, prices and candles. Public, no key needed.
+    code: |
+      from datetime import datetime, timedelta, timezone
+
+      meta = await client.info.meta()  # markets; each one's `index` is its asset index
+      book = await client.info.l2_book('BTC')  # order book snapshot
+      mids = await client.info.all_mids()  # every market's mid price
+      candles = await client.info.candle_snapshot({'coin': 'BTC', 'interval': '1h', 'startTime': datetime.now(timezone.utc) - timedelta(days=1)})  # candles
+      contracts = await client.coingecko.derivatives.contracts()  # funding and open interest
+
+  - title: Fetch account data
+    body: Positions, balances, fills and transfers, read by account address.
+    code: |
+      state = await client.info.clearinghouse_state(user=wallet.address)  # positions and margin
+      spot = await client.info.spot_clearinghouse_state(wallet.address)  # spot balances
+      fills = await client.info.user_fills(wallet.address)  # recent fills
+      transfers = await client.user.get_transfer_history(wallet.address)  # deposits, withdrawals, transfers
+      profile = await client.user.get_user()  # your profile (signed)
+
+  - title: Place & manage orders
+    body: >-
+      Place, list, modify and cancel orders, signed by your key or an agent. Verify a
+      cancel with `open_orders`.
+    code: |
+      from decimal import Decimal
+
+      index = {m['name']: m['index'] for m in (await client.info.meta())['universe']}  # asset index by market
+      result = await client.exchange.order([{'a': index['BTC'], 'b': True, 'p': Decimal('60000'), 's': Decimal('0.001'), 'r': False, 't': {'limit': {'tif': 'Alo'}}}], grouping='na')  # place
+      orders = await client.info.open_orders(user=wallet.address)  # list open orders
+      if orders:
+        found = await client.info.order_status(user=wallet.address, oid=orders[0]['oid'])  # query one
+        await client.exchange.modify(orders[0]['oid'], order={'a': index[orders[0]['coin']], 'b': True, 'p': Decimal('59000'), 's': Decimal('0.001'), 'r': False, 't': {'limit': {'tif': 'Alo'}}})  # modify
+      orders = await client.info.open_orders(user=wallet.address)  # re-list: a modify re-issues the oid
+      if orders:
+        await client.exchange.cancel([{'a': index[o['coin']], 'o': o['oid']} for o in orders])  # cancel all open
+      await client.exchange.update_leverage(asset=index['BTC'], is_cross=True, leverage=2)  # set leverage
+
+  - title: Paginate through results
+    body: Walk paged calls automatically, all at once or one page at a time.
+    code: |
+      from datetime import datetime, timedelta, timezone
+
+      fills = await client.info.user_fills_by_time_paged(wallet.address, start_time=datetime.now(timezone.utc) - timedelta(days=30))  # every fill in range
+      async for page in client.info.get_liquidations_paged(page_size=100):  # one page at a time
+        print(len(page))  # every account's liquidations: filter on page[i]['user']
+        break  # the full walk is ~750k rows on testnet
+      feed = await client.info.get_liquidation_feed_paged('BTC', start_time=datetime.now(timezone.utc) - timedelta(days=1))  # last day's liquidation events
+      announcements = await client.public.announcements.list_paged()  # every announcement
+
+  - title: Listen to live streams
+    body: Order book, trades and your own order updates over one WebSocket.
+    code: |
+      async with client.streams.l2_book('BTC') as stream:  # order book snapshots
+        async for book in stream:
+          print(book['time'])
+          break
+      async with client.streams.order_updates(user=wallet.address) as stream:  # your orders
+        async for updates in stream:
+          print([u['status'] for u in updates])
+          break
+
+  - title: Manage deposits & withdrawals
+    body: Deposit addresses, withdrawals, perp/spot transfers and the testnet faucet.
+    code: |
+      from decimal import Decimal
+
+      address = await client.user.get_deposit_address(asset='USDC', chain='solana')  # where to deposit
+      await client.exchange.withdraw(destination=wallet.address, amount='2000000')  # withdraw 2 USDC
+      await client.exchange.usd_class_transfer(Decimal('1'), to_perp=False)  # perp -> spot
+      history = await client.user.get_transfer_history(wallet.address)  # transfer history
+      claim = await client.user.faucet_claim()  # testnet USDC, once per day
