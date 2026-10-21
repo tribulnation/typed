@@ -41,14 +41,18 @@ without sending.
 
 ## Move Between Perp And Spot
 
+`amount` is in micro-USDC, as a whole-number string (the same unit as `withdraw`):
+`'1000000'` moves 1 USDC, `'1'` only 0.000001 USDC. Sign with the master key: an agent
+cannot move the master's funds between wallets, and the client refuses the call with
+`AuthError` before sending it.
+
 ```python
 import os
-from decimal import Decimal
 from typed_margin_trade import MarginTrade
 
 async with MarginTrade.new(os.environ['MARGIN_TRADE_TESTNET_PRIVATE_KEY'], mainnet=False) as client:
-  await client.exchange.usd_class_transfer(Decimal('1'), to_perp=False)  # perp -> spot
-  await client.exchange.usd_class_transfer(Decimal('1'), to_perp=True)  # spot -> perp
+  await client.exchange.usd_class_transfer('1000000', to_perp=False)  # 1 USDC perp -> spot
+  await client.exchange.usd_class_transfer('1000000', to_perp=True)  # 1 USDC spot -> perp
 ```
 
 ## History

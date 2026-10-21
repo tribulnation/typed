@@ -115,6 +115,13 @@ All of a client's subscriptions share one connection, so this ends every one of 
 public channels included, each with `NetworkError`. To be sure no fill was missed, read
 `info.user_fills` after subscribing again.
 
+## Keepalive
+
+The client pings the connection every 10 seconds, which the venue needs to keep it open: a
+connection pinged less often is closed within about a minute, busy or idle. Change it with
+`MarginTrade.new(..., ping_interval=timedelta(seconds=...))`, keeping it well under 30
+seconds.
+
 ## Timeouts
 
 Each subscribe and unsubscribe waits for the server's reply up to the client's timeout (10

@@ -1,5 +1,6 @@
-"""Margin Trade wire timestamp types: epoch milliseconds everywhere (`depositHistory`'s
-snake_case `created_at`/`last_updated` included), ISO 8601 strings on `/version` only.
+"""Margin Trade wire timestamp types: epoch milliseconds almost everywhere (`depositHistory`'s
+snake_case `created_at`/`last_updated` included), epoch seconds on the CoinGecko contracts'
+`next_funding_rate_timestamp`, ISO 8601 strings on `/version` only.
 """
 
 from typing_extensions import Annotated
@@ -17,6 +18,16 @@ TimestampMillis = Annotated[
   PlainSerializer(timestamp_millis.dump, when_used='json'),
 ]
 """An epoch-millisecond field, as a UTC `datetime`."""
+
+timestamp_seconds = EpochConverter.seconds(tz=timezone.utc)
+"""Converter for epoch-second fields (`next_funding_rate_timestamp`)."""
+
+TimestampSeconds = Annotated[
+  datetime,
+  BeforeValidator(timestamp_seconds.parse),
+  PlainSerializer(timestamp_seconds.dump, when_used='json'),
+]
+"""An epoch-second field, as a UTC `datetime`."""
 
 timestamp_iso = IsoConverter()
 """Converter for ISO 8601 string fields (`build_time`)."""

@@ -9,6 +9,7 @@ so a surface's own `async with` opens and closes nothing.
 from typing_extensions import Self
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
+from datetime import timedelta
 
 from typed_core.http import HttpClient
 
@@ -44,6 +45,7 @@ class ClientBase:
     mainnet: bool = True,
     public: bool = False,
     validate: bool = True,
+    ping_interval: timedelta = timedelta(seconds=10),
   ) -> Self:
     """Build a client.
 
@@ -57,6 +59,8 @@ class ClientBase:
       public: Build without a wallet (none may be given): `info`, `public`, `coingecko`,
         `streams` and the unsigned `user` reads only.
       validate: Validate responses by default.
+      ping_interval: How often `streams` pings its connection. The venue closes a connection
+        pinged every 30 s within about a minute; keep it well below that.
 
     Raises:
       ValueError: `public` is true and a `wallet` or `vault` was given too.
@@ -73,7 +77,9 @@ class ClientBase:
       http=HttpRpcClient(
         network=profile, http=HttpClient(), credentials=credentials, validate=validate
       ),
-      ws=SocketClient.new(profile.ws_url, validate=validate),
+      ws=SocketClient.new(
+        profile.ws_url, validate=validate, ping_interval=ping_interval
+      ),
       validate=validate,
     )
 
