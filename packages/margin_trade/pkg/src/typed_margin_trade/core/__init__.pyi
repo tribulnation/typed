@@ -8,7 +8,14 @@ from .exc import (
   RateLimited,
   LogicError,
 )
-from .types import TimestampMillis, timestamp_millis, TimestampIso, timestamp_iso
+from .types import (
+  TimestampSeconds,
+  timestamp_seconds,
+  TimestampMillis,
+  timestamp_millis,
+  TimestampIso,
+  timestamp_iso,
+)
 from .auth import Wallet, Credentials
 from .networks import NetworkCode, NetworkProfile, MAINNET, TESTNET
 
@@ -21,6 +28,8 @@ __all__ = [
   'AuthError',
   'RateLimited',
   'LogicError',
+  'TimestampSeconds',
+  'timestamp_seconds',
   'TimestampMillis',
   'timestamp_millis',
   'TimestampIso',

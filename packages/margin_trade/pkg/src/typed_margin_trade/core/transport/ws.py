@@ -156,8 +156,10 @@ class SocketConnection(
   `timeout` bounds both the handshake and the wait for each subscribe/unsubscribe reply.
   """
 
-  ping_interval: timedelta = field(kw_only=True, default=timedelta(seconds=30))
-  """How often the protocol-level `{"method": "ping"}` is sent."""
+  ping_interval: timedelta = field(kw_only=True, default=timedelta(seconds=10))
+  """How often the protocol-level `{"method": "ping"}` is sent. The venue drops a connection
+  pinged every 30 s within about a minute, busy or idle; every 10 s keeps it open.
+  """
   pending: PendingRequest | None = field(default=None, init=False, repr=False)
   """The request in flight, if any."""
   lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
@@ -296,7 +298,7 @@ class SocketClient(StreamClient):
     *,
     validate: bool = True,
     timeout: timedelta = timedelta(seconds=10),
-    ping_interval: timedelta = timedelta(seconds=30),
+    ping_interval: timedelta = timedelta(seconds=10),
   ) -> 'SocketClient':
     """Build the transport for one network's WebSocket URL (connects lazily)."""
     conn = SocketConnection(url=url, timeout=timeout, ping_interval=ping_interval)

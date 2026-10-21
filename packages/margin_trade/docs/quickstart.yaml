@@ -94,10 +94,8 @@ how_tos:
   - title: Manage deposits & withdrawals
     body: Deposit addresses, withdrawals, perp/spot transfers and the testnet faucet.
     code: |
-      from decimal import Decimal
-
       address = await client.user.get_deposit_address(asset='USDC', chain='solana')  # where to deposit
       await client.exchange.withdraw(destination=wallet.address, amount='2000000')  # withdraw 2 USDC
-      await client.exchange.usd_class_transfer(Decimal('1'), to_perp=False)  # perp -> spot
+      await client.exchange.usd_class_transfer('1000000', to_perp=False)  # 1 USDC (micro-units) perp -> spot
       history = await client.user.get_transfer_history(wallet.address)  # transfer history
       claim = await client.user.faucet_claim()  # testnet USDC, once per day

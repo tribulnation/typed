@@ -60,6 +60,10 @@ async with MarginTrade.new(
   orders = await client.info.open_orders(user=master.address)
 ```
 
+An agent can trade, cancel and change leverage for the master account. Withdrawals,
+transfers between the perp and spot wallets, and agent management need the master key: the
+client raises `AuthError` for them when it signs with an agent.
+
 Approve an agent from the master with `client.exchange.approve_agent(agent_address=...)`
 and list approvals with `client.exchange.get_agents()`.
 

@@ -68,6 +68,9 @@ async with MarginTrade.new(wallet, mainnet=False) as client:
     print(found['order']['status'])
 ```
 
+To look an order up by its client order id, pass the `cloid` as `oid`:
+`order_status(user=wallet.address, oid='0x0000000000000000000000000000abcd')`.
+
 `order_status` and `historical_orders` lag the book by a few seconds: a just-placed order
 can read `not found`, and a just-canceled one `open`. To know what is resting right now,
 use `open_orders` (or the `order_updates` stream).
