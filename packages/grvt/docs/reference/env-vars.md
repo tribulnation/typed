@@ -7,7 +7,7 @@ against production.
 | Variable | Used for |
 | --- | --- |
 | `GRVT_API_KEY` | API key; exchanged for the session every authenticated call uses |
-| `GRVT_PRIVATE_KEY` | the API key's signer private key; signs `create_order`, `bulk_orders`, `transfer`, `withdrawal` and `set_derisk_mm_ratio` |
+| `GRVT_PRIVATE_KEY` | the API key's signer private key; signs `create_order`, `bulk_orders`, `transfer`, `withdrawal`, `set_derisk_mm_ratio`, `set_position_config` and `add_position_margin` |
 | `GRVT_TRADING_ACCOUNT_ID` | optional default trading sub-account id |
 
 | `env=` | Prefix | Example |
@@ -32,7 +32,7 @@ GRVT_TESTNET_TRADING_ACCOUNT_ID="your_sub_account_id"
    `AuthError`. With only the private key, the client logs in as the account's funding
    wallet (see [Wallet Login](../api-keys.md#wallet-login)).
 3. The signed calls also need the private key: `create_order`, `bulk_orders`, `transfer`,
-   `withdrawal` and `set_derisk_mm_ratio`. Without it they raise `AuthError`. A `bulk_orders`
+   `withdrawal`, `set_derisk_mm_ratio`, `set_position_config` and `add_position_margin`. Without it they raise `AuthError`. A `bulk_orders`
    batch that only cancels is not signed, and neither is a call you pass a complete,
    pre-signed `signature`.
 4. Without a trading account id, trading calls use the sub-account a trading-account key is

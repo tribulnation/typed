@@ -1,4 +1,5 @@
-"""EIP-712 signing of GRVT payloads: orders, transfers, withdrawals, derisk ratio, wallet login.
+"""EIP-712 signing of GRVT payloads: orders, transfers, withdrawals, derisk ratio, position
+margin config and isolated margin, wallet login.
 
 Every signed payload carries a `Signature{signer, r, s, v, expiration, nonce, chain_id}`
 over a typed struct in the `{name: "GRVT Exchange", version: "0", chainId}` domain (no
@@ -87,6 +88,29 @@ DERISK_TYPES: dict[str, list[Field]] = {
     {'name': 'expiration', 'type': 'int64'},
   ]
 }
+POSITION_CONFIG_TYPES: dict[str, list[Field]] = {
+  'SetSubAccountPositionMarginConfig': [
+    {'name': 'subAccountID', 'type': 'uint64'},
+    {'name': 'asset', 'type': 'uint256'},
+    {'name': 'marginType', 'type': 'uint8'},
+    {'name': 'leverage', 'type': 'int32'},
+    {'name': 'nonce', 'type': 'uint32'},
+    {'name': 'expiration', 'type': 'int64'},
+  ]
+}
+"""`set_position_config`: the type string of GRVT's exchange contract
+(`SubAccountSig.sol`, `_SET_SUB_POSITION_MARGIN_CONFIG_H`)."""
+POSITION_MARGIN_TYPES: dict[str, list[Field]] = {
+  'AddIsolatedPositionMargin': [
+    {'name': 'subAccountID', 'type': 'uint64'},
+    {'name': 'asset', 'type': 'uint256'},
+    {'name': 'amount', 'type': 'int64'},
+    {'name': 'nonce', 'type': 'uint32'},
+    {'name': 'expiration', 'type': 'int64'},
+  ]
+}
+"""`add_position_margin`: the type string of GRVT's exchange contract (`TradeSig.sol`,
+`_HASH_ADD_ISOLATED_POSITION_MARGIN_H`)."""
 WALLET_LOGIN_TYPES: dict[str, list[Field]] = {
   'WalletLogin': [
     {'name': 'signer', 'type': 'address'},
@@ -109,12 +133,20 @@ spec (`gravity-technologies/api-spec`) and `@grvt/client`'s `ETimeInForceInt`. K
 explicit rather than derived from the request type's `Literal`, so a type change never
 changes the signing encoding."""
 
+SIGNED_MARGIN_TYPE = {'ISOLATED': 1, 'CROSS': 2}
+"""Wire `PositionMarginType` -> the `uint8` signed in `marginType`: the ordinal of the exchange
+contract's `enum PositionMarginType` (`contracts/exchange/types/Enum.sol`, with
+`UNSPECIFIED = 0`), the same values as the `PositionMarginType` enum of GRVT's API spec."""
+
 PRICE_DECIMALS = 9
 """`OrderLeg.limitPrice` is the price scaled by 1e9."""
 BUILDER_FEE_DECIMALS = 4
 """`OrderWithBuilderFee.builderFee` is the fee rate scaled by 1e4."""
 DERISK_RATIO_DECIMALS = 6
 """`deriskToMaintenanceMarginRatio` is the ratio scaled by 1e6."""
+LEVERAGE_DECIMALS = 6
+"""`SetSubAccountPositionMarginConfig.leverage` is the leverage scaled by 1e6 (the exchange
+contract caps it at `50_000_000`, "50x")."""
 ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 LOGIN_TTL = timedelta(minutes=4)
@@ -122,12 +154,14 @@ LOGIN_TTL = timedelta(minutes=4)
 
 
 class InstrumentKey(TypedDict):
-  """The instrument facts an order signature needs."""
+  """The instrument facts an order or position signature needs."""
 
   instrument_hash: str
-  """`OrderLeg.assetID`, as a hex string."""
+  """`OrderLeg.assetID` (and a position's `asset`), as a hex string."""
   base_decimals: int
   """`OrderLeg.contractSize` is the size scaled by `10**base_decimals`."""
+  quote: str
+  """Quote currency, whose `balance_decimals` scale isolated margin amounts."""
 
 
 class CurrencyKey(TypedDict):
@@ -193,8 +227,10 @@ def integer(value: Any, *, bits: int, what: str, signed: bool = False) -> int:
   return number
 
 
-def scaled(value: Any, decimals: int, *, what: str, bits: int = 64) -> int:
-  """Scale a decimal wire value to the unsigned integer a struct field signs.
+def scaled(
+  value: Any, decimals: int, *, what: str, bits: int = 64, signed: bool = False
+) -> int:
+  """Scale a decimal wire value to the integer a struct field signs.
 
   A string must be in plain notation (`PLAIN_DECIMAL`). It reaches the wire untouched, and
   the venue verifies the signature against the value it reads from that string, so a form
@@ -206,12 +242,13 @@ def scaled(value: Any, decimals: int, *, what: str, bits: int = 64) -> int:
       wrote it), or an integer default.
     decimals: Power of ten to scale by.
     what: Field name, for the error message.
-    bits: Width of the signed `uint` field.
+    bits: Width of the signed field.
+    signed: The field is `int<bits>` rather than `uint<bits>`.
 
   Raises:
     BadRequest: The value is not a finite decimal, is a string not in plain notation, has
-      more precision than `decimals` allows, or is negative or too large for the field once
-      scaled.
+      more precision than `decimals` allows, or is out of the field's range once scaled
+      (negative, for an unsigned field).
   """
   try:
     number = Decimal(str(value)) * (Decimal(10) ** decimals)
@@ -226,10 +263,13 @@ def scaled(value: Any, decimals: int, *, what: str, bits: int = 64) -> int:
     )
   if number != number.to_integral_value():
     raise BadRequest(f'{what}={value} has more than {decimals} decimals')
-  low, high = bounds(bits)
+  low, high = bounds(bits, signed=signed)
   if not low <= number <= high:
+    lowest = plain(Decimal(low).scaleb(-decimals))
     largest = plain(Decimal(high).scaleb(-decimals))
-    raise BadRequest(f'{what}={value} is out of range: it must be in [0, {largest}]')
+    raise BadRequest(
+      f'{what}={value} is out of range: it must be in [{lowest}, {largest}]'
+    )
   return int(number)
 
 
@@ -484,6 +524,75 @@ class Signer:
       ),
     }
     return self.sign_payload(DERISK_TYPES, message=message, payload=request, ttl=ttl)
+
+  def position_config(
+    self, request: Mapping[str, Any], instrument: InstrumentKey, *, ttl: timedelta
+  ) -> dict[str, Any]:
+    """Sign a `SetSubAccountPositionMarginConfig` request (`set_position_config`).
+
+    Args:
+      request: Wire `ApiSetSubAccountPositionMarginConfigRequest`.
+      instrument: Signing facts of the request's instrument.
+      ttl: Signature lifetime when the request pins no expiration.
+
+    Raises:
+      BadRequest: An unknown margin type, a `sub_account_id` that is not a `uint64`, or a
+        leverage finer than 1e-6, negative, or too large to sign.
+    """
+    margin_type = request.get('margin_type')
+    if margin_type not in SIGNED_MARGIN_TYPE:
+      raise BadRequest(f'Unknown margin_type {margin_type!r}')
+    # `leverage` is an `int32`; `bits=31` unsigned is its non-negative half.
+    message = {
+      'subAccountID': integer(
+        request.get('sub_account_id'), bits=64, what='sub_account_id'
+      ),
+      'asset': int(instrument['instrument_hash'], 16),
+      'marginType': SIGNED_MARGIN_TYPE[margin_type],
+      'leverage': scaled(
+        request.get('leverage'), LEVERAGE_DECIMALS, what='leverage', bits=31
+      ),
+    }
+    return self.sign_payload(
+      POSITION_CONFIG_TYPES, message=message, payload=request, ttl=ttl
+    )
+
+  def position_margin(
+    self,
+    request: Mapping[str, Any],
+    instrument: InstrumentKey,
+    quote: CurrencyKey,
+    *,
+    ttl: timedelta,
+  ) -> dict[str, Any]:
+    """Sign an `AddIsolatedPositionMargin` request (`add_position_margin`).
+
+    Args:
+      request: Wire `ApiAddIsolatedPositionMarginRequest`.
+      instrument: Signing facts of the request's instrument.
+      quote: Signing facts of the instrument's quote currency, which the amount is in.
+      ttl: Signature lifetime when the request pins no expiration.
+
+    Raises:
+      BadRequest: A `sub_account_id` that is not a `uint64`, or an amount finer than the
+        quote currency allows or too large to sign. A negative amount (removing margin) is
+        signed as is.
+    """
+    message = {
+      'subAccountID': integer(
+        request.get('sub_account_id'), bits=64, what='sub_account_id'
+      ),
+      'asset': int(instrument['instrument_hash'], 16),
+      'amount': scaled(
+        request.get('amount'),
+        quote['balance_decimals'],
+        what='amount',
+        signed=True,
+      ),
+    }
+    return self.sign_payload(
+      POSITION_MARGIN_TYPES, message=message, payload=request, ttl=ttl
+    )
 
   def wallet_login(self) -> Signature:
     """Sign a `WalletLogin`, valid for `LOGIN_TTL` (the venue allows at most 5 minutes)."""

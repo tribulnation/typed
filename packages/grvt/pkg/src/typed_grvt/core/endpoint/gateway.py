@@ -20,12 +20,21 @@ R = TypeVar('R', default=Any)
 Transport = Literal['http', 'ws']
 """Physical transport one RPC is sent over."""
 
-Sign = Literal['order', 'orders', 'transfer', 'withdrawal', 'derisk']
+Sign = Literal[
+  'order',
+  'orders',
+  'transfer',
+  'withdrawal',
+  'derisk',
+  'position_config',
+  'position_margin',
+]
 """Which EIP-712 payload of a request the core signs before sending it:
 
 - `order`: `request["order"]` (`create_order`).
 - `orders`: every entry of `request["orders"]` (`bulk_orders`).
-- `transfer`, `withdrawal`, `derisk`: the request itself.
+- `transfer`, `withdrawal`, `derisk`, `position_config` (`set_position_config`),
+  `position_margin` (`add_position_margin`): the request itself.
 """
 
 SubAccount = Literal['request', 'order', 'orders']

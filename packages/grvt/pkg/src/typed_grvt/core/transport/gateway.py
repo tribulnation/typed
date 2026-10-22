@@ -312,11 +312,12 @@ class GatewayTransport(Owned, GatewayClient):
     """Fill in the EIP-712 signature of the payload `sign` names, when still unsigned.
 
     For `order`/`orders` the payloads are the orders themselves, so a request carrying
-    none (a bulk cancel by ids) goes out as it came, unsigned. For `transfer`,
-    `withdrawal` and `derisk` the payload is the request.
+    none (a bulk cancel by ids) goes out as it came, unsigned. For every other kind the
+    payload is the request.
 
     Raises:
       AuthError: There is no signer (no private key was given).
+      BadRequest: A position request names no instrument.
       LogicError: The request is not a JSON object, or there is no market-data lookup to
         sign with.
     """
@@ -344,6 +345,15 @@ class GatewayTransport(Owned, GatewayClient):
     signer, ttl = self.signer, self.signature_ttl
     if sign == 'derisk':
       return signer.derisk(wire, ttl=ttl)
+    if sign in ('position_config', 'position_margin'):
+      name = wire.get('instrument')
+      if not isinstance(name, str):
+        raise BadRequest(f'instrument must be an instrument name, got {name!r}')
+      instrument = (await self.lookup.instrument_keys({name}))[name]
+      if sign == 'position_config':
+        return signer.position_config(wire, instrument, ttl=ttl)
+      quote = await self.lookup.currency_key(instrument['quote'])
+      return signer.position_margin(wire, instrument, quote, ttl=ttl)
     if sign in ('transfer', 'withdrawal'):
       currency = await self.lookup.currency_key(wire['currency'])
       if sign == 'transfer':
