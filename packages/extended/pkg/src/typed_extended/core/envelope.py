@@ -9,6 +9,10 @@ for an unknown path, a plain-text `429` or an HTML `502` from a proxy), so the H
 checked first and the body is read only when it is JSON. A `2xx` body that is not JSON is
 not a response this client can interpret, and raises `ValidationError`.
 
+A few endpoints answer "nothing here" with a bodiless `404` (a sub-account holding nothing,
+an order id the venue does not know). Those declare `not_found`, and that one response
+becomes `None` or `[]`; every other `404`, there or anywhere else, still raises.
+
 Numbers are decoded with `Decimal` for non-integers, so a JSON-number price never passes
 through a float; integers (including 64-bit ids above 2^63) stay exact `int`s.
 """
@@ -26,6 +30,12 @@ EnvelopeMode = Literal['data', 'page', 'frame']
 """What a successful envelope unwraps to: `data` alone, `{data, pagination}` for a paginated
 call, or the whole frame for a call whose success carries no `data` (committing a bridge
 quote answers a bare `{"status": "OK"}`)."""
+
+
+NotFound = Literal['none', 'empty']
+"""What a bodiless `404` means on an endpoint whose venue sends it for "nothing here": `none`
+returns `None` (a zero balance, an unknown order id), `empty` returns `[]` (no spot
+balances)."""
 
 
 class ErrorBody(TypedDict):
@@ -118,7 +128,12 @@ def raise_error(status: int, error: Any, payload: Any):
   raise BadRequest(*detail)
 
 
-def unwrap(response: httpx.Response, *, envelope: EnvelopeMode = 'data') -> Any:
+def unwrap(
+  response: httpx.Response,
+  *,
+  envelope: EnvelopeMode = 'data',
+  not_found: NotFound | None = None,
+) -> Any:
   """Return what a call produced: `data`, `{data, pagination}`, or the whole frame.
 
   A successful body that is not an envelope (no `status`) is returned whole: the docs show
@@ -129,6 +144,9 @@ def unwrap(response: httpx.Response, *, envelope: EnvelopeMode = 'data') -> Any:
     response: The HTTP response.
     envelope: `data` for bare `data`; `page` to keep the `pagination` beside it, for a
       paginated endpoint; `frame` for the whole successful frame.
+    not_found: What a `404` with an empty body means on this endpoint, when the venue sends
+      it for "nothing here": `None` or `[]`. Unset, it raises like any other `404`; a `404`
+      carrying a body always raises.
 
   Raises:
     AuthError: Rejected credentials or signature.
@@ -139,6 +157,8 @@ def unwrap(response: httpx.Response, *, envelope: EnvelopeMode = 'data') -> Any:
   """
   text = response.text
   if not response.is_success:
+    if not_found is not None and response.status_code == 404 and not text.strip():
+      return [] if not_found == 'empty' else None
     try:
       payload = decode(text) if text.strip() else text
     except ValidationError:

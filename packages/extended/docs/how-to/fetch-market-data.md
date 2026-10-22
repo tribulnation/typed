@@ -47,9 +47,13 @@ from typed_extended import Extended
 
 async with Extended.new(public=True) as client:
   book = await client.info.orderbook('BTC-USD')
-  best_bid, best_ask = book['bid'][0], book['ask'][0]
-  print(best_bid['price'], best_bid['qty'], best_ask['price'], best_ask['qty'])
+  if book is not None and book['bid'] and book['ask']:
+    best_bid, best_ask = book['bid'][0], book['ask'][0]
+    print(best_bid['price'], best_bid['qty'], best_ask['price'], best_ask['qty'])
 ```
+
+The book is `None` for an inactive (`active: false`) or unknown market. A delisted market
+that is still active has a book with no levels.
 
 ## Recent Trades
 
@@ -81,8 +85,10 @@ async with Extended.new(public=True) as client:
 ```
 
 `candle_type` picks the price: `trades`, `mark-prices` or `index-prices`. Intervals run from
-`PT1M` to `P30D`. Candles come newest first, at most 10,000 per call; walk back by passing the
-oldest `T` as `end_time`.
+`PT1M` to `P30D`. Candles come newest first: the ones that opened in the `limit` intervals
+before `end_time` (exclusive), at most 2800 per call. `P30D` counts as 30 days, so a monthly
+window can hold one candle fewer than `limit`. To go further back, use `candles_paged` (see
+[Paginate Through Results](paginate-through-results.md#market-data-history)).
 
 ## Funding And Open Interest
 
@@ -100,6 +106,9 @@ async with Extended.new(public=True) as client:
   )
   print(funding[0]['f'], interest[0])
 ```
+
+Funding rates come newest first, both bounds inclusive, at most 1000 per call (a wider range
+returns its newest 1000); `funding_rates_paged` walks the rest.
 
 ## Assets And Exchange Status
 

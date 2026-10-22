@@ -44,11 +44,14 @@ class Request(TypedDict):
   """No parameters."""
 
 
-class BalanceEndpoint(RpcEndpoint):
-  """Get the sub-account's collateral balance, equity, available-for-trade/withdrawal, margin, exposure and spot equity. The venue answers `404` (raised as `BadRequest`) when the balance is 0."""
+Response = Balance | None
 
-  async def balance(self, *, validate: bool | None = None) -> Balance:
-    """Get the sub-account's collateral balance, equity, available-for-trade/withdrawal, margin, exposure and spot equity. The venue answers `404` (raised as `BadRequest`) when the balance is 0.
+
+class BalanceEndpoint(RpcEndpoint):
+  """Get the sub-account's collateral balance, equity, available-for-trade/withdrawal, margin, exposure and spot equity. Returns `None` for a sub-account holding nothing at all, which the venue answers with a bodiless `404`."""
+
+  async def balance(self, *, validate: bool | None = None) -> Response:
+    """Get the sub-account's collateral balance, equity, available-for-trade/withdrawal, margin, exposure and spot equity. Returns `None` for a sub-account holding nothing at all, which the venue answers with a bodiless `404`.
 
     Args:
       validate: Override this call's response validation; falls back to the client-level default when omitted.
@@ -60,8 +63,8 @@ class BalanceEndpoint(RpcEndpoint):
       Request(),
       method='GET',
       path='/user/balance',
-      meta={'auth': 'api_key'},
+      meta={'auth': 'api_key', 'not_found': 'none'},
       validate=validate,
       request_type=Request,
-      response_type=Balance,
+      response_type=Response,
     )

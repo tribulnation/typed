@@ -98,7 +98,8 @@ from typed_extended import Extended
 
 async with Extended.new() as client:
   order = await client.account.order(123456789)  # by Extended id
-  print(order['status'], order.get('filledQty'), order.get('statusReason'))
+  if order is not None:  # None for an id the venue does not know
+    print(order['status'], order.get('filledQty'), order.get('statusReason'))
   same = await client.account.orders_by_external_id('my-order-1')  # by client id
 ```
 

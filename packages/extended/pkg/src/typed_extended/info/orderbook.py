@@ -22,11 +22,14 @@ class Orderbook(TypedDict):
   """Ask price levels, best first."""
 
 
-class OrderbookEndpoint(RpcEndpoint):
-  """Get the latest order book snapshot of one market: every aggregated price level (thousands of levels on liquid markets; there is no depth parameter)."""
+Response = Orderbook | None
 
-  async def orderbook(self, market: str, *, validate: bool | None = None) -> Orderbook:
-    """Get the latest order book snapshot of one market: every aggregated price level (thousands of levels on liquid markets; there is no depth parameter).
+
+class OrderbookEndpoint(RpcEndpoint):
+  """Get the latest order book snapshot of one market: every aggregated price level (thousands of levels on liquid markets; there is no depth parameter). Returns `None` for a market that is inactive (`active: false` in `info.markets`) or unknown, for which the venue sends no book."""
+
+  async def orderbook(self, market: str, *, validate: bool | None = None) -> Response:
+    """Get the latest order book snapshot of one market: every aggregated price level (thousands of levels on liquid markets; there is no depth parameter). Returns `None` for a market that is inactive (`active: false` in `info.markets`) or unknown, for which the venue sends no book.
 
     Args:
       market: Market name, e.g. `BTC-USD`.
@@ -42,5 +45,5 @@ class OrderbookEndpoint(RpcEndpoint):
       meta={},
       validate=validate,
       request_type=Request,
-      response_type=Orderbook,
+      response_type=Response,
     )

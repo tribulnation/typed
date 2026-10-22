@@ -15,7 +15,7 @@ from types import UnionType
 
 from typed_core.validation import validator
 
-from ..envelope import EnvelopeMode
+from ..envelope import EnvelopeMode, NotFound
 from .wire import dump_request, fill_path
 
 T = TypeVar('T')
@@ -43,6 +43,12 @@ class Meta(TypedDict):
   params: NotRequired[Literal['query']]
   """`query` when a `POST`'s fields go in the query string rather than a JSON body
   (`POST /user/bridge/quote?id=`, `POST /user/deadmanswitch?countdownTime=`)."""
+  not_found: NotRequired[NotFound]
+  """What a bodiless `404` means, on a read the venue answers that way for "nothing here":
+  `none` returns `None` (`GET /user/balance` of a sub-account holding nothing,
+  `GET /user/orders/{id}` of an unknown id), `empty` returns `[]`
+  (`GET /user/spot/balances`). Absent, or on a `404` with a body, the call raises
+  `BadRequest`."""
 
 
 class RpcClient(Protocol):
@@ -58,6 +64,7 @@ class RpcClient(Protocol):
     auth: bool = False,
     sign: SignKind | None = None,
     envelope: EnvelopeMode = 'data',
+    not_found: NotFound | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
@@ -71,6 +78,7 @@ class RpcClient(Protocol):
       auth: Send the API key.
       sign: Build and attach this Stark settlement to `json` first.
       envelope: What the successful envelope unwraps to (`core.envelope.EnvelopeMode`).
+      not_found: What a bodiless `404` returns instead of raising (`core.envelope.NotFound`).
       validator: Response validator.
       validate: Per-call override of response validation.
     """
@@ -113,7 +121,8 @@ class RpcEndpoint:
       request: The endpoint's `Request` value, or `None` for a parameterless call.
       method: HTTP verb.
       path: URL path, possibly with `{placeholders}` filled from `request`.
-      meta: This call's quirks: authentication, signing, pagination envelope, placement.
+      meta: This call's quirks: authentication, signing, pagination envelope, placement,
+        and what a bodiless `404` means.
       validate: Per-call override of response validation.
       request_type: The endpoint's request type, used to serialize `request`.
       response_type: The endpoint's response type, used to validate the reply.
@@ -131,6 +140,7 @@ class RpcEndpoint:
       auth=sign is not None or meta.get('auth') == 'api_key',
       sign=sign,
       envelope=meta.get('envelope', 'data'),
+      not_found=meta.get('not_found'),
       validator=response_validator,
       validate=validate,
     )
