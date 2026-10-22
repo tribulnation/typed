@@ -191,11 +191,41 @@ Created orders come back unprocessed, with the placeholder `order_id` `0x00` and
 carry a `time_to_live_ms`, during which an order arriving late with one of those ids is
 cancelled too. Like every 64-bit integer GRVT takes, it is a numeral string.
 
+## Isolated Margin And Leverage
+
+`set_position_config` switches one instrument between cross (the default) and isolated
+margin and sets its leverage. It is signed, and GRVT refuses it while the instrument has an
+open position.
+
+```python
+from decimal import Decimal
+from typed_grvt import Grvt
+
+async with Grvt.new(env='testnet') as client:
+  await client.trading.set_position_config(
+    instrument='BTC_USDT_Perp', margin_type='ISOLATED', leverage=Decimal('10')
+  )
+  # ... open a position: its margin is now isolated
+  for p in await client.trading.positions(kind=['PERPETUAL']):
+    print(p['instrument'], p['margin_type'], p.get('isolated_balance'))
+  limits = await client.trading.position_margin_limits(instrument='BTC_USDT_Perp')
+  print(limits['max_addable_amount'], limits['max_removable_amount'])
+  # Move 10 USDT in; a negative amount takes up to max_removable_amount out.
+  await client.trading.add_position_margin(
+    instrument='BTC_USDT_Perp', amount=Decimal('10')
+  )
+  await client.trading.add_position_margin(
+    instrument='BTC_USDT_Perp', amount=Decimal('-5')
+  )
+```
+
+The amount is in the quote currency, USDT here. Only an isolated position takes margin.
+
 ## More Order Tools
 
 1. `cancel_on_disconnect(...)` starts a countdown that cancels every open order unless you
    keep refreshing it, a dead man's switch for market makers.
-2. `all_initial_leverage()` reads the leverage set per instrument.
+2. `all_initial_leverage()` reads the leverage and margin type set per instrument.
 3. `set_derisk_mm_ratio(ratio=...)` sets the sub-account's derisk margin to maintenance
    margin ratio. Like an order, it is signed with the signer key.
 

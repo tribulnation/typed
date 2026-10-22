@@ -2,7 +2,8 @@
 
 An order signs each leg's `instrument_hash` and its size scaled by `base_decimals`; a
 transfer or withdrawal signs the currency's numeric id and an amount scaled by its
-`balance_decimals`. None of that is in the request, so the trading core reads it from the
+`balance_decimals`; a position's margin config or isolated margin signs its instrument's
+`instrument_hash`, and the margin amount scaled by the quote currency's `balance_decimals`. None of that is in the request, so the trading core reads it from the
 market-data gateway and caches it: a listed instrument's or currency's facts never change.
 
 What is not cached is never assumed absent: an instrument is fetched by name the first time

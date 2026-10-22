@@ -5,8 +5,8 @@ GRVT authenticated calls need two secrets:
 1. an **API key**, which the client exchanges for a session cookie (login and refresh are
    automatic), and
 2. the **signer private key** the API key is tagged with, which signs (EIP-712) the calls
-   GRVT requires a signature on: `create_order`, `bulk_orders`, `transfer`, `withdrawal` and
-   `set_derisk_mm_ratio`. Signing is local: the key never leaves your process.
+   GRVT requires a signature on: `create_order`, `bulk_orders`, `transfer`, `withdrawal`,
+   `set_derisk_mm_ratio`, `set_position_config` and `add_position_margin`. Signing is local: the key never leaves your process.
 
 Market data needs neither: build the client with `public=True`.
 
@@ -70,7 +70,7 @@ async with Grvt.new(
 
 Passing either key reads nothing from the environment (see
 [Environment Variables](reference/env-vars.md)). Without `private_key`, reads still work, but
-`create_order`, `bulk_orders`, `transfer`, `withdrawal` and `set_derisk_mm_ratio` raise
+`create_order`, `bulk_orders`, `transfer`, `withdrawal`, `set_derisk_mm_ratio`, `set_position_config` and `add_position_margin` raise
 `AuthError` because they cannot be signed (a `bulk_orders` batch that only cancels is not
 signed).
 

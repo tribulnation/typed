@@ -610,7 +610,7 @@ class Ticker(TypedDict):
   long_short_ratio: NotRequired[Decimal]
   """The ratio of accounts that are net long vs net short on this instrument."""
   funding_rate: NotRequired[Decimal]
-  """The current indicative funding rate for the active interval, expressed in centibeeps."""
+  """The current indicative funding rate for the active funding interval (the instrument's `funding_interval_hours`), expressed in percentage points like the settled `funding_rate` of `market.funding_rate` (`0.01` is 0.01%)."""
   next_funding_time: NotRequired[TimestampNanos]
   """Timestamp when the current funding interval ends."""
   status: NotRequired[
@@ -761,17 +761,17 @@ class ClientTier(TypedDict):
   tier: int
   """Fee tier of the account."""
   futures_taker_fee: int
-  """Futures taker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Futures taker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   futures_maker_fee: int
-  """Futures maker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Futures maker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   options_taker_fee: int
-  """Options taker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Options taker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   options_maker_fee: int
-  """Options maker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Options maker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   spot_taker_fee: int
-  """Spot taker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Spot taker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   spot_maker_fee: int
-  """Spot maker fee at this tier, an integer rate in a unit GRVT does not document (`450` for the first tier)."""
+  """Spot maker fee at this tier, in millionths of notional (`1` is 0.0001%); a negative fee is a rebate."""
   spot_borrow_configs: list[SpotBorrowConfig]
   """Per-currency borrow & collateral limits for this tier. Populated only in the funding_account_summary response; empty in raw config contexts."""
 

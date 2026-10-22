@@ -56,7 +56,7 @@ pip install typed-grvt
 | --- | --- | --- |
 | `client.market` | Instruments, currencies, tickers, order books, trades, candles, funding rates | none |
 | `client.market_streams` | Live tickers, order books, trades and candles | none |
-| `client.trading` | Orders, fills, positions, account summaries, transfers, withdrawals, leverage, RFQs, vault summaries, redemption queues and redemption cancels | API key (+ signer key for `create_order`, `bulk_orders`, `transfer`, `withdrawal` and `set_derisk_mm_ratio`) |
+| `client.trading` | Orders, fills, positions, account summaries, transfers, withdrawals, leverage and isolated margin, RFQs, vault summaries, redemption queues and redemption cancels | API key (+ signer key for `create_order`, `bulk_orders`, `transfer`, `withdrawal`, `set_derisk_mm_ratio`, `set_position_config` and `add_position_margin`) |
 | `client.trading_streams` | Your orders, fills, positions, transfers, deposits and withdrawals, live | API key |
 | `client.edge` | Deposit addresses, bridge withdrawal quotes and status, referrals, strategies | API key (none for `investment_strategies` and `rhino_chain_id`) |
 
