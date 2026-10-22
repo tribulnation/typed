@@ -6,17 +6,14 @@ from typed_extended.core.endpoint.rpc import RpcEndpoint
 
 
 class Request(TypedDict):
-  """Sub-accounts to read."""
-
-  accountId: NotRequired[list[int]]
-  """Sub-account ids (repeated `accountId` query key), each belonging to the wallet; the selected sub-account when omitted."""
+  """No parameters."""
 
 
 class SpotBalance(TypedDict):
   """Holding of one asset (the collateral asset included)."""
 
   accountId: int
-  """Sub-account holding the asset."""
+  """Sub-account holding the asset: always the API key's own."""
   asset: str
   """Asset symbol (e.g. `USDC`, `BTC`)."""
   balance: Decimal
@@ -45,31 +42,22 @@ Response = list[SpotBalance]
 
 
 class SpotBalances(RpcEndpoint):
-  """Get per-asset spot balances, with one row for the collateral asset, of the selected sub-account or of the given sub-accounts of the wallet. The venue answers `404` (raised as `BadRequest`) when there are no balances at all."""
+  """Get the API key's sub-account per-asset spot balances, with one row for the collateral asset. Returns an empty list for a sub-account holding nothing at all, which the venue answers with a bodiless `404`."""
 
-  async def spot_balances(
-    self,
-    account_id: list[int] | None = None,
-    *,
-    validate: bool | None = None,
-  ) -> Response:
-    """Get per-asset spot balances, with one row for the collateral asset, of the selected sub-account or of the given sub-accounts of the wallet. The venue answers `404` (raised as `BadRequest`) when there are no balances at all.
+  async def spot_balances(self, *, validate: bool | None = None) -> Response:
+    """Get the API key's sub-account per-asset spot balances, with one row for the collateral asset. Returns an empty list for a sub-account holding nothing at all, which the venue answers with a bodiless `404`.
 
     Args:
-      account_id: Sub-account ids (repeated `accountId` query key), each belonging to the wallet; the selected sub-account when omitted.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
 
     References:
       - [Official docs](https://api.docs.extended.exchange/#get-spot-balances)
     """
-    request: Request = Request()
-    if account_id is not None:
-      request['accountId'] = account_id
     return await self.request(
-      request,
+      Request(),
       method='GET',
       path='/user/spot/balances',
-      meta={'auth': 'api_key'},
+      meta={'auth': 'api_key', 'not_found': 'empty'},
       validate=validate,
       request_type=Request,
       response_type=Response,

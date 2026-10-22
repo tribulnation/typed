@@ -13,7 +13,7 @@ import httpx
 from ..auth import Credentials
 from ..endpoint.rpc import Method, RpcClient, SignKind
 from ..endpoint.wire import query_values
-from ..envelope import EnvelopeMode, unwrap
+from ..envelope import EnvelopeMode, NotFound, unwrap
 from ..exc import AuthError, BadRequest
 from ..networks import NetworkProfile
 from ..signing import PREPARERS, AssetSettlement, FeeRates, MarketSettlement, SubAccount
@@ -181,6 +181,7 @@ class HttpRpcClient(RpcClient):
     auth: bool = False,
     sign: SignKind | None = None,
     envelope: EnvelopeMode = 'data',
+    not_found: NotFound | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
@@ -194,6 +195,7 @@ class HttpRpcClient(RpcClient):
       auth: Send the API key.
       sign: Complete `json` and attach this Stark settlement before sending.
       envelope: What the successful envelope unwraps to (`core.envelope.EnvelopeMode`).
+      not_found: What a bodiless `404` returns instead of raising (`core.envelope.NotFound`).
       validator: Response validator.
       validate: Per-call override of response validation.
 
@@ -216,7 +218,11 @@ class HttpRpcClient(RpcClient):
       headers=headers,
     )
     return self.result(
-      response, validator=validator, validate=validate, envelope=envelope
+      response,
+      validator=validator,
+      validate=validate,
+      envelope=envelope,
+      not_found=not_found,
     )
 
   def result(
@@ -226,9 +232,10 @@ class HttpRpcClient(RpcClient):
     *,
     validate: bool | None = None,
     envelope: EnvelopeMode = 'data',
+    not_found: NotFound | None = None,
   ) -> T:
     """Unwrap the envelope and map errors, then validate."""
-    payload = unwrap(response, envelope=envelope)
+    payload = unwrap(response, envelope=envelope, not_found=not_found)
     if validator is not None and self.should_validate(validate):
       return validator.python(payload)
     return payload

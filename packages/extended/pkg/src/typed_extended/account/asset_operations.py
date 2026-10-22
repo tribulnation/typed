@@ -19,7 +19,7 @@ class AssetOperation(TypedDict):
   status: Literal['CREATED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'READY_FOR_CLAIM']
   """Operation status."""
   amount: Decimal
-  """Amount, in the collateral asset (negative for outflows in the docs example)."""
+  """Signed amount in the collateral asset, seen from `accountId`: positive when funds come in (a claim, an incoming transfer), negative when they go out (a withdrawal, an outgoing transfer)."""
   fee: Decimal
   """Fee paid."""
   asset: int
@@ -27,9 +27,9 @@ class AssetOperation(TypedDict):
   time: TimestampMillis
   """When the operation was last updated."""
   accountId: int
-  """Source account for transfers and withdrawals; destination account for deposits."""
+  """The API key's own sub-account, whichever way the funds moved; the sign of `amount` gives the direction."""
   counterpartyAccountId: NotRequired[int]
-  """Destination account of a transfer."""
+  """The other sub-account of a transfer: its source when `amount` is positive (incoming), its destination when negative (outgoing)."""
   transactionHash: NotRequired[str]
   """On-chain transaction hash; absent for transfers."""
   chain: NotRequired[str]

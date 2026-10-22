@@ -33,6 +33,14 @@ async with Extended.new() as client:
     print('venue error:', e.args)
 ```
 
+## Nothing There
+
+A read whose answer is "nothing" returns it rather than raising: `client.account.balance()`
+returns `None` for a sub-account holding nothing, `client.account.spot_balances()` an empty
+list, `client.account.order(...)` `None` for an id the venue does not know, and
+`client.info.orderbook(...)` `None` for an inactive or unknown market. Any other `404` still
+raises `BadRequest`.
+
 ## Asynchronous Rejections
 
 An order accepted by `client.orders.create(...)` can still be rejected by the matching engine.

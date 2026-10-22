@@ -2,7 +2,7 @@
 """Shapes shared by several endpoints of `orders`."""
 
 from typing_extensions import Literal, TypedDict
-from decimal import Decimal
+from typed_core.decimals import PlainDecimal
 
 
 class PlacedOrder(TypedDict):
@@ -17,11 +17,11 @@ class PlacedOrder(TypedDict):
 class RfqTpslLeg(TypedDict):
   """A take-profit or stop-loss leg of an RFQ order; the core signs it."""
 
-  triggerPrice: Decimal
+  triggerPrice: PlainDecimal | str
   """Price threshold that triggers the leg."""
   triggerPriceType: Literal['MARK', 'INDEX']
   """Price the trigger watches (`MARK` or `INDEX` only on RFQ markets)."""
-  price: Decimal
+  price: PlainDecimal | str
   """Worst accepted execution price of the leg, required even for a market execution."""
   priceType: Literal['LIMIT', 'MARKET']
   """Execute the triggered leg as a limit or a market order."""
@@ -30,11 +30,11 @@ class RfqTpslLeg(TypedDict):
 class TpslLeg(TypedDict):
   """A take-profit or stop-loss leg of an order; the core signs it."""
 
-  triggerPrice: Decimal
+  triggerPrice: PlainDecimal | str
   """Price threshold that triggers the leg."""
   triggerPriceType: Literal['LAST', 'MARK', 'INDEX']
   """Price the trigger watches."""
-  price: Decimal
+  price: PlainDecimal | str
   """Worst accepted execution price of the leg, required even for a market execution."""
   priceType: Literal['LIMIT', 'MARKET']
   """Execute the triggered leg as a limit or a market order."""

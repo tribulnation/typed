@@ -22,12 +22,20 @@ from typed_extended import Extended
 
 async with Extended.new() as client:
   balance = await client.account.balance()
-  print(
-    balance['equity'], balance['availableForTrade'], balance['availableForWithdrawal']
-  )
-  print(balance['unrealisedPnl'], balance['marginRatio'], balance['leverage'])
-  spot = await client.account.spot_balances()
+  if balance is None:
+    print('the sub-account holds nothing')
+  else:
+    print(
+      balance['equity'], balance['availableForTrade'], balance['availableForWithdrawal']
+    )
+    print(balance['unrealisedPnl'], balance['marginRatio'], balance['leverage'])
+  for holding in await client.account.spot_balances():
+    print(holding['asset'], holding['balance'], holding['equityContribution'])
 ```
+
+A sub-account that holds nothing at all has no balance: `balance()` returns `None` and
+`spot_balances()` an empty list. Both read the API key's own sub-account; to read another
+sub-account of the wallet, use that sub-account's API key.
 
 ## Positions
 

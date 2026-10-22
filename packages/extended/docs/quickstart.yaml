@@ -24,8 +24,9 @@ first_call:
     load_dotenv()
 
     async with Extended.new() as client:
-      balance = await client.account.balance()
-      print(balance['equity'], balance['availableForTrade'])
+      balance = await client.account.balance()  # None if the sub-account holds nothing
+      if balance is not None:
+        print(balance['equity'], balance['availableForTrade'])
 
 how_tos:
   - title: Fetch market data
@@ -82,12 +83,13 @@ how_tos:
 
   - title: Paginate through results
     body: >-
-      Every history endpoint has a `_paged` variant that follows the cursor — see
+      Every history endpoint, candles and funding rates have a `_paged` variant — see
       [Paginate through results](/typed/extended/how-to/paginate-through-results).
     code: |
       trades = await client.account.trades_paged(['BTC-USD'], limit=100)  # every page, flattened
       async for page in client.account.orders_history_paged(limit=100):
         print(len(page))  # one page at a time
+      candles = await client.info.candles_paged('BTC-USD', candle_type='trades', interval='P1D', limit=2800)  # every daily candle
 
   - title: Transfer & withdraw
     body: >-

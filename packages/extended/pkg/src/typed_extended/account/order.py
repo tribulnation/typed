@@ -11,11 +11,14 @@ class Request(TypedDict):
   """Extended order id (64-bit, may exceed 2^63)."""
 
 
-class OrderEndpoint(RpcEndpoint):
-  """Get one order of the sub-account by its Extended id."""
+Response = Order | None
 
-  async def order(self, id: int, *, validate: bool | None = None) -> Order:
-    """Get one order of the sub-account by its Extended id.
+
+class OrderEndpoint(RpcEndpoint):
+  """Get one order of the sub-account by its Extended id. Returns `None` for an id the venue does not know (never placed, or past its retention), which it answers with a bodiless `404`."""
+
+  async def order(self, id: int, *, validate: bool | None = None) -> Response:
+    """Get one order of the sub-account by its Extended id. Returns `None` for an id the venue does not know (never placed, or past its retention), which it answers with a bodiless `404`.
 
     Args:
       id: Extended order id (64-bit, may exceed 2^63).
@@ -28,8 +31,8 @@ class OrderEndpoint(RpcEndpoint):
       Request(id=id),
       method='GET',
       path='/user/orders/{id}',
-      meta={'auth': 'api_key'},
+      meta={'auth': 'api_key', 'not_found': 'none'},
       validate=validate,
       request_type=Request,
-      response_type=Order,
+      response_type=Response,
     )
