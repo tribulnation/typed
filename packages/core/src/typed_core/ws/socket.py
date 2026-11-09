@@ -127,6 +127,12 @@ class Socket(ABC):
   Read on every connect, so replacing it applies to the next connection, never to the one
   already open. Kept out of `repr`, since it usually carries a credential.
   """
+  max_size: int | None = field(kw_only=True, default=2**20)
+  """Largest incoming message accepted, in bytes; `None` lifts the limit.
+
+  A larger message closes the connection with code 1009 (message too big), failing the work
+  bound to it. The default is `websockets`' own. Read on every connect, like `headers`.
+  """
   _ctx_future: 'asyncio.Future[Context] | None' = field(default=None, init=False, repr=False)
   """Backing store for `ctx_future`, `None` until something first reaches for it."""
   open_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
@@ -232,6 +238,7 @@ class Socket(ABC):
       try:
         return await websockets.connect(
           self.url, additional_headers=self.headers, open_timeout=self.timeout.total_seconds(),
+          max_size=self.max_size,
         )
       except (websockets.exceptions.WebSocketException, OSError, EOFError, TimeoutError) as e:
         raise NetworkError(f'Failed to connect to {self.url}') from e
