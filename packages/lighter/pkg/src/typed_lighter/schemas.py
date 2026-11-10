@@ -22,12 +22,12 @@ class AccountAsset(TypedDict):
   """Spot balance."""
   locked_balance: Decimal
   """Part of the balance locked by open spot orders."""
-  margin_mode: Literal['enabled', 'disabled']
-  """Whether the asset counts as perps margin."""
+  margin_mode: Literal['enabled', 'disabled', 'priced_only']
+  """Whether the asset counts as perps margin (`priced_only`: priced for the account value, not usable as margin)."""
   margin_balance: Decimal
   """Balance counted as perps margin (USDC collateral in a unified account)."""
-  multiplier: Decimal
-  """Balance multiplier; `1` for most assets, above `1` for interest-bearing ones."""
+  multiplier: Decimal | Literal['']
+  """Balance multiplier; `1` for most assets, above `1` for interest-bearing ones. Empty on some spot `account_market` updates (seen for LIT, a margin-disabled asset)."""
 
 
 class AccountPosition(TypedDict):
