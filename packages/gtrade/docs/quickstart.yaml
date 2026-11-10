@@ -1,0 +1,115 @@
+env_setup:
+  body: >-
+    Create a `.env` with an agent key, a read-only API key, or both — see
+    [Wallet & Agent Setup](/typed/gtrade/authenticated-setup) for how to create them.
+    Public data needs neither: use `GTrade.new(public=True)`.
+  code: |
+    # .env
+    GTRADE_AGENT_PRIVATE_KEY="0x..."
+    GTRADE_API_KEY="gk_..."
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-gtrade python-dotenv
+
+first_call:
+  body: >-
+    Load the environment, then make your first call. Public data needs no credentials;
+    build the client with `GTrade.new()` instead to use your `.env` credentials for
+    private reads, channels and writes.
+  code: |
+    from dotenv import load_dotenv
+    from typed_gtrade import GTrade
+
+    load_dotenv()
+
+    async with GTrade.new(public=True) as client:  # GTrade.new() for private calls
+      prices = await client.trading.markets.prices()
+      print(prices[0]['market'], prices[0]['mark'])
+
+how_tos:
+  - title: Fetch market data
+    body: Markets, prices, the virtual order book, candles, trades, funding and price snapshots. Public, no credentials needed.
+    code: |
+      from datetime import datetime, timedelta, timezone
+      now = datetime.now(timezone.utc)
+      markets = await client.trading.markets.list()                         # every market
+      btc = await client.trading.markets.get('BTC/USD')                     # one market
+      prices = await client.trading.markets.prices()                        # mark and index prices
+      book = await client.trading.markets.book('BTC/USD', levels=10)        # virtual order book
+      candles = await client.trading.markets.candles('BTC/USD', interval='1h', from_=now - timedelta(days=1), to=now)  # candles
+      trades = await client.trading.markets.trades('BTC/USD', limit=50)     # recent trades
+      funding = await client.trading.markets.funding('BTC/USD')             # funding and borrowing rates
+      charts = await client.pricing.snapshots.charts()                      # every pair's current candle
+
+  - title: Query protocol data
+    body: Trading variables, open trades, protocol stats, leaderboards and contests. Backend values are mostly raw contract-precision integers, Backend Global values mostly floats.
+    code: |
+      subset = await client.backend.trading_variables.by_keys(['pairs', 'tradingState'])  # trading variables
+      open_trades = await client.backend.trades.open()                                     # every open trade
+      stats = await client.backend_global.stats.chain(42161)                               # daily protocol stats
+      totals = await client.backend_global.trading_history.stats('24h', chain_id=42161)    # 24h volume
+      weekly = await client.backend_global.traders.leaderboard(period=7, chain_id=42161)   # weekly leaderboard
+      contests = await client.backend_global.contests.list()                               # trading contests
+      referrals = await client.backend_global.referrals.config()                           # referral programme
+
+  - title: Fetch account data
+    body: Balances, positions, open orders, order history and fills. Needs a client built with `GTrade.new()` and an agent key or a read-only API key.
+    code: |
+      trader = '0x...'  # the trader (master wallet) address
+      account = await client.trading.account.get(trader)                         # balances, allowances, agents
+      positions = await client.trading.account.positions(trader)                 # open positions
+      orders = await client.trading.account.orders(trader)                       # open orders
+      history = await client.trading.account.order_history(address=trader)       # order history page
+      fills = await client.trading.account.fills(address=trader)                 # fills page
+
+  - title: Place & manage orders
+    body: >-
+      Writes return an unsigned transaction for the agent to sign and broadcast through your own RPC.
+      A `clientId` deduplicates preparing, not broadcasting: sign each transaction once and
+      [retry safely](/typed/gtrade/how-to/place-and-manage-orders#retry-safely).
+      Needs a client built with `GTrade.new()` and an agent key, ETH for gas and a collateral approval: see the
+      [first trade checklist](/typed/gtrade/how-to/place-and-manage-orders#first-trade-checklist).
+    code: |
+      prepared = await client.trading.orders.create({'market': 'ETH/USD', 'side': 'long', 'type': 'limit', 'size': '0.5', 'price': '2500', 'leverage': '5', 'clientId': 'eth-limit-1'})  # prepare a limit order
+      tx = prepared['transaction']                                                      # sign once, save, broadcast: only while the order is prepared with no txHash
+      order = await client.trading.orders.submit(id=prepared['order']['id'], tx_hash='0x...')  # report the hash once mined
+      order_id = order['id']                                                            # keep this id: it can differ from the prepared one
+      order = await client.trading.orders.get(order_id)                                 # track its status
+      updated = await client.trading.orders.update(order_id, price='2450')              # move the resting order (broadcast it)
+      canceled = await client.trading.orders.cancel(order_id)                           # cancel it (broadcast it)
+      closed = await client.trading.positions.close('987654')                           # close a position (broadcast and submit)
+
+  - title: Paginate through results
+    body: Walk order history, fills or trader history automatically. Order history and fills need a client built with `GTrade.new()`; trader history is public.
+    code: |
+      trader = '0x...'
+      fills = await client.trading.account.fills_paged(address=trader)  # every fill
+      async for rows in client.trading.account.order_history_paged(address=trader):
+        print(len(rows))  # one page at a time
+      history = await client.backend_global.traders.history_paged(address=trader, chain_id=42161)  # public trader history
+
+  - title: Listen to live streams
+    body: Trading API channels, backend contract events and live prices, consumed concurrently. Private channels need a client built with `GTrade.new()`.
+    code: |
+      import asyncio
+
+      async def books():  # order book updates (public)
+        async with client.trading.streams.book('BTC/USD') as frames:
+          async for frame in frames:
+            print(frame['data']['markPrice'])
+
+      async def my_orders():  # your order updates (agent key or API key)
+        async with client.trading.streams.orders() as frames:
+          async for frame in frames:
+            if frame['snapshot'] is True:
+              print('open:', [order['id'] for order in frame['data']])
+            else:
+              print(frame['data']['id'], frame['data']['status'])
+
+      async def blocks():  # the chain's latest block (public; a slow reader skips to the newest)
+        async with client.backend.streams.current_block() as frames:
+          async for block in frames:
+            print(block, frames.skipped)
+
+      await asyncio.gather(books(), my_orders(), blocks())
