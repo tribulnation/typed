@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typed-gtrade"
+version = "0.1.0"
+authors = [
+  {name="Marcel Claramunt", email="marcel@tribulnation.com"}
+]
+description = "A fully typed, validated async client for the gTrade API."
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Typing :: Typed",
+]
+dependencies = [
+  "typed-core>=0.14.0", "lazy-loader", "eth-account>=0.13", "eth-utils>=2",
+  "httpx>=0.26", "pydantic>=2", "pydantic-core>=2", "typing-extensions>=4.7",
+  "websockets>=14",
+]
+requires-python = ">=3.10"
+readme = {file="README.md", content-type="text/markdown"}
+
+[tool.setuptools.package-data]
+"typed_gtrade" = ["py.typed", "*.pyi", "**/*.pyi"]
+
+[project.urls]
+Repository = "https://github.com/tribulnation/typed"
+Documentation = "https://tribulnation.com/typed/gtrade"
+Website = "https://tribulnation.com/typed"
