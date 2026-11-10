@@ -129,6 +129,17 @@ socket = MyStreams(url, headers={'Cookie': f'session={token}'})
 socket.headers = {'Cookie': f'session={new_token}'}  # used from the next connect on
 ```
 
+### Large messages
+
+A socket accepts incoming messages up to 1 MiB, `websockets`' default. A larger one closes
+the connection with code 1009, failing the work bound to it. A venue that pushes bigger
+frames (a full order book or protocol-state snapshot) raises the limit with `max_size`, in
+bytes, or lifts it with `None`:
+
+```python
+socket = MyStreams(url, max_size=8 * 2**20)
+```
+
 ### Keep-latest subscriptions
 
 By default a stream delivers every message, in order. For a channel whose every message is
