@@ -18,9 +18,10 @@ import re
 import orjson
 import pydantic
 
-from typed_core import LogicError, BadRequest
+from typed_core import LogicError, BadRequest, NetworkError
 from typed_core.util import Stream, StreamManager
 from typed_core.validation import validator
+from typed_core.ws.socket import Context
 from typed_core.ws.streams import Streams, Subscription
 
 logger = logging.getLogger('dydx.indexer.streams')
@@ -67,8 +68,10 @@ class Unsubscribed(BaseMessage, Channel):
 
 
 class Error(BaseMessage):
-  """Error payload."""
+  """Error payload. dYdX names no channel in it, so it answers the request in flight."""
   type: Literal['error']
+  message: NotRequired[str]
+  """dYdX's reason, e.g. a channel already subscribed on this connection."""
 
 
 class Notification(BaseMessage, Channel):
@@ -82,6 +85,18 @@ Msg = Connected | Subscribed | Unsubscribed | Error | Notification
 MsgT: type[Msg] = Msg  # type: ignore
 
 msg_adapter = pydantic.TypeAdapter(MsgT)
+
+
+class Request(Channel):
+  """Subscribe or unsubscribe request."""
+  type: Literal['subscribe', 'unsubscribe']
+  batched: NotRequired[bool]
+
+
+class ReplyMismatch(NetworkError):
+  """A reply names another channel than the request in flight: the connection's request/reply
+  pairing is lost (a request cancelled after it was sent leaves its reply behind), so the
+  connection is closed and its channels resubscribe on a fresh one."""
 
 
 class Params(TypedDict, total=False):
@@ -106,7 +121,7 @@ def parse_channel_id(channel_id: str) -> tuple[str, str | None]:
 
 
 def channel_id(msg: Channel) -> str:
-  """Build the local stream channel key for an indexer message.
+  """Build the local stream channel key for an indexer message or request.
 
   Args:
     msg: WebSocket message.
@@ -126,7 +141,15 @@ class IndexerWsClient(Streams[Notification, Params, Subscribed, Unsubscribed]):
   url: str = INDEXER_WS_URL
   validate: bool = True
   lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+  """Serializes requests: replies are paired with the one request in flight."""
   replies: asyncio.Queue[Error | Subscribed | Unsubscribed] = field(default_factory=asyncio.Queue)
+  """Replies of the current connection, not yet taken by a request."""
+
+  def connection_closed(self, ctx: Context):
+    """Drop the closed connection's leftover replies: their requests are gone, and a new
+    connection's first request must never take one of them."""
+    self.replies = asyncio.Queue()
+    super().connection_closed(ctx)
 
   def parse_msg(self, msg: str | bytes) -> Subscription | None:
     """Parse an indexer WebSocket message.
@@ -145,27 +168,43 @@ class IndexerWsClient(Streams[Notification, Params, Subscribed, Unsubscribed]):
         channel = channel_id(obj)
         return {'channel': channel, 'notification': obj}
 
-  async def send(self, msg: object):
+  async def send(self, msg: object, *, ctx: Context | None = None):
     """Send a WebSocket message to the indexer.
 
     Args:
       msg: WebSocket message.
+      ctx: Connection to send on; defaults to the current one.
     """
-    ws = await self.ws
+    ws = (ctx or await self.ctx).ws
     await ws.send(orjson.dumps(msg), text=True)
 
-  async def request(self, msg: object) -> Error | Subscribed | Unsubscribed:
-    """Send a serialized WebSocket request and wait for its reply.
+  async def request(self, msg: Request) -> Error | Subscribed | Unsubscribed:
+    """Send a request and wait for its reply.
+
+    A `subscribed`/`unsubscribed` reply must name the request's channel. One that names
+    another is a reply left behind by an earlier request: the connection is closed, so all
+    its channels resubscribe cleanly, and `ReplyMismatch` is raised.
 
     Args:
-      msg: WebSocket message.
+      msg: Subscribe or unsubscribe request.
 
     Returns:
       The subscription, unsubscription, or error reply.
+
+    Raises:
+      ReplyMismatch: The reply names another channel than `msg`.
     """
     async with self.lock:
-      await self.send(msg)
-      return await self.replies.get()
+      ctx = await self.ctx
+      await self.send(msg, ctx=ctx)
+      reply = await self.replies.get()
+      if reply['type'] != 'error' and (got := channel_id(reply)) != (sent := channel_id(msg)):
+        logger.error(
+          'dYdX indexer replied for %s to a %s of %s; closing the connection', got, msg['type'], sent
+        )
+        await self.close(ctx)
+        raise ReplyMismatch(f'Reply for {got} to a {msg["type"]} of {sent}')
+      return reply
 
   async def request_subscription(self, channel: str, params: Params | None = None) -> Subscribed:
     """Request an indexer WebSocket subscription.
@@ -178,7 +217,7 @@ class IndexerWsClient(Streams[Notification, Params, Subscribed, Unsubscribed]):
       The parsed value.
     """
     channel, id = parse_channel_id(channel)
-    msg: dict = {
+    msg: Request = {
       'type': 'subscribe',
       'channel': channel,
     }
@@ -204,7 +243,7 @@ class IndexerWsClient(Streams[Notification, Params, Subscribed, Unsubscribed]):
       The parsed value.
     """
     channel, id = parse_channel_id(channel)
-    msg = {
+    msg: Request = {
       'type': 'unsubscribe',
       'channel': channel,
     }
