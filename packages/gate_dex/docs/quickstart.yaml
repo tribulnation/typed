@@ -1,0 +1,79 @@
+env_setup:
+  body: >-
+    Create a `.env` with your API Key and Secret Key — see
+    [API keys setup](/typed/gate_dex/api-keys) for how to create them. Every Gate DEX call
+    needs them, market data included.
+  code: |
+    # .env
+    GATE_DEX_API_KEY="your_api_key"
+    GATE_DEX_SECRET_KEY="your_secret_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-gate_dex python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_gate_dex import GateDex
+
+    load_dotenv()
+
+    async with GateDex.new() as client:
+      price = await client.market.price(
+        chain_id=1, token_address='0xdac17f958d2ee523a2206206994597c13d831ec7'
+      )
+      print(price['price'], price['time'])
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Token prices, candles and liquidity events — see
+      [Fetch market data](/typed/gate_dex/how-to/fetch-market-data).
+    code: |
+      weth = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+      price = await client.market.price(chain_id=1, token_address=weth)  # latest USD price
+      candles = await client.market.candles(chain_id=1, token_address=weth, period=3600, limit=24)  # hourly candles
+      events = await client.market.liquidity_events(chain_id=1, token_address=weth)  # liquidity adds/removes
+
+  - title: Research tokens
+    body: >-
+      Metadata, holders, new tokens, rankings and security audits. These calls take
+      `chain_id` as a string, or a filter for rankings — see
+      [Research tokens](/typed/gate_dex/how-to/research-tokens).
+    code: |
+      usdt = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+      info = await client.market.token.base_info(chain_id='1', token_address=usdt)  # name, symbol, decimals
+      stats = await client.market.token.trade_info(chain_id='1', token_address=[usdt])  # price, market cap, volume
+      holders = await client.market.token.top_holders(chain_id='1', token_address=usdt)  # top 20 holders
+      ranked = await client.market.token.ranking(chain_id={'eq': '56'}, sort=[{'field': 'trend_info.volume_24h', 'order': 'desc'}], limit=10)  # leaderboard
+      audit = await client.market.token.risk(chain_id='1', address=usdt, lan='en')  # security audit
+
+  - title: Swap tokens
+    body: >-
+      Quote, approve and build a swap, sign both transactions with your own wallet, then submit
+      and track it. Gate DEX has no testnet: a submitted swap spends real funds on mainnet. The
+      client never holds wallet keys — see [Swap tokens](/typed/gate_dex/how-to/swap-tokens).
+    code: |
+      import json
+      usdt, wallet = '0xdac17f958d2ee523a2206206994597c13d831ec7', '0xYourWalletAddress'
+      quote = await client.trade.quote(chain_id=1, amount_in='100', token_in=usdt, token_out='-', slippage=0.01, slippage_type=1, user_wallet=wallet)  # best route
+      approval = await client.trade.approve_transaction(user_wallet=wallet, approve_amount='100', quote_id=quote['quote_id'])  # ERC-20 allowance calldata
+      build = await client.trade.build(chain_id=1, amount_in='100', token_in=usdt, token_out='-', slippage=0.01, slippage_type=1, user_wallet=wallet, receiver=wallet, quote_id=quote['quote_id'])  # unsigned swap
+      signed_approval, signed_swap = '0x02...', '0x02...'  # sign approval['data'] (nonce N) and build['unsigned_tx'] (nonce N + 1) with your wallet library
+      submitted = await client.trade.submit({'order_id': build['order_id'], 'signed_tx_string': json.dumps([signed_swap]), 'signed_approve_tx_string': json.dumps([signed_approval])})  # Gate broadcasts both, on mainnet
+      order = await client.trade.status(chain_id=1, order_id=build['order_id'], tx_hash=submitted['tx_hash'])  # track the order
+
+  - title: Paginate through results
+    body: >-
+      Candles, liquidity events, new tokens and rankings have a `_paged` variant — see
+      [Paginate through results](/typed/gate_dex/how-to/paginate-through-results).
+    code: |
+      from datetime import datetime, timezone
+      weth = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+      candles = await client.market.candles_paged(chain_id=1, token_address=weth, period=3600, start=datetime(2026, 10, 12, tzinfo=timezone.utc))  # every page, flattened
+      async for events in client.market.liquidity_events_paged(chain_id=1, token_address=weth):
+        print(len(events))  # one page at a time
+        break  # stop whenever you have enough
+      tokens = await client.market.token.created_paged(start=datetime(2026, 10, 26, tzinfo=timezone.utc), end=datetime(2026, 10, 26, 1, tzinfo=timezone.utc), chain_id='1', limit='100')  # Ethereum tokens created in one hour
