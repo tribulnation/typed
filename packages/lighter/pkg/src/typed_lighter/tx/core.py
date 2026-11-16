@@ -4,8 +4,9 @@ A `tx` method's request holds the transaction's own fields plus two controls the
 consumes, `api_key_index` and `nonce`; `meta['tx_type']` names the transaction type. The core
 takes a key and nonce (from the nonce manager unless the caller pinned them), signs with the
 matching signer function (`tx/signing.py`), and submits: `POST /api/v1/sendTx` (form:
-`tx_type`, `tx_info` as a JSON string) over HTTP, or `jsonapi/sendtx` (`tx_info` as a JSON
-object) over the shared WebSocket connection. No auth token is involved: the signature is the
+`tx_type`, `tx_info` as a JSON string, and `price_protection` when a create-order sets it)
+over HTTP, or `jsonapi/sendtx` (`tx_info` as a JSON object) over the shared WebSocket
+connection. No auth token is involved: the signature is the
 authentication. A `200` only means the API server accepted the transaction; the sequencer can
 still reject it later, which only shows up in the account's streams or transaction lookups.
 
@@ -323,6 +324,7 @@ class TxCore:
     *,
     transport: Transport = 'http',
     path: str = SEND_TX_PATH,
+    price_protection: bool | None = None,
     validator: validator[T] | None = None,
     validate: bool | None = None,
   ) -> T:
@@ -333,10 +335,23 @@ class TxCore:
       signed: The signed transaction.
       transport: Submit over HTTP or over the WebSocket connection.
       path: HTTP path to submit to.
+      price_protection: `sendTx`'s `price_protection` form field, sent only when set: `False`
+        skips the API server's fat-finger check (`21733`) on a perpetual limit order.
       validator: Response validator.
       validate: Per-call override of response validation.
+
+    Raises:
+      BadRequest: `price_protection` is set on a WebSocket submission, where
+        `jsonapi/sendtx` documents no such field.
+
+    References:
+      - [sendTx](https://docs.lighter.xyz/api/transactions/sendtx)
     """
     should_validate = self.should_validate(validate)
+    if transport == 'ws' and price_protection is not None:
+      raise BadRequest(
+        '`price_protection` is a `sendTx` form field: submit over HTTP to set it'
+      )
     if transport == 'ws':
       return await self.ws.rpc(
         {
@@ -346,12 +361,11 @@ class TxCore:
         validator=validator,
         validate=should_validate,
       )
+    form: dict[str, Any] = {'tx_type': signed.tx_type, 'tx_info': signed.tx_info}
+    if price_protection is not None:
+      form['price_protection'] = price_protection
     return await self.http.request(
-      'POST',
-      path,
-      form={'tx_type': signed.tx_type, 'tx_info': signed.tx_info},
-      validator=validator,
-      validate=should_validate,
+      'POST', path, form=form, validator=validator, validate=should_validate
     )
 
   async def submit_batch(
@@ -460,6 +474,7 @@ class TxCore:
         its keys (except for `change_api_key`, whose slot is the one being registered).
       LogicError: No signer function is registered for `meta`, a `submit` target was asked
         to go over WebSocket, or its adapter signed another transaction type.
+      BadRequest: The request sets `price_protection` but does not go to `sendTx` over HTTP.
     """
     submit = meta.get('submit')
     direct = None
@@ -477,6 +492,12 @@ class TxCore:
     sign_request: TxSigner = sign
     signer = self.signer
     response_validator = validator(response_type) if response_type is not None else None  # type: ignore[type-var]
+    price_protection: bool | None = request.get('price_protection')
+    if price_protection is not None and (direct is not None or transport != 'http'):
+      # Refused before a nonce is taken: only `sendTx` over HTTP documents the field.
+      raise BadRequest(
+        '`price_protection` is a `sendTx` form field: submit over HTTP to set it'
+      )
 
     async def sign_and_submit(*, api_key_index: int, nonce: int) -> Any:
       """Sign with one key and nonce, check the signed type, then submit."""
@@ -499,6 +520,7 @@ class TxCore:
         signed,
         transport=transport,
         path=path,
+        price_protection=price_protection,
         validator=response_validator,
         validate=validate,
       )
