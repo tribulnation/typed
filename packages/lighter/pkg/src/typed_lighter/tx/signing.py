@@ -70,7 +70,10 @@ Twin = Literal[
 """`AccountSigner` twins: each takes exactly its request's fields as arguments."""
 
 CONTROLS = ('api_key_index', 'nonce')
-"""Request keys the core consumes itself."""
+"""Request keys the core consumes itself to sign: the key and its nonce."""
+SUBMIT_CONTROLS = ('price_protection',)
+"""Request keys the core sends beside the signed transaction (`sendTx` form fields): never
+signed."""
 
 
 @dataclass(frozen=True)
@@ -96,7 +99,9 @@ class Forward:
       api_key_index: Slot to sign with.
       nonce: Nonce of that slot.
     """
-    fields = {k: v for k, v in request.items() if k not in CONTROLS}
+    fields = {
+      k: v for k, v in request.items() if k not in CONTROLS and k not in SUBMIT_CONTROLS
+    }
     method = getattr(signer, self.twin)
     return method(**fields, nonce=nonce, api_key_index=api_key_index)
 

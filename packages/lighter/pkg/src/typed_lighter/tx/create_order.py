@@ -217,6 +217,8 @@ class Request(TypedDict):
   """API key to sign with; defaults to round-robin over the configured keys."""
   nonce: NotRequired[int]
   """Explicit nonce of `api_key_index`, bypassing the client's nonce manager."""
+  price_protection: NotRequired[bool]
+  """Whether the API server runs its fat-finger check on a perpetual limit order (`21733`, `order price flagged as an accidental price`): an ask must be at least `max(mark, best bid) x 0.95`, a bid at most `min(mark, best ask) x 1.05`. The venue's default is `true`; `false` skips that check only (the mark-price filter `21734` still applies). HTTP only: `jsonapi/sendtx` documents no such field."""
 
 
 class CreateOrder(TxCore):
@@ -234,6 +236,7 @@ class CreateOrder(TxCore):
     *,
     api_key_index: int | None = None,
     nonce: int | None = None,
+    price_protection: bool | None = None,
     validate: bool | None = None,
     transport: Literal['http', 'ws'] = 'http',
   ) -> SendTxResponse:
@@ -243,6 +246,7 @@ class CreateOrder(TxCore):
       order: The order to place, by order type.
       api_key_index: API key to sign with; defaults to round-robin over the configured keys.
       nonce: Explicit nonce of `api_key_index`, bypassing the client's nonce manager.
+      price_protection: Whether the API server runs its fat-finger check on a perpetual limit order (`21733`, `order price flagged as an accidental price`): an ask must be at least `max(mark, best bid) x 0.95`, a bid at most `min(mark, best ask) x 1.05`. The venue's default is `true`; `false` skips that check only (the mark-price filter `21734` still applies). HTTP only: `jsonapi/sendtx` documents no such field.
       validate: Override this call's response validation; falls back to the client-level default when omitted.
       transport: Transport to send this call over. Defaults to 'http'.
 
@@ -254,6 +258,8 @@ class CreateOrder(TxCore):
       request['api_key_index'] = api_key_index
     if nonce is not None:
       request['nonce'] = nonce
+    if price_protection is not None:
+      request['price_protection'] = price_protection
     return await self.request(
       request,
       method='POST',
