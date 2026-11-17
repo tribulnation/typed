@@ -81,6 +81,8 @@ async with RISEx.new(public=True) as client:
   print(len(trades['trades']), len(funding['records']), len(transfers['items']))
 ```
 
+Funding history includes the hourly accruals of a position that is still open (`is_settled` false), whose `funding_rate_8h` is `''` until they settle, and dividend rows (`entry_type` `'dividend'`), whose `funding_rate` is `''`. Check for `''` before doing arithmetic on either rate.
+
 Every history accepts `datetime` bounds (`start_time`/`end_time`, or `block_time_from`/`block_time_to` for transfers) and paginates; see [Paginate Through Results](paginate-through-results.md).
 
 ## Fees And Signers
