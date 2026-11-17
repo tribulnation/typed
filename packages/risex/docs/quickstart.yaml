@@ -1,0 +1,102 @@
+env_setup:
+  body: >-
+    Create a `.env` with your account and signer keys. See
+    [Authenticated Setup](/typed/risex/authenticated-setup) for how to generate them,
+    claim testnet USDC and register the signer. Market data needs no keys.
+  code: |
+    # .env
+    RISEX_ACCOUNT_KEY="0x..."
+    RISEX_SIGNER_KEY="0x..."
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-risex python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call on testnet.
+  code: |
+    from dotenv import load_dotenv
+    from typed_risex import RISEx
+
+    load_dotenv()
+
+    async with RISEx.new(network='testnet') as client:
+      book = await client.markets.orderbook(market_id=1, limit=5)
+      print(book['bids'][0], book['asks'][0])
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Markets, order books, candles, trades and funding rates. Public, no keys needed.
+      See [Fetch Market Data](/typed/risex/how-to/fetch-market-data).
+    code: |
+      markets = await client.markets.all()                                # markets and their config
+      book = await client.markets.orderbook(market_id=1, limit=10)         # order book
+      candles = await client.markets.candles(market_id=1)                  # candles (last hour)
+      trades = await client.markets.trade_history(market_id=1, limit=20)  # recent trades
+      funding = await client.markets.funding_rate_history(market_id=1)     # funding rate history
+
+  - title: Fetch account data
+    body: >-
+      Balances, portfolio, positions and history, keyed by account address.
+      See [Fetch Account Data](/typed/risex/how-to/fetch-account-data).
+    code: |
+      ACCOUNT = '0xYourAccountAddress'
+      cross = await client.account.cross_margin_balance(ACCOUNT)            # collateral + unrealized PnL
+      details = await client.portfolio.details(ACCOUNT)                     # equity, margin and risk
+      positions = await client.account.positions(account=ACCOUNT)           # open positions
+      trades = await client.account.trade_history(ACCOUNT, limit=50)        # your trades
+      funding = await client.account.funding_payments(ACCOUNT, limit=50)    # funding payments
+      fees = await client.account.fees()                                    # your fee tier (needs keys: JWT)
+
+  - title: Place & manage orders
+    body: >-
+      Sizes and prices are integer steps and ticks of the market's increments. Needs the signer key.
+      See [Place & Manage Orders](/typed/risex/how-to/place-and-manage-orders).
+    code: |
+      ACCOUNT = '0xYourAccountAddress'
+      order = await client.orders.place({'market_id': 1, 'order_type': 1, 'side': 0,
+                                         'size_steps': 100, 'price_ticks': 500000,
+                                         'post_only': True})                  # place a limit order
+      lookup = await client.orders.get(order['order_id'])                     # query it
+      resting = await client.orders.open(account=ACCOUNT, market_id=1)        # list open orders
+      await client.orders.cancel(1, order_id=order['order_id'])               # cancel it
+      await client.orders.cancel_all(1)                                       # cancel all in market 1
+
+  - title: Manage leverage & margin
+    body: >-
+      Per-market leverage, margin mode and isolated margin, signed by the signer key.
+      See [Manage Leverage & Margin](/typed/risex/how-to/manage-leverage-and-margin).
+    code: |
+      await client.account.update_leverage(1, leverage='10')                     # 10x on market 1
+      await client.account.update_margin_mode(1, margin_mode=1)                  # isolated
+      await client.account.update_isolated_margin(1, amount=str(5 * 10**18))     # add 5 USDC
+      await client.account.update_margin_mode(1, margin_mode=0)                  # back to cross
+
+  - title: Paginate through results
+    body: >-
+      Every paginated history has a `_paged` twin: await it for every row, or iterate page by page.
+      Open orders and points history come back whole in one call and have none.
+      See [Paginate Through Results](/typed/risex/how-to/paginate-through-results).
+    code: |
+      from datetime import datetime, timezone
+
+      ACCOUNT = '0xYourAccountAddress'
+      now = datetime.now(timezone.utc)  # a fixed end keeps pages stable while new rows arrive
+      trades = await client.account.trade_history_paged(ACCOUNT, end_time=now, limit=500)  # every row
+      async for page in client.orders.history_paged(account=ACCOUNT, end_time=now):        # one page at a time
+        print(len(page))
+
+  - title: Listen to live streams
+    body: >-
+      One WebSocket connection for every channel; account channels authenticate with the signer key.
+      See [Listen To Live Streams](/typed/risex/how-to/listen-to-live-streams).
+    code: |
+      async with client.streams.orderbook([1]) as book:   # public order book
+        async for message in book:
+          print(message['type'], message['data'])
+          break
+      async with client.streams.fills() as fills:         # your fills
+        async for fill in fills:
+          print(fill['data'])
+          break
