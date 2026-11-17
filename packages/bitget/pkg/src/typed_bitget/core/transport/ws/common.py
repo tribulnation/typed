@@ -13,6 +13,8 @@ and the two would silently clobber each other under dataclass field merging); a 
 command carries a real caller-visible `id`, matched via `StreamsRpc`'s own internal
 `rpc_request` counter — `rpc_send` renders the counter's `int` id as the wire `str` id,
 `parse_msg` reads it back off the echoed reply.
+
+Logins, resets and their reconnects: see `session`.
 """
 
 from typing_extensions import Any, Callable, ClassVar, Mapping, NotRequired, TypedDict, TypeVar, cast
@@ -20,19 +22,24 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 import asyncio
 import json
+import logging
 import re
 import time
 
-from typed_core.exceptions import ApiError, AuthError, BadRequest
+from typed_core.exceptions import ApiError, AuthError, BadRequest, NetworkError
 from typed_core.util import StreamManager
 from typed_core.ws import StreamsRpc
+from typed_core.ws.socket import Context
 from typed_core.ws.streams_rpc import Message
 from typed_core.validation import validator
 
 from ...endpoint.stream import StreamClient
 from ...auth import Credentials, ws_login_args
+from . import session
 
 T = TypeVar('T')
+
+logger = logging.getLogger(__name__)
 
 Notification = Mapping[str, Any]
 """One push frame: `{action, arg, data, ts}` — no `event` key, unlike replies below."""
@@ -125,6 +132,10 @@ class BaseSocketConnection(
 
   _ack_queue: 'asyncio.Queue[Reply]' = field(default_factory=asyncio.Queue, init=False, repr=False)
   _ack_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+  logged_in: Context | None = field(default=None, init=False, repr=False)
+  """The connection the last successful login was made on; a new connection needs its own."""
+  closing: set[asyncio.Task] = field(default_factory=set, init=False, repr=False)
+  """Closes scheduled from the listener, kept referenced until they finish."""
 
   async def send(self, msg: object):
     ws = await self.ws
@@ -144,10 +155,47 @@ class BaseSocketConnection(
     """Send one subscribe/unsubscribe/login request and return the next reply by arrival
     order alone — mirrors `typed_core.ws.SerialReplies.request` (not reused directly, see
     the module docstring for why).
+    Bound to the connection and to `timeout` (`NetworkError`, never a hang); a stale queued
+    frame (an earlier request's late ack) is dropped first, so it never answers this one.
     """
-    async with self._ack_lock:
-      await self.send(msg)
-      return await self._ack_queue.get()
+
+    async def exchange() -> Reply:
+      async with self._ack_lock:
+        while not self._ack_queue.empty():
+          logger.warning('Dropping a stale Bitget WebSocket ack: %s', self._ack_queue.get_nowait())
+        await self.send(msg)
+        try:
+          return await asyncio.wait_for(self._ack_queue.get(), self.timeout.total_seconds())
+        except asyncio.TimeoutError as e:
+          raise NetworkError(f'No Bitget WebSocket ack within {self.timeout}') from e
+
+    return await self.wait(exchange())
+
+  def connection_closed(self, ctx: Context):
+    """Forget the closed connection's login and queued acks."""
+    if self.logged_in is ctx:
+      self.logged_in = None
+    while not self._ack_queue.empty():
+      self._ack_queue.get_nowait()
+    super().connection_closed(ctx)
+
+  def current(self) -> Context | None:
+    """The open connection, if any, without opening one."""
+    future = self._ctx_future
+    if future is not None and future.done() and not future.cancelled() and future.exception() is None:
+      return future.result()
+
+  async def reconnect(self, ctx: Context | None = None):
+    """Close `ctx` (default: the open connection) so the next use opens a fresh one; its
+    streams and requests raise `NetworkError`."""
+    if (ctx := ctx or self.current()) is not None:
+      await self.close(ctx)
+
+  def schedule_reconnect(self):
+    """`reconnect` the open connection, from the synchronous message handler."""
+    task = asyncio.ensure_future(self.reconnect(self.current()))
+    self.closing.add(task)
+    task.add_done_callback(self.closing.discard)
 
   async def rpc_send(self, id: int, req: Command, /):
     arg = {**req['args'][0], 'id': str(id)}
@@ -167,6 +215,10 @@ class BaseSocketConnection(
           return {'kind': 'response', 'id': int(command_id), 'response': obj}
         except ValueError:
           pass
+    if obj.get('event') == 'error' and session.resets_connection(obj, awaiting_ack=self._ack_lock.locked()):
+      logger.warning('Bitget WebSocket error %s; reconnecting: %s', obj.get('code'), obj.get('msg'))
+      self.schedule_reconnect()
+      return None
     self._ack_queue.put_nowait(obj)
     return None
 
@@ -198,12 +250,14 @@ class BaseSocketConnection(
     """Send the login op and wait for its ack, sent once per connection before any private
     subscribe — not per-message. The WS timestamp is Unix seconds, unlike REST's milliseconds.
     """
+    ctx = await self.ctx
     ts = str(int(time.time()))
     reply = await self._ack_request(
       {'op': 'login', 'args': [ws_login_args(credentials, timestamp=ts)]}
     )
     if reply.get('event') != 'login' or str(reply.get('code')) != '0':
       raise AuthError('WebSocket login failed', reply)
+    self.logged_in = ctx
     return reply
 
   async def command(self, req: Command) -> Reply:
@@ -237,9 +291,6 @@ class BaseSocketStreamClient(StreamClient):
   credentials: Credentials | None = None
   """`None` means unauthenticated: `authed_subscribe`/`authed_command` raises once connected."""
   validate: bool = True
-  _logged_in: asyncio.Event = field(
-    default_factory=asyncio.Event, init=False, repr=False
-  )
   _login_lock: asyncio.Lock = field(
     default_factory=asyncio.Lock, init=False, repr=False
   )
@@ -257,18 +308,16 @@ class BaseSocketStreamClient(StreamClient):
     await self.private_conn.__aexit__(exc_type, exc_value, traceback)
 
   async def ensure_login(self):
-    """Log in on the private connection if not already logged in, serialized against
-    concurrent callers so several private subscribes racing on first use log in once.
+    """Log in on the private connection unless this very connection is logged in already,
+    serialized against concurrent callers so several private subscribes racing on a fresh
+    connection log in once. A reconnect (a drop, a reset) needs a new login.
     """
     if self.credentials is None:
       raise AuthError('No credentials: this client was built with `public=True`.')
-    if self._logged_in.is_set():
-      return
     async with self._login_lock:
-      if self._logged_in.is_set():
-        return
-      await self.private_conn.login(self.credentials)
-      self._logged_in.set()
+      ctx = await self.private_conn.ctx
+      if self.private_conn.logged_in is not ctx:
+        await self.private_conn.login(self.credentials)
 
   def _local_key_and_message_key(
     self, channel: str, params: SubscriptionParams | None
@@ -313,10 +362,21 @@ class BaseSocketStreamClient(StreamClient):
     local_key, message_key = self._local_key_and_message_key(resolved_channel, remaining_params)
 
     async def connect():
-      await self.ensure_login()
-      return await self.private_conn.subscribe(
-        local_key, remaining_params, request_channel=resolved_channel, message_key=message_key
-      )
+      """Log in and subscribe; refused for want of a login, retry on a fresh connection."""
+      attempt = 1
+      while True:
+        await self.ensure_login()
+        try:
+          return await self.private_conn.subscribe(
+            local_key, remaining_params, request_channel=resolved_channel, message_key=message_key
+          )
+        except BadRequest as e:
+          if not session.login_required(e) or attempt == session.LOGIN_ATTEMPTS:
+            raise
+        logger.warning('Bitget %s: not logged in; reconnecting (attempt %d)', resolved_channel, attempt)
+        await self.private_conn.reconnect()
+        await asyncio.sleep(session.backoff(attempt))
+        attempt += 1
 
     manager = StreamManager(connect)
     if validator is None or not self.should_validate(validate):
