@@ -1,8 +1,9 @@
 """Root ownership for Spot HTTP, Spot sockets, public Futures REST and Charts."""
 
 from typing_extensions import Self
-from dataclasses import dataclass, field
 from typed_core.http import HttpClient
+
+from dataclasses import dataclass, field
 from contextlib import AsyncExitStack
 
 from ..futures.core import FuturesHttpClient
@@ -49,7 +50,7 @@ class KrakenBase:
   """Build and own the transports backing every Kraken namespace.
 
   Spot private streams and WebSocket trading share the authenticated socket.
-  Public Futures and Charts have independent HTTP transports and no credentials.
+  Spot, public Futures and Charts share an HTTP pool; only Spot uses credentials.
   """
 
   spot_client: HttpRpcClient
@@ -68,6 +69,7 @@ class KrakenBase:
     public: bool = False,
     validate: bool = True,
     http: HttpClient | None = None,
+    futures_url: str = 'https://futures.kraken.com',
   ) -> Self:
     """Build a Kraken client with Spot and public Futures market data.
 
@@ -76,14 +78,16 @@ class KrakenBase:
       private_key: Kraken private key; read from `KRAKEN_PRIVATE_KEY` when omitted.
       public: Build a credential-free client, usable only for public endpoints/channels.
       validate: Validate responses by default.
-      http: HTTP transport override; closed when this client exits.
+      http: Shared HTTP transport override; closed when this client exits.
+      futures_url: Base URL of the public Futures REST and Charts, e.g.
+        `https://demo-futures.kraken.com` for the demo environment.
     """
     credentials = resolve_credentials(api_key, private_key, public=public)
     spot_client = HttpRpcClient(
+      http=http if http is not None else HttpClient(),
       base_url=SPOT_API_URL,
       credentials=credentials,
       validate=validate,
-      http=http if http is not None else HttpClient(),
     )
     market_client = KrakenSocketClient.new(SPOT_WS_URL, validate=validate)
     private_client = KrakenSocketClient.new(
@@ -97,10 +101,10 @@ class KrakenBase:
       market_client=market_client,
       private_client=private_client,
       futures_client=FuturesHttpClient(
-        validate=validate, http=http if http is not None else HttpClient()
+        base_url=futures_url, http=spot_client.http, validate=validate
       ),
       charts_client=ChartsHttpClient(
-        validate=validate, http=http if http is not None else HttpClient()
+        base_url=futures_url, http=spot_client.http, validate=validate
       ),
     )
 
