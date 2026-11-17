@@ -1,0 +1,121 @@
+# Structured quickstart + how-to content for the /typed catalog page's inline
+# combobox view. Mirrors docs/index.md and docs/how-to/*.md, kept in sync by hand.
+#
+# `body` fields are markdown (inline subset: links, code spans, emphasis; no
+# block-level content). Links are absolute native-route paths (`/typed/nado/...`).
+
+env_setup:
+  body: >-
+    Nado has no API keys: every write is signed with your wallet key. Put it in a `.env` —
+    see [Authenticated Setup](/typed/nado/authenticated-setup) for linked signers and
+    testnet. Almost every read needs no key (`Nado.new(public=True)`); listing your
+    trigger orders and the order-update stream are signed.
+  code: |
+    # .env
+    NADO_PRIVATE_KEY="0x..."          # mainnet (Ink)
+    NADO_TESTNET_PRIVATE_KEY="0x..."  # testnet, used with network='testnet'
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-nado python-dotenv
+
+first_call:
+  body: >-
+    Load the environment, then make your first call. Prices and sizes are x18 integers:
+    divide by `10**18`.
+  code: |
+    from dotenv import load_dotenv
+    from typed_nado import Nado
+
+    load_dotenv()
+
+    async with Nado.new() as client:
+      price = await client.gateway.market_price(2)  # BTC-PERP
+      print(price['bid_x18'] / 10**18, price['ask_x18'] / 10**18)
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Products, prices, books, candles, tickers and trades. Public, no key needed.
+      [Full guide](/typed/nado/how-to/fetch-market-data).
+    code: |
+      symbols = await client.gateway.symbols(product_type='perp')  # trading rules per symbol
+      price = await client.gateway.market_price(2)  # best bid/ask
+      book = await client.gateway.market_liquidity(product_id=2, depth=10)  # order book
+      candles = await client.archive.candlesticks(product_id=2, granularity=3600, limit=24)  # candles
+      tickers = await client.archive_v2.tickers('perp')  # 24h tickers
+      trades = await client.archive_v2.trades('BTC-PERP_USDT0', limit=50)  # recent trades
+
+  - title: Fetch account data
+    body: >-
+      Balances, open orders, fees and history. Defaults to your own subaccount.
+      [Full guide](/typed/nado/how-to/fetch-account-data).
+    code: |
+      info = await client.gateway.subaccount_info()  # balances and health
+      open_orders = await client.gateway.subaccount_orders(product_id=2)  # open orders
+      fees = await client.gateway.fee_rates()  # fee tier and rates
+      positions = await client.archive.positions(open=True)  # open positions
+      funding = await client.archive.interest_and_funding(product_ids=[2], limit=100)  # funding paid
+
+  - title: Place & manage orders
+    body: >-
+      Signed orders, with `order_appendix` building the order type and flags.
+      Signs and executes on mainnet with real funds; try `Nado.new(network='testnet')` first.
+      [Full guide](/typed/nado/how-to/place-and-manage-orders).
+    code: |
+      from datetime import datetime, timedelta, timezone
+      from typed_nado import order_appendix
+
+      expiry = datetime.now(timezone.utc) + timedelta(days=1)
+      placed = await client.gateway.place_order(  # place a post-only buy of 0.002 BTC
+        product_id=2,
+        order={'priceX18': 50_000 * 10**18, 'amount': 2 * 10**15, 'expiration': expiry, 'appendix': order_appendix('post_only')},
+      )
+      state = await client.gateway.order(2, digest=placed['digest'])  # query it
+      await client.gateway.cancel_orders({'productIds': [2], 'digests': [placed['digest']]})  # cancel it
+      await client.gateway.cancel_product_orders({'productIds': [2]})  # cancel all on BTC-PERP
+
+  - title: Paginate through results
+    body: >-
+      Every history endpoint has a `_paged` twin: await it for everything, or iterate pages.
+      [Full guide](/typed/nado/how-to/paginate-through-results).
+    code: |
+      trades = await client.archive_v2.trades_paged('BTC-PERP_USDT0', limit=500)  # every page, flattened
+      async for page in client.archive.candlesticks_paged(product_id=2, granularity=3600):
+        print(len(page))  # one page at a time
+
+  - title: Listen to live streams
+    body: >-
+      Public market streams and your own order updates over one WebSocket.
+      [Full guide](/typed/nado/how-to/listen-to-live-streams).
+    code: |
+      async with client.streams.trade(2) as trades:  # public trades
+        async for trade in trades:
+          print(trade['price'] / 10**18)
+      async with client.streams.order_update(product_id=2) as updates:  # your orders (signed)
+        async for update in updates:
+          print(update['digest'], update['reason'])
+
+  - title: Withdraw & transfer collateral
+    body: >-
+      Check limits, withdraw to your wallet, move USDT0 between subaccounts.
+      Signs and executes on mainnet with real funds; try `Nado.new(network='testnet')` first.
+      [Full guide](/typed/nado/how-to/withdraw-and-transfer-collateral).
+    code: |
+      from typed_nado.core import subaccount_bytes32
+
+      limit = await client.gateway.max_withdrawable(product_id=0)  # withdrawable USDT0 (x18)
+      await client.gateway.withdraw_collateral({'productId': 0, 'amount': 25 * 10**6})  # withdraw 25 USDT0 (6 decimals)
+      other = subaccount_bytes32('0xYourWalletAddress', 'savings')
+      await client.gateway.transfer_quote({'recipient': other, 'amount': 10 * 10**18})  # transfer 10 USDT0
+
+  - title: Use the NLP vault
+    body: >-
+      Pool state, your locked balances, mint and burn NLP.
+      Signs and executes on mainnet with real funds; try `Nado.new(network='testnet')` first.
+      [Full guide](/typed/nado/how-to/use-the-nlp-vault).
+    code: |
+      pools = await client.gateway.nlp_pool_info()  # vault pools
+      balances = await client.gateway.nlp_locked_balances()  # your locked/unlocked NLP
+      await client.gateway.mint_nlp({'quoteAmount': 100 * 10**18})  # mint with 100 USDT0
+      await client.gateway.burn_nlp({'nlpAmount': 50 * 10**18})  # burn 50 NLP
