@@ -23,14 +23,14 @@ class FundingPayment(TypedDict):
   """Transaction hash (empty for unsettled rows, except dividends)"""
   side: Literal['long', 'short']
   """Position side: "long" or "short\""""
-  funding_rate: Decimal
-  """Funding rate (decimal string, up to 18 decimal places): hourly rate for unsettled rows; hourly rate for that period for settled rows."""
+  funding_rate: Decimal | Literal['']
+  """Funding rate (decimal string, up to 18 decimal places): hourly rate for unsettled rows; hourly rate for that period for settled rows. Empty on a dividend row (`entry_type` "dividend"), which carries no rate of its own."""
   is_settled: bool
   """Whether this payment has been settled on-chain. False = unsettled hourly accrual."""
-  funding_rate_8h: Decimal
-  """8h cumulative funding rate at settlement time (decimal string, up to 18 decimal places). Only set for settled rows."""
+  funding_rate_8h: Decimal | Literal['']
+  """8h cumulative funding rate at settlement time (decimal string, up to 18 decimal places). Empty on unsettled rows (`is_settled` false)."""
   trade_side: str
-  """Trade direction that triggered this settlement: "BUY" or "SELL". Only set for settled rows."""
+  """Trade direction that triggered this settlement: "BUY" or "SELL". Empty on unsettled rows (`is_settled` false)."""
   entry_type: str
   """Entry kind: "funding" for a regular hourly period, "dividend" for a one-off dividend
 adjustment. A dividend carries no funding_rate of its own."""
