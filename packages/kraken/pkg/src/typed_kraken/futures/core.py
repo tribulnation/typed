@@ -10,9 +10,12 @@ from ..core.transport.public import PublicHttpClient
 
 
 class FuturesEnvelope(TypedDict):
-  """Result marker and error fields shared by Futures REST responses."""
+  """Result marker and error fields shared by Futures REST responses.
 
-  result: Literal['success', 'error']
+  History endpoints (`/api/history/v3/...`) answer without a `result` marker.
+  """
+
+  result: NotRequired[Literal['success', 'error']]
   error: NotRequired[str]
   errors: NotRequired[list[str]]
 
@@ -27,7 +30,7 @@ class FuturesHttpClient(PublicHttpClient):
     """Check the Futures result marker independently of endpoint validation."""
     payload = super().payload(response)
     envelope = validate_envelope.python(payload)
-    if envelope['result'] == 'error':
+    if envelope.get('result') == 'error':
       message = envelope.get('error', '')
       if message == 'apiLimitExceeded':
         raise RateLimited(message)
