@@ -110,7 +110,7 @@ class AccountContractInstrument(TypedDict):
     'InversePerpetual', 'LinearPerpetual', 'LinearFutures', 'InverseFutures'
   ]
   """Contract type."""
-  status: Literal['PreLaunch', 'Trading', 'Delivering', 'Closed']
+  status: Literal['PreLaunch', 'PendingOpen', 'Trading', 'Delivering', 'Closed']
   """Trading status of the contract."""
   baseCoin: str
   """Base coin."""
