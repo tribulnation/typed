@@ -1,0 +1,104 @@
+env_setup:
+  body: >-
+    Create a `.env` with your wallet private key (trading, private streams) and/or an API
+    key (read-only account data) — see
+    [Authenticated Setup](/typed/evedex/authenticated-setup) for the difference.
+  code: |
+    # .env
+    EVEDEX_PRIVATE_KEY="0x..."
+    EVEDEX_API_KEY="your_api_key"
+
+install:
+  body: Install the client and `python-dotenv` to load the `.env` file.
+  code: pip install typed-evedex python-dotenv
+
+first_call:
+  body: Load the environment, then make your first call.
+  code: |
+    from dotenv import load_dotenv
+    from typed_evedex import Evedex
+
+    load_dotenv()
+
+    async with Evedex.new() as client:
+      balance = await client.exchange.account.available_balance()
+      print(balance['availableBalance'])
+
+how_tos:
+  - title: Fetch market data
+    body: >-
+      Instruments, order book, trades and candles — all public, no credentials needed.
+      See [Fetch Market Data](/typed/evedex/how-to/fetch-market-data).
+    code: |
+      from datetime import datetime, timezone
+      instruments = await client.exchange.market.instruments()                    # every instrument
+      btc = await client.exchange.market.instrument('BTCUSD')                     # one instrument
+      book = await client.exchange.market.order_book(instrument='BTCUSD')         # order book
+      trades = await client.exchange.market.recent_trades('BTCUSD')               # recent trades
+      info = await client.exchange.market.info()                                  # exchange state and fees
+      candles = await client.market_data.candles_paged(                           # candle history
+        instrument='BTCUSD', group='1h', after=datetime(2026, 1, 1, tzinfo=timezone.utc), before=datetime.now(timezone.utc)
+      )
+
+  - title: Fetch account data
+    body: >-
+      Balances, positions, orders, fills and transfers, with an API key or the wallet key.
+      See [Fetch Account Data](/typed/evedex/how-to/fetch-account-data).
+    code: |
+      me = await client.exchange.account.me()                                     # account
+      margin = await client.exchange.account.available_balance()                  # margin summary
+      funding = await client.exchange.account.funding()                           # trading balance
+      positions = await client.exchange.positions.list()                          # open positions
+      orders = await client.exchange.orders.list(limit=50)                        # order history
+      transfers = await client.exchange.transfers.list(limit=20)                  # transfers
+
+  - title: Place & manage orders
+    body: >-
+      Limit, market, stop-limit and batch orders, signed with your wallet by the client.
+      See [Place & Manage Orders](/typed/evedex/how-to/place-and-manage-orders).
+    code: |
+      order = await client.exchange.orders.place_limit(                           # place a limit order
+        instrument='BTCUSD', side='BUY', leverage=5, quantity='0.001', limit_price='60000'
+      )
+      state = await client.exchange.orders.get(order['id'])                       # check its status
+      await client.exchange.orders.replace_limit(order['id'], quantity='0.002', limit_price='60500')  # replace it
+      open_orders = await client.exchange.orders.opened()                         # list open orders
+      await client.exchange.orders.cancel(order['id'])                            # cancel it
+      await client.exchange.orders.cancel_by_instrument('BTCUSD')                 # cancel all on BTCUSD
+
+  - title: Manage positions & TP/SL
+    body: >-
+      Leverage, closing positions, take-profit and stop-loss.
+      See [Manage Positions & TP/SL](/typed/evedex/how-to/manage-positions).
+    code: |
+      await client.exchange.positions.set_leverage('BTCUSD', leverage=10)         # set leverage
+      tp = await client.exchange.tpsl.create(                                     # take-profit on the position
+        'BTCUSD', type='take-profit', side='SELL', quantity='0', price='70000', order=None
+      )
+      await client.exchange.tpsl.cancel(instrument='BTCUSD', id=tp['id'])         # cancel it
+      await client.exchange.positions.close(                                      # close the position
+        instrument='BTCUSD', quantity='0.001', leverage=10
+      )
+
+  - title: Listen to streams
+    body: >-
+      Public market channels and your private account channels over one WebSocket.
+      See [Listen To Live Streams](/typed/evedex/how-to/listen-to-live-streams).
+    code: |
+      async with client.streams.order_book_best('BTCUSD') as stream:              # best bid/ask
+        async for update in stream:
+          print(update['orderBook']['bids'][0])
+          break
+      async with client.streams.account.orders() as stream:                       # your order updates
+        async for order in stream:
+          print(order['id'], order['status'])
+          break
+
+  - title: Paginate through results
+    body: >-
+      Every `_paged` method walks all pages for you.
+      See [Paginate Through Results](/typed/evedex/how-to/paginate-through-results).
+    code: |
+      orders = await client.exchange.orders.list_paged(instrument='BTCUSD')      # every order, flattened
+      async for rows in client.exchange.positions.history_paged(limit=100):      # closed positions, page by page
+        print(len(rows))
