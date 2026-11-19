@@ -1,4 +1,12 @@
-# Typed Nado
+<p align="center">
+  <a href="https://tribulnation.com/typed/nado">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/nado-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/nado-light.svg">
+      <img alt="Typed Nado" src="https://tribulnation.com/media/lockups/nado-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
 <p align="center">
   <em>A fully typed, validated async client for the Nado API.</em>
