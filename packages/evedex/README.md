@@ -1,4 +1,12 @@
-# Typed EVEDEX
+<p align="center">
+  <a href="https://tribulnation.com/typed/evedex">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/evedex-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/evedex-light.svg">
+      <img alt="Typed EVEDEX" src="https://tribulnation.com/media/lockups/evedex-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
 <p align="center">
   <em>A fully typed, validated async client for the EVEDEX API.</em>
