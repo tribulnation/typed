@@ -24,6 +24,7 @@ from .types import (
   OpenPositionsResult,
   OrderStatusResult,
   OrderType,
+  QtyMode,
   SendOrderResult,
   Side,
 )
@@ -146,6 +147,7 @@ class FuturesTrading:
     cli_ord_id: str | None = None,
     size: Decimal | None = None,
     limit_price: Decimal | None = None,
+    qty_mode: QtyMode | None = None,
     validate: bool | None = None,
   ) -> EditOrderResult:
     """Edit a resting order's size or price in place.
@@ -153,8 +155,14 @@ class FuturesTrading:
     Args:
       order_id: The order to edit; or `cli_ord_id`.
       cli_ord_id: The order's client ID.
-      size: New total size, filled part included.
+      size: New size, read per `qty_mode`: by default (`RELATIVE`) the remaining
+        open size, excluding past fills; with `ABSOLUTE`, the total order size,
+        past fills included.
       limit_price: New limit price.
+      qty_mode: How `size` is read; Kraken defaults to `RELATIVE` when omitted.
+
+    References:
+      - [Edit order](https://docs.kraken.com/api/docs/futures-api/trading/edit-order-spring)
     """
     return await self.client.signed(
       'POST',
@@ -164,6 +172,7 @@ class FuturesTrading:
         'cliOrdId': cli_ord_id,
         'size': size,
         'limitPrice': limit_price,
+        'qtyMode': qty_mode,
       },
       validator=validator(EditOrderResult),
       validate=validate,

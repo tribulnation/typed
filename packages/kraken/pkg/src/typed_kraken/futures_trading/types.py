@@ -16,6 +16,10 @@ immediate-or-cancel and `mkt` an IOC bounded only by the venue's price collar.""
 
 Side = Literal['buy', 'sell']
 
+QtyMode = Literal['ABSOLUTE', 'RELATIVE']
+"""How an edit's `size` is read: `ABSOLUTE` sets the total order size, past fills
+included; `RELATIVE` (Kraken's default) sets the remaining open size."""
+
 
 class FlexCurrency(TypedDict):
   """One currency held in the multi-collateral (flex) account."""
@@ -353,7 +357,10 @@ class BatchEdit(TypedDict):
   order_id: NotRequired[str]
   cliOrdId: NotRequired[str]
   size: NotRequired[Decimal]
+  """New size, read per `qtyMode`: the remaining open size unless `ABSOLUTE`."""
   limitPrice: NotRequired[Decimal]
+  qtyMode: NotRequired[QtyMode]
+  """How `size` is read; Kraken defaults to `RELATIVE`."""
 
 
 class BatchCancel(TypedDict):
