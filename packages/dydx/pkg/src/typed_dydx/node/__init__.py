@@ -11,6 +11,7 @@ from typed_dydx.node.constants import (
   STATEFUL_ORDER_TIME_WINDOW,
 )
 from typed_dydx.node.core import Node
+from typed_dydx.node.leverage import UpdateLeverage
 from typed_dydx.node.market import Market
 from typed_dydx.node.orders import Orders
 from typed_dydx.node.orders.place_order import PlacedOrder, PlacedOrders
