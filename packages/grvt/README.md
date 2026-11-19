@@ -1,4 +1,12 @@
-# Typed GRVT
+<p align="center">
+  <a href="https://tribulnation.com/typed/grvt">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/grvt-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/grvt-light.svg">
+      <img alt="Typed GRVT" src="https://tribulnation.com/media/lockups/grvt-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
 <p align="center">
   <em>A fully typed, validated async client for the GRVT API.</em>
