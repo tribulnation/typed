@@ -54,14 +54,14 @@ class ContractTicker(TypedDict):
   """Delivery fee rate. Futures only; empty string on perpetuals, confirmed live on 823 of 863 linear and 22 of 26 inverse rows (2026-09-07 public probe)."""
   deliveryTime: NotRequired[Literal['0'] | TimestampMillis]
   """Delivery time, as a millisecond timestamp. `"0"` on perpetuals, confirmed by the recorded `linear_symbol`/`inverse_symbol` examples (a dated future, `linear_dated_future`, carries a real timestamp)."""
-  bid1Price: Decimal
-  """Best bid price."""
-  bid1Size: Decimal
-  """Size resting at the best bid."""
-  ask1Price: Decimal
-  """Best ask price."""
-  ask1Size: Decimal
-  """Size resting at the best ask."""
+  bid1Price: Literal[''] | Decimal
+  """Best bid price. Empty string confirmed live on a contract with nothing resting on that side of the book: `BITOUSDT` (`linear`) sent `""` for all four of `bid1Price`/`bid1Size`/`ask1Price`/`ask1Size` on 2026-11-19 from 06:00 UTC, while its last, index and mark prices stayed decimal strings."""
+  bid1Size: Literal[''] | Decimal
+  """Size resting at the best bid. Empty string confirmed live on a contract with nothing resting on that side of the book: `BITOUSDT` (`linear`) sent `""` for all four of `bid1Price`/`bid1Size`/`ask1Price`/`ask1Size` on 2026-11-19 from 06:00 UTC, while its last, index and mark prices stayed decimal strings."""
+  ask1Price: Literal[''] | Decimal
+  """Best ask price. Empty string confirmed live on a contract with nothing resting on that side of the book: `BITOUSDT` (`linear`) sent `""` for all four of `bid1Price`/`bid1Size`/`ask1Price`/`ask1Size` on 2026-11-19 from 06:00 UTC, while its last, index and mark prices stayed decimal strings."""
+  ask1Size: Literal[''] | Decimal
+  """Size resting at the best ask. Empty string confirmed live on a contract with nothing resting on that side of the book: `BITOUSDT` (`linear`) sent `""` for all four of `bid1Price`/`bid1Size`/`ask1Price`/`ask1Size` on 2026-11-19 from 06:00 UTC, while its last, index and mark prices stayed decimal strings."""
   preOpenPrice: NotRequired[Literal[''] | Decimal]
   """Estimated open price of a pre-market contract. Empty string outside a pre-market listing, confirmed live on 859 of 863 linear rows (2026-09-07 public probe)."""
   preQty: NotRequired[Literal[''] | Decimal]
