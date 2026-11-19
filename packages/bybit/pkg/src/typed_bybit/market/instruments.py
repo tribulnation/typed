@@ -104,7 +104,9 @@ class Request(TypedDict):
   """Symbol name."""
   baseCoin: NotRequired[str]
   """Base coin."""
-  status: NotRequired[Literal['PreLaunch', 'Trading', 'Delivering', 'Closed']]
+  status: NotRequired[
+    Literal['PreLaunch', 'PendingOpen', 'Trading', 'Delivering', 'Closed']
+  ]
   """Instrument status."""
   symbolType: NotRequired[str]
   """Symbol classification."""
@@ -231,7 +233,7 @@ class ContractInstrument(TypedDict):
     'InversePerpetual', 'LinearPerpetual', 'LinearFutures', 'InverseFutures'
   ]
   """Contract type."""
-  status: Literal['PreLaunch', 'Trading', 'Delivering', 'Closed']
+  status: Literal['PreLaunch', 'PendingOpen', 'Trading', 'Delivering', 'Closed']
   """Trading status of the contract."""
   baseCoin: str
   """Base coin."""
@@ -316,7 +318,8 @@ class Instruments(RpcEndpoint):
     *,
     symbol: str | None = None,
     base_coin: str | None = None,
-    status: Literal['PreLaunch', 'Trading', 'Delivering', 'Closed'] | None = None,
+    status: Literal['PreLaunch', 'PendingOpen', 'Trading', 'Delivering', 'Closed']
+    | None = None,
     symbol_type: str | None = None,
     limit: int | None = None,
     validate: bool | None = None,
@@ -366,7 +369,8 @@ class Instruments(RpcEndpoint):
     *,
     symbol: str | None = None,
     base_coin: str | None = None,
-    status: Literal['PreLaunch', 'Trading', 'Delivering', 'Closed'] | None = None,
+    status: Literal['PreLaunch', 'PendingOpen', 'Trading', 'Delivering', 'Closed']
+    | None = None,
     symbol_type: str | None = None,
     limit: int | None = None,
     cursor: str | None = None,
