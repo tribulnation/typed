@@ -16,14 +16,14 @@ class MixTicker1(TypedDict):
   """Trading pair; documented alongside `instId` for futures, unlike spot."""
   lastPr: Decimal
   """Latest price."""
-  bidPr: Decimal
-  """Bid price."""
-  askPr: Decimal
-  """Ask price."""
-  bidSz: Decimal
-  """Buying (bid) amount."""
-  askSz: Decimal
-  """Selling (ask) amount."""
+  bidPr: NotRequired[Decimal]
+  """Bid price. Absent when nothing rests on that side of the book (confirmed live 2026-11-19 on `USDT-FUTURES` `BITOUSDT`, contract `symbolStatus` `maintain`)."""
+  askPr: NotRequired[Decimal]
+  """Ask price. Absent when nothing rests on that side of the book (confirmed live 2026-11-19 on `USDT-FUTURES` `BITOUSDT`, contract `symbolStatus` `maintain`)."""
+  bidSz: NotRequired[Decimal]
+  """Buying (bid) amount. Absent when nothing rests on that side of the book (confirmed live 2026-11-19 on `USDT-FUTURES` `BITOUSDT`, contract `symbolStatus` `maintain`)."""
+  askSz: NotRequired[Decimal]
+  """Selling (ask) amount. Absent when nothing rests on that side of the book (confirmed live 2026-11-19 on `USDT-FUTURES` `BITOUSDT`, contract `symbolStatus` `maintain`)."""
   open24h: Decimal
   """Entry (opening) price of the last 24 hours, compared on a rolling 24h basis."""
   high24h: Decimal
