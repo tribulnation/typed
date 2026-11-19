@@ -44,7 +44,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e packages/core
       - run: pip install -e packages/ethereum/pkg
-      - run: pip install ruff pyright pytest build
+      - run: pip install ruff pyright pytest pytest-asyncio build
       - run: ruff check --select TID251 packages/ethereum/pkg
       - run: pyright packages/ethereum/pkg
       - run: cp packages/ethereum/README.md packages/ethereum/LICENSE packages/ethereum/pkg/
