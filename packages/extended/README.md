@@ -1,4 +1,12 @@
-# Typed Extended
+<p align="center">
+  <a href="https://tribulnation.com/typed/extended">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://tribulnation.com/media/lockups/extended-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://tribulnation.com/media/lockups/extended-light.svg">
+      <img alt="Typed Extended" src="https://tribulnation.com/media/lockups/extended-light.svg" width="520">
+    </picture>
+  </a>
+</p>
 
 <p align="center">
   <em>A fully typed, validated async client for the Extended API.</em>
