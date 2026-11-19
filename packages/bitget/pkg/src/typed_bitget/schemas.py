@@ -373,14 +373,14 @@ class MixTicker(TypedDict):
   """Futures symbol."""
   lastPr: Decimal
   """Last traded price."""
-  askPr: Decimal
-  """Best ask price."""
-  bidPr: Decimal
-  """Best bid price."""
-  bidSz: Decimal
-  """Best bid size."""
-  askSz: Decimal
-  """Best ask size."""
+  askPr: Decimal | None
+  """Best ask price; `null` when the symbol has no quote on that side (confirmed live)."""
+  bidPr: Decimal | None
+  """Best bid price; `null` when the symbol has no quote on that side (confirmed live)."""
+  bidSz: Decimal | None
+  """Best bid size; `null` when the symbol has no quote on that side (confirmed live)."""
+  askSz: Decimal | None
+  """Best ask size; `null` when the symbol has no quote on that side (confirmed live)."""
   high24h: Decimal
   """24h high price."""
   low24h: Decimal
