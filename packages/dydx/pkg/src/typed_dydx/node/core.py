@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from types import TracebackType
 
 from typed_core.exceptions import AuthError
-from typing_extensions import TYPE_CHECKING, Self, Sequence
+from typing_extensions import TYPE_CHECKING, Mapping, Self, Sequence
 
 from typed_dydx.chain import Chain
 from typed_dydx.chain.comet.core import CometOptions
@@ -257,6 +257,34 @@ class Node:
     return await self.orders.batch_cancel_orders(
       order_ids,
       good_til_block=good_til_block,
+      mode=mode,
+      simulate=simulate,
+    )
+
+  async def update_leverage(
+    self,
+    imf_ppm: Mapping[int, int],
+    *,
+    subaccount: int = 0,
+    mode: tx_proto.BroadcastMode = tx_proto.BroadcastMode.SYNC,
+    simulate: bool = False,
+  ) -> tx_proto.BroadcastTxResponse:
+    """Build, sign, and broadcast a per-market leverage update (`MsgUpdateLeverage`).
+
+    Args:
+      imf_ppm: The initial margin fraction to set, in parts per million, by CLOB pair
+        id. Leverage is `1_000_000 / imf_ppm`: `100_000` is 10x.
+      subaccount: dYdX subaccount number owned by the wallet.
+      mode: Cosmos broadcast mode.
+      simulate: Whether to simulate the transaction before broadcasting.
+
+    Returns:
+      The transaction broadcast response.
+    """
+    from typed_dydx.node.leverage import UpdateLeverage
+    return await UpdateLeverage(self.context, self.tx).update_leverage(
+      imf_ppm,
+      subaccount=subaccount,
       mode=mode,
       simulate=simulate,
     )

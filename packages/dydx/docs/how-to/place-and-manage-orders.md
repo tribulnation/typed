@@ -57,3 +57,25 @@ async with Dydx.testnet('your testnet mnemonic') as client:
 
 Short-term orders cannot be batched this way because dYdX rejects transactions
 containing more than one short-term `MsgPlaceOrder`.
+
+## Set per-market leverage
+
+A subaccount can lower its leverage on a market below the market's maximum. The setting
+is an initial margin fraction in parts per million (`1_000_000 / leverage`), keyed by
+CLOB pair id:
+
+```python
+from typed_dydx import Dydx
+
+async with Dydx.testnet('your testnet mnemonic') as client:
+  market = await client.indexer.data.get_market('ETH-USD')
+  pair = int(market['clobPairId'])
+  await client.node.update_leverage({pair: 200_000}, simulate=True)  # 5x
+  wallet = client.node.require_wallet()
+  settings = await client.chain.clob.leverage(wallet.address, number=0)
+  print(settings.clob_pair_leverage)
+```
+
+The chain refuses a fraction below the market's base initial margin fraction (above its
+maximum leverage) or one the subaccount's collateral would no longer cover. The market's
+open-interest-scaled fraction still applies when it is the larger one.
