@@ -225,6 +225,8 @@ class AccountUpdateData(TypedDict):
     'OPTIONS_PREMIUM_FEE',
     'OPTIONS_SETTLE_PROFIT',
     'AUTO_EXCHANGE',
+    'COIN_SWAP_DEPOSIT',
+    'COIN_SWAP_WITHDRAW',
   ]
   """Event reason type."""
   B: NotRequired[list[BalanceUpdate]]
