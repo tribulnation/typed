@@ -48,33 +48,31 @@ The exchange clients work the same way: `<Venue>.new(...)`, then `async with`. P
 
 ## Packages
 
-| Venue | PyPI package | Status | Docs |
-|---|---|---|---|
-| Binance | [`typed-binance`](https://pypi.org/project/typed-binance/) | Production | [docs](https://tribulnation.com/typed/binance) |
-| Coinbase | [`typed-coinbase`](https://pypi.org/project/typed-coinbase/) | Beta | [docs](https://tribulnation.com/typed/coinbase) |
-| Bybit | [`typed-bybit`](https://pypi.org/project/typed-bybit/) | Beta | [docs](https://tribulnation.com/typed/bybit) |
-| Bitget | [`typed-bitget`](https://pypi.org/project/typed-bitget/) | Beta | [docs](https://tribulnation.com/typed/bitget) |
-| Hyperliquid | [`typed-hyperliquid`](https://pypi.org/project/typed-hyperliquid/) | Production | [docs](https://tribulnation.com/typed/hyperliquid) |
-| MEXC | [`typed-mexc`](https://pypi.org/project/typed-mexc/) | Production | [docs](https://tribulnation.com/typed/mexc) |
-| KuCoin | [`typed-kucoin`](https://pypi.org/project/typed-kucoin/) | Beta | [docs](https://tribulnation.com/typed/kucoin) |
-| Kraken | [`typed-kraken`](https://pypi.org/project/typed-kraken/) | Beta | [docs](https://tribulnation.com/typed/kraken) |
-| dYdX | [`typed-dydx`](https://pypi.org/project/typed-dydx/) | Production | [docs](https://tribulnation.com/typed/dydx) |
-| Deribit | [`typed-deribit`](https://pypi.org/project/typed-deribit/) | Beta | [docs](https://tribulnation.com/typed/deribit) |
-| Aster | [`typed-aster`](https://pypi.org/project/typed-aster/) | Beta | [docs](https://tribulnation.com/typed/aster) |
-| Lighter | [`typed-lighter`](https://pypi.org/project/typed-lighter/) | Beta | [docs](https://tribulnation.com/typed/lighter) |
-| GRVT | [`typed-grvt`](https://pypi.org/project/typed-grvt/) | Beta | [docs](https://tribulnation.com/typed/grvt) |
-| Extended | [`typed-extended`](https://pypi.org/project/typed-extended/) | Beta | [docs](https://tribulnation.com/typed/extended) |
-| Bit2Me | [`typed-bit2me`](https://pypi.org/project/typed-bit2me/) | Beta | [docs](https://tribulnation.com/typed/bit2me) |
-| Margin Trade | [`typed-margin-trade`](https://pypi.org/project/typed-margin-trade/) | Beta | [docs](https://tribulnation.com/typed/margin_trade) |
-| gTrade | [`typed-gtrade`](https://pypi.org/project/typed-gtrade/) | Beta | [docs](https://tribulnation.com/typed/gtrade) |
-| Nado | [`typed-nado`](https://pypi.org/project/typed-nado/) | Beta | [docs](https://tribulnation.com/typed/nado) |
-| RISEx | [`typed-risex`](https://pypi.org/project/typed-risex/) | Beta | [docs](https://tribulnation.com/typed/risex) |
-| EVEDEX | [`typed-evedex`](https://pypi.org/project/typed-evedex/) | Beta | [docs](https://tribulnation.com/typed/evedex) |
-| Alchemy | [`typed-alchemy`](https://pypi.org/project/typed-alchemy/) | Production | [docs](https://tribulnation.com/typed/alchemy) |
-| Moralis | [`typed-moralis`](https://pypi.org/project/typed-moralis/) | Beta | [docs](https://tribulnation.com/typed/moralis) |
-| Etherscan | [`typed-etherscan`](https://pypi.org/project/typed-etherscan/) | Beta | [docs](https://tribulnation.com/typed/etherscan) |
-| Ethereum nodes (Web3.py) | [`typed-ethereum`](https://pypi.org/project/typed-ethereum/) | Beta | [README](https://github.com/tribulnation/typed/tree/main/packages/ethereum) |
-| Shared core (installed with the clients) | [`typed-core`](https://pypi.org/project/typed-core/) | - | [README](https://github.com/tribulnation/typed/tree/main/packages/core) |
+| | Repo | Status | PyPI |
+|--|------|--------|-----|
+| <img src="https://catalogue.tribulnation.com/icons/platform/binance.svg" width="20" height="20" /> | [Binance](https://github.com/tribulnation/typed/tree/main/packages/binance) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-binance)](https://pypi.org/project/typed-binance/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/coinbase.svg" width="20" height="20" /> | [Coinbase](https://github.com/tribulnation/typed/tree/main/packages/coinbase) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-coinbase)](https://pypi.org/project/typed-coinbase/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/bybit.svg" width="20" height="20" /> | [Bybit](https://github.com/tribulnation/typed/tree/main/packages/bybit) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-bybit)](https://pypi.org/project/typed-bybit/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/bitget-token.svg" width="20" height="20" /> | [Bitget](https://github.com/tribulnation/typed/tree/main/packages/bitget) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-bitget)](https://pypi.org/project/typed-bitget/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/hyperliquid.svg" width="20" height="20" /> | [Hyperliquid](https://github.com/tribulnation/typed/tree/main/packages/hyperliquid) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-hyperliquid)](https://pypi.org/project/typed-hyperliquid/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/mexc.svg" width="20" height="20" /> | [MEXC](https://github.com/tribulnation/typed/tree/main/packages/mexc) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-mexc)](https://pypi.org/project/typed-mexc/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/kucoin.svg" width="20" height="20" /> | [KuCoin](https://github.com/tribulnation/typed/tree/main/packages/kucoin) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-kucoin)](https://pypi.org/project/typed-kucoin/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/kraken.svg" width="20" height="20" /> | [Kraken](https://github.com/tribulnation/typed/tree/main/packages/kraken) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-kraken)](https://pypi.org/project/typed-kraken/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/dydx.svg" width="20" height="20" /> | [dYdX](https://github.com/tribulnation/typed/tree/main/packages/dydx) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-dydx)](https://pypi.org/project/typed-dydx/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/deribit.svg" width="20" height="20" /> | [Deribit](https://github.com/tribulnation/typed/tree/main/packages/deribit) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-deribit)](https://pypi.org/project/typed-deribit/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/aster.svg" width="20" height="20" /> | [Aster](https://github.com/tribulnation/typed/tree/main/packages/aster) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-aster)](https://pypi.org/project/typed-aster/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/lighter.svg" width="20" height="20" /> | [Lighter](https://github.com/tribulnation/typed/tree/main/packages/lighter) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-lighter)](https://pypi.org/project/typed-lighter/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/grvt.svg" width="20" height="20" /> | [GRVT](https://github.com/tribulnation/typed/tree/main/packages/grvt) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-grvt)](https://pypi.org/project/typed-grvt/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/extended.svg" width="20" height="20" /> | [Extended](https://github.com/tribulnation/typed/tree/main/packages/extended) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-extended)](https://pypi.org/project/typed-extended/) |
+| <img src="https://catalogue.tribulnation.com/icons/asset/bit2me.svg" width="20" height="20" /> | [Bit2Me](https://github.com/tribulnation/typed/tree/main/packages/bit2me) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-bit2me)](https://pypi.org/project/typed-bit2me/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/margin-trade.svg" width="20" height="20" /> | [Margin Trade](https://github.com/tribulnation/typed/tree/main/packages/margin_trade) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-margin-trade)](https://pypi.org/project/typed-margin-trade/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/gtrade.svg" width="20" height="20" /> | [gTrade](https://github.com/tribulnation/typed/tree/main/packages/gtrade) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-gtrade)](https://pypi.org/project/typed-gtrade/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/nado.svg" width="20" height="20" /> | [Nado](https://github.com/tribulnation/typed/tree/main/packages/nado) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-nado)](https://pypi.org/project/typed-nado/) |
+|  | [RISEx](https://github.com/tribulnation/typed/tree/main/packages/risex) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-risex)](https://pypi.org/project/typed-risex/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/evedex.svg" width="20" height="20" /> | [EVEDEX](https://github.com/tribulnation/typed/tree/main/packages/evedex) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-evedex)](https://pypi.org/project/typed-evedex/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/alchemy.svg" width="20" height="20" /> | [Alchemy](https://github.com/tribulnation/typed/tree/main/packages/alchemy) | ✅ Production | [![PyPI](https://img.shields.io/pypi/v/typed-alchemy)](https://pypi.org/project/typed-alchemy/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/moralis.svg" width="20" height="20" /> | [Moralis](https://github.com/tribulnation/typed/tree/main/packages/moralis) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-moralis)](https://pypi.org/project/typed-moralis/) |
+| <img src="https://catalogue.tribulnation.com/icons/platform/etherscan.svg" width="20" height="20" /> | [Etherscan](https://github.com/tribulnation/typed/tree/main/packages/etherscan) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-etherscan)](https://pypi.org/project/typed-etherscan/) |
 
 Documentation for every client: [tribulnation.com/typed](https://tribulnation.com/typed).
 
