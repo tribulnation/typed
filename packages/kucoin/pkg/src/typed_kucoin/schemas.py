@@ -591,8 +591,8 @@ class FuturesOrder(TypedDict):
   """Trigger price reference, for an order that originated from a stop order; the empty string otherwise."""
   stopTriggered: bool
   """Whether the originating stop condition has triggered."""
-  stopPrice: float
-  """Trigger price, for an order that originated from a stop order. KuCoin's own OpenAPI spec types this inconsistently across operations returning the identical order shape (`integer` on some, `number` on others); modeled as `number` to cover both."""
+  stopPrice: float | None
+  """Trigger price, for an order that originated from a stop order; `null` otherwise (e.g. a plain limit or market order). KuCoin's own OpenAPI spec types this inconsistently across operations returning the identical order shape (`integer` on some, `number` on others); modeled as `number` to cover both."""
   timeInForce: Literal['GTC', 'IOC']
   """Order timing strategy."""
   postOnly: bool
@@ -611,8 +611,8 @@ class FuturesOrder(TypedDict):
   """Visible quantity for an iceberg order. Iceberg placement was discontinued 2026-08-03; this response field remains and reads `0` for every order placed since."""
   clientOid: str
   """Client-provided order id."""
-  remark: str
-  """Order remark."""
+  remark: str | None
+  """Order remark, or `null` when none was given."""
   tags: str
   """Tag identifying the order's source."""
   isActive: bool
@@ -623,8 +623,8 @@ class FuturesOrder(TypedDict):
   """Order creation time, Unix milliseconds."""
   updatedAt: TimestampMillis
   """Last update time, Unix milliseconds."""
-  endAt: NotRequired[TimestampMillis]
-  """Order end time, Unix milliseconds. KuCoin's own OpenAPI spec omits this field from some operations' response schemas that otherwise return the identical order shape (e.g. Get Order By OrderId) while including it on others (e.g. Get Order By ClientOid) -- modeled as present-but-optional on that basis rather than assumed absent."""
+  endAt: NotRequired[TimestampMillis | None]
+  """Order end time, Unix milliseconds, or `null` while the order is still active. KuCoin's own OpenAPI spec omits this field from some operations' response schemas that otherwise return the identical order shape (e.g. Get Order By OrderId) while including it on others (e.g. Get Order By ClientOid) -- modeled as present-but-optional on that basis rather than assumed absent."""
   orderTime: TimestampNanos
   """Order creation time, Unix nanoseconds."""
   settleCurrency: str
