@@ -8,7 +8,8 @@ References:
   - [KuCoin API docs](https://www.kucoin.com/docs-new)
 """
 
-from typing_extensions import Any, NotRequired
+from typing_extensions import Any, Mapping, NotRequired
+from datetime import timedelta
 import httpx
 
 from typed_core.exceptions import ApiError, AuthError, BadRequest, RateLimited
@@ -28,6 +29,41 @@ class Envelope(TypedDict):
 
 validate_envelope = validator(Envelope)
 
+
+class RateLimit(TypedDict, total=False):
+  """KuCoin's `gw-ratelimit-*` response headers, attached as the last argument of a
+  `RateLimited` so a caller can wait out the quota instead of guessing a backoff."""
+
+  limit: int
+  """`gw-ratelimit-limit`: the resource pool's quota for the current window."""
+  remaining: int
+  """`gw-ratelimit-remaining`: what is left of the quota."""
+  reset: timedelta
+  """`gw-ratelimit-reset`: time until the quota resets (sent in milliseconds)."""
+
+
+def rate_limit(headers: Mapping[str, str]) -> RateLimit:
+  """Read the rate-limit headers present on a response; malformed ones are left out.
+
+  Args:
+    headers: The response headers, looked up case-insensitively by `httpx`.
+  """
+  info = RateLimit()
+  if (limit := whole(headers.get('gw-ratelimit-limit'))) is not None:
+    info['limit'] = limit
+  if (remaining := whole(headers.get('gw-ratelimit-remaining'))) is not None:
+    info['remaining'] = remaining
+  if (reset := whole(headers.get('gw-ratelimit-reset'))) is not None:
+    info['reset'] = timedelta(milliseconds=reset)
+  return info
+
+
+def whole(value: str | None) -> int | None:
+  """A header's non-negative integer value, or `None` when absent or malformed."""
+  if value is not None and value.strip().isdigit():
+    return int(value)
+
+
 AUTH_CODES = frozenset(
   {'400001', '400002', '400003', '400004', '400005', '400006', '400007', '411100'}
 )
@@ -42,24 +78,28 @@ BAD_REQUEST_CODES = frozenset({'400100', '400200', '415000'})
 """Codes that mean the request itself was malformed."""
 
 
-def raise_code(code: str, msg: str, payload: Any):
+def raise_code(
+  code: str, msg: str, payload: Any, *, headers: Mapping[str, str] | None = None
+):
   """Raise the `typed_core` exception matching a non-success `code`.
 
   Args:
     code: The venue's own result code.
     msg: The venue's own error message.
     payload: The full envelope, attached to the exception for debugging.
+    headers: The response headers; a `RateLimited` carries their `RateLimit` last.
 
   Raises:
     AuthError: Credential, signature, timestamp or account rejection.
-    RateLimited: Request throttled by the venue.
+    RateLimited: Request throttled by the venue, with a `RateLimit` as its last
+      argument.
     BadRequest: Malformed request parameters.
     ApiError: Any other non-success code.
   """
   if code in AUTH_CODES:
     raise AuthError(code, msg, payload)
   if code in RATE_LIMIT_CODES:
-    raise RateLimited(code, msg, payload)
+    raise RateLimited(code, msg, payload, rate_limit(headers or {}))
   if code in BAD_REQUEST_CODES:
     raise BadRequest(code, msg, payload)
   raise ApiError(code, msg, payload)
@@ -73,7 +113,7 @@ def raise_http_status(response: httpx.Response):
 
   Raises:
     AuthError: Status `401` or `403`.
-    RateLimited: Status `429`.
+    RateLimited: Status `429`, with a `RateLimit` as its last argument.
     BadRequest: Any other `4xx` status.
     ApiError: Any other unsuccessful status.
   """
@@ -85,7 +125,7 @@ def raise_http_status(response: httpx.Response):
   if status in (401, 403):
     raise AuthError(status, payload)
   if status == 429:
-    raise RateLimited(status, payload)
+    raise RateLimited(status, payload, rate_limit(response.headers))
   if 400 <= status < 500:
     raise BadRequest(status, payload)
   raise ApiError(status, payload)
@@ -105,5 +145,7 @@ def unwrap(response: httpx.Response) -> Any:
     raise_http_status(response)
   envelope = validate_envelope(response.text)
   if envelope['code'] != '200000':
-    raise_code(envelope['code'], envelope.get('msg', ''), envelope)
+    raise_code(
+      envelope['code'], envelope.get('msg', ''), envelope, headers=response.headers
+    )
   return envelope.get('data')
