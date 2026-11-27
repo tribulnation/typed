@@ -53,7 +53,9 @@ async with KuCoin.new(public=True) as client:
   is used.
 - **📚 Full Surface**: Account, Spot, Margin, Futures, Earn, VIP Lending, Affiliate, Convert,
   Copy Trading and Broker each hang off their own attribute on `KuCoin`, alongside the
-  Spot/Margin public and private WebSocket feeds.
+  Spot/Margin public and private WebSocket feeds. `uta` and `streams.uta_private` cover
+  Unified Trading Account trading: account mode, unified margin, orders for every product
+  line, fills, positions and the private order and execution channels.
 
 ## Installation
 

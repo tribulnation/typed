@@ -5,6 +5,7 @@ from .futures_public import FuturesPublic
 from .margin_private import MarginPrivate
 from .spot_margin_private import SpotMarginPrivate
 from .spot_margin_public import SpotMarginPublic
+from .uta_private import UtaPrivate
 from typed_kucoin.core.base import StreamsBase
 
 
@@ -59,3 +60,12 @@ class Streams(StreamsBase):
       - [Upstream docs](https://www.kucoin.com/docs-new/3470063w0)
     """
     return SpotMarginPublic(client=self.spot_margin_stream_client)
+
+  @cached_property
+  def uta_private(self) -> UtaPrivate:
+    """Unified Trading Account private channels (WebSocket V2) — order changes and fills of every product line on one signature-authenticated connection (`wss://wsapi-push.kucoin.com`).
+
+    References:
+      - [Upstream docs](https://www.kucoin.com/docs-new/websocket-api/introduction)
+    """
+    return UtaPrivate(client=self.uta_private_stream_client)

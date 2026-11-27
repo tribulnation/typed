@@ -10,6 +10,7 @@ from .futures import Futures
 from .margin import Margin
 from .spot import Spot
 from .streams import Streams
+from .uta import Uta
 from .vip_lending import VipLending
 from typed_kucoin.core.base import KuCoinBase
 
@@ -110,8 +111,19 @@ class KuCoin(KuCoinBase):
       - [Upstream docs](https://www.kucoin.com/docs-new/websocket-api/base-info/introduction)
     """
     return Streams.new(
-      self.spot_margin_stream_client, futures_stream_client=self.futures_stream_client
+      self.spot_margin_stream_client,
+      futures_stream_client=self.futures_stream_client,
+      uta_private_stream_client=self.uta_private_stream_client,
     )
+
+  @cached_property
+  def uta(self) -> Uta:
+    """Unified Trading Account (UTA) REST V2 — one account and one order API for spot, cross margin and futures: account mode, balances, margin, fees, leverage, orders, fills and positions.
+
+    References:
+      - [Upstream docs](https://www.kucoin.com/docs-new/v2/rest/ua/introduction)
+    """
+    return Uta(client=self.default_client)
 
   @cached_property
   def vip_lending(self) -> VipLending:
