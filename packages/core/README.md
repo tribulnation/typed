@@ -61,9 +61,21 @@ destination, an `http://` proxy URL commonly works by tunneling the TLS connecti
 `trust_env=False` ignores HTTPX environment settings (proxies and certificate locations),
 but still uses an explicit `proxy`. See [HTTPX environment variables](https://www.python-httpx.org/environment_variables/).
 
-`limits` continues to control connection pooling. The existing default disables keepalive
-when uppercase `HTTP_PROXY` or `HTTPS_PROXY` is present; pass explicit `httpx.Limits` to
-override it, including when using `trust_env=False`.
+`limits` controls connection pooling. By default an idle connection stays pooled for
+`KEEPALIVE_EXPIRY` (50 seconds, against HTTPX's 5), so a request after a pause reuses it
+instead of paying a new TCP and TLS handshake. A connection the server closed while idle is
+discarded and replaced on the next request. The default disables keepalive when uppercase
+`HTTP_PROXY` or `HTTPS_PROXY` is present; pass explicit `httpx.Limits` to override it,
+including when using `trust_env=False`:
+
+```python
+import httpx
+from typed_core.http import HttpClient
+
+http = HttpClient(limits=httpx.Limits(keepalive_expiry=120))
+```
+
+Typed clients that accept `http=...` take such a transport.
 
 All construction settings apply when the underlying HTTPX client is lazily created. An
 existing client supplied through the legacy `_client` field keeps its own configuration.
