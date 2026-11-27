@@ -1,6 +1,6 @@
 # Contributing to Typed
 
-Packages' code is generated from an internal spec. So, please do not open PRs: the code would be overwritten. Instead, consider opening issues or reaching out to us at marcel@tribulunation.com
+Packages' code is generated from an internal spec. So, please do not open PRs: the code would be overwritten. Instead, consider opening issues or reaching out to us at marcel@tribulnation.com
 
 ## Filing a bug
 
