@@ -1671,6 +1671,307 @@ class TradeWsCancelOrderArgs(TypedDict):
   """Client-provided id of the order to cancel. Choose exactly one of `orderId`/`clientOid`; per the venue's docs, if both are given only `clientOid` takes effect."""
 
 
+class UtaAddOrderLimit(TypedDict):
+  """Request to place a limit order on a Unified Trading Account, for spot, cross margin or futures."""
+
+  tradeType: Literal['SPOT', 'FUTURES', 'MARGIN']
+  """Product line: `SPOT`, `MARGIN` (cross) or `FUTURES`."""
+  clientOid: NotRequired[str]
+  """Client order id, at most 40 characters of letters, digits, `_` and `-`."""
+  symbol: str
+  """Spot pair (`BTC-USDT`) or futures contract (`XBTUSDTM`)."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  orderType: Literal['LIMIT']
+  """Order type."""
+  size: PlainDecimal | str
+  """Order quantity in `sizeUnit`."""
+  sizeUnit: Literal['BASECCY', 'QUOTECCY', 'UNIT']
+  """Unit of `size`: `BASECCY` for spot limits, `UNIT` (contracts) or `BASECCY` for futures."""
+  price: PlainDecimal | str
+  """Limit price."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'GTT', 'FOK', 'RPI']]
+  """Time in force; `GTT` is spot only, `RPI` futures only."""
+  cancelAfter: NotRequired[int]
+  """Seconds after which a `GTT` order is cancelled."""
+  postOnly: NotRequired[bool]
+  """Maker only: an order that would take is cancelled instead."""
+  reduceOnly: NotRequired[bool]
+  """Futures only: the order may only reduce the position."""
+  marginMode: NotRequired[Literal['ISOLATED', 'CROSS']]
+  """`CROSS` (default) or `ISOLATED` (futures only)."""
+  stp: NotRequired[Literal['DC', 'CO', 'CN', 'CB']]
+  """Self-trade prevention; futures do not support `DC`."""
+  tags: NotRequired[str]
+  """Order tag, at most 20 characters."""
+
+
+class UtaAddOrderMarket(TypedDict):
+  """Request to place a market order on a Unified Trading Account, for spot, cross margin or futures."""
+
+  tradeType: Literal['SPOT', 'FUTURES', 'MARGIN']
+  """Product line: `SPOT`, `MARGIN` (cross) or `FUTURES`."""
+  clientOid: NotRequired[str]
+  """Client order id, at most 40 characters of letters, digits, `_` and `-`."""
+  symbol: str
+  """Spot pair (`BTC-USDT`) or futures contract (`XBTUSDTM`)."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  orderType: Literal['MARKET']
+  """Order type."""
+  size: PlainDecimal | str
+  """Order quantity in `sizeUnit`."""
+  sizeUnit: Literal['BASECCY', 'QUOTECCY', 'UNIT']
+  """Unit of `size`: `BASECCY` or `QUOTECCY` on spot, `UNIT` (contracts) or `BASECCY` on futures."""
+  reduceOnly: NotRequired[bool]
+  """Futures only: the order may only reduce the position."""
+  marginMode: NotRequired[Literal['ISOLATED', 'CROSS']]
+  """`CROSS` (default) or `ISOLATED` (futures only)."""
+  stp: NotRequired[Literal['DC', 'CO', 'CN', 'CB']]
+  """Self-trade prevention; futures do not support `DC`."""
+  tags: NotRequired[str]
+  """Order tag, at most 20 characters."""
+
+
+class UtaExecutionEvent(TypedDict):
+  """One fill push of the UTA private `execution` channel, with KuCoin's abbreviated keys. `q` is in contracts on futures."""
+
+  oi: str
+  """Order id; `0` for liquidation, ADL and settlement fills."""
+  ci: NotRequired[str]
+  """Client order id; empty when none was sent."""
+  s: str
+  """Spot pair or futures contract."""
+  S: Literal['BUY', 'SELL']
+  """Fill side."""
+  oT: NotRequired[Literal['LIMIT', 'MARKET', '']]
+  """Order type; empty for system fills."""
+  p: Decimal
+  """Fill price."""
+  q: Decimal
+  """Fill quantity: base units on spot, contracts on futures."""
+  ti: str | int
+  """Trade id; KuCoin sends a number on some lines and a string on others."""
+  E: TimestampNanos
+  """Execution time."""
+  lR: NotRequired[Literal['MAKER', 'TAKER', '']]
+  """Liquidity role; empty for ADL fills."""
+  f: NotRequired[Decimal]
+  """Fee charged; negative is a rebate."""
+  fC: NotRequired[str]
+  """Fee currency."""
+  fT: NotRequired[Literal['NORMAL', 'LIQUID', 'ADL', 'SETTLEMENT']]
+  """Fill type."""
+  fP: NotRequired[str]
+  """Realized PnL of a closing futures fill, when reported."""
+
+
+class UtaFill(TypedDict):
+  """One Unified Trading Account fill, as Get Trade History returns it. `size` is in contracts on futures."""
+
+  tradeType: NotRequired[Literal['SPOT', 'FUTURES', 'MARGIN']]
+  """Product line."""
+  symbol: str
+  """Spot pair or futures contract."""
+  orderId: str
+  """Order id; `0` for liquidation, ADL and settlement fills."""
+  clientOid: NotRequired[str | None]
+  """Client order id; empty or `null` when none was sent."""
+  orderType: NotRequired[Literal['LIMIT', 'MARKET', '']]
+  """Order type; empty for system fills."""
+  side: Literal['BUY', 'SELL']
+  """Fill side."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT', '']]
+  """Futures position side."""
+  fillType: Literal['NORMAL', 'LIQUID', 'SETTLEMENT', 'ADL']
+  """`NORMAL` trade, `LIQUID` liquidation, `ADL` auto-deleveraging or `SETTLEMENT`."""
+  tradeId: str
+  """Trade id."""
+  size: Decimal
+  """Fill quantity: base units on spot, contracts on futures."""
+  value: NotRequired[Decimal]
+  """Fill value in the quote currency."""
+  price: Decimal
+  """Fill price."""
+  executionTime: TimestampNanos
+  """Execution time."""
+  fee: Decimal
+  """Fee charged; negative is a rebate."""
+  feeCurrency: str
+  """Fee currency."""
+  liquidityRole: NotRequired[Literal['MAKER', 'TAKER', '']]
+  """Liquidity role; empty for some system fills."""
+  marginMode: NotRequired[Literal['ISOLATED', 'CROSS', '']]
+  """Margin mode; empty where it does not apply."""
+  tax: NotRequired[Decimal | Literal['']]
+  """Settled tax."""
+  fillPnl: NotRequired[Decimal | Literal['']]
+  """Realized PnL of a closing futures fill."""
+
+
+class UtaOrder(TypedDict):
+  """One Unified Trading Account order, as Get Order Details returns it and as an item of Get Open Order List. Quantities are in `sizeUnit`: contracts (`UNIT`) on futures."""
+
+  tradeType: NotRequired[Literal['SPOT', 'FUTURES', 'MARGIN']]
+  """Product line."""
+  orderId: str
+  """System order id."""
+  clientOid: NotRequired[str | None]
+  """Client order id; empty or `null` when none was sent."""
+  status: Literal[0, 1, 2, 3, 4, 5, 6]
+  """Order status: `0` not triggered, `1` triggered, `2` live (nothing filled), `3` filled, `4` partially filled and live, `5` cancelled with nothing filled, `6` partially filled then cancelled."""
+  symbol: str
+  """Spot pair or futures contract."""
+  side: Literal['BUY', 'SELL']
+  """Order side."""
+  orderType: Literal['LIMIT', 'MARKET']
+  """Order type."""
+  size: Decimal
+  """Order quantity in `sizeUnit`."""
+  sizeUnit: NotRequired[Literal['BASECCY', 'QUOTECCY', 'UNIT']]
+  """Unit of `size` and `filledSize`."""
+  price: NotRequired[Decimal | Literal['']]
+  """Limit price; empty for market orders."""
+  filledSize: Decimal
+  """Cumulative filled quantity in `sizeUnit`."""
+  avgPrice: NotRequired[Decimal | Literal['']]
+  """Average fill price."""
+  fee: NotRequired[Decimal | Literal['']]
+  """Cumulative fee."""
+  feeCurrency: NotRequired[str]
+  """Fee currency."""
+  tax: NotRequired[Decimal | Literal['']]
+  """Settled tax."""
+  tradeId: NotRequired[str]
+  """Id of the last trade, when there is one."""
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'GTT', 'FOK', 'RPI']]
+  """Time in force."""
+  postOnly: NotRequired[bool]
+  """Whether the order is post-only."""
+  reduceOnly: NotRequired[bool | Literal['']]
+  """Whether a futures order is reduce-only; empty on other lines."""
+  marginMode: NotRequired[Literal['ISOLATED', 'CROSS', '']]
+  """Margin mode; empty where it does not apply."""
+  positionSide: NotRequired[Literal['BOTH', 'LONG', 'SHORT', '']]
+  """Futures position side; UTA futures are one-way (`BOTH`)."""
+  stp: NotRequired[Literal['DC', 'CO', 'CN', 'CB', '']]
+  """Self-trade prevention; empty when off."""
+  cancelReason: NotRequired[str]
+  """Why the order was cancelled, when it was."""
+  cancelSize: NotRequired[Decimal | Literal['']]
+  """Cancelled quantity."""
+  cancelAfter: NotRequired[int | None]
+  """Seconds after which a `GTT` order is cancelled; `null` or `0` otherwise."""
+  tags: NotRequired[str]
+  """Order tag."""
+  triggerOrderId: NotRequired[str]
+  """Conditional order this order was triggered from."""
+  orderTime: NotRequired[TimestampNanos]
+  """Creation time."""
+  updatedTime: NotRequired[TimestampNanos]
+  """Last update time."""
+
+
+class UtaOrderEvent(TypedDict):
+  """One order change push of the UTA private `orderAll` channel, with KuCoin's abbreviated keys. Quantities are in `qU`: contracts (`UNIT`) on futures."""
+
+  oi: str
+  """Order id."""
+  ci: NotRequired[str]
+  """Client order id; empty when none was sent."""
+  os: Literal[0, 1, 2, 3, 4, 5, 6]
+  """Order status, as `UtaOrder.status`."""
+  eT: Literal['OPEN', 'UPDATE', 'FILL', 'CANCEL', 'TRIGGER', 'MATCH']
+  """Event: `OPEN`, `UPDATE`, `FILL`, `CANCEL`, `TRIGGER` or `MATCH`."""
+  tT: NotRequired[Literal['SPOT', 'FUTURES', 'MARGIN']]
+  """Product line."""
+  s: str
+  """Spot pair or futures contract."""
+  S: Literal['BUY', 'SELL']
+  """Order side."""
+  oT: NotRequired[Literal['LIMIT', 'MARKET']]
+  """Order type."""
+  p: NotRequired[Decimal | Literal['']]
+  """Limit price; empty for market orders."""
+  q: Decimal
+  """Order quantity in `qU`."""
+  qU: NotRequired[Literal['BASECCY', 'QUOTECCY', 'UNIT']]
+  """Unit of the quantities."""
+  fS: Decimal
+  """Cumulative filled quantity."""
+  lS: NotRequired[Decimal | Literal['']]
+  """Quantity of the last fill."""
+  ls: NotRequired[Decimal | Literal['']]
+  """Price of the last fill."""
+  lR: NotRequired[Literal['MAKER', 'TAKER', '']]
+  """Liquidity role of the last fill; empty before one."""
+  ti: NotRequired[str]
+  """Id of the last trade; empty before one."""
+  aP: NotRequired[Decimal | Literal['']]
+  """Average fill price."""
+  f: NotRequired[Decimal | Literal['']]
+  """Cumulative fee."""
+  fC: NotRequired[str]
+  """Fee currency."""
+  rS: NotRequired[Decimal | Literal['']]
+  """Remaining quantity."""
+  cS: NotRequired[Decimal | Literal['']]
+  """Cancelled quantity."""
+  pO: NotRequired[bool]
+  """Post-only flag."""
+  rO: NotRequired[bool]
+  """Reduce-only flag."""
+  tIF: NotRequired[str]
+  """Time in force."""
+  O: NotRequired[TimestampNanos]
+  """Order creation time."""
+  U: TimestampNanos
+  """Update time."""
+
+
+class UtaPosition(TypedDict):
+  """One open futures position of a Unified Trading Account."""
+
+  symbol: str
+  """Contract symbol."""
+  id: NotRequired[str]
+  """Position id."""
+  marginMode: Literal['CROSS', 'ISOLATED']
+  """Margin mode."""
+  size: Decimal
+  """Signed size in contracts: positive long, negative short."""
+  entryPrice: Decimal
+  """Average entry price."""
+  positionValue: Decimal
+  """Position value at the mark price, in the settlement currency."""
+  positionMargin: NotRequired[Decimal]
+  """Position margin: value over leverage on cross, the allocated margin on isolated."""
+  markPrice: Decimal
+  """Mark price."""
+  leverage: NotRequired[Decimal]
+  """Position leverage."""
+  unrealizedPnL: Decimal
+  """Unrealized PnL."""
+  realizedPnL: NotRequired[Decimal]
+  """Accumulated realized PnL."""
+  initialMargin: NotRequired[Decimal]
+  """Initial margin."""
+  mmr: NotRequired[Decimal]
+  """Maintenance margin rate."""
+  maintenanceMargin: Decimal
+  """Maintenance margin."""
+  liquidationPrice: NotRequired[Decimal | Literal['']]
+  """Estimated liquidation price."""
+  adlPercentage: NotRequired[Decimal | Literal['']]
+  """ADL ranking percentile."""
+  riskRatio: NotRequired[Decimal | Literal['']]
+  """Risk ratio of an isolated position."""
+  creationTime: NotRequired[TimestampNanos]
+  """When the position was opened."""
+  updateTime: NotRequired[TimestampNanos]
+  """Last update (size or leverage change)."""
+
+
 WsSubscriptionAck = Literal['ack']
 
 

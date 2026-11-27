@@ -2,14 +2,15 @@
 holding each heterogeneous child's already-built transport, wrapped by the generated
 `KuCoin`/`Streams` composites.
 
-`KuCoin` composes ten REST products, sharing exactly three physical HTTP connections
-(one per real base URL Classic products live on -- `api.kucoin.com`, `api-futures.
-kucoin.com`, `api-broker.kucoin.com`), and one WebSocket surface (`streams`), sharing
-exactly two physical connections (Spot/Margin, Futures) -- so its own resolved `core`
+`KuCoin` composes eleven REST products (the Classic ten plus `uta`, the Unified Trading
+Account API on `api.kucoin.com`), sharing exactly three physical HTTP connections
+(one per base URL -- `api.kucoin.com`, `api-futures.kucoin.com`,
+`api-broker.kucoin.com`), and one WebSocket surface (`streams`), sharing exactly three
+physical connections (Classic Spot/Margin, Classic Futures, UTA private) -- so its own resolved `core`
 (`KuCoinBase`) is a *Base* holding one field per physical transport, built once in
 `.new()`, never a single shared transport every child forwards unchanged (design §5c).
 
-`streams` itself further composes five leaf-bearing groupings that share one of the two
+`streams` itself further composes six leaf-bearing groupings that share one of the three
 sockets `KuCoinBase` already built -- `StreamsBase` is design §5a's own "extra
 caller-supplied value" forwarding mechanism, layered on top of §5c's explicit `children`
 mapping (the two mechanisms "answer independent questions" and compose without
@@ -29,30 +30,39 @@ from .transport.http import (
   FUTURES_API_URL,
   HttpRpcClient,
 )
+from .transport.uta_ws import UtaStreamClient
 from .transport.ws import SocketStreamClient
 
 
 @dataclass(kw_only=True, frozen=True)
 class StreamsBase:
-  """The two physical WebSocket connections `Streams` composes: Spot/Margin (also
-  serving Margin's own private channels) and Futures -- see `KuCoinBase.new`, which
-  builds both."""
+  """The three physical WebSocket connections `Streams` composes: Classic Spot/Margin
+  (also serving Margin's own private channels), Classic Futures, and the Unified Trading
+  Account's private connection -- see `KuCoinBase.new`, which builds all three."""
 
   spot_margin_stream_client: SocketStreamClient
   futures_stream_client: SocketStreamClient
+  uta_private_stream_client: UtaStreamClient
 
   @classmethod
   def new(
-    cls, client: SocketStreamClient, *, futures_stream_client: SocketStreamClient
+    cls,
+    client: SocketStreamClient,
+    *,
+    futures_stream_client: SocketStreamClient,
+    uta_private_stream_client: UtaStreamClient,
   ) -> Self:
-    """Build from the two already-connected sockets `KuCoinBase.new` constructs.
+    """Build from the three already-built connections `KuCoinBase.new` constructs.
 
     Args:
       client: The Spot/Margin connection -- forwarded as `spot_margin_stream_client`.
       futures_stream_client: The Futures connection.
+      uta_private_stream_client: The UTA private connection.
     """
     return cls(
-      spot_margin_stream_client=client, futures_stream_client=futures_stream_client
+      spot_margin_stream_client=client,
+      futures_stream_client=futures_stream_client,
+      uta_private_stream_client=uta_private_stream_client,
     )
 
   async def __aenter__(self) -> Self:
@@ -60,6 +70,7 @@ class StreamsBase:
     async with AsyncExitStack() as stack:
       await stack.enter_async_context(self.spot_margin_stream_client)
       await stack.enter_async_context(self.futures_stream_client)
+      await stack.enter_async_context(self.uta_private_stream_client)
       stack.pop_all()
     return self
 
@@ -68,15 +79,17 @@ class StreamsBase:
     stack = AsyncExitStack()
     stack.push_async_exit(self.spot_margin_stream_client)
     stack.push_async_exit(self.futures_stream_client)
+    stack.push_async_exit(self.uta_private_stream_client)
     await stack.__aexit__(exc_type, exc_value, traceback)
 
 
 @dataclass(kw_only=True)
 class KuCoinBase:
-  """KuCoin client root: builds and owns the five physical transports every generated
+  """KuCoin client root: builds and owns the six physical transports every generated
   composite (`Account`, `Spot`, `Margin`, `Earn`, `VipLending`, `Affiliate`, `Convert`,
-  `Futures`, `CopyTrading`, `Broker`, `Streams`) forwards unchanged -- three HTTP
-  clients (one per real base URL) and two WebSocket connections (Spot/Margin, Futures).
+  `Futures`, `CopyTrading`, `Broker`, `Uta`, `Streams`) forwards unchanged -- three HTTP
+  clients (one per real base URL) and three WebSocket connections (Classic Spot/Margin,
+  Classic Futures, UTA private).
   """
 
   default_client: HttpRpcClient
@@ -84,6 +97,7 @@ class KuCoinBase:
   broker_client: HttpRpcClient
   spot_margin_stream_client: SocketStreamClient
   futures_stream_client: SocketStreamClient
+  uta_private_stream_client: UtaStreamClient
 
   @classmethod
   def new(
@@ -159,12 +173,16 @@ class KuCoinBase:
       private=private,
       validate=validate,
     )
+    uta_private_stream_client = UtaStreamClient.new(
+      credentials=credentials, validate=validate
+    )
     return cls(
       default_client=default_client,
       futures_rest_client=futures_rest_client,
       broker_client=broker_client,
       spot_margin_stream_client=spot_margin_stream_client,
       futures_stream_client=futures_stream_client,
+      uta_private_stream_client=uta_private_stream_client,
     )
 
   async def __aenter__(self) -> Self:
@@ -175,6 +193,7 @@ class KuCoinBase:
       await stack.enter_async_context(self.broker_client)
       await stack.enter_async_context(self.spot_margin_stream_client)
       await stack.enter_async_context(self.futures_stream_client)
+      await stack.enter_async_context(self.uta_private_stream_client)
       stack.pop_all()
     return self
 
@@ -186,4 +205,5 @@ class KuCoinBase:
     stack.push_async_exit(self.broker_client)
     stack.push_async_exit(self.spot_margin_stream_client)
     stack.push_async_exit(self.futures_stream_client)
+    stack.push_async_exit(self.uta_private_stream_client)
     await stack.__aexit__(exc_type, exc_value, traceback)
