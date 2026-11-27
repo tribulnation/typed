@@ -1,25 +1,52 @@
-# Typed Clients
+# Typed
 
-Async, typed, validated Python clients for every crypto venue we trade on. One namespace. Every exchange.
+Async, typed and validated Python clients for crypto exchanges and on-chain data APIs.
 
-```python
-from typed_binance import Binance
+[![License: MIT](https://img.shields.io/github/license/tribulnation/typed)](LICENSE)
+[![Check](https://github.com/tribulnation/typed/actions/workflows/check.yml/badge.svg)](https://github.com/tribulnation/typed/actions/workflows/check.yml)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://pypi.org/project/typed-hyperliquid/)
 
-async with Binance.new(public=True) as client:
-  price = await client.spot.market.ticker_price(symbol='BTCUSDT')
-  print(price)
+## Why
+
+- Request parameters and responses are `TypedDict`s, so your editor and type checker know the shape of every call.
+- Responses are validated and parsed at runtime by default: prices the venue sends as strings arrive as `Decimal`. Pass `validate=False` to get the raw JSON values instead.
+- Async throughout: HTTP calls and WebSocket streams.
+- Each exchange client covers the venue's documented endpoints, trading and account ones included. The code is generated from a spec of each venue's API.
+
+## Install
+
+There is one package per venue. Install the ones you need:
+
+```bash
+pip install typed-hyperliquid
 ```
 
-## Why typed?
+Python 3.10 or newer. The clients share `typed-core`, which is installed with them.
 
-- **🎯 Precise Types**: Typed endpoint inputs and responses, not `dict`/`Any`.
-- **✅ Runtime Validation**: Responses validated by default, not just typed on paper.
-- **⚡ Async First**: Async HTTP and streaming, built for concurrent workflows.
-- **📚 Full Surface**: Every documented endpoint, not just the popular ones.
+## Quickstart
+
+Fetch the best bid and ask for BTC on Hyperliquid. Public endpoints need no API key.
+
+```python
+import asyncio
+from typed_hyperliquid import Hyperliquid
+
+async def main():
+  async with Hyperliquid.new(public=True) as client:
+    book = await client.info.l2_book('BTC')
+    bids, asks = book['levels']
+    print(bids[0], asks[0])
+
+asyncio.run(main())
+```
+
+```
+{'n': 5, 'px': Decimal('60027.0'), 'sz': Decimal('0.11931')} {'n': 15, 'px': Decimal('60028.0'), 'sz': Decimal('4.08393')}
+```
+
+The exchange clients work the same way: `<Venue>.new(...)`, then `async with`. Pass credentials to `new()` for private endpoints. Each package's docs show how.
 
 ## Packages
-
-Every client builds on [`typed-core`](packages/core).
 
 | | Repo | Status | PyPI |
 |--|------|--------|-----|
@@ -47,12 +74,16 @@ Every client builds on [`typed-core`](packages/core).
 | <img src="https://catalogue.tribulnation.com/icons/platform/moralis.svg" width="20" height="20" /> | [Moralis](https://github.com/tribulnation/typed/tree/main/packages/moralis) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-moralis)](https://pypi.org/project/typed-moralis/) |
 | <img src="https://catalogue.tribulnation.com/icons/platform/etherscan.svg" width="20" height="20" /> | [Etherscan](https://github.com/tribulnation/typed/tree/main/packages/etherscan) | 🧪 Beta | [![PyPI](https://img.shields.io/pypi/v/typed-etherscan)](https://pypi.org/project/typed-etherscan/) |
 
-More venues are on the way — see the [full catalog](https://tribulnation.com/typed).
+Documentation for every client: [tribulnation.com/typed](https://tribulnation.com/typed).
+
+## Status
+
+Production packages are used in live trading. Beta packages work but their API may still change. Each package is versioned and released on its own, tagged `<package>-vX.Y.Z`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md): most of the source code is generated from an internal spec. So, open issues not PRs please! If you want to collaborate further, please reach out to us at marcel@tribulnation.com :)
+The code is generated from a spec kept outside this repo, so a PR here would be overwritten. Please [open an issue](https://github.com/tribulnation/typed/issues) instead; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
