@@ -913,8 +913,8 @@ class FuturesTrade(TypedDict):
   """Currency the fee was charged in."""
   tradeTime: TimestampNanos
   """Fill time, Unix nanoseconds."""
-  subTradeType: str
-  """Deprecated; no longer carries a meaningful value."""
+  subTradeType: str | None
+  """Deprecated; no longer carries a meaningful value. `null` on plain fills (seen live 2026-11-27, and in KuCoin's own Get Trade History and Get Recent Trade History response examples)."""
   marginMode: Literal['ISOLATED', 'CROSS']
   """Margin mode."""
   displayType: Literal['limit', 'market', 'limit_stop', 'market_stop']
