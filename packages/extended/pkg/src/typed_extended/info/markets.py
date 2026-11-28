@@ -99,8 +99,10 @@ class Market(TypedDict):
   """Decimals of the collateral asset."""
   active: bool
   """Whether the market is currently active."""
-  status: Literal['ACTIVE', 'REDUCE_ONLY', 'DELISTED', 'PRELISTED', 'DISABLED']
-  """Listing status: `ACTIVE` (every order type), `REDUCE_ONLY` (only reduce-only orders), `DELISTED` (no trading), `PRELISTED` (trading not yet available) or `DISABLED` (no trading)."""
+  status: Literal[
+    'ACTIVE', 'REDUCE_ONLY', 'REDUCE_ONLY_OI', 'DELISTED', 'PRELISTED', 'DISABLED'
+  ]
+  """Listing status: `ACTIVE` (every order type), `REDUCE_ONLY` (only reduce-only orders), `REDUCE_ONLY_OI` (only reduce-only orders, while open interest is above `tradingConfig.openInterestLimit`), `DELISTED` (no trading), `PRELISTED` (trading not yet available) or `DISABLED` (no trading)."""
   isRfq: bool
   """Whether this is an RFQ market, whose orders go through the RFQ order endpoint."""
   isOffHours: NotRequired[bool]
