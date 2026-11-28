@@ -7,25 +7,6 @@ import httpx
 from typed_core.exceptions import NetworkError
 
 
-KEEPALIVE_EXPIRY = 50.0
-"""Seconds an idle connection stays pooled for reuse by default (HTTPX's own default is 5).
-
-A new connection costs a TCP and a TLS handshake, two extra round trips before the
-request. The value stays below the 60-second idle timeout that is the default on common
-load balancers, so the client normally closes an idle connection before the server does;
-some exchange APIs close idle connections after about a minute.
-"""
-
-
-def _default_limits() -> httpx.Limits:
-  """Default pool limits: keep idle connections `KEEPALIVE_EXPIRY` seconds, or none behind
-  an environment proxy."""
-  if os.environ.get('HTTPS_PROXY') or os.environ.get('HTTP_PROXY'):
-    return httpx.Limits(max_keepalive_connections=0)
-  else:
-    return httpx.Limits(keepalive_expiry=KEEPALIVE_EXPIRY)
-
-
 @dataclass
 class HttpClient:
   """Managed HTTP client, wrapping `httpx.AsyncClient`.
@@ -35,24 +16,43 @@ class HttpClient:
   2. Requests: many concurrent callers OK
   """
 
-  limits: httpx.Limits = field(default_factory=_default_limits)
-  """Connection pool limits. The default keeps idle connections `KEEPALIVE_EXPIRY`
-  seconds, and none when uppercase `HTTP_PROXY` or `HTTPS_PROXY` is set."""
+  limits: httpx.Limits | None = None
+  """Explicit connection pool limits, used as given: they override `keepalive_expiry` and
+  the environment-proxy rule."""
   timeout: float | httpx.Timeout | None = field(default=5.0, kw_only=True)
   """Default request timeout; `None` disables timeouts."""
   proxy: str | httpx.Proxy | None = field(default=None, kw_only=True, repr=False)
   """Explicit proxy for HTTP and HTTPS, overriding environment proxy routing."""
   trust_env: bool = field(default=True, kw_only=True)
   """Read HTTPX environment settings, including proxies and certificate locations."""
+  keepalive_expiry: float = field(default=50.0, kw_only=True)
+  """Seconds an idle connection stays pooled for reuse (HTTPX's own default is 5).
+
+  A new connection costs a TCP and a TLS handshake, two extra round trips before the
+  request. The default stays below the 60-second idle timeout common on load balancers, so
+  the client normally closes an idle connection before the server does. Ignored when
+  `limits` is given, and behind an environment proxy (uppercase `HTTP_PROXY` or
+  `HTTPS_PROXY`), where no idle connection is kept.
+  """
   lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
   _client: httpx.AsyncClient | None = None
+
+  def pool_limits(self) -> httpx.Limits:
+    """The connection pool limits in effect: explicit `limits`, else none kept behind an
+    environment proxy, else idle connections kept `keepalive_expiry` seconds."""
+    if self.limits is not None:
+      return self.limits
+    elif os.environ.get('HTTPS_PROXY') or os.environ.get('HTTP_PROXY'):
+      return httpx.Limits(max_keepalive_connections=0)
+    else:
+      return httpx.Limits(keepalive_expiry=self.keepalive_expiry)
 
   @property
   async def client(self) -> httpx.AsyncClient:
     async with self.lock:
       if self._client is None:
         self._client = await httpx.AsyncClient(
-          limits=self.limits,
+          limits=self.pool_limits(),
           timeout=self.timeout,
           proxy=self.proxy,
           trust_env=self.trust_env,

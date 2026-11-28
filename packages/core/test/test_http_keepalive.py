@@ -7,7 +7,9 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from typed_core.http import KEEPALIVE_EXPIRY, HttpClient
+from typed_core.http import HttpClient
+
+KEEPALIVE_EXPIRY = HttpClient().keepalive_expiry
 
 RESPONSE = b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Type: text/plain\r\n\r\nok'
 
@@ -74,23 +76,29 @@ class Server:
 
 
 def test_default_keeps_idle_connections():
-  """Idle connections stay pooled `KEEPALIVE_EXPIRY` seconds, not HTTPX's 5."""
-  limits = HttpClient().limits
-  assert limits.keepalive_expiry == KEEPALIVE_EXPIRY > 5
+  """Idle connections stay pooled `keepalive_expiry` seconds by default, not HTTPX's 5."""
+  limits = HttpClient().pool_limits()
+  assert limits.keepalive_expiry == KEEPALIVE_EXPIRY == 50
   assert limits.max_keepalive_connections == httpx.Limits().max_keepalive_connections
+
+
+def test_keepalive_expiry_is_a_parameter():
+  """An explicit `keepalive_expiry` sets the pool's idle expiry."""
+  assert HttpClient(keepalive_expiry=120).pool_limits().keepalive_expiry == 120
 
 
 @pytest.mark.parametrize('name', ['HTTP_PROXY', 'HTTPS_PROXY'])
 def test_no_keepalive_behind_an_environment_proxy(monkeypatch, name):
-  """Behind an environment proxy, idle connections are not kept."""
+  """Behind an environment proxy, idle connections are not kept, whatever the expiry."""
   monkeypatch.setenv(name, 'http://proxy.invalid:8080')
-  assert HttpClient().limits.max_keepalive_connections == 0
+  assert HttpClient(keepalive_expiry=120).pool_limits().max_keepalive_connections == 0
 
 
-def test_explicit_limits_win():
-  """Explicit limits configure the pool as given."""
+def test_explicit_limits_win(monkeypatch):
+  """Explicit limits configure the pool as given, over `keepalive_expiry` and the proxy."""
+  monkeypatch.setenv('HTTPS_PROXY', 'http://proxy.invalid:8080')
   limits = httpx.Limits(keepalive_expiry=10)
-  assert HttpClient(limits=limits).limits is limits
+  assert HttpClient(limits=limits, keepalive_expiry=120).pool_limits() is limits
 
 
 @pytest.mark.asyncio
@@ -99,6 +107,16 @@ async def test_idle_connection_is_reused(monkeypatch):
   async with Server() as server, HttpClient() as http:
     await http.request('GET', server.url)
     advance_pool_clock(monkeypatch, KEEPALIVE_EXPIRY - 1)
+    assert (await http.request('GET', server.url)).text == 'ok'
+    assert server.connections == 1
+
+
+@pytest.mark.asyncio
+async def test_explicit_expiry_reaches_the_pool(monkeypatch):
+  """An explicit `keepalive_expiry` above the default keeps the connection past it."""
+  async with Server() as server, HttpClient(keepalive_expiry=120) as http:
+    await http.request('GET', server.url)
+    advance_pool_clock(monkeypatch, KEEPALIVE_EXPIRY + 1)
     assert (await http.request('GET', server.url)).text == 'ok'
     assert server.connections == 1
 
