@@ -80,3 +80,33 @@ Subscriptions share the client's single connection, so run several concurrently 
 
 Create one client per process and reuse it; it is safe to call concurrently. Use
 `async with` so connections close predictably.
+
+## HTTP Timeouts, Keep-Alive and Proxies
+
+Pass a configured `typed_core.http.HttpClient` to control HTTP requests:
+
+```python
+from typed_core.http import HttpClient
+from typed_evedex import Evedex
+
+http = HttpClient(timeout=30, keepalive_expiry=120, proxy="http://localhost:8080")
+client = Evedex.new(public=True, http=http)
+```
+
+The Exchange, Auth and market-data services and the wallet session all share the supplied
+client. Use the resulting client with `async with client:`; exiting closes its HTTP
+transport, including a supplied one. Give independently managed clients separate transports.
+
+Without `http`, the client builds one with `Evedex.new(timeout=...)` (ten seconds by
+default) as its request timeout. A supplied `HttpClient` keeps its own timeout; `timeout`
+then applies only to the WebSocket connect. `keepalive_expiry` is how long an idle pooled
+connection is kept for reuse (see `typed_core.http.HttpClient`). Requests are
+single-attempt; callers decide whether and when to retry.
+
+Without an explicit `proxy`, HTTPX reads `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and
+`NO_PROXY` from the environment. An explicit `proxy` overrides that environment routing,
+including `NO_PROXY`. `HttpClient(trust_env=False)` disables HTTPX environment settings
+(including certificate settings); an explicit proxy still applies.
+
+These settings configure HTTP requests, including the wallet sign-in, and do not configure
+the WebSocket connection.
