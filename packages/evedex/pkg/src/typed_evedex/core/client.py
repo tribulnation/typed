@@ -44,6 +44,7 @@ class ClientBase:
     public: bool = False,
     validate: bool = True,
     timeout: timedelta = timedelta(seconds=10),
+    http: HttpClient | None = None,
   ) -> Self:
     """Build a client.
 
@@ -58,7 +59,10 @@ class ClientBase:
       address: Expected wallet address, checked against the key's.
       public: Build without credentials, for public data only.
       validate: Validate responses.
-      timeout: HTTP request and WebSocket connect timeout.
+      timeout: HTTP request and WebSocket connect timeout. A passed `http` keeps its
+        own request timeout.
+      http: Shared HTTP client override, reused by every REST service and the wallet
+        session; closed when this client exits.
 
     Raises:
       AuthError: `public` is false and no credential was passed or found.
@@ -75,7 +79,8 @@ class ClientBase:
     credentials = resolve_credentials(
       profile, private_key=private_key, api_key=api_key, address=address, public=public
     )
-    http = HttpClient(timeout=timeout.total_seconds())
+    if http is None:
+      http = HttpClient(timeout=timeout.total_seconds())
     session = None
     if credentials is not None and credentials.account is not None:
       session = Session(account=credentials.account, profile=profile, http=http)
